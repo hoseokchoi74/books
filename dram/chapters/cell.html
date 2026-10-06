@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1T1C 셀과 전하 공유 · DRAM 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="cell">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 02 <span class="hanja">第二章 · 容</span></div>
+  <h1>1T1C 셀과 전하 공유</h1>
+  <p class="lead">DRAM의 한 비트는 놀랄 만큼 단순하다. 스위치 하나와 작은 물통 하나. 이 장에서는 그 물통에 전하를 채우고(쓰기), 물통을 훨씬 큰 관에 연결해 수위가 얼마나 변하는지 재는(읽기) 과정을 직접 조작해 본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>1T1C 셀의 회로와 단면 구조, 워드라인·비트라인·스토리지 노드의 역할을 설명할 수 있다.</li>
+  <li>쓰기·읽기 동작을 전압 파형으로 따라가고, 읽기가 왜 "파괴적"인지 안다.</li>
+  <li>전하 공유 신호 \(\Delta V\)를 계산하고, 전달비 \(C_s/(C_s+C_{BL})\)가 왜 중요한지 이해한다.</li>
+  <li>셀 하나에 담긴 전자의 개수를 어림하고, 누설 전류와 연결 짓는다.</li>
+  <li>셀 트랜지스터의 문턱 전압과 워드라인 부스팅(VPP), 음의 워드라인 바이어스의 의미를 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>스위치 하나, 물통 하나</h2>
+<p>1T1C 셀은 <span class="term">접근 트랜지스터(access transistor)</span> 하나와 <span class="term">스토리지 커패시터(storage capacitor)</span> \(C_s\) 하나로 이뤄진다. 트랜지스터의 게이트는 가로로 지나가는 <span class="term">워드라인(WL, word line)</span>에, 드레인은 세로로 지나가는 <span class="term">비트라인(BL, bit line)</span>에 연결된다. 소스 쪽은 커패시터의 한쪽 전극, 즉 <span class="term">스토리지 노드(SN, storage node)</span>다. 커패시터의 반대쪽 전극(셀 플레이트)은 보통 \(V_{DD}/2\)에 고정된다.</p>
+
+<div class="fig-row">
+<figure class="fig" style="margin:0">
+<svg viewBox="0 0 320 300" role="img" aria-label="1T1C 회로도">
+  <line x1="20" y1="60" x2="300" y2="60" class="st-gold" stroke-width="4"/><text x="24" y="50" class="t-m" style="fill:var(--gold);font-weight:700">워드라인 WL</text>
+  <line x1="90" y1="20" x2="90" y2="285" class="st-indigo" stroke-width="4"/><text x="98" y="282" class="t-m" style="fill:var(--indigo);font-weight:700">비트라인 BL</text>
+  <path d="M90 140 H140" class="s-stroke" stroke-width="2"/>
+  <line x1="140" y1="118" x2="140" y2="162" class="s-stroke" stroke-width="2.5"/>
+  <line x1="150" y1="118" x2="150" y2="162" class="s-stroke" stroke-width="2.5"/>
+  <line x1="145" y1="60" x2="145" y2="112" class="st-gold" stroke-width="2"/><line x1="133" y1="112" x2="157" y2="112" class="st-gold" stroke-width="2"/>
+  <path d="M150 140 H210 V180" class="s-stroke" stroke-width="2"/>
+  <circle cx="210" cy="160" r="4" class="s-red"/><text x="218" y="158" class="t-s" style="fill:var(--red)">SN (스토리지 노드)</text>
+  <line x1="185" y1="182" x2="235" y2="182" class="st-jade" stroke-width="4"/><line x1="185" y1="194" x2="235" y2="194" class="st-jade" stroke-width="4"/>
+  <text x="244" y="194" class="t-m" style="fill:var(--jade);font-weight:700">C_s</text>
+  <path d="M210 194 V230" class="s-stroke" stroke-width="2"/><text x="170" y="248" class="t-s">셀 플레이트 = V_DD/2</text>
+  <text x="104" y="104" class="t-s">접근 트랜지스터</text>
+</svg>
+<figcaption><b>그림 2-1(a).</b> 1T1C 셀 회로. 워드라인이 스위치를 열면 비트라인과 커패시터가 연결된다.</figcaption>
+</figure>
+<figure class="fig" style="margin:0">
+<svg viewBox="0 0 320 300" role="img" aria-label="1T1C 단면">
+  <rect x="10" y="200" width="300" height="90" class="s-paper2" stroke="var(--line)"/><text x="20" y="282" class="t-s">p형 실리콘 기판</text>
+  <rect x="30" y="178" width="60" height="26" fill="var(--indigo)" opacity=".55"/><text x="38" y="196" class="t-s" style="fill:#fff">n⁺ (BL 접촉)</text>
+  <rect x="200" y="178" width="60" height="26" fill="var(--red)" opacity=".55"/><text x="210" y="196" class="t-s" style="fill:#fff">n⁺ (SN)</text>
+  <path d="M112 175 V250 Q145 268 178 250 V175 Z" fill="var(--gold)" opacity=".8"/><text x="122" y="228" class="t-s" style="fill:#fff">매립 WL</text>
+  <path d="M106 175 V252 Q145 274 184 252 V175" fill="none" stroke="var(--ink3)" stroke-dasharray="3 2"/>
+  <rect x="50" y="110" width="20" height="68" fill="var(--ink3)" opacity=".7"/>
+  <rect x="10" y="96" width="140" height="14" fill="var(--indigo)"/><text x="16" y="92" class="t-s" style="fill:var(--indigo)">비트라인</text>
+  <rect x="220" y="150" width="20" height="28" fill="var(--ink3)" opacity=".7"/>
+  <rect x="210" y="20" width="40" height="130" rx="6" fill="none" stroke="var(--jade)" stroke-width="5"/>
+  <rect x="200" y="12" width="60" height="140" rx="8" fill="none" stroke="var(--ink3)" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="264" y="60" class="t-s" style="fill:var(--jade)">실린더형</text><text x="264" y="74" class="t-s" style="fill:var(--jade)">커패시터</text>
+  <text x="264" y="96" class="t-s">유전막 +</text><text x="264" y="110" class="t-s">셀 플레이트</text>
+  <path d="M120 248 Q145 262 170 248" fill="none" stroke="var(--red)" stroke-width="2"/><text x="120" y="296" class="t-s" style="fill:var(--red)"> </text>
+</svg>
+<figcaption><b>그림 2-1(b).</b> 실제 단면(개념도). 요즘 셀은 워드라인을 실리콘 속에 묻은 매립 채널 트랜지스터(BCAT)를 쓰고, 커패시터는 비트라인 위로 높이 솟은 실린더다(9장).</figcaption>
+</figure>
+</div>
+
+<p>비유하자면 커패시터는 <strong>물통</strong>, 비트라인은 <strong>훨씬 굵고 긴 수도관</strong>, 트랜지스터는 둘 사이의 <strong>밸브</strong>다. 물통이 가득하면 1, 비어 있으면 0이다. 문제는 물통이 수도관보다 훨씬 작다는 것 — 밸브를 열어도 관의 수위는 아주 조금만 변한다. 이 "아주 조금"을 읽어 내는 것이 DRAM 설계의 핵심이다.</p>
+
+<h2 id="s2"><span class="n">02</span>쓰기와 읽기를 직접 해 보기</h2>
+<p><b>쓰기(write)</b>는 간단하다. 비트라인을 원하는 전압(1이면 \(V_{DD}\), 0이면 0 V)으로 강하게 구동한 채 워드라인을 켜면, 커패시터가 비트라인 전압으로 충전된다. <b>읽기(read)</b>는 세 단계다. ① 비트라인을 \(V_{DD}/2\)로 <span class="term">프리차지(precharge)</span>한 뒤 띄워 둔다(floating). ② 워드라인을 켠다. 커패시터와 비트라인이 전하를 나눠 가지며 비트라인 전압이 살짝 오르거나 내린다. ③ 센스 앰프가 그 차이를 증폭하고(4장), 증폭된 전압이 다시 셀에 써진다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-1</span><span class="ttl">1T1C 셀 조작기</span></div>
+  <div class="sim-b">
+    <div class="btnrow">
+      <span class="hint">비트라인:</span>
+      <button class="sbtn" data-bl="1">V_DD로 구동 (쓰기 1)</button>
+      <button class="sbtn" data-bl="0">0 V로 구동 (쓰기 0)</button>
+      <button class="sbtn on" data-bl="pre">V_DD/2 프리차지 후 띄움</button>
+      <button class="sbtn" data-bl="sense">센스 앰프 켜기</button>
+    </div>
+    <div class="btnrow">
+      <span class="hint">워드라인:</span>
+      <button class="sbtn" id="wlBtn">WL 켜기</button>
+      <label class="hint"><input type="checkbox" id="vpp" checked> 부스트 워드라인 (VPP = V_DD + V_th 이상)</label>
+      <button class="sbtn warn" id="leakBtn">시간 흐르게 (누설)</button>
+    </div>
+    <div class="fig-row" style="align-items:stretch">
+      <div class="canvas-box"><svg id="cellSvg" viewBox="0 0 320 240" style="display:block;width:100%"></svg></div>
+      <div class="canvas-box"><canvas id="cv1" data-h="240"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">셀 전압 V_SN</span><span class="v" data-r="vs"></span></div>
+      <div class="ro"><span class="k">비트라인 V_BL</span><span class="v" data-r="vb"></span></div>
+      <div class="ro"><span class="k">BL − V_DD/2</span><span class="v" data-r="dv"></span></div>
+      <div class="ro"><span class="k">셀이 기억하는 값</span><span class="v" data-r="bit"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>순서대로 해 보기.</b> ① "쓰기 1" → WL 켜기 → WL 끄기: 셀이 충전된다. ② "프리차지" → WL 켜기: 비트라인이 V_DD/2에서 수십 mV 오른다. 동시에 셀 전압이 비트라인과 같아지며 <em>원래 값을 잃는다</em>(파괴적 읽기). ③ "센스 앰프 켜기": 비트라인이 V_DD로 증폭되며 셀도 다시 채워진다. 부스트를 끄고 1을 써 보면 셀이 V_DD − V_th = 0.4 V까지만 충전된다 — V_DD/2보다 낮으니 읽으면 0이 나온다! (C_s = 10 fF, C_BL = 60 fF, V_DD = 1.1 V)</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>전하 공유: 신호는 얼마나 작은가</h2>
+<p>읽기 직전 셀 전압을 \(V_{cell}\), 비트라인을 \(V_{DD}/2\)라 하자. 워드라인이 켜지면 두 커패시터가 연결되고 전하가 보존되므로</p>
+<div class="eq">$$C_s V_{cell} + C_{BL}\frac{V_{DD}}{2} = (C_s + C_{BL})\,V_{final}$$
+$$\Delta V \equiv V_{final} - \frac{V_{DD}}{2} = \Big(V_{cell} - \frac{V_{DD}}{2}\Big)\cdot\frac{C_s}{C_s + C_{BL}}$$
+<div class="note">\(C_s/(C_s+C_{BL})\)를 <b>전달비(transfer ratio)</b>라 한다. 셀이 1이면 \(\Delta V > 0\), 0이면 \(\Delta V < 0\).</div></div>
+<p>\(C_s = 10\) fF, \(C_{BL} = 60\) fF, \(V_{DD} = 1.1\) V이면 전달비는 1/7 ≈ 0.14, 완전히 충전된 1의 신호는 \(0.55 \times 0.14 \approx 79\) mV다. 1.1 V로 저장했는데 읽을 때는 80 mV 남짓만 보인다. 여기에 누설로 줄어든 전하, 센스 앰프의 오프셋, 이웃 비트라인의 잡음이 끼어들면 여유는 금세 바닥난다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-2</span><span class="ttl">물통과 수도관 — 전하 공유 계산기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">셀 커패시턴스 C_s <output data-o="cs"></output></span><input type="range" data-k="cs" min="3" max="40" step="0.5" value="10" data-d="1" data-u="fF"></label>
+      <label class="ctrl"><span class="lab">비트라인 커패시턴스 C_BL <output data-o="cb"></output></span><input type="range" data-k="cb" min="20" max="200" step="1" value="60" data-d="0" data-u="fF"></label>
+      <label class="ctrl"><span class="lab">V_DD (어레이) <output data-o="vdd"></output></span><input type="range" data-k="vdd" min="0.8" max="1.6" step="0.05" value="1.1" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">남은 전하 (누설 후) <output data-o="keep"></output></span><input type="range" data-k="keep" min="0" max="100" step="1" value="100" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">밸브 열림 <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="100" step="1" value="100" data-d="0" data-u="%"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">전달비 C_s/(C_s+C_BL)</span><span class="v" data-r="tr"></span></div>
+      <div class="ro"><span class="k">신호 ΔV ("1" 읽기)</span><span class="v" data-r="dv1"></span></div>
+      <div class="ro"><span class="k">신호 ΔV ("0" 읽기)</span><span class="v" data-r="dv0"></span></div>
+      <div class="ro"><span class="k">판정 (센스 앰프 오프셋 ±25 mV)</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>그림 설명.</b> 물통의 바닥 넓이는 커패시턴스, 수위는 전압이다. 밸브 슬라이더를 0에서 100까지 움직이면 물이 오가며 두 수위가 같아진다. 비트라인 물통이 넓을수록(C_BL ↑) 공유 후 수위 변화가 작다. 그래서 설계자는 비트라인을 짧게 끊어 C_BL을 줄이고(5장), 커패시터를 높이 쌓아 C_s를 지킨다(9장).</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>셀 하나에 전자 몇 개?</h2>
+<p>커패시터에 담긴 전하는 \(Q = C V\)다. 1을 저장한 셀은 셀 플레이트(\(V_{DD}/2\)) 대비 \(+V_{DD}/2\), 0은 \(-V_{DD}/2\)의 전압을 가지므로, 1과 0의 전하 차이는 \(C_s V_{DD}\)다.</p>
+<div class="eq">$$N_e = \frac{C_s V_{DD}}{q} = \frac{10\times10^{-15}\ \text{F}\times 1.1\ \text{V}}{1.6\times10^{-19}\ \text{C}} \approx 69{,}000\ \text{개}$$</div>
+<p>1과 0을 가르는 전자는 7만 개 남짓, 그중 센스 앰프가 1로 알아보려면 절반 이상이 남아 있어야 한다. 누설 전류가 1 fA(펨토암페어, \(10^{-15}\) A)라면 1초에 전자 약 6,200개가 빠져나간다. 3만 개쯤 잃으면 위험하니 5초 정도는 버틴다는 계산이 나온다. 실제로는 대부분의 셀이 수 초 이상 버티지만 극소수의 약한 셀이 수십~수백 ms만에 무너진다 — 3장의 주제다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-3</span><span class="ttl">전자 세기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">C_s <output data-o="c"></output></span><input type="range" data-k="c" min="2" max="40" step="0.5" value="10" data-d="1" data-u="fF"></label>
+      <label class="ctrl"><span class="lab">V_DD <output data-o="v"></output></span><input type="range" data-k="v" min="0.8" max="5" step="0.05" value="1.1" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">누설 전류 (로그) <output data-o="il"></output></span><input type="range" data-k="il" min="-17" max="-12" step="0.1" value="-15" data-log="1" data-si="A"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="210"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">1과 0의 전자 수 차이</span><span class="v" data-r="ne"></span></div>
+      <div class="ro"><span class="k">1초에 새는 전자</span><span class="v" data-r="lk"></span></div>
+      <div class="ro"><span class="k">절반을 잃는 시간</span><span class="v" data-r="th"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>그림 설명.</b> 점 하나가 전자 500개다. 1980년대 1 Mb DRAM은 5 V, 수십 fF 셀로 수백만 개의 전자를 담았다(V_DD를 5로 올려 보자). 지금은 그 100분의 1도 안 되는 전자로 같은 일을 한다.</p>
+</div>
+
+<h2 id="s5"><span class="n">05</span>셀 트랜지스터: 꽉 잠기는 밸브</h2>
+<p>로직 트랜지스터는 빨리 켜지는 것이 중요하지만, DRAM 셀 트랜지스터는 <strong>꽉 잠기는 것</strong>이 더 중요하다. 꺼져 있을 때 흐르는 서브문턱 누설(subthreshold leakage)이 곧 전하 손실이기 때문이다. 그래서 셀 트랜지스터는 문턱 전압 \(V_{th}\)을 높게(약 0.6–0.8 V) 만든다. 문턱이 높으면 1을 쓸 때 \(V_{DD} - V_{th}\)까지밖에 못 올라가므로, 워드라인은 \(V_{DD}\)보다 높은 승압 전압 <span class="term">VPP</span>(약 2.5–3 V)로 구동한다. 반대로 꺼져 있을 때는 워드라인을 0 V가 아니라 약간 음의 전압(<span class="term">음의 워드라인, NWL</span>, 약 −0.2~−0.3 V)으로 눌러 누설을 한 자릿수 더 줄인다.</p>
+<div class="eq">$$I_{sub} \approx I_0\cdot 10^{\,(V_{GS}-V_{th})/S}, \qquad S \approx 70\text{–}100\ \text{mV/dec}$$
+<div class="note">게이트 전압을 S만큼 낮출 때마다 누설이 10배 준다. S를 서브문턱 기울기(subthreshold swing)라 한다.</div></div>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-4</span><span class="ttl">셀 트랜지스터 I–V와 리텐션</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">문턱 전압 V_th <output data-o="vt"></output></span><input type="range" data-k="vt" min="0.3" max="1.0" step="0.01" value="0.7" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">서브문턱 기울기 S <output data-o="ss"></output></span><input type="range" data-k="ss" min="65" max="130" step="1" value="85" data-d="0" data-u="mV/dec"></label>
+      <label class="ctrl"><span class="lab">대기 워드라인 전압 <output data-o="vwl"></output></span><input type="range" data-k="vwl" min="-0.4" max="0.2" step="0.01" value="-0.2" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">VPP (켤 때 WL) <output data-o="vpp"></output></span><input type="range" data-k="vpp" min="1.1" max="3.2" step="0.05" value="2.8" data-d="2" data-u="V"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">대기 누설 I_off</span><span class="v" data-r="ioff"></span></div>
+      <div class="ro"><span class="k">"1" 쓰기 최대 전압</span><span class="v" data-r="vmax"></span></div>
+      <div class="ro"><span class="k">리텐션 추정 (C=10 fF, ΔV=0.3 V)</span><span class="v" data-r="ret"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 볼 것.</b> V_th를 낮추면 켤 때 전류는 커지지만 I_off가 기하급수로 늘어 리텐션이 무너진다. 대기 WL을 0 V에서 −0.2 V로 내리면 같은 트랜지스터로 리텐션이 수십 배 늘어난다. VPP를 V_DD + V_th보다 낮추면 1을 끝까지 쓰지 못한다. (교육용 단순 모델: 실제 누설에는 접합 누설·GIDL이 함께 기여한다.)</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">C_s = 12 fF, C_BL = 72 fF, V_DD = 1.2 V일 때, 완전히 충전된 "1"을 읽을 때의 ΔV는?</p><ol>
+<li>약 50 mV</li><li>약 86 mV</li><li>약 171 mV</li><li>약 600 mV</li></ol>
+<p class="explain">ΔV = 0.6 × 12/84 ≈ 0.0857 V ≈ 86 mV.</p></div>
+<div class="quiz" data-a="2"><p class="q">DRAM 읽기가 "파괴적"이라는 말의 뜻은?</p><ol>
+<li>읽을 때마다 셀 트랜지스터가 열화된다</li><li>읽으면 이웃 셀의 데이터가 지워진다</li><li>전하 공유로 셀 전압이 비트라인과 같아져 원래 값을 잃으므로, 다시 써 줘야 한다</li><li>읽기 전에 반드시 셀을 지워야 한다</li></ol>
+<p class="explain">워드라인이 켜지면 셀은 비트라인과 같은 전압이 된다. 센스 앰프가 증폭한 값으로 재저장(restore)해야 데이터가 살아남는다.</p></div>
+<div class="quiz" data-a="0"><p class="q">워드라인을 V_DD보다 높은 VPP로 구동하는 이유는?</p><ol>
+<li>셀 트랜지스터의 문턱 전압 때문에 "1"이 V_DD − V_th까지만 써지는 것을 막기 위해</li><li>비트라인 커패시턴스를 줄이기 위해</li><li>리프레시 주기를 줄이기 위해</li><li>소비 전력을 줄이기 위해</li></ol>
+<p class="explain">NMOS로 높은 전압을 통과시키려면 게이트가 그보다 V_th 이상 높아야 한다. 그래서 워드라인에는 승압 회로(charge pump)가 만든 VPP를 쓴다.</p></div>
+<div class="quiz" data-a="3"><p class="q">비트라인 커패시턴스 C_BL을 줄이기 위한 가장 직접적인 방법은?</p><ol>
+<li>V_DD를 높인다</li><li>셀 트랜지스터의 V_th를 높인다</li><li>리프레시를 더 자주 한다</li><li>비트라인 하나에 연결된 셀 수를 줄여 비트라인을 짧게 만든다</li></ol>
+<p class="explain">C_BL은 비트라인 길이(연결된 셀 수)에 비례한다. 셀 수를 줄이면 신호는 커지지만 센스 앰프가 늘어나 면적이 커진다 — 5장의 트레이드오프.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* ── 실험 2-1: 셀 조작기 ── */
+(function(){
+  const VDD = 1.1, VTH = 0.7, CS = 10, CB = 60;
+  let st = {vs:0.0, vb:VDD/2, wl:false, mode:'pre', leak:false, hist:[], t:0};
+  const svg = document.getElementById('cellSvg'), box = document.getElementById('sim1');
+  const vppEl = document.getElementById('vpp');
+  function colV(v){ const t = J.clamp(v/VDD,0,1); const a = J3hex(J.c('--line')), b = J3hex(J.c('--jade')); return `rgb(${a.map((x,i)=>Math.round(x+(b[i]-x)*t)).join(',')})`; }
+  function J3hex(c){ c=c.trim(); return [1,3,5].map(i=>parseInt(c.slice(i,i+2),16)); }
+  function drawSvg(){
+    svg.innerHTML = '';
+    const wlc = st.wl ? J.c('--gold') : J.c('--ink3');
+    J.svg('line', {x1:20, y1:40, x2:300, y2:40, stroke:wlc, 'stroke-width':st.wl?6:3}, svg);
+    J.svg('text', {x:24, y:30, class:'t-m', text:'WL '+(st.wl ? (vppEl.checked ? 'VPP 2.8 V' : 'V_DD 1.1 V') : '0 V'), style:`fill:${wlc};font-weight:700`}, svg);
+    J.svg('rect', {x:70, y:10, width:16, height:225, fill:colV(st.vb), stroke:J.c('--indigo'), 'stroke-width':2}, svg);
+    J.svg('text', {x:92, y:228, class:'t-s', text:'BL '+st.vb.toFixed(3)+' V'}, svg);
+    J.svg('path', {d:'M86 110 H130', stroke:J.c('--ink'), 'stroke-width':2}, svg);
+    J.svg('rect', {x:128, y:92, width:30, height:36, rx:3, fill: st.wl ? J.c('--gold-soft') : J.c('--card'), stroke:J.c('--ink'), 'stroke-width':2}, svg);
+    J.svg('line', {x1:143, y1:40, x2:143, y2:92, stroke:wlc, 'stroke-width':2}, svg);
+    J.svg('text', {x:136, y:116, class:'t-s', text: st.wl ? 'ON' : 'OFF', style:'font-weight:700'}, svg);
+    J.svg('path', {d:'M158 110 H220 V130', stroke:J.c('--ink'), 'stroke-width':2, fill:'none'}, svg);
+    // 물통(커패시터)
+    const h = 80, lvl = J.clamp(st.vs/VDD,0,1)*h;
+    J.svg('rect', {x:190, y:130, width:60, height:h, fill:J.c('--card'), stroke:J.c('--jade'), 'stroke-width':2}, svg);
+    J.svg('rect', {x:191, y:130+h-lvl, width:58, height:lvl, fill:J.c('--jade'), opacity:.85}, svg);
+    J.svg('text', {x:256, y:150, class:'t-s', text:'C_s'}, svg);
+    J.svg('text', {x:256, y:166, class:'t-s mono', text:st.vs.toFixed(3)+' V'}, svg);
+    J.svg('line', {x1:190, y1:130+h-VDD/2/VDD*h, x2:250, y2:130+h-VDD/2/VDD*h, stroke:J.c('--red'), 'stroke-dasharray':'3 3'}, svg);
+    J.svg('text', {x:256, y:130+h-h/2+4, class:'t-s', text:'V_DD/2', style:'fill:var(--red)'}, svg);
+    const modeTxt = {1:'BL ← V_DD 구동', 0:'BL ← 0 V 구동', pre:'BL 프리차지(띄움)', sense:'센스 앰프 증폭 중'}[st.mode];
+    J.svg('text', {x:300, y:228, 'text-anchor':'end', class:'t-s', text:modeTxt, style:'fill:var(--indigo)'}, svg);
+  }
+  function step(dt){
+    st.t += dt;
+    const vmaxPass = vppEl.checked ? 9 : VDD - VTH; // 통과 가능한 최대 전압
+    // 비트라인 구동
+    if(st.mode === '1') st.vb += (VDD - st.vb)*Math.min(1, dt*30);
+    else if(st.mode === '0') st.vb += (0 - st.vb)*Math.min(1, dt*30);
+    else if(st.mode === 'sense'){ const tgt = st.vb >= VDD/2 ? VDD : 0; st.vb += (tgt - st.vb)*Math.min(1, dt*8); }
+    // 셀–BL 연결
+    if(st.wl){
+      // 비트라인이 구동되는 동안: 셀은 BL 전압을 따라가되, NMOS는 게이트−V_th 이상을 통과시키지 못한다
+      const flowable = st.vb > st.vs ? Math.max(0, Math.min(st.vb, vmaxPass) - st.vs) : (st.vb - st.vs);
+      st.vs += flowable*Math.min(1, dt*12);
+    }
+    if(st.leak){ st.vs += (0 - st.vs)*dt*0.25; }
+    st.hist.push([st.t, st.vs, st.vb]); if(st.hist.length > 600) st.hist.shift();
+  }
+  // 프리차지 모드에서 정확한 전하 공유를 위해 별도 처리
+  function share(dt){
+    const vmaxPass = vppEl.checked ? 9 : VDD - VTH;
+    if(st.wl && st.mode === 'pre'){
+      const vf = (CS*st.vs + CB*st.vb)/(CS+CB);
+      const k = Math.min(1, dt*10);
+      const dq = (vf - st.vs)*k*CS; // 셀로 들어가는 전하
+      if(st.vs + dq/CS > vmaxPass && dq > 0) return;
+      st.vs += dq/CS; st.vb -= dq/CB;
+    }
+  }
+  function draw(){
+    drawSvg();
+    const cv = document.getElementById('cv1');
+    const t1 = st.t, t0 = Math.max(0, t1 - 8);
+    J.plot(cv, {x:[t0, t0+8], y:[-0.05, 1.2], xlab:'시간 (임의 단위)', ylab:'전압 (V)', xf:t=>'', series:[
+      {pts:st.hist.filter(p=>p[0]>=t0).map(p=>[p[0],p[2]]), color:'--indigo', w:2},
+      {pts:st.hist.filter(p=>p[0]>=t0).map(p=>[p[0],p[1]]), color:'--jade', w:2.5}],
+      hlines:[{y:VDD/2, color:'--red', label:'V_DD/2'}], pad:{l:44, b:28}});
+    J.out(box,'vs', st.vs.toFixed(3)+' V');
+    J.out(box,'vb', st.vb.toFixed(3)+' V');
+    const d = (st.vb - VDD/2)*1000;
+    J.out(box,'dv', (d>=0?'+':'')+d.toFixed(1)+' mV', Math.abs(d) < 25 ? 'warn' : '');
+    J.out(box,'bit', st.vs > VDD*0.75 ? '1 (튼튼)' : st.vs > VDD/2 + 0.05 ? '1 (약함)' : st.vs < 0.1 ? '0' : Math.abs(st.vs-VDD/2) < 0.06 ? '? (알 수 없음)' : '0 (약함)', st.vs > VDD*0.75 || st.vs < 0.1 ? 'good' : 'bad');
+  }
+  // 상태 변경 버튼
+  J.$$('[data-bl]', box).forEach(b => b.onclick = () => {
+    J.$$('[data-bl]', box).forEach(x => x.classList.remove('on')); b.classList.add('on');
+    st.mode = b.dataset.bl;
+    if(st.mode === 'pre') st.vb = VDD/2;
+  });
+  const wlBtn = document.getElementById('wlBtn');
+  wlBtn.onclick = () => { st.wl = !st.wl; wlBtn.classList.toggle('on', st.wl); wlBtn.textContent = st.wl ? 'WL 끄기' : 'WL 켜기'; };
+  const lk = document.getElementById('leakBtn');
+  lk.onclick = () => { st.leak = !st.leak; lk.classList.toggle('on', st.leak); lk.textContent = st.leak ? '누설 멈추기' : '시간 흐르게 (누설)'; };
+  J.live(draw);
+  J.loop(document.getElementById('cv1'), dt => {
+    if(st.mode === 'pre' && st.wl){ share(dt); st.t += dt; if(st.leak) st.vs += (0-st.vs)*dt*0.25; st.hist.push([st.t, st.vs, st.vb]); if(st.hist.length>600) st.hist.shift(); }
+    else step(dt);
+    draw();
+  });
+})();
+
+/* ── 실험 2-2: 물통과 수도관 ── */
+J.sim('sim2', (v, box) => {
+  const cs = v.cs, cb = v.cb, vdd = v.vdd, vh = vdd/2;
+  const vc1 = vh + (vdd - vh)*v.keep/100; // 1 저장 후 누설 (셀 플레이트 기준 반 전압으로 감쇠)
+  const tr = cs/(cs+cb);
+  const dv1 = (vc1 - vh)*tr, dv0 = (0 - vh)*tr;
+  const f = v.t/100;
+  const vfin = vh + dv1;
+  const vcNow = vc1 + (vfin - vc1)*f, vbNow = vh + (vfin - vh)*f;
+  J.out(box,'tr', J.fmt(tr,3));
+  J.out(box,'dv1', '+'+J.fmt(dv1*1000,1)+' mV', dv1*1000 > 25 ? 'good' : 'bad');
+  J.out(box,'dv0', J.fmt(dv0*1000,1)+' mV');
+  J.out(box,'ok', dv1*1000 > 25 ? '"1" 읽기 성공' : '"1"을 놓침', dv1*1000 > 25 ? 'good' : 'bad');
+  const {ctx, w, h} = J.fit(document.getElementById('cv2'));
+  ctx.clearRect(0,0,w,h);
+  const base = h - 40, top = 40, scaleY = (base-top)/1.6;
+  const wc = Math.max(14, Math.sqrt(cs)*14), wb = Math.min(w*0.55, Math.sqrt(cb)*22);
+  const xc = 60, xb = xc + wc + 120;
+  const tank = (x, wd, v, color, label) => {
+    ctx.fillStyle = J.c('--card'); ctx.strokeStyle = J.c('--ink3'); ctx.lineWidth = 2;
+    ctx.fillRect(x, top, wd, base-top); ctx.strokeRect(x, top, wd, base-top);
+    ctx.fillStyle = J.c(color); ctx.globalAlpha = .8; ctx.fillRect(x+1, base - v*scaleY, wd-2, v*scaleY); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.font = '600 13px "Noto Sans KR"'; ctx.textAlign = 'center';
+    ctx.fillText(label, x+wd/2, base+18);
+    ctx.font = '12px "JetBrains Mono"'; ctx.fillText(v.toFixed(3)+' V', x+wd/2, base - v*scaleY - 6);
+  };
+  tank(xc, wc, vcNow, '--jade', 'C_s '+cs+' fF');
+  tank(xb, wb, vbNow, '--indigo', 'C_BL '+cb+' fF');
+  // 관과 밸브
+  const py = base - 8;
+  ctx.fillStyle = J.c('--ink3'); ctx.fillRect(xc+wc, py-5, xb-xc-wc, 10);
+  ctx.fillStyle = f > 0 ? J.c('--gold') : J.c('--red');
+  ctx.beginPath(); ctx.arc((xc+wc+xb)/2, py, 11, 0, 7); ctx.fill();
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='center'; ctx.fillText(f>0 ? '밸브(WL) 열림' : '밸브 닫힘', (xc+wc+xb)/2, py-18);
+  // 기준선
+  ctx.strokeStyle = J.c('--red'); ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(20, base - vh*scaleY); ctx.lineTo(w-10, base - vh*scaleY); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = J.c('--red'); ctx.textAlign='right'; ctx.fillText('V_DD/2 = '+vh.toFixed(2)+' V', w-12, base - vh*scaleY - 5);
+  // 확대 표시
+  const zx = Math.max(xb + wb + 30, w - 140);
+  if(zx + 100 < w){
+    ctx.textAlign='left'; ctx.fillStyle = J.c('--ink2'); ctx.fillText('ΔV 확대 ×10', zx, top+4);
+    ctx.strokeStyle = J.c('--line'); ctx.strokeRect(zx, top+12, 90, base-top-12);
+    const mid = (top+12+base)/2, d = (vbNow - vh)*10*scaleY;
+    ctx.fillStyle = J.c('--indigo'); ctx.fillRect(zx+20, Math.min(mid, mid-d), 50, Math.abs(d));
+    ctx.strokeStyle = J.c('--red'); ctx.beginPath(); ctx.moveTo(zx, mid); ctx.lineTo(zx+90, mid); ctx.stroke();
+    ctx.fillStyle = J.c('--ink'); ctx.font='12px "JetBrains Mono"'; ctx.fillText(((vbNow-vh)*1000).toFixed(1)+' mV', zx+10, base+18);
+  }
+});
+
+/* ── 실험 2-3: 전자 세기 ── */
+J.sim('sim3', (v, box) => {
+  const q = 1.602e-19, ne = v.c*1e-15*v.v/q, lk = v.il/q;
+  const half = ne/2/lk;
+  J.out(box,'ne', Math.round(ne).toLocaleString('ko-KR')+' 개');
+  J.out(box,'lk', Math.round(lk).toLocaleString('ko-KR')+' 개/s');
+  J.out(box,'th', half > 3600 ? J.fmt(half/3600,1)+' 시간' : half > 1 ? J.fmt(half,2)+' 초' : J.fmt(half*1000,1)+' ms', half < 0.064 ? 'bad' : 'good');
+  const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+  ctx.clearRect(0,0,w,h);
+  const n = Math.min(4000, Math.round(ne/500)), cols = Math.floor((w-20)/7);
+  const R = J.rng(5);
+  ctx.fillStyle = J.c('--jade');
+  for(let i=0;i<n;i++){ const r = Math.floor(i/cols), c = i%cols; const y = 10 + r*7; if(y > h-10){ ctx.fillStyle = J.c('--ink2'); ctx.font='12px "Noto Sans KR"'; ctx.fillText('… (화면에 다 담지 못함)', 12, h-4); break; }
+    ctx.beginPath(); ctx.arc(14 + c*7 + (R()-.5), y + (R()-.5), 2.2, 0, 7); ctx.fill(); }
+});
+
+/* ── 실험 2-4: I–V ── */
+J.sim('sim4', (v, box) => {
+  const I0 = 1e-7; // V_GS = V_th에서의 전류 (W/L 고려 근사)
+  const S = v.ss/1000;
+  const Id = vg => { const sub = I0*Math.pow(10, (vg - v.vt)/S); const on = vg > v.vt ? 2e-5*Math.pow(vg - v.vt, 1.3) + I0 : 0; return Math.max(sub > I0 ? 0 : sub, 0) + (vg > v.vt ? on : 0) + 1e-18; };
+  const pts = []; for(let x=-0.5; x<=3.2; x+=0.01) pts.push([x, Id(x)]);
+  const ioff = Id(v.vwl), C = 10e-15, ret = C*0.3/ioff;
+  const vmax = Math.min(1.1, v.vpp - v.vt);
+  J.plot(document.getElementById('cv4'), {x:[-0.5,3.2], y:[1e-18,1e-4], logy:true, xlab:'게이트(WL) 전압 V_GS (V)', ylab:'드레인 전류 (A, 로그)', yf:t=>J.si(t,'A',1), series:[{pts, color:'--indigo', w:2.5}],
+    vlines:[{x:v.vwl, color:'--red', label:'대기 WL'}, {x:v.vpp, color:'--gold', label:'VPP', align:'right'}, {x:v.vt, color:'--ink3', label:'V_th', dash:[2,3]}],
+    points:[{x:v.vwl, y:ioff, color:'--red', label:J.si(ioff,'A',2)}], pad:{l:62}});
+  J.out(box,'ioff', J.si(ioff,'A',2), ioff > 1e-14 ? 'bad' : 'good');
+  J.out(box,'vmax', J.fmt(vmax,2)+' V', vmax < 1.09 ? 'bad' : 'good');
+  J.out(box,'ret', ret > 3600 ? J.fmt(ret/3600,1)+' 시간' : ret >= 1 ? J.fmt(ret,1)+' 초' : J.fmt(ret*1000,2)+' ms', ret < 0.064 ? 'bad' : ret < 1 ? 'warn' : 'good');
+});
+</script>
+</body>
+</html>

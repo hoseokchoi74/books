@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>메모리 계층과 DRAM의 자리 · DRAM 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="hierarchy">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 01 <span class="hanja">第一章 · 層</span></div>
+  <h1>메모리 계층과 DRAM의 자리</h1>
+  <p class="lead">CPU는 1초에 수십억 번 계산하지만, 계산할 재료를 가져오는 일은 훨씬 느리다. 이 장에서는 레지스터에서 SSD까지 이어지는 메모리 계층을 훑고, 그 한가운데에서 DRAM이 왜 "주기억장치"라는 자리를 50년 넘게 지키고 있는지 살펴본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>메모리 계층의 각 층(레지스터·캐시·DRAM·SSD)의 지연 시간과 용량을 자릿수로 말할 수 있다.</li>
+  <li>SRAM·DRAM·NAND 플래시의 셀 구조 차이와 그로 인한 장단점을 설명할 수 있다.</li>
+  <li>평균 메모리 접근 시간(AMAT)을 계산하고, 캐시 적중률이 성능에 미치는 영향을 안다.</li>
+  <li>지역성(locality)이 왜 계층 구조를 가능하게 하는지 실험으로 확인한다.</li>
+  <li>"메모리 벽"과 DRAM 용량 성장의 역사를 큰 흐름으로 이해한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>빠르거나, 크거나, 싸거나</h2>
+<p>이상적인 메모리는 무한히 크고, 무한히 빠르고, 공짜다. 현실의 메모리는 셋 중 둘도 겨우 고른다. 빠른 메모리는 셀 하나에 트랜지스터를 많이 써서 비싸고 작으며, 큰 메모리는 셀을 극단적으로 단순하게 만들어 느리다. 그래서 컴퓨터는 성격이 다른 메모리를 <span class="term">계층(hierarchy)</span>으로 쌓는다. 위로 갈수록 빠르고 작고 비싸며, 아래로 갈수록 느리고 크고 싸다.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 760 360" id="pyr" role="img" aria-label="메모리 계층 피라미드"></svg>
+<figcaption><b>그림 1-1.</b> 메모리 계층. 폭은 용량을, 색은 기술을 나타낸다. 오른쪽 숫자는 대략적인 접근 지연이다. DRAM은 "칩 안"과 "저장 장치" 사이, 휘발성 메모리의 가장 아래층에 있다.</figcaption>
+</figure>
+
+<p>DRAM(Dynamic Random-Access Memory)은 이 계층에서 <strong>CPU가 직접 주소로 접근할 수 있는 가장 큰 메모리</strong>다. 캐시보다 수십 배 느리지만 수천 배 크고, SSD보다 수천 배 빠르다. 운영체제가 실행 중인 프로그램과 데이터를 올려 두는 곳, 즉 "주기억장치(main memory)"가 바로 DRAM이다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-1</span><span class="ttl">1 ns를 1초로 늘리면</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="scaleBtns">
+      <span class="hint">기준:</span>
+      <button class="sbtn on" data-s="1">CPU 1클록(0.3 ns) = 1초</button>
+      <button class="sbtn" data-s="2">1 ns = 1초</button>
+      <button class="sbtn" data-s="3">실제 시간</button>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="330"></canvas></div>
+    <div class="readouts" id="ro1"></div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 막대는 로그 눈금이다. 막대 한 칸이 10배. CPU 클록 하나를 1초로 늘리면 DRAM에서 데이터를 가져오는 데 4분 가까이 걸린다. 그 사이 CPU는 할 일 없이 기다리거나, 다른 일을 찾아야 한다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>세 가지 메모리 셀: SRAM, DRAM, 플래시</h2>
+<p>계층의 성격은 결국 <span class="term">셀(cell)</span> 하나를 어떻게 만드느냐에서 결정된다. 한 비트를 저장하는 데 몇 개의 소자가 필요한가, 그 상태가 얼마나 오래 유지되는가, 읽고 쓰는 데 무엇이 필요한가.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 780 300" role="img" aria-label="SRAM, DRAM, NAND 셀 비교">
+  <!-- SRAM 6T -->
+  <g transform="translate(20,20)">
+    <text x="110" y="14" text-anchor="middle" class="t-l">SRAM · 6T</text>
+    <rect x="10" y="30" width="200" height="190" rx="4" class="s-paper2" stroke="var(--line)"/>
+    <line x1="30" y1="60" x2="190" y2="60" class="st-gold" stroke-width="3"/><text x="194" y="64" class="t-s">WL</text>
+    <line x1="40" y1="60" x2="40" y2="210" class="st-indigo" stroke-width="3"/><text x="28" y="226" class="t-s">BL</text>
+    <line x1="180" y1="60" x2="180" y2="210" class="st-indigo" stroke-width="3"/><text x="172" y="226" class="t-s">BL̅</text>
+    <!-- cross-coupled inverters -->
+    <path d="M80 110 l26 16 l-26 16 z" fill="var(--card)" class="st-ink" stroke-width="1.5"/><circle cx="110" cy="126" r="4" fill="var(--card)" class="st-ink" stroke-width="1.5"/>
+    <path d="M140 172 l-26 -16 l26 -16 z" fill="var(--card)" class="st-ink" stroke-width="1.5"/><circle cx="110" cy="156" r="4" fill="var(--card)" class="st-ink" stroke-width="1.5"/>
+    <path d="M114 126 H150 V156 H140 M106 156 H70 V126 H80" class="s-stroke" stroke-width="1.5"/>
+    <rect x="34" y="120" width="12" height="12" class="s-gold"/><rect x="174" y="150" width="12" height="12" class="s-gold"/>
+    <path d="M46 126 H70 M174 156 H150" class="s-stroke" stroke-width="1.5"/>
+    <text x="110" y="196" text-anchor="middle" class="t-s">교차 결합 인버터 2개(4T)</text>
+    <text x="110" y="210" text-anchor="middle" class="t-s">+ 접근 트랜지스터 2개</text>
+  </g>
+  <!-- DRAM 1T1C -->
+  <g transform="translate(280,20)">
+    <text x="110" y="14" text-anchor="middle" class="t-l">DRAM · 1T1C</text>
+    <rect x="10" y="30" width="200" height="190" rx="4" class="s-jadesoft" stroke="var(--jade)"/>
+    <line x1="30" y1="70" x2="190" y2="70" class="st-gold" stroke-width="3"/><text x="194" y="74" class="t-s">WL</text>
+    <line x1="60" y1="50" x2="60" y2="210" class="st-indigo" stroke-width="3"/><text x="48" y="226" class="t-s">BL</text>
+    <line x1="60" y1="110" x2="100" y2="110" class="s-stroke" stroke-width="1.5"/>
+    <line x1="100" y1="96" x2="100" y2="124" class="s-stroke" stroke-width="2"/>
+    <line x1="108" y1="96" x2="108" y2="124" class="s-stroke" stroke-width="2"/>
+    <line x1="104" y1="70" x2="104" y2="92" class="st-gold" stroke-width="1.5"/>
+    <path d="M108 110 H140 V140" class="s-stroke" stroke-width="1.5"/>
+    <line x1="124" y1="140" x2="156" y2="140" class="st-jade" stroke-width="3"/>
+    <line x1="124" y1="148" x2="156" y2="148" class="st-jade" stroke-width="3"/>
+    <path d="M140 148 V170 M130 170 H150 M134 175 H146 M138 180 H142" class="s-stroke" stroke-width="1.5"/>
+    <text x="164" y="148" class="t-s">C_s</text>
+    <text x="110" y="200" text-anchor="middle" class="t-s">트랜지스터 1 + 커패시터 1</text>
+  </g>
+  <!-- NAND -->
+  <g transform="translate(540,20)">
+    <text x="110" y="14" text-anchor="middle" class="t-l">NAND 플래시</text>
+    <rect x="10" y="30" width="210" height="190" rx="4" class="s-plumsoft" stroke="var(--plum)"/>
+    <g id="nandg"></g>
+    <text x="115" y="200" text-anchor="middle" class="t-s">부유 게이트/전하 트랩에 전자 가둠</text>
+    <text x="115" y="214" text-anchor="middle" class="t-s">셀들이 직렬 스트링으로 연결</text>
+  </g>
+  <text x="130" y="275" text-anchor="middle" class="t-m">~120–150 F² · 빠름 · 비쌈</text>
+  <text x="390" y="275" text-anchor="middle" class="t-m" style="fill:var(--jade);font-weight:700">6 F² · 중간 · 리프레시 필요</text>
+  <text x="655" y="275" text-anchor="middle" class="t-m">4 F² 이하(3D) · 느림 · 비휘발</text>
+</svg>
+<figcaption><b>그림 1-2.</b> 세 가지 셀. F는 공정의 최소 선폭(feature size)이며, 셀 면적을 F²의 배수로 나타내면 공정과 무관하게 셀의 "효율"을 비교할 수 있다.</figcaption>
+</figure>
+
+<div class="tbwrap"><table class="tb">
+<tr><th>항목</th><th>SRAM</th><th>DRAM</th><th>NAND 플래시</th></tr>
+<tr><td>셀 구성</td><td>트랜지스터 6개</td><td>트랜지스터 1 + 커패시터 1</td><td>트랜지스터 1 (게이트에 전하 저장)</td></tr>
+<tr><td>셀 면적</td><td>~120–150 F²</td><td>6 F² (차세대 4 F²)</td><td>4 F² ÷ 적층 수 (3D 200층 이상)</td></tr>
+<tr><td>읽기 지연</td><td>~1 ns (L1)</td><td>~15–50 ns (칩), ~80 ns (시스템)</td><td>~20–100 µs</td></tr>
+<tr><td>쓰기</td><td>바이트 단위, 무제한</td><td>바이트 단위, 사실상 무제한</td><td>페이지 쓰기, 블록 지우기, 수천 회 수명</td></tr>
+<tr><td>전원 끄면</td><td>사라짐</td><td>사라짐 (켜져 있어도 ms 단위로 샘)</td><td>유지 (년 단위)</td></tr>
+<tr><td>주 용도</td><td>CPU 캐시, 레지스터 파일</td><td>주기억장치, GPU 메모리(HBM·GDDR)</td><td>SSD, 스마트폰 저장소</td></tr>
+</table></div>
+
+<p>DRAM의 이름에 붙은 <span class="term">다이내믹(dynamic)</span>은 바로 "켜져 있어도 샌다"는 성질을 가리킨다. 커패시터에 담은 전하가 새어 나가므로 수십 밀리초마다 읽어서 다시 써 줘야 한다(3장). SRAM의 <span class="term">스태틱(static)</span>은 전원만 있으면 교차 결합 인버터가 스스로 상태를 붙잡고 있다는 뜻이다. 대신 6개의 트랜지스터가 필요해 같은 면적에 DRAM보다 20배 이상 적은 비트밖에 넣지 못한다.</p>
+
+<h2 id="s3"><span class="n">03</span>평균 메모리 접근 시간</h2>
+<p>계층 구조가 의미 있으려면, 대부분의 접근이 위쪽 빠른 층에서 끝나야 한다. 각 층에서 원하는 데이터를 찾는 확률을 <span class="term">적중률(hit rate)</span> \(h\)라고 하면, 평균 메모리 접근 시간(AMAT, Average Memory Access Time)은 다음처럼 재귀적으로 쓸 수 있다.</p>
+<div class="eq">$$\text{AMAT} = t_{L1} + (1-h_{1})\Big[t_{L2} + (1-h_{2})\big[t_{L3} + (1-h_{3})\,t_{\text{DRAM}}\big]\Big]$$
+<div class="note">각 \(t\)는 그 층에 접근하는 시간, \(h\)는 그 층의 지역 적중률(local hit rate)이다.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-2</span><span class="ttl">AMAT 계산기 — 적중률 1 %의 무게</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">L1 적중률 <output data-o="h1"></output></span><input type="range" data-k="h1" min="80" max="99.9" step="0.1" value="95" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">L2 적중률 <output data-o="h2"></output></span><input type="range" data-k="h2" min="0" max="99" step="1" value="60" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">L3 적중률 <output data-o="h3"></output></span><input type="range" data-k="h3" min="0" max="99" step="1" value="50" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">DRAM 지연 <output data-o="td"></output></span><input type="range" data-k="td" min="40" max="200" step="5" value="80" data-d="0" data-u="ns"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="150"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">AMAT</span><span class="v" data-r="amat"></span></div>
+      <div class="ro"><span class="k">DRAM까지 가는 비율</span><span class="v" data-r="miss"></span></div>
+      <div class="ro"><span class="k">DRAM이 차지하는 시간 몫</span><span class="v" data-r="share"></span></div>
+      <div class="ro"><span class="k">CPU 클록(3.5 GHz) 환산</span><span class="v" data-r="cyc"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 볼 것.</b> L1 적중률을 95 %에서 99 %로 올려 보자. 단 4 %p 차이가 AMAT를 몇 배나 바꾼다. 거꾸로, DRAM 지연을 80 ns에서 60 ns로 줄이는 것은 생각보다 효과가 작다 — DRAM까지 내려가는 접근이 원래 드물기 때문이다. 다만 AI처럼 데이터가 너무 커서 캐시에 들어가지 않는 작업에선 L2·L3 적중률을 0 근처로 내려 보자. 이때 DRAM이 모든 것을 결정한다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>지역성: 계층이 통하는 이유</h2>
+<p>적중률이 높을 수 있는 이유는 프로그램이 메모리를 무작위로 쓰지 않기 때문이다. 방금 쓴 데이터를 곧 다시 쓰는 <span class="term">시간 지역성(temporal locality)</span>, 방금 쓴 주소의 이웃을 곧 쓰는 <span class="term">공간 지역성(spatial locality)</span>이 있다. 캐시는 한 번 미스가 나면 한 단어가 아니라 이웃을 포함한 <span class="term">캐시 라인(cache line)</span> 64바이트를 통째로 가져온다. DRAM도 마찬가지로, 한 번 연 행(row) 안의 이웃 데이터는 훨씬 빨리 읽을 수 있다(6장 로우 버퍼).</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-3</span><span class="ttl">접근 패턴과 캐시 적중</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="patBtns">
+      <button class="sbtn on" data-p="seq">순차 접근 (배열 훑기)</button>
+      <button class="sbtn" data-p="stride">보폭 8 (열 방향 순회)</button>
+      <button class="sbtn" data-p="rand">무작위 (해시·그래프)</button>
+      <button class="sbtn" data-p="loop">작은 반복 (핫 루프)</button>
+      <button class="sbtn warn" id="patReset">다시</button>
+    </div>
+    <div class="ctrls"><label class="ctrl"><span class="lab">캐시 크기 (라인 수) <output data-o="lines"></output></span><input type="range" data-k="lines" min="2" max="16" step="1" value="8" data-d="0" data-u="라인"></label></div>
+    <div class="canvas-box"><canvas id="cv3" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">접근 수</span><span class="v" data-r="n"></span></div>
+      <div class="ro good"><span class="k">적중(hit)</span><span class="v" data-r="hit"></span></div>
+      <div class="ro bad"><span class="k">미스 → DRAM</span><span class="v" data-r="miss"></span></div>
+      <div class="ro"><span class="k">적중률</span><span class="v" data-r="rate"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>그림 설명.</b> 왼쪽 격자는 메모리 256단어이고 한 줄(8단어)이 캐시 라인 하나다. 빨간 점이 현재 접근, 초록으로 칠해진 줄이 캐시에 올라와 있는 라인(LRU 교체)이다. 순차 접근은 8번에 한 번만 미스가 나지만, 보폭 8 접근은 매번 새 라인을 건드려 캐시가 무력해진다.</p>
+</div>
+
+<h2 id="s5"><span class="n">05</span>메모리 벽과 DRAM의 50년</h2>
+<p>1990년대 중반 울프(W. Wulf)와 맥키(S. McKee)는 프로세서 속도는 해마다 50 % 넘게 빨라지는데 DRAM 지연은 겨우 몇 % 줄어드는 추세가 계속되면, 언젠가 성능이 전적으로 메모리에 의해 결정될 것이라고 경고했다. 이를 <span class="term">메모리 벽(memory wall)</span>이라 부른다. 캐시 계층, 비순차 실행, 프리페치가 그 벽을 늦췄지만, 오늘날 거대 AI 모델에서는 다시 벽이 정면에 서 있다. 연산량은 2년에 수십 배씩 늘어나는데 메모리 대역폭은 그만큼 늘지 않는다 — 그래서 HBM(12장)이 등장했다.</p>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-4</span><span class="ttl">DRAM 칩 한 개의 용량, 1970–2026</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">연도 <output data-o="yr"></output></span><input type="range" data-k="yr" min="1970" max="2026" step="1" value="1983" data-raw></label>
+      <label class="ctrl"><span class="lab">비교 추세선 <output data-o="tr"></output></span><input type="range" data-k="tr" min="2" max="6" step="0.5" value="3" data-d="1" data-u="년마다 4배"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">그 해의 최대 칩 용량</span><span class="v" data-r="cap"></span></div>
+      <div class="ro"><span class="k">대표 사건</span><span class="v" data-r="ev" style="font-size:13.5px;font-family:var(--sans)"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 점은 대표적인 양산 칩 세대(근사 연도), 점선은 "N년마다 4배" 추세선이다. 1970–90년대에는 3년마다 4배라는 놀라운 속도가 유지됐지만, 2010년대 이후 셀 미세화가 어려워지며 기울기가 눕는다. 그래서 업계는 칩을 쌓는 쪽(HBM, 3D DRAM)으로 방향을 돌리고 있다.</p>
+</div>
+
+<div class="note-box hist"><div class="h" data-h="史">한 장짜리 특허에서 시작된 산업</div>
+1966년 IBM의 로버트 데나드(Robert Dennard)는 트랜지스터 하나와 커패시터 하나로 한 비트를 저장하는 셀을 고안했고, 1968년 특허를 받았다. 1970년 인텔이 내놓은 최초의 상용 DRAM 1103(1 Kb)은 아직 트랜지스터 3개짜리 셀이었지만, 곧 1T1C가 표준이 되었다. 한국은 1983년 64 Kb DRAM 개발로 뒤늦게 출발했으나 1992년 64 Mb를 세계 최초로 개발하며 선두에 섰고, 지금까지 세계 DRAM 생산의 절반 이상을 차지하고 있다.
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">DRAM이 주기억장치로 쓰이는 가장 큰 이유는?</p><ol>
+<li>SRAM보다 빠르기 때문에</li><li>전원을 꺼도 데이터가 유지되기 때문에</li><li>셀이 단순해 같은 면적에 훨씬 많은 비트를 넣을 수 있기 때문에</li><li>리프레시가 필요 없기 때문에</li></ol>
+<p class="explain">1T1C 셀은 6 F²로 SRAM(~120 F² 이상)보다 20배 이상 작다. 대신 느리고 리프레시가 필요하다. 비휘발성은 플래시의 성질이다.</p></div>
+<div class="quiz" data-a="1"><p class="q">L1 1 ns, L1 적중률 95 %, 미스 시 무조건 DRAM(80 ns)으로 간다면 AMAT는?</p><ol>
+<li>4 ns</li><li>5 ns</li><li>40.5 ns</li><li>80 ns</li></ol>
+<p class="explain">1 + 0.05 × 80 = 5 ns. 미스 5 %가 평균 시간의 80 %를 차지한다.</p></div>
+<div class="quiz" data-a="3"><p class="q">2차원 배열을 열 방향(column-major)으로 순회하면 느려지는 주된 이유는?</p><ol>
+<li>시간 지역성이 너무 높아서</li><li>DRAM 리프레시와 겹쳐서</li><li>CPU 클록이 낮아져서</li><li>공간 지역성을 활용하지 못해 매 접근마다 다른 캐시 라인을 건드려서</li></ol>
+<p class="explain">행 우선으로 저장된 배열을 열 방향으로 걸으면 보폭이 한 행 길이만큼 커져, 가져온 캐시 라인의 나머지 단어를 쓰기 전에 버리게 된다(실험 1-3의 보폭 8).</p></div>
+<div class="quiz" data-a="0"><p class="q">DRAM의 '다이내믹'이 뜻하는 것은?</p><ol>
+<li>저장 전하가 새기 때문에 주기적으로 다시 써 줘야 한다</li><li>클록 주파수를 동적으로 바꿀 수 있다</li><li>주소를 동적으로 할당한다</li><li>전압을 동적으로 조절한다</li></ol>
+<p class="explain">다이내믹 = 리프레시가 필요하다. 반대로 SRAM은 래치가 상태를 스스로 유지하므로 스태틱이다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 1-1: 피라미드 */
+(function(){
+  const s = document.getElementById('pyr');
+  const L = [
+    ['레지스터','~1 KB','0.3 ns','--red'],
+    ['L1 캐시 (SRAM)','64 KB','1 ns','--gold'],
+    ['L2 캐시 (SRAM)','1–2 MB','4 ns','--gold'],
+    ['L3 캐시 (SRAM)','32–128 MB','12 ns','--gold'],
+    ['DRAM (주기억장치)','16 GB – 2 TB','~80 ns','--jade'],
+    ['SSD (NAND)','1–8 TB','~80 µs','--plum'],
+    ['HDD / 테이프','10 TB +','~5 ms','--ink3']
+  ];
+  const cx = 300, top = 20, H = 44;
+  L.forEach((l,i) => {
+    const w1 = 50 + i*70, w2 = 50 + (i+1)*70, y = top + i*H;
+    J.svg('path', {d:`M${cx-w1/2} ${y} L${cx+w1/2} ${y} L${cx+w2/2} ${y+H-4} L${cx-w2/2} ${y+H-4} Z`, fill:`var(${l[3]})`, opacity: i===4 ? .95 : .55, stroke:'var(--card)'}, s);
+    J.svg('text', {x:cx, y:y+H/2+2, 'text-anchor':'middle', class:'t-m', text:l[0], style:`font-weight:${i===4?700:500};fill:${i===4?'#fff':'var(--ink)'}`}, s);
+    J.svg('text', {x:620, y:y+H/2+2, class:'t-m mono', text:l[2], style:`fill:${i===4?'var(--jade)':'var(--ink2)'};font-weight:${i===4?700:400}`}, s);
+    J.svg('text', {x:700, y:y+H/2+2, class:'t-s mono', text:l[1]}, s);
+    J.svg('line', {x1:cx+w2/2+6, y1:y+H/2-2, x2:610, y2:y+H/2-2, stroke:'var(--line)', 'stroke-dasharray':'2 3'}, s);
+  });
+  J.svg('text', {x:620, y:14, class:'t-s', text:'지연'}, s); J.svg('text', {x:700, y:14, class:'t-s', text:'용량'}, s);
+  J.svg('text', {x:18, y:40, class:'t-s', text:'↑ 빠르고 비쌈'}, s); J.svg('text', {x:18, y:330, class:'t-s', text:'↓ 크고 쌈'}, s);
+  J.svg('line', {x1:10, y1:198, x2:600, y2:198, stroke:'var(--red)', 'stroke-dasharray':'6 4'}, s);
+  J.svg('text', {x:12, y:192, class:'t-s', text:'── 휘발성 (전원 끄면 사라짐)', style:'fill:var(--red)'}, s);
+  J.svg('text', {x:12, y:254, class:'t-s', text:'── 비휘발성', style:'fill:var(--red)'}, s);
+  J.svg('line', {x1:10, y1:242, x2:600, y2:242, stroke:'var(--red)', 'stroke-dasharray':'6 4'}, s);
+  // NAND string
+  const g = document.getElementById('nandg');
+  J.svg('line', {x1:115, y1:40, x2:115, y2:180, class:'st-indigo', 'stroke-width':3}, g);
+  for(let i=0;i<5;i++){ const y = 56 + i*24;
+    J.svg('rect', {x:122, y, width:14, height:16, fill:'var(--plum)', opacity:.75}, g);
+    J.svg('line', {x1:140, y1:y+8, x2:200, y2:y+8, class:'st-gold', 'stroke-width':2}, g);
+    J.svg('text', {x:202, y:y+12, class:'t-s', text:'WL'+i}, g); }
+  J.svg('text', {x:60, y:52, class:'t-s', text:'BL'}, g);
+})();
+
+/* 실험 1-1 */
+(function(){
+  const lv = [['레지스터',0.3],['L1 캐시',1],['L2 캐시',4],['L3 캐시',12],['DRAM',80],['NVMe SSD',80e3],['HDD',5e6],['네트워크 왕복(서울↔미국)',150e6]];
+  let mode = 1;
+  const cv = document.getElementById('cv1'), ro = document.getElementById('ro1');
+  function human(sec){
+    if(sec < 1e-6) return J.fmt(sec*1e9,1)+' ns';
+    if(sec < 1e-3) return J.fmt(sec*1e6,1)+' µs';
+    if(sec < 1) return J.fmt(sec*1e3,1)+' ms';
+    if(sec < 60) return J.fmt(sec,1)+' 초';
+    if(sec < 3600) return J.fmt(sec/60,1)+' 분';
+    if(sec < 86400) return J.fmt(sec/3600,1)+' 시간';
+    if(sec < 86400*365) return J.fmt(sec/86400,1)+' 일';
+    return J.fmt(sec/86400/365,1)+' 년';
+  }
+  function draw(){
+    const k = mode === 1 ? 1/0.3e-9 : mode === 2 ? 1e9 : 1;
+    const {ctx, w, h} = J.fit(cv);
+    const P = {l:150, r:110, t:10, b:20}, bh = (h-P.t-P.b)/lv.length;
+    const lo = -1, hi = 9; // log10 ns
+    ctx.clearRect(0,0,w,h);
+    for(let e=lo; e<=hi; e++){ const x = P.l + (e-lo)/(hi-lo)*(w-P.l-P.r); ctx.strokeStyle = J.c('--line2'); ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,h-P.b); ctx.stroke(); }
+    lv.forEach((l,i) => {
+      const y = P.t + i*bh + 4, len = (Math.log10(l[1]) - lo)/(hi-lo)*(w-P.l-P.r);
+      ctx.fillStyle = J.c(l[0]==='DRAM' ? '--jade' : i<4 ? '--gold' : i<7 ? '--plum' : '--ink3');
+      ctx.globalAlpha = l[0]==='DRAM' ? 1 : .7; ctx.fillRect(P.l, y, len, bh-8); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c('--ink'); ctx.font = (l[0]==='DRAM'?'700 ':'')+'13px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(l[0], P.l-8, y+(bh-8)/2);
+      ctx.textAlign = 'left'; ctx.font = '12.5px "JetBrains Mono"'; ctx.fillStyle = J.c(l[0]==='DRAM'?'--jade':'--ink2');
+      ctx.fillText(human(l[1]*1e-9*k), P.l+len+6, y+(bh-8)/2);
+    });
+    ro.innerHTML = `<div class="ro good"><span class="k">DRAM 한 번</span><span class="v">${human(80e-9*k)}</span></div>
+      <div class="ro"><span class="k">DRAM ÷ L1</span><span class="v">80 배</span></div>
+      <div class="ro"><span class="k">SSD ÷ DRAM</span><span class="v">1,000 배</span></div>`;
+  }
+  J.$$('#scaleBtns button').forEach(b => b.onclick = () => { J.$$('#scaleBtns button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); mode = +b.dataset.s; draw(); });
+  J.live(draw);
+})();
+
+/* 실험 1-2 AMAT */
+J.sim('sim2', (v, box) => {
+  const t1 = 1, t2 = 4, t3 = 12, td = v.td, h1 = v.h1/100, h2 = v.h2/100, h3 = v.h3/100;
+  const c1 = t1, c2 = (1-h1)*t2, c3 = (1-h1)*(1-h2)*t3, cd = (1-h1)*(1-h2)*(1-h3)*td;
+  const amat = c1+c2+c3+cd;
+  J.out(box,'amat', J.fmt(amat,2)+' ns');
+  J.out(box,'miss', J.fmt((1-h1)*(1-h2)*(1-h3)*100,2)+' %');
+  J.out(box,'share', J.fmt(cd/amat*100,0)+' %', cd/amat > .5 ? 'bad' : 'good');
+  J.out(box,'cyc', J.fmt(amat*3.5,1)+' 클록');
+  const {ctx, w, h} = J.fit(document.getElementById('cv2'));
+  const parts = [['L1',c1,'--red'],['L2',c2,'--gold'],['L3',c3,'--indigo'],['DRAM',cd,'--jade']];
+  const maxT = Math.max(12, amat*1.1), X = t => 20 + t/maxT*(w-40);
+  let x = 0; ctx.clearRect(0,0,w,h);
+  parts.forEach(p => { ctx.fillStyle = J.c(p[2]); ctx.fillRect(X(x), 40, X(x+p[1])-X(x), 50);
+    if(X(x+p[1])-X(x) > 34){ ctx.fillStyle = '#fff'; ctx.font = '600 12px "Noto Sans KR"'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(p[0]+' '+J.fmt(p[1],2), (X(x)+X(x+p[1]))/2, 65); }
+    x += p[1]; });
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  ctx.fillText('평균 접근 1회의 시간 구성 (ns)', 20, 28);
+  J.niceTicks(0, maxT, 6).forEach(t => { ctx.fillStyle = J.c('--ink3'); ctx.textAlign='center'; ctx.font='11px "JetBrains Mono"'; ctx.fillText(t, X(t), 112); ctx.fillRect(X(t), 92, 1, 6); });
+});
+
+/* 실험 1-3 지역성 */
+(function(){
+  const box = document.getElementById('sim3'), cv = document.getElementById('cv3');
+  const COLS = 32, ROWS = 8, LINE = 8; // 256 단어, 라인=8단어 → 32라인
+  let pat = 'seq', step = 0, cache = [], hit = 0, miss = 0, lastAddr = -1, trail = [], R = J.rng(3), acc = 0;
+  const lines = () => +J.$('[data-k="lines"]', box).value;
+  function next(){
+    if(pat === 'seq') return step % 256;
+    if(pat === 'stride') return (step*8 + Math.floor(step/32)) % 256;
+    if(pat === 'rand') return Math.floor(R()*256);
+    return [0,1,2,3,40,41,42,43,100,101,102,103][step % 12];
+  }
+  function access(){
+    const a = next(); step++;
+    const ln = Math.floor(a / LINE);
+    const i = cache.indexOf(ln);
+    if(i >= 0){ hit++; cache.splice(i,1); cache.unshift(ln); }
+    else { miss++; cache.unshift(ln); while(cache.length > lines()) cache.pop(); }
+    lastAddr = a; trail.unshift(a); trail = trail.slice(0, 6);
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(cv);
+    ctx.clearRect(0,0,w,h);
+    const gw = Math.min(w*0.62, 520), cell = gw / COLS, gh = cell*ROWS;
+    const ox = 10, oy = 30;
+    ctx.font = '12px "Noto Sans KR"'; ctx.fillStyle = J.c('--ink2'); ctx.textAlign='left'; ctx.fillText('메모리 (한 칸 = 1단어, 굵은 테두리 = 캐시 라인 8단어)', ox, 18);
+    for(let a=0;a<256;a++){
+      const r = Math.floor(a/COLS), c = a%COLS, x = ox + c*cell, y = oy + r*cell*2.2;
+      const ln = Math.floor(a/LINE);
+      ctx.fillStyle = cache.includes(ln) ? J.c('--jade-soft') : J.c('--card');
+      ctx.fillRect(x+0.5, y+0.5, cell-1, cell*2-1);
+      ctx.strokeStyle = J.c('--line2'); ctx.strokeRect(x+0.5, y+0.5, cell-1, cell*2-1);
+    }
+    for(let l=0;l<32;l++){ const a = l*LINE, r = Math.floor(a/COLS), c = a%COLS; ctx.strokeStyle = cache.includes(l) ? J.c('--jade') : J.c('--line'); ctx.lineWidth = 1.5; ctx.strokeRect(ox + c*cell+0.5, oy + r*cell*2.2+0.5, cell*LINE-1, cell*2-1); ctx.lineWidth = 1; }
+    trail.forEach((a,i) => { const r = Math.floor(a/COLS), c = a%COLS; ctx.fillStyle = J.c('--red'); ctx.globalAlpha = 1 - i/6; ctx.beginPath(); ctx.arc(ox + c*cell + cell/2, oy + r*cell*2.2 + cell, Math.max(2, cell*0.32), 0, 7); ctx.fill(); });
+    ctx.globalAlpha = 1;
+    // 캐시 상자
+    const cx = ox + gw + 30, cw = w - cx - 10;
+    ctx.fillStyle = J.c('--ink2'); ctx.fillText('캐시 (LRU 순서)', cx, 18);
+    const n = lines(), bh = Math.min(22, (h-40)/n - 3);
+    for(let i=0;i<n;i++){
+      const y = oy + i*(bh+3);
+      ctx.fillStyle = cache[i] !== undefined ? J.c('--jade-soft') : J.c('--paper2'); ctx.fillRect(cx, y, cw, bh);
+      ctx.strokeStyle = J.c('--jade'); ctx.strokeRect(cx+.5, y+.5, cw-1, bh-1);
+      if(cache[i] !== undefined){ ctx.fillStyle = J.c('--ink'); ctx.font = '11.5px "JetBrains Mono"'; ctx.textBaseline='middle'; ctx.fillText(`라인 ${String(cache[i]).padStart(2,'0')} [${cache[i]*8}–${cache[i]*8+7}]`, cx+6, y+bh/2); ctx.textBaseline='alphabetic'; }
+    }
+    const tot = hit + miss;
+    J.out(box,'n', tot); J.out(box,'hit', hit); J.out(box,'miss', miss); J.out(box,'rate', tot ? J.fmt(hit/tot*100,1)+' %' : '—');
+  }
+  function reset(){ step = 0; cache = []; hit = 0; miss = 0; trail = []; R = J.rng(3); draw(); }
+  J.$$('#patBtns button[data-p]').forEach(b => b.onclick = () => { J.$$('#patBtns button[data-p]').forEach(x=>x.classList.remove('on')); b.classList.add('on'); pat = b.dataset.p; reset(); });
+  document.getElementById('patReset').onclick = reset;
+  J.$('[data-k="lines"]', box).addEventListener('input', e => { J.$('[data-o="lines"]', box).textContent = e.target.value + ' 라인'; reset(); });
+  J.$('[data-o="lines"]', box).textContent = '8 라인';
+  J.live(draw);
+  J.loop(cv, dt => { acc += dt; if(acc > 0.09){ acc = 0; if(step < 400) access(); draw(); } });
+})();
+
+/* 실험 1-4 용량 역사 */
+(function(){
+  const D = [[1970,1,'인텔 1103, 최초의 상용 DRAM (1 Kb, 3T 셀)'],[1973,4,'4 Kb, 1T1C 셀과 주소 다중화 정착'],[1976,16,'16 Kb'],[1979,64,'64 Kb 세대 시작'],[1983,64,'삼성, 국내 첫 64 Kb DRAM 개발'],[1984,256,'256 Kb'],[1986,1024,'1 Mb, 트렌치/스택 커패시터 경쟁'],[1989,4096,'4 Mb'],[1992,16384,'64 Mb 세계 최초 개발(삼성) · 16 Mb 양산'],[1995,65536,'64 Mb 양산'],[1998,262144,'256 Mb · DDR SDRAM 등장'],[2003,1048576,'1 Gb'],[2008,2097152,'2 Gb · DDR3'],[2011,4194304,'4 Gb · DDR4 표준화 진행'],[2014,8388608,'8 Gb'],[2019,16777216,'16 Gb · DDR5 표준(2020) 준비'],[2023,33554432,'32 Gb DDR5 발표 · HBM3E'],[2026,33554432*1.5,'24–32 Gb 주력 · HBM4 양산']];
+  J.sim('sim4', (v, box) => {
+    const cv = document.getElementById('cv4');
+    const tr = v.tr, yr = v.yr;
+    const pts = D.map(d => [d[0], d[1]]);
+    const trend = []; for(let y=1970;y<=2026;y+=1) trend.push([y, Math.pow(4, (y-1970)/tr)]);
+    let cur = D[0]; D.forEach(d => { if(d[0] <= yr) cur = d; });
+    const fmtb = kb => kb >= 1048576 ? J.fmt(kb/1048576,0)+' Gb' : kb >= 1024 ? J.fmt(kb/1024,0)+' Mb' : J.fmt(kb,0)+' Kb';
+    J.plot(cv, {x:[1970,2026], y:[0.5, 1e9], logy:true, xlab:'연도', ylab:'칩 용량 (Kb, 로그)', xf:t=>t, yf:t=>fmtb(t),
+      series:[{pts:trend, color:'--ink3', dash:[5,5], w:1.5},{pts, color:'--jade', w:2.5}],
+      points: D.map(d => ({x:d[0], y:d[1], color: d===cur ? '--red' : '--jade', r: d===cur ? 6 : 3.5})).concat([{x:cur[0], y:cur[1], color:'--red', r:0.01, label:fmtb(cur[1])}]),
+      vlines:[{x:yr, color:'--red', label: yr+'년'}], pad:{l:64}});
+    J.out(box,'cap', fmtb(cur[1]));
+    J.out(box,'ev', cur[0]+' · '+cur[2]);
+  });
+})();
+</script>
+</body>
+</html>

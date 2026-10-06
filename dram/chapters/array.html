@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>어레이 구조와 주소 · DRAM 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../../assets/iso3d.js"></script>
+</head>
+<body data-ch="array">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 05 <span class="hanja">第五章 · 陣</span></div>
+  <h1>어레이 구조와 주소</h1>
+  <p class="lead">수백억 개의 셀은 바둑판처럼 놓여 있다. 가로줄(워드라인)과 세로줄(비트라인)이 만나는 점마다 셀이 하나. 그런데 바둑판 하나를 무작정 키울 수는 없다. 이 장은 칩이 셀을 매트·서브어레이·뱅크로 어떻게 나누고, 주소 한 줄이 어떻게 셀 하나를 찾아가는지 따라간다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>칩 → 뱅크 그룹 → 뱅크 → 서브어레이(매트) → 셀의 계층을 설명할 수 있다.</li>
+  <li>행 주소와 열 주소가 디코더를 거쳐 하나의 워드라인과 열 선택선을 고르는 과정을 안다.</li>
+  <li>비트라인 길이(셀 수)와 매트 크기의 트레이드오프를 정량적으로 따져 본다.</li>
+  <li>오픈 비트라인과 폴디드 비트라인의 차이, 6F²와 8F²의 관계를 이해한다.</li>
+  <li>페이지(행) 크기가 무엇이며 왜 성능과 전력에 중요한지 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>바둑판에서 칩까지</h2>
+<p>워드라인 하나에는 수천 개의 셀 게이트가 매달려 있고, 비트라인 하나에는 수백 개의 셀 드레인이 매달려 있다. 선이 길수록 저항과 커패시턴스가 커져 느려지고 신호가 작아진다. 그래서 셀 바다는 대략 512×512~1024×1024 크기의 <span class="term">매트(mat)</span>로 잘게 나뉜다. 매트 사이에는 <span class="term">서브 워드라인 드라이버(SWD)</span>가 세로 띠로, <span class="term">센스 앰프</span>가 가로 띠로 들어간다. 매트 여러 개가 모여 <span class="term">서브어레이</span>, 서브어레이가 모여 <span class="term">뱅크(bank)</span>가 되고, 뱅크는 독립적으로 행을 열고 닫을 수 있는 단위다. DDR5 칩은 뱅크 32개(뱅크 그룹 8개 × 4)를 가진다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-1</span><span class="ttl">줌인: 칩에서 셀까지</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="zoomBtns">
+      <button class="sbtn on" data-z="0">① 칩 (다이)</button>
+      <button class="sbtn" data-z="1">② 뱅크</button>
+      <button class="sbtn" data-z="2">③ 매트와 띠</button>
+      <button class="sbtn" data-z="3">④ 셀 배열</button>
+    </div>
+    <div class="canvas-box"><svg id="zoomSvg" viewBox="0 0 720 380" style="display:block;width:100%"></svg></div>
+    <p class="hint" id="zoomTxt" style="margin:8px 2px 0"></p>
+  </div>
+  <p class="cap"><b>그림 설명.</b> 각 단계의 빨간 상자가 다음 단계에서 확대되는 부분이다. 실제 칩 면적의 절반 남짓만 셀이고, 나머지는 센스 앰프·드라이버·디코더·입출력 회로 같은 "주변 회로(periphery)"다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>주소 한 줄이 셀을 찾아가는 길</h2>
+<p>CPU가 보낸 물리 주소는 메모리 컨트롤러에서 <span class="term">랭크·뱅크 그룹·뱅크·행(row)·열(column)</span> 주소로 쪼개진다(8장). DRAM은 주소 핀 수를 줄이려고 행 주소와 열 주소를 같은 핀으로 시간차를 두고 받는다. 먼저 <code>ACT</code> 명령과 함께 행 주소가 오면 <span class="term">행 디코더</span>가 수만 개 중 워드라인 하나를 켠다. 그 행의 모든 셀(수천 비트)이 센스 앰프로 올라온다. 이어 <code>RD</code> 명령과 함께 열 주소가 오면 <span class="term">열 디코더</span>가 <span class="term">열 선택선(CSL)</span>을 켜 그중 일부 비트만 칩 밖으로 보낸다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-2</span><span class="ttl">행·열 디코더 — 주소를 넣으면 셀이 켜진다</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">행 주소 (4비트) <output data-o="row"></output></span><input type="range" data-k="row" min="0" max="15" step="1" value="5" data-raw></label>
+      <label class="ctrl"><span class="lab">열 주소 (2비트, 4비트 단위 선택) <output data-o="col"></output></span><input type="range" data-k="col" min="0" max="3" step="1" value="2" data-raw></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="380"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">행 주소 (2진)</span><span class="v" data-r="rb"></span></div>
+      <div class="ro"><span class="k">열 주소 (2진)</span><span class="v" data-r="cb"></span></div>
+      <div class="ro"><span class="k">센스 앰프로 올라온 비트</span><span class="v" data-r="sa"></span></div>
+      <div class="ro"><span class="k">밖으로 나가는 비트</span><span class="v" data-r="out"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>그림 설명.</b> 16행 × 16열 미니 어레이. 행 디코더는 4비트를 받아 16개 중 하나의 워드라인(금색)을 켜고, 그 행 16비트가 모두 센스 앰프(아래 띠)로 올라온다. 열 디코더는 그중 4비트 묶음 하나를 고른다. 실제 칩에서는 한 번 ACT에 8 Kb(1 KB) 이상이 올라오고, RD 한 번에 그중 128비트 정도만 나간다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>매트 크기의 트레이드오프</h2>
+<p>비트라인 하나에 연결된 셀 수를 \(N_{BL}\), 셀 하나의 비트라인 기생 커패시턴스를 \(c_b\)라 하면 \(C_{BL} \approx N_{BL}\,c_b + C_{SA}\)다. \(N_{BL}\)을 줄이면 2장의 전달비가 좋아져 신호가 커지지만, 같은 용량을 위해 센스 앰프 띠가 더 많이 필요해 칩이 커진다. 워드라인 쪽도 마찬가지로 한 서브 워드라인에 붙은 셀 수가 많을수록 RC 지연이 커진다.</p>
+<div class="eq">$$\Delta V = \frac{V_{DD}}{2}\cdot\frac{C_s}{C_s + N_{BL}c_b + C_{SA}}, \qquad \text{셀 효율} = \frac{\text{셀 면적}}{\text{셀 면적} + \text{SA 띠} + \text{SWD 띠}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-3</span><span class="ttl">매트 설계: 신호냐, 면적이냐</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">비트라인당 셀 수 N_BL <output data-o="nbl"></output></span><input type="range" data-k="nbl" min="128" max="2048" step="64" value="640" data-d="0"></label>
+      <label class="ctrl"><span class="lab">서브 WL당 셀 수 <output data-o="nwl"></output></span><input type="range" data-k="nwl" min="128" max="2048" step="64" value="512" data-d="0"></label>
+      <label class="ctrl"><span class="lab">셀 C_s <output data-o="cs"></output></span><input type="range" data-k="cs" min="5" max="25" step="0.5" value="10" data-d="1" data-u="fF"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">C_BL</span><span class="v" data-r="cbl"></span></div>
+      <div class="ro"><span class="k">신호 ΔV</span><span class="v" data-r="dv"></span></div>
+      <div class="ro"><span class="k">셀 효율 (셀/전체 면적)</span><span class="v" data-r="eff"></span></div>
+      <div class="ro"><span class="k">서브 WL 지연 (상대)</span><span class="v" data-r="wl"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 초록 곡선은 N_BL에 따른 신호, 파란 곡선은 셀 효율이다. 두 곡선이 반대로 움직인다. 빨간 점이 현재 설계. 신호가 60 mV 아래면(빨간 띠) 센싱이 위험하다. (모델: c_b = 0.08 fF/셀, C_SA = 8 fF, SA 띠 높이 = 셀 40개분, SWD 띠 폭 = 셀 30개분, 모두 교육용 근사.)</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>오픈 비트라인 vs 폴디드 비트라인</h2>
+<p>센스 앰프는 비트라인 쌍을 비교한다. 쌍을 어디서 가져오느냐에 따라 두 구조가 있다. <span class="term">폴디드(folded) 비트라인</span>은 BL과 BL̅이 같은 매트 안에서 나란히 달린다. 워드라인 하나가 두 비트라인 중 하나에만 셀을 연결해야 하므로 셀 배치에 빈자리가 생겨 셀 면적이 8F²가 된다. 대신 두 선이 같은 잡음을 함께 맞아 상쇄된다. <span class="term">오픈(open) 비트라인</span>은 BL과 BL̅이 센스 앰프 양쪽의 서로 다른 매트에 있다. 모든 교차점에 셀을 둘 수 있어 6F²가 되지만 잡음 상쇄가 약하다. 2000년대 중반 이후 업계는 면적을 위해 오픈 비트라인 + 6F²로 넘어왔다.</p>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-4</span><span class="ttl">셀 배치 비교: 8F² 폴디드 vs 6F² 오픈</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="bltBtns"><button class="sbtn on" data-b="folded">폴디드 (8F²)</button><button class="sbtn" data-b="open">오픈 (6F²)</button>
+      <label class="hint"><input type="checkbox" id="noiseChk"> 워드라인 결합 잡음 주입</label></div>
+    <div class="canvas-box"><canvas id="cv4" data-h="330"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">셀 하나 면적</span><span class="v" data-r="area"></span></div>
+      <div class="ro"><span class="k">같은 면적의 셀 수 (상대)</span><span class="v" data-r="dens"></span></div>
+      <div class="ro"><span class="k">BL−BL̅ 잡음</span><span class="v" data-r="nz"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>그림 설명.</b> 격자 한 칸 = F × F. 초록 사각형은 셀(활성 영역+커패시터)이고, 굵은 선은 비트라인(파랑)과 워드라인(금색)이다. 잡음 주입을 켜면 워드라인이 올라갈 때 결합으로 비트라인이 흔들린다. 폴디드에서는 BL과 BL̅이 똑같이 흔들려 차이가 0에 가깝지만, 오픈에서는 서로 다른 매트라 차이가 남는다.</p>
+</div>
+
+<h2 id="s5"><span class="n">05</span>페이지 크기</h2>
+<p>ACT 한 번에 센스 앰프로 올라오는 비트 묶음을 <span class="term">페이지(page)</span> 또는 행 버퍼라고 한다. x8 DDR5 칩의 페이지는 1 KB, x16은 2 KB다. 페이지가 크면 같은 행 안의 연속 접근(로우 버퍼 히트, 6장)이 많아지지만, 한 번 열 때 수천 개의 비트라인을 모두 충·방전하므로 <strong>ACT 한 번의 에너지</strong>가 커진다. 64바이트만 필요한데 1 KB를 여는 것은 낭비라서, 페이지를 작게 쪼개는 연구(서브어레이 단위 활성화, 부분 행 활성화)도 활발하다. HBM이 채널당 페이지를 작게 잡는 이유도 여기에 있다.</p>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">ACT 명령에 담겨 오는 주소는?</p><ol>
+<li>열 주소</li><li>캐시 라인 오프셋</li><li>뱅크 주소와 행 주소</li><li>랭크 주소만</li></ol>
+<p class="explain">ACT는 지정된 뱅크의 한 행을 연다. 열 주소는 이후 RD/WR 명령과 함께 온다.</p></div>
+<div class="quiz" data-a="0"><p class="q">비트라인당 셀 수를 줄이면 일어나는 일로 옳은 것은?</p><ol>
+<li>신호 ΔV는 커지고 센스 앰프 띠가 늘어 셀 효율은 낮아진다</li><li>신호와 셀 효율이 모두 좋아진다</li><li>신호가 작아진다</li><li>리프레시가 필요 없어진다</li></ol>
+<p class="explain">C_BL이 줄어 전달비가 좋아지지만, 같은 용량에 더 많은 매트·SA가 필요하다.</p></div>
+<div class="quiz" data-a="1"><p class="q">6F² 셀이 가능한 비트라인 구조는?</p><ol>
+<li>폴디드 비트라인</li><li>오픈 비트라인</li><li>계층형 워드라인</li><li>듀얼 포트</li></ol>
+<p class="explain">오픈 비트라인은 모든 WL–BL 교차점에 셀을 놓을 수 있어 6F²를 달성한다. 폴디드는 8F²가 필요하다.</p></div>
+<div class="quiz" data-a="3"><p class="q">페이지 크기가 클수록 나빠지는 것은?</p><ol>
+<li>로우 버퍼 히트율</li><li>최대 데이터 전송률</li><li>리텐션 시간</li><li>ACT 한 번의 에너지</li></ol>
+<p class="explain">한 번 열 때 페이지 전체의 비트라인을 충·방전해야 하므로 ACT 에너지가 페이지 크기에 비례한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 실험 5-1 줌 */
+(function(){
+  const svg = document.getElementById('zoomSvg'), txt = document.getElementById('zoomTxt');
+  const T = [
+    '칩(다이) 하나: 가운데 십자 띠에 패드·입출력·명령 디코더가 있고, 네 구역에 뱅크들이 나뉘어 앉아 있다. DDR5 16 Gb 다이는 대략 손톱의 1/10 크기다.',
+    '뱅크 하나: 매트 수백 개가 격자로 놓인다. 왼쪽의 행 디코더가 워드라인을, 아래의 열 디코더가 열 선택선을 고른다.',
+    '매트와 띠: 셀 매트 사이에 센스 앰프 띠(가로)와 서브 워드라인 드라이버 띠(세로)가 끼어 있다. 띠가 차지하는 면적이 셀 효율을 깎는다.',
+    '셀 배열: 금색 워드라인과 파란 비트라인이 교차하는 곳마다 셀(초록)이 있다. 비트라인은 매트 경계의 센스 앰프로 들어간다.'
+  ];
+  function draw(z){
+    svg.innerHTML = '';
+    txt.textContent = T[z];
+    const R = (x,y,w,h,f,o={}) => J.svg('rect', Object.assign({x,y,width:w,height:h,fill:f,stroke:'var(--card)'},o), svg);
+    const Tx = (x,y,t,c='t-s',st='') => J.svg('text',{x,y,class:c,text:t,style:st},svg);
+    if(z === 0){
+      R(60,20,600,340,'var(--paper2)',{stroke:'var(--ink3)','stroke-width':2});
+      for(let q=0;q<4;q++){ const ox = 70 + (q%2)*310, oy = 30 + Math.floor(q/2)*175;
+        for(let b=0;b<8;b++) R(ox + (b%4)*72, oy + Math.floor(b/4)*76, 68, 72, 'var(--jade)', {opacity:.75});
+      }
+      R(60,182,600,16,'var(--gold)',{opacity:.7}); R(352,20,16,340,'var(--gold)',{opacity:.7});
+      Tx(370,194,'주변 회로 · 패드 · I/O','t-s','fill:var(--ink)');
+      R(70,30,68,72,'none',{stroke:'var(--red)','stroke-width':3});
+      Tx(70,376,'뱅크 32개 (뱅크 그룹 8 × 4) — 초록 블록 하나가 뱅크','t-s');
+    } else if(z === 1){
+      R(80,20,560,320,'var(--paper2)',{stroke:'var(--ink3)'});
+      for(let r=0;r<8;r++) for(let c=0;c<12;c++) R(120 + c*42, 30 + r*36, 38, 30, 'var(--jade)', {opacity:.7});
+      R(84,30,30,288,'var(--gold)',{opacity:.8}); Tx(88,350,'행 디코더','t-s');
+      R(120,322,500,16,'var(--indigo)',{opacity:.6}); Tx(560,356,'열 디코더','t-s');
+      R(120,30,80,66,'none',{stroke:'var(--red)','stroke-width':3});
+    } else if(z === 2){
+      for(let r=0;r<3;r++) for(let c=0;c<4;c++){
+        const x = 50 + c*160, y = 20 + r*118;
+        R(x, y, 130, 92, 'var(--jade)', {opacity:.65});
+        R(x+130, y, 26, 92, 'var(--gold)', {opacity:.8});
+        R(x, y+92, 156, 22, 'var(--indigo)', {opacity:.55});
+      }
+      Tx(50+130+2, 14, 'SWD 띠', 't-s', 'fill:var(--gold)'); Tx(56, 20+92+15, '센스 앰프 띠', 't-s', 'fill:#fff');
+      Tx(70, 66, '셀 매트 (예: 512 × 1024)', 't-s', 'fill:#fff');
+      R(50,20,130,92,'none',{stroke:'var(--red)','stroke-width':3});
+    } else {
+      const n = 12, gx = 60, gy = 30, s = 26;
+      for(let r=0;r<n;r++){ J.svg('line',{x1:gx-10,y1:gy+r*s+s/2,x2:gx+n*s*1.6,y2:gy+r*s+s/2,stroke:'var(--gold)','stroke-width':3,opacity:.85},svg); }
+      for(let c=0;c<n*1.6/1.2;c++){ J.svg('line',{x1:gx+c*s*1.2+s/2,y1:gy-8,x2:gx+c*s*1.2+s/2,y2:gy+n*s+6,stroke:'var(--indigo)','stroke-width':2.5,opacity:.85},svg); }
+      for(let r=0;r<n;r++) for(let c=0;c<16;c++){ J.svg('circle',{cx:gx+c*s*1.2+s/2+6,cy:gy+r*s+s/2+6,r:5,fill:'var(--jade)'},svg); }
+      R(gx-10, gy+n*s+8, n*s*1.6+10, 18, 'var(--indigo)', {opacity:.5}); Tx(gx, gy+n*s+21, '센스 앰프 띠','t-s','fill:#fff');
+      R(10, gy-8, 30, n*s+14, 'var(--gold)', {opacity:.6}); Tx(12, gy+n*s+40, 'SWD','t-s');
+    }
+  }
+  J.$$('#zoomBtns button').forEach(b => b.onclick = () => { J.$$('#zoomBtns button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); draw(+b.dataset.z); });
+  draw(0);
+})();
+
+/* 실험 5-2 디코더 */
+J.sim('sim2', (v, box) => {
+  const {ctx, w, h} = J.fit(document.getElementById('cv2'));
+  ctx.clearRect(0,0,w,h);
+  const N = 16, ax = 120, ay = 30, cs = Math.min((w-ax-30)/N, (h-120)/N);
+  const R = J.rng(42), bits = []; for(let r=0;r<N;r++){ bits.push([]); for(let c=0;c<N;c++) bits[r].push(R()<.5?1:0); }
+  // 행 디코더
+  ctx.fillStyle = J.c('--gold-soft'); ctx.fillRect(10, ay, 90, N*cs);
+  ctx.strokeStyle = J.c('--gold'); ctx.strokeRect(10.5, ay+.5, 90, N*cs);
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='center'; ctx.fillText('행 디코더', 55, ay-8);
+  for(let r=0;r<N;r++){
+    const on = r === v.row, y = ay + r*cs + cs/2;
+    ctx.fillStyle = J.c(on ? '--red' : '--ink3'); ctx.font = (on?'700 ':'')+'10.5px "JetBrains Mono"'; ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(r.toString(2).padStart(4,'0'), 96, y);
+    ctx.strokeStyle = J.c(on ? '--gold' : '--line'); ctx.lineWidth = on ? 4 : 1.5;
+    ctx.beginPath(); ctx.moveTo(100, y); ctx.lineTo(ax + N*cs, y); ctx.stroke();
+  }
+  ctx.lineWidth = 1;
+  for(let c=0;c<N;c++){ const x = ax + c*cs + cs/2, sel = Math.floor(c/4) === v.col;
+    ctx.strokeStyle = J.c(sel ? '--indigo' : '--line'); ctx.lineWidth = sel ? 2.5 : 1.2; ctx.beginPath(); ctx.moveTo(x, ay-4); ctx.lineTo(x, ay + N*cs + 6); ctx.stroke(); }
+  ctx.lineWidth = 1;
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+    const x = ax + c*cs + cs/2, y = ay + r*cs + cs/2, on = r === v.row, sel = on && Math.floor(c/4) === v.col;
+    ctx.fillStyle = J.c(sel ? '--red' : on ? '--jade' : bits[r][c] ? '--jade-soft' : '--paper2');
+    ctx.beginPath(); ctx.arc(x, y, cs*0.3, 0, 7); ctx.fill();
+    if(on){ ctx.fillStyle = sel ? '#fff' : '#fff'; ctx.font = `600 ${Math.max(9, cs*0.4)}px "JetBrains Mono"`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(bits[r][c], x, y+1); }
+  }
+  // SA 띠
+  const sy = ay + N*cs + 10;
+  ctx.fillStyle = J.c('--indigo-soft'); ctx.fillRect(ax, sy, N*cs, 26); ctx.strokeStyle = J.c('--indigo'); ctx.strokeRect(ax+.5, sy+.5, N*cs, 26);
+  for(let c=0;c<N;c++){ const x = ax + c*cs + cs/2, sel = Math.floor(c/4) === v.col;
+    ctx.fillStyle = J.c(sel ? '--red' : '--ink'); ctx.font = (sel?'700 ':'')+'12px "JetBrains Mono"'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(bits[v.row][c], x, sy+13); }
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('← 센스 앰프 (행 전체 16비트)', ax + N*cs + 6 > w - 160 ? ax : ax + N*cs + 6, sy + 44);
+  // 열 디코더 선택 표시
+  ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2.5; ctx.strokeRect(ax + v.col*4*cs + 1, sy - 2, 4*cs - 2, 30); ctx.lineWidth = 1;
+  ctx.fillStyle = J.c('--red'); ctx.textAlign='center'; ctx.fillText('열 선택 → 출력', ax + v.col*4*cs + 2*cs, sy + 44);
+  J.out(box,'rb', v.row.toString(2).padStart(4,'0'));
+  J.out(box,'cb', v.col.toString(2).padStart(2,'0'));
+  J.out(box,'sa', bits[v.row].join(''));
+  J.out(box,'out', bits[v.row].slice(v.col*4, v.col*4+4).join(''));
+});
+
+/* 실험 5-3 매트 트레이드오프 */
+J.sim('sim3', (v, box) => {
+  const cb = 0.08, csa = 8, vh = 0.55;
+  const dvOf = n => vh*v.cs/(v.cs + n*cb + csa)*1000;
+  const effOf = (n, m) => (n*m)/((n+40)*(m+30));
+  const sig = [], eff = [];
+  for(let n=128; n<=2048; n+=32){ sig.push([n, dvOf(n)]); eff.push([n, effOf(n, v.nwl)*100]); }
+  const dv = dvOf(v.nbl), e = effOf(v.nbl, v.nwl)*100;
+  const r = J.plot(document.getElementById('cv3'), {x:[128,2048], y:[0,100], xlab:'비트라인당 셀 수 N_BL', ylab:'ΔV (mV) / 셀 효율 (%)',
+    series:[{pts:sig, color:'--jade', w:2.5},{pts:eff, color:'--indigo', w:2.5}],
+    bands:[{y0:0, y1:60, color:'--red', alpha:.06}],
+    points:[{x:v.nbl, y:dv, color:'--red', label:J.fmt(dv,0)+' mV'},{x:v.nbl, y:e, color:'--red', label:J.fmt(e,0)+' %'}],
+    vlines:[{x:v.nbl, color:'--ink3', dash:[2,3]}]});
+  J.out(box,'cbl', J.fmt(v.nbl*cb + csa,1)+' fF');
+  J.out(box,'dv', J.fmt(dv,1)+' mV', dv < 60 ? 'bad' : dv < 80 ? 'warn' : 'good');
+  J.out(box,'eff', J.fmt(e,1)+' %', e < 80 ? 'warn' : 'good');
+  J.out(box,'wl', '× '+J.fmt(Math.pow(v.nwl/512,2),2), v.nwl > 1024 ? 'bad' : '');
+});
+
+/* 실험 5-4 오픈/폴디드 */
+(function(){
+  const box = document.getElementById('sim4');
+  let mode = 'folded', t = 0;
+  function draw(){
+    const {ctx, w, h} = J.fit(document.getElementById('cv4'));
+    ctx.clearRect(0,0,w,h);
+    const F = Math.min(18, (w*0.6)/24), ox = 20, oy = 20, cols = 24, rows = 12;
+    ctx.strokeStyle = J.c('--line2');
+    for(let i=0;i<=cols;i++){ ctx.beginPath(); ctx.moveTo(ox+i*F, oy); ctx.lineTo(ox+i*F, oy+rows*F); ctx.stroke(); }
+    for(let j=0;j<=rows;j++){ ctx.beginPath(); ctx.moveTo(ox, oy+j*F); ctx.lineTo(ox+cols*F, oy+j*F); ctx.stroke(); }
+    // 워드라인: 2F 피치 (세로선)
+    const wlx = [], blyy = [];
+    if(mode === 'folded'){
+      for(let i=0;i<cols/2;i++) wlx.push(ox + (i*2+1)*F);
+      for(let j=0;j<rows/2;j++) blyy.push(oy + (j*2+1)*F);
+      // 셀: 4F x 2F, 엇갈림
+      for(let j=0;j<blyy.length;j++) for(let i=0;i<wlx.length;i+=2){
+        const i2 = i + (j%2 ? 1 : 0); if(i2 >= wlx.length) continue;
+        ctx.fillStyle = J.c('--jade'); ctx.globalAlpha = .55; ctx.fillRect(wlx[i2]-F*1.5, blyy[j]-F*0.5, F*3.6, F*1.0); ctx.globalAlpha = 1;
+        ctx.strokeStyle = J.c('--red'); ctx.setLineDash([3,2]); ctx.strokeRect(wlx[i2]-F*2+1, blyy[j]-F+1, F*4-2, F*2-2); ctx.setLineDash([]);
+      }
+    } else {
+      for(let i=0;i<cols/2;i++) wlx.push(ox + (i*2+1)*F);
+      for(let j=0;j<rows/2;j++) blyy.push(oy + (j*2+1)*F);
+      for(let j=0;j<blyy.length;j++) for(let i=0;i<wlx.length;i++){
+        const x = wlx[i] + ((i+j)%3 - 1)*F*0.2;
+        ctx.fillStyle = J.c('--jade'); ctx.globalAlpha = .55; ctx.fillRect(wlx[i]-F*0.8, blyy[j]-F*0.5, F*1.6, F*1.0); ctx.globalAlpha = 1;
+        if(i%3===0) { ctx.strokeStyle = J.c('--red'); ctx.setLineDash([3,2]); ctx.strokeRect(wlx[i]-F+1, blyy[j]-F+1, F*3-2, F*2-2); ctx.setLineDash([]); }
+      }
+    }
+    ctx.strokeStyle = J.c('--gold'); ctx.lineWidth = 3; wlx.forEach(x => { ctx.beginPath(); ctx.moveTo(x, oy-6); ctx.lineTo(x, oy+rows*F+6); ctx.stroke(); });
+    ctx.strokeStyle = J.c('--indigo'); ctx.lineWidth = 2.5; blyy.forEach((y,j) => { ctx.beginPath(); ctx.moveTo(ox-6, y); ctx.lineTo(ox+cols*F+6, y); ctx.stroke(); });
+    ctx.lineWidth = 1;
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left';
+    ctx.fillText(mode === 'folded' ? '빨간 점선 = 셀 하나 4F × 2F = 8F²' : '빨간 점선 = 셀 하나 3F × 2F = 6F²', ox, oy+rows*F+26);
+    // 잡음 파형
+    const nx = ox + cols*F + 30, nw = w - nx - 10;
+    if(nw > 120){
+      const noise = document.getElementById('noiseChk').checked;
+      const H = 70, y1 = 60, y2 = 180;
+      ctx.fillText('BL', nx, y1-36); ctx.fillText('BL̅', nx, y2-36);
+      ['--indigo','--plum'].forEach((c,k) => {
+        ctx.strokeStyle = J.c(c); ctx.lineWidth = 2; ctx.beginPath();
+        for(let i=0;i<=nw;i++){ const tt = t + i/nw*4;
+          let n = noise ? Math.sin(tt*5)*Math.exp(-((tt%2)-0.3)*3)*(tt%2>0.3?1:0)*18 : 0;
+          if(mode === 'open' && k === 1) n *= 0.25;
+          const y = (k ? y2 : y1) - n; i ? ctx.lineTo(nx+i, y) : ctx.moveTo(nx+i, y); }
+        ctx.stroke();
+      });
+      ctx.lineWidth = 1;
+      const diff = noise ? (mode === 'open' ? '크다 (~15 mV)' : '거의 0') : '0';
+      J.out(box,'nz', diff, noise && mode==='open' ? 'bad' : 'good');
+    } else J.out(box,'nz', document.getElementById('noiseChk').checked ? (mode==='open'?'크다':'거의 0') : '0', document.getElementById('noiseChk').checked && mode==='open' ? 'bad' : 'good');
+    J.out(box,'area', mode === 'folded' ? '8 F²' : '6 F²');
+    J.out(box,'dens', mode === 'folded' ? '1.00 ×' : '1.33 ×', mode === 'open' ? 'good' : '');
+  }
+  J.$$('#bltBtns button').forEach(b => b.onclick = () => { J.$$('#bltBtns button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); mode = b.dataset.b; draw(); });
+  document.getElementById('noiseChk').onchange = draw;
+  J.live(draw);
+  J.loop(document.getElementById('cv4'), dt => { if(document.getElementById('noiseChk').checked){ t += dt; draw(); } });
+})();
+</script>
+</body>
+</html>

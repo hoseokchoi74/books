@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>누설과 리프레시 · DRAM 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="refresh">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 03 <span class="hanja">第三章 · 漏</span></div>
+  <h1>누설과 리프레시</h1>
+  <p class="lead">물통에는 작은 구멍들이 나 있다. 대부분은 몇 분을 버티지만, 수십억 개 가운데 몇 개는 0.1초도 못 버틴다. DRAM은 이 가장 약한 셀에 맞춰 모든 셀을 주기적으로 다시 채운다. 이 장은 그 "리프레시"의 물리와 비용을 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>셀 전하가 새는 네 가지 경로(서브문턱·접합·GIDL·유전막)를 단면에서 짚을 수 있다.</li>
+  <li>리텐션 시간이 왜 넓은 분포를 가지며, 왜 "꼬리"의 약한 셀이 리프레시 주기를 결정하는지 안다.</li>
+  <li>온도가 리텐션을 얼마나 줄이는지 아레니우스 관계로 계산한다.</li>
+  <li>tREFI, tRFC, 리프레시 윈도의 관계를 이해하고 리프레시 오버헤드를 계산한다.</li>
+  <li>가변 리텐션 시간(VRT)이 왜 리프레시 최적화를 어렵게 만드는지 설명할 수 있다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>전하는 어디로 새는가</h2>
+<p>스토리지 노드에 담긴 전하는 여러 길로 빠져나간다. 셀 트랜지스터가 "꺼져" 있어도 흐르는 <span class="term">서브문턱 누설</span>, 스토리지 노드의 n⁺ 영역과 p형 기판 사이 PN 접합의 <span class="term">접합 누설(junction leakage)</span>, 게이트와 겹친 영역의 강한 전계가 만드는 <span class="term">GIDL(Gate-Induced Drain Leakage)</span>, 그리고 얇은 커패시터 유전막을 뚫고 지나가는 <span class="term">유전막 누설</span>이다. 특히 접합 부근의 결정 결함(트랩)은 전자–정공 생성의 징검다리 역할을 해 누설을 크게 키운다. 결함이 하나 있느냐 없느냐가 셀마다 리텐션이 천차만별인 이유다.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 760 310" role="img" aria-label="누설 경로">
+  <rect x="20" y="170" width="720" height="130" class="s-paper2" stroke="var(--line)"/>
+  <text x="30" y="292" class="t-s">p형 기판 (V_BB 음의 바이어스)</text>
+  <rect x="80" y="150" width="100" height="30" fill="var(--indigo)" opacity=".6"/><text x="98" y="170" class="t-s" style="fill:#fff">BL 접촉 n⁺</text>
+  <rect x="340" y="150" width="120" height="30" fill="var(--red)" opacity=".6"/><text x="360" y="170" class="t-s" style="fill:#fff">스토리지 노드 n⁺</text>
+  <path d="M200 148 V240 Q260 270 320 240 V148 Z" fill="var(--gold)" opacity=".75"/><text x="226" y="214" class="t-m" style="fill:#fff;font-weight:700">매립 워드라인</text>
+  <rect x="380" y="20" width="44" height="130" rx="6" fill="none" stroke="var(--jade)" stroke-width="6"/><text x="434" y="60" class="t-s" style="fill:var(--jade)">커패시터</text>
+  <!-- 누설 화살표 -->
+  <defs><marker id="lk" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10z" fill="var(--red)"/></marker></defs>
+  <path d="M340 190 C300 200 200 200 180 182" fill="none" stroke="var(--red)" stroke-width="2.5" marker-end="url(#lk)"/>
+  <text x="200" y="135" class="t-s" style="fill:var(--red)">① 서브문턱 누설 (채널 통해 BL로)</text>
+  <path d="M400 182 V240" fill="none" stroke="var(--red)" stroke-width="2.5" marker-end="url(#lk)"/>
+  <text x="410" y="232" class="t-s" style="fill:var(--red)">② 접합 누설 (기판으로)</text>
+  <circle cx="400" cy="205" r="5" fill="none" stroke="var(--ink)" stroke-width="1.5"/><text x="410" y="210" class="t-s">결함 트랩</text>
+  <path d="M338 165 Q326 170 322 182" fill="none" stroke="var(--red)" stroke-width="2.5" marker-end="url(#lk)"/>
+  <text x="470" y="198" class="t-s" style="fill:var(--red)">③ GIDL (게이트 모서리 강전계)</text>
+  <path d="M402 40 H470" fill="none" stroke="var(--red)" stroke-width="2.5" marker-end="url(#lk)" stroke-dasharray="4 3"/>
+  <text x="476" y="44" class="t-s" style="fill:var(--red)">④ 유전막 누설 (셀 플레이트로)</text>
+  <text x="600" y="120" class="t-m" style="font-weight:700">셀 전압 V_SN</text>
+  <text x="600" y="140" class="t-s">1 → 서서히 V_DD/2 쪽,</text>
+  <text x="600" y="156" class="t-s">결국 0 쪽으로</text>
+</svg>
+<figcaption><b>그림 3-1.</b> 스토리지 노드의 네 가지 누설 경로(개념도). 어느 경로든 "1"을 저장한 노드의 전압을 끌어내린다. 실제 리텐션을 지배하는 것은 대개 ②·③ 이다.</figcaption>
+</figure>
+
+<h2 id="s2"><span class="n">02</span>리텐션 시간의 분포와 꼬리</h2>
+<p>셀이 "1"을 잃지 않고 버티는 시간을 <span class="term">리텐션 시간(retention time)</span> \(t_{ret}\)이라 한다. 칩 하나에 수백억 개의 셀이 있고, 대부분은 수 초~수십 초를 버티는 <strong>본분포(main distribution)</strong>에 속한다. 그러나 접합 근처에 결함을 품은 극소수의 셀이 수십~수백 ms에서 무너지는 <strong>꼬리 분포(tail distribution)</strong>를 이룬다. 리프레시 주기는 평균이 아니라 이 꼬리가 결정한다.</p>
+<p>누설은 열적으로 활성화된 과정이므로 온도에 지수적으로 민감하다. 활성화 에너지 \(E_a\)를 쓰면</p>
+<div class="eq">$$t_{ret}(T) = t_{ret}(T_0)\cdot\exp\!\left[\frac{E_a}{k_B}\left(\frac{1}{T}-\frac{1}{T_0}\right)\right]$$
+<div class="note">꼬리 셀은 \(E_a \approx 0.5\text{–}0.6\) eV로, 대략 10 °C 오를 때마다 리텐션이 절반 가까이 준다. 그래서 85 °C를 넘으면 리프레시를 두 배로 자주 한다.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-1</span><span class="ttl">16 Gb 칩의 리텐션 분포</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="25" max="105" step="1" value="45" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">리프레시 윈도 tREFW <output data-o="tw"></output></span><input type="range" data-k="tw" min="8" max="512" step="8" value="64" data-d="0" data-u="ms"></label>
+      <label class="ctrl"><span class="lab">꼬리 비율 (결함 셀) <output data-o="tf"></output></span><input type="range" data-k="tf" min="-7" max="-3" step="0.1" value="-5" data-log="1" data-d="7"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="320"></canvas></div>
+    <div class="legend"><span><i style="background:var(--jade)"></i>본분포</span><span><i style="background:var(--red)"></i>꼬리(결함 셀)</span><span><i style="background:var(--gold)"></i>tREFW</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">리텐션 < tREFW 인 셀 (리페어 필요)</span><span class="v" data-r="fail"></span></div>
+      <div class="ro"><span class="k">본분포 중앙값</span><span class="v" data-r="med"></span></div>
+      <div class="ro"><span class="k">꼬리 중앙값</span><span class="v" data-r="tmed"></span></div>
+      <div class="ro"><span class="k">45 °C 대비 리텐션 배율</span><span class="v" data-r="af"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로축은 리텐션 시간(로그), 세로축은 그 구간에 속한 셀 수(로그)다. 셀 수 170억 개(16 Gb) 기준. 금색 선 왼쪽에 있는 셀은 정해진 리프레시 주기 안에 데이터를 잃는다. 제조사는 이런 셀을 테스트로 찾아 여분 셀로 바꿔 놓는다(10장). 온도를 85 °C로 올리면 분포 전체가 왼쪽으로 밀리며 실패 셀이 수십 배 늘어나는 것을 확인하자 — 그래서 고온에서는 tREFW를 절반으로 줄인다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>리프레시는 어떻게 하는가</h2>
+<p>리프레시는 특별한 동작이 아니다. 행 하나를 활성화(ACT)하면 그 행의 모든 셀이 센스 앰프로 읽히고 증폭되어 다시 써진다(2장의 재저장). 즉 <strong>행을 열었다 닫기만 하면 리프레시</strong>다. 메모리 컨트롤러는 평균 <span class="term">tREFI</span>(refresh interval) 간격으로 <code>REF</code> 명령을 보내고, DRAM은 내부 행 카운터를 따라 다음 몇 개의 행을 한꺼번에 리프레시한다. 이 동안 뱅크는 다른 일을 못 하며, 걸리는 시간이 <span class="term">tRFC</span>(refresh cycle time)다.</p>
+<div class="eq">$$t_{REFI} = \frac{t_{REFW}}{N_{REF}}, \qquad \text{DDR5: } \frac{32\ \text{ms}}{8192} \approx 3.9\ \mu\text{s}, \qquad \text{오버헤드} \approx \frac{t_{RFC}}{t_{REFI}}$$</div>
+
+<figure class="fig">
+<svg viewBox="0 0 760 150" id="refTimeline" role="img" aria-label="리프레시 명령 타임라인"></svg>
+<figcaption><b>그림 3-2.</b> REF 명령 타임라인. tREFI마다 REF가 들어오고, 각 REF는 tRFC 동안 칩(또는 뱅크)을 점유한다. 8192번의 REF가 모이면 모든 행이 한 바퀴 리프레시된다.</figcaption>
+</figure>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-2</span><span class="ttl">리프레시 스케줄러 — 무너지기 전에 채워라</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">리프레시 간격 배율 <output data-o="mul"></output></span><input type="range" data-k="mul" min="0.5" max="6" step="0.25" value="1" data-d="2" data-u="× tREFI"></label>
+      <label class="ctrl"><span class="lab">온도 <output data-o="temp"></output></span><input type="range" data-k="temp" min="25" max="105" step="5" value="45" data-d="0" data-u="°C"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn warn" id="rsReset">초기화</button><button class="sbtn" id="rsPause">일시정지</button><span class="hint">한 행 = 32셀. 색이 옅어질수록 전하가 빠진 셀. 빨간 테두리 = 리프레시 포인터</span></div>
+    <div class="canvas-box"><canvas id="cv2" data-h="330"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">시뮬레이션 시간</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">한 바퀴 (리프레시 윈도)</span><span class="v" data-r="win"></span></div>
+      <div class="ro"><span class="k">위험 셀 (전하 &lt; 60%)</span><span class="v" data-r="risk"></span></div>
+      <div class="ro"><span class="k">뒤집힌 비트</span><span class="v" data-r="flip"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 볼 것.</b> 배율 1(정상)에서는 약한 셀도 반쯤 비었다가 다시 채워진다. 배율을 3–4로 늘리거나(리프레시 절약) 온도를 85 °C 이상으로 올리면 약한 셀(★)이 문턱 아래로 떨어진 뒤 리프레시되어, 잘못된 값 "0"이 "튼튼하게" 다시 써진다. 리프레시가 늦으면 오류를 고치는 게 아니라 확정해 버린다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>리프레시의 비용</h2>
+<p>리프레시 중인 뱅크는 읽기·쓰기를 받을 수 없다. 칩 용량이 커지면 한 번의 REF가 처리해야 할 행이 늘어 tRFC가 길어지고, 미세화로 리텐션이 짧아지면 tREFI를 줄여야 한다. 그래서 용량이 커질수록 리프레시가 성능과 전력을 갉아먹는 비율이 커진다. 스마트폰이 잠들어 있을 때 DRAM 전력의 상당 부분이 리프레시에 쓰이는 이유이기도 하다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-3</span><span class="ttl">리프레시 오버헤드 계산기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">세대</span><select data-k="gen"><option value="ddr4">DDR4 (tREFI 7.8 µs)</option><option value="ddr5" selected>DDR5 (tREFI 3.9 µs)</option></select></label>
+      <label class="ctrl"><span class="lab">고온 모드 (85 °C 초과, tREFI ÷ 2)</span><select data-k="hot"><option value="0">끔</option><option value="1">켬</option></select></label>
+      <label class="ctrl"><span class="lab">칩 용량</span><select data-k="den"><option value="8">8 Gb</option><option value="16" selected>16 Gb</option><option value="32">32 Gb</option><option value="64">64 Gb (추정)</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="260"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">tRFC</span><span class="v" data-r="trfc"></span></div>
+      <div class="ro"><span class="k">tREFI</span><span class="v" data-r="trefi"></span></div>
+      <div class="ro"><span class="k">리프레시로 묶인 시간 비율</span><span class="v" data-r="ov"></span></div>
+      <div class="ro"><span class="k">1초 중 멈춰 있는 시간</span><span class="v" data-r="ms"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>참고.</b> tRFC 값은 JEDEC 표준의 대표값(전체 뱅크 리프레시 기준)을 단순화한 것이다. DDR5는 뱅크 하나씩 리프레시하는 <em>동일 뱅크 리프레시(REFsb)</em>를 도입해, 나머지 뱅크는 계속 일할 수 있게 함으로써 실제 성능 손실을 줄인다.</p>
+</div>
+
+<h2 id="s5"><span class="n">05</span>리프레시를 줄이려는 노력과 VRT</h2>
+<p>모든 셀을 가장 약한 셀에 맞춰 리프레시하는 것은 낭비다. 셀의 99.9 % 이상은 수 초를 버티기 때문이다. 그래서 행마다 리텐션을 측정해 강한 행은 드물게 리프레시하자는 아이디어(예: RAIDR, 2012)가 제안되었다. 모바일 DRAM은 이미 온도에 따라 리프레시 속도를 바꾸는 <span class="term">온도 보상 셀프 리프레시(TCSR)</span>, 쓰지 않는 영역은 리프레시하지 않는 <span class="term">부분 어레이 셀프 리프레시(PASR)</span>를 쓴다.</p>
+<p>그러나 행 단위 최적화를 가로막는 골칫거리가 있다. 어떤 셀은 리텐션 시간이 두 값 사이를 무작위로 오간다. 결함 트랩 하나가 전자를 잡았다 놓았다 하며 누설 경로를 켰다 껐다 하기 때문이다. 이를 <span class="term">가변 리텐션 시간(VRT, Variable Retention Time)</span>이라 한다. 측정할 때는 튼튼했던 셀이 몇 시간 뒤 약한 상태로 바뀔 수 있다.</p>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-4</span><span class="ttl">VRT 셀 24시간 관찰</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">상태 전환 빈도 <output data-o="rate"></output></span><input type="range" data-k="rate" min="0.05" max="3" step="0.05" value="0.4" data-d="2" data-u="회/시간"></label>
+      <label class="ctrl"><span class="lab">프로파일링 시간 <output data-o="prof"></output></span><input type="range" data-k="prof" min="0.5" max="12" step="0.5" value="1" data-d="1" data-u="시간"></label>
+      <label class="ctrl"><span class="lab">난수 씨앗 <output data-o="seed"></output></span><input type="range" data-k="seed" min="1" max="50" step="1" value="7" data-d="0"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="260"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">프로파일링 결과</span><span class="v" data-r="pr"></span></div>
+      <div class="ro"><span class="k">이후 약한 상태 시간</span><span class="v" data-r="weak"></span></div>
+      <div class="ro"><span class="k">판정</span><span class="v" data-r="ver"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 셀의 리텐션이 2 s(강함)와 120 ms(약함) 사이를 무작위로 오간다. 회색 구간 동안 리텐션을 측정해 "이 행은 256 ms마다 리프레시해도 된다"고 결론 내렸다고 하자. 그 뒤 셀이 약한 상태로 들어가는 순간(빨간 구간) 데이터를 잃는다. 씨앗과 프로파일링 시간을 바꿔 가며, 프로파일링을 길게 할수록 안전해지지만 결코 완벽하지 않다는 것을 확인해 보자.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">리프레시 주기를 결정하는 것은?</p><ol>
+<li>본분포의 평균 리텐션 시간</li><li>꼬리 분포에 있는 가장 약한 셀들의 리텐션 시간 (리페어 후)</li><li>CPU 클록 주파수</li><li>비트라인 커패시턴스</li></ol>
+<p class="explain">한 칩의 모든 셀이 안전해야 하므로, 리페어로 걸러 낸 뒤 남은 가장 약한 셀이 기준이 된다.</p></div>
+<div class="quiz" data-a="2"><p class="q">DDR5에서 tREFW = 32 ms, REF 명령이 8192번이면 tREFI는?</p><ol>
+<li>7.8 µs</li><li>1.95 µs</li><li>3.9 µs</li><li>32 µs</li></ol>
+<p class="explain">32 ms / 8192 ≈ 3.9 µs.</p></div>
+<div class="quiz" data-a="0"><p class="q">tRFC = 295 ns, tREFI = 3.9 µs라면 리프레시로 묶이는 시간 비율은 약?</p><ol>
+<li>7.6 %</li><li>0.76 %</li><li>13 %</li><li>76 %</li></ol>
+<p class="explain">295/3900 ≈ 0.076. 고온 모드에서 tREFI가 절반이 되면 15 %를 넘는다.</p></div>
+<div class="quiz" data-a="3"><p class="q">VRT(가변 리텐션 시간)가 문제인 이유는?</p><ol>
+<li>리텐션이 항상 0으로 수렴하기 때문에</li><li>온도와 무관하기 때문에</li><li>모든 셀에서 동시에 일어나기 때문에</li><li>한 번 측정한 리텐션이 나중에 짧아질 수 있어, 측정 기반 리프레시 최적화를 위험하게 만들기 때문에</li></ol>
+<p class="explain">결함 트랩의 상태 변화로 리텐션이 바뀐다. 그래서 측정 기반 최적화는 큰 안전 여유나 ECC와 함께 써야 한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+function Phi(z){ // 표준정규 누적분포
+  const t = 1/(1+0.2316419*Math.abs(z)), d = 0.3989423*Math.exp(-z*z/2);
+  const p = d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
+  return z > 0 ? 1-p : p;
+}
+const kB = 8.617e-5;
+function arr(T, Ea, T0=45){ return Math.exp(Ea/kB*(1/(T+273.15) - 1/(T0+273.15))); }
+
+/* 실험 3-1 */
+J.sim('sim1', (v, box) => {
+  const N = 16*Math.pow(2,30), tf = v.tf;
+  const fm = arr(v.T, 0.6), ft = arr(v.T, 0.55);
+  const mMed = 60*fm, mS = 0.7, tMed = 2*ft, tS = 1.0;
+  const cdf = (t, med, s) => Phi(Math.log(t/med)/s);
+  const bins = [], mainPts = [], tailPts = [];
+  for(let e=-3; e<3; e+=0.1){
+    const a = Math.pow(10,e), b = Math.pow(10,e+0.1);
+    const nm = N*(1-tf)*(cdf(b,mMed,mS)-cdf(a,mMed,mS)), nt = N*tf*(cdf(b,tMed,tS)-cdf(a,tMed,tS));
+    mainPts.push([Math.sqrt(a*b), Math.max(0.5, nm)]); tailPts.push([Math.sqrt(a*b), Math.max(0.5, nt)]);
+  }
+  const tw = v.tw/1000;
+  const fail = N*(1-tf)*cdf(tw,mMed,mS) + N*tf*cdf(tw,tMed,tS);
+  J.plot(document.getElementById('cv1'), {x:[1e-3,1e3], y:[1, 1e10], logx:true, logy:true, xlab:'리텐션 시간 (s, 로그)', ylab:'셀 수 (구간별, 로그)',
+    xf:t=>t>=1?t+' s':(t*1000)+' ms', yf:t=>'10^'+Math.round(Math.log10(t)),
+    series:[{pts:mainPts, color:'--jade', w:2.5, fill:.2},{pts:tailPts, color:'--red', w:2.5, fill:.2}],
+    bands:[{x0:1e-3, x1:tw, color:'--red', alpha:.07}],
+    vlines:[{x:tw, color:'--gold', label:'tREFW '+v.tw+' ms', dash:[]}], pad:{l:58}});
+  J.out(box,'fail', fail < 1 ? '< 1 개' : Math.round(fail).toLocaleString('ko-KR')+' 개', fail > 1e4 ? 'bad' : fail > 50 ? 'warn' : 'good');
+  J.out(box,'med', J.fmt(mMed,1)+' s');
+  J.out(box,'tmed', tMed >= 1 ? J.fmt(tMed,2)+' s' : J.fmt(tMed*1000,0)+' ms');
+  J.out(box,'af', '× '+J.fmt(ft,3));
+});
+
+/* 그림 3-2 타임라인 */
+(function(){
+  const s = document.getElementById('refTimeline');
+  J.svg('line', {x1:20, y1:90, x2:740, y2:90, stroke:'var(--ink3)', 'stroke-width':1.5}, s);
+  for(let i=0;i<5;i++){
+    const x = 40 + i*150;
+    J.svg('rect', {x, y:62, width:34, height:28, fill:'var(--red)', opacity:.8}, s);
+    J.svg('text', {x:x+17, y:80, 'text-anchor':'middle', class:'t-s', text:'REF', style:'fill:#fff;font-weight:700'}, s);
+    J.svg('rect', {x:x+34, y:62, width:116, height:28, fill:'var(--jade)', opacity:.25}, s);
+    J.svg('text', {x:x+92, y:80, 'text-anchor':'middle', class:'t-s', text:'읽기/쓰기 가능'}, s);
+  }
+  J.svg('path', {d:'M40 110 V118 H190 V110', fill:'none', stroke:'var(--indigo)', 'stroke-width':1.5}, s);
+  J.svg('text', {x:115, y:134, 'text-anchor':'middle', class:'t-m mono', text:'tREFI ≈ 3.9 µs', style:'fill:var(--indigo)'}, s);
+  J.svg('path', {d:'M40 54 V46 H74 V54', fill:'none', stroke:'var(--red)', 'stroke-width':1.5}, s);
+  J.svg('text', {x:57, y:38, 'text-anchor':'middle', class:'t-s mono', text:'tRFC ~295 ns', style:'fill:var(--red)'}, s);
+  J.svg('text', {x:740, y:38, 'text-anchor':'end', class:'t-s', text:'× 8192회 = tREFW 32 ms (모든 행 1회)'}, s);
+})();
+
+/* 실험 3-2 리프레시 스케줄러 */
+(function(){
+  const box = document.getElementById('sim2'), cv = document.getElementById('cv2');
+  const ROWS = 32, COLS = 32;
+  let cells, t, ptr, last, flips, paused = false, acc;
+  function init(){
+    const R = J.rng(11);
+    cells = [];
+    for(let r=0;r<ROWS;r++){ const row = []; for(let c=0;c<COLS;c++){
+      const bit = R() < 0.6 ? 1 : 0;
+      let tau = Math.exp(Math.log(4) + J.gauss(R)*0.6); // 초
+      if(R() < 0.012) tau = 0.09 + R()*0.12; // 약한 셀
+      row.push({bit, q: bit, tau, weak: tau < 0.3, dead:false});
+    } cells.push(row); }
+    t = 0; ptr = 0; last = new Array(ROWS).fill(0); flips = 0; acc = 0;
+  }
+  init();
+  const v = () => ({mul:+J.$('[data-k="mul"]',box).value, temp:+J.$('[data-k="temp"]',box).value});
+  function step(dt){
+    const p = v(), af = arr(p.temp, 0.55);
+    const simDt = dt*0.06; // 실제 1초 = 60 ms
+    const period = 0.064/ROWS*p.mul; // 한 행 리프레시 간격
+    t += simDt; acc += simDt;
+    cells.forEach(row => row.forEach(c => { if(c.bit && !c.dead) c.q *= Math.exp(-simDt/(c.tau*af)); }));
+    while(acc >= period){
+      acc -= period;
+      cells[ptr].forEach(c => { if(c.bit && !c.dead){ if(c.q < 0.5){ c.dead = true; c.q = 0; flips++; } else c.q = 1; } });
+      ptr = (ptr+1) % ROWS;
+    }
+  }
+  function draw(){
+    const p = v(), af = arr(p.temp, 0.55);
+    const {ctx, w, h} = J.fit(cv);
+    ctx.clearRect(0,0,w,h);
+    const cw = Math.min((w-60)/COLS, 22), ch = (h-20)/ROWS;
+    const jade = J.c('--jade'), line = J.c('--line2');
+    let risk = 0;
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+      const k = cells[r][c], x = 40 + c*cw, y = 10 + r*ch;
+      if(k.dead){ ctx.fillStyle = J.c('--red'); ctx.globalAlpha = .9; }
+      else if(k.bit){ ctx.fillStyle = jade; ctx.globalAlpha = .12 + .88*k.q; if(k.q < 0.6) risk++; }
+      else { ctx.fillStyle = line; ctx.globalAlpha = 1; }
+      ctx.fillRect(x+1, y+1, cw-2, ch-2); ctx.globalAlpha = 1;
+      if(k.weak && k.bit){ ctx.fillStyle = J.c('--ink'); ctx.font = `${Math.min(ch-2,11)}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(k.dead ? '✕' : '★', x+cw/2, y+ch/2+1); }
+    }
+    ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2; ctx.strokeRect(38, 10 + ptr*ch, COLS*cw+4, ch); ctx.lineWidth = 1;
+    ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='right'; ctx.textBaseline='middle';
+    for(let r=0;r<ROWS;r+=4) ctx.fillText('R'+r, 34, 10 + r*ch + ch/2);
+    J.out(box,'t', J.fmt(t*1000,0)+' ms');
+    J.out(box,'win', J.fmt(64*p.mul,0)+' ms');
+    J.out(box,'risk', risk, risk ? 'warn' : 'good');
+    J.out(box,'flip', flips, flips ? 'bad' : 'good');
+  }
+  J.$$('input', box).forEach(i => i.addEventListener('input', draw));
+  J.sim('sim2', () => draw());
+  document.getElementById('rsReset').onclick = () => { init(); draw(); };
+  const pb = document.getElementById('rsPause');
+  pb.onclick = () => { paused = !paused; pb.textContent = paused ? '계속' : '일시정지'; pb.classList.toggle('on', paused); };
+  J.loop(cv, dt => { if(!paused){ step(dt); draw(); } });
+})();
+
+/* 실험 3-3 오버헤드 */
+J.sim('sim3', (v, box) => {
+  const T = {ddr4:{8:350,16:550,32:880,64:1200}, ddr5:{8:195,16:295,32:410,64:600}};
+  const base = v.gen === 'ddr4' ? 7.8 : 3.9, trefi = base/(v.hot === '1' ? 2 : 1);
+  const trfc = T[v.gen][v.den];
+  const ov = trfc/(trefi*1000);
+  J.out(box,'trfc', trfc+' ns'); J.out(box,'trefi', J.fmt(trefi,2)+' µs');
+  J.out(box,'ov', J.fmt(ov*100,1)+' %', ov > 0.12 ? 'bad' : ov > 0.06 ? 'warn' : 'good');
+  J.out(box,'ms', J.fmt(ov*1000,0)+' ms');
+  const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+  ctx.clearRect(0,0,w,h);
+  const dens = [8,16,32,64], P = {l:50, r:20, t:20, b:40}, gw = (w-P.l-P.r)/dens.length;
+  const maxv = 35, Y = x => h-P.b - x/maxv*(h-P.t-P.b);
+  ctx.strokeStyle = J.c('--line2'); ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='right'; ctx.textBaseline='middle';
+  [0,10,20,30].forEach(y => { ctx.beginPath(); ctx.moveTo(P.l, Y(y)); ctx.lineTo(w-P.r, Y(y)); ctx.stroke(); ctx.fillText(y+'%', P.l-6, Y(y)); });
+  dens.forEach((d,i) => {
+    [['ddr4','0'],['ddr4','1'],['ddr5','0'],['ddr5','1']].forEach((g,j) => {
+      const tr = (g[0]==='ddr4'?7.8:3.9)/(g[1]==='1'?2:1), o = T[g[0]][d]/(tr*1000)*100;
+      const bw = gw/5, x = P.l + i*gw + 6 + j*bw;
+      const sel = g[0]===v.gen && g[1]===v.hot && d==v.den;
+      ctx.fillStyle = J.c(g[0]==='ddr4' ? '--indigo' : '--jade'); ctx.globalAlpha = g[1]==='1' ? .45 : .9;
+      if(sel){ ctx.globalAlpha = 1; ctx.fillStyle = J.c('--red'); }
+      ctx.fillRect(x, Y(Math.min(o,maxv)), bw-3, Y(0)-Y(Math.min(o,maxv))); ctx.globalAlpha = 1;
+    });
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(d+' Gb', P.l + i*gw + gw/2 - 4, h-P.b+6);
+  });
+  ctx.textAlign='left'; ctx.fillStyle = J.c('--ink2'); ctx.fillText('막대: DDR4 정상 · DDR4 고온 · DDR5 정상 · DDR5 고온 (빨강 = 현재 선택)', P.l, 2);
+});
+
+/* 실험 3-4 VRT */
+J.sim('sim4', (v, box) => {
+  const R = J.rng(v.seed*97+3);
+  const pts = []; let t = 0, s = R() < 0.6 ? 1 : 0; const segs = [];
+  while(t < 24){ const dur = -Math.log(1-R())/v.rate; segs.push([t, Math.min(24,t+dur), s]); t += dur; s = 1-s; }
+  segs.forEach(g => { pts.push([g[0], g[2] ? 2 : 0.12]); pts.push([g[1], g[2] ? 2 : 0.12]); });
+  const profWeak = segs.some(g => g[2]===0 && g[0] < v.prof);
+  const later = segs.filter(g => g[2]===0 && g[1] > v.prof).reduce((a,g) => a + g[1] - Math.max(g[0], v.prof), 0);
+  const bands = [{x0:0, x1:v.prof, color:'--ink3', alpha:.12}];
+  if(!profWeak) segs.filter(g => g[2]===0 && g[1] > v.prof).forEach(g => bands.push({x0:Math.max(g[0],v.prof), x1:g[1], color:'--red', alpha:.2}));
+  J.plot(document.getElementById('cv4'), {x:[0,24], y:[0.05, 5], logy:true, xlab:'시간 (시간)', ylab:'리텐션 (s, 로그)', yf:t=>t>=1?t+' s':(t*1000)+' ms',
+    series:[{pts, color:'--plum', w:2.5}], bands,
+    hlines:[{y:0.256, color:'--gold', label:'프로파일 기반 리프레시 256 ms'}, {y:0.064, color:'--jade', label:'기본 64 ms', dash:[2,3]}], vlines:[{x:v.prof, color:'--ink3', label:'프로파일링 끝'}], pad:{l:58}});
+  J.out(box,'pr', profWeak ? '약한 셀 발견 → 64 ms 유지' : '강한 셀 → 256 ms로 완화');
+  J.out(box,'weak', profWeak ? '—' : J.fmt(later,1)+' 시간');
+  J.out(box,'ver', profWeak ? '안전 (최적화 포기)' : later > 0 ? '데이터 손실!' : '운 좋게 안전', profWeak ? 'warn' : later > 0 ? 'bad' : 'good');
+});
+</script>
+</body>
+</html>

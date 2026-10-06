@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>집현전 · Jade Hall</title>
+<meta name="description" content="집현전(Jade Hall) — 펼치면 원리가 움직이는 한국형 인터랙티브 교과서 시리즈">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E賢%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/jade.css">
+<script src="assets/book.js"></script>
+<style>
+  .hero{display:grid; grid-template-columns:auto 1fr; gap:48px; align-items:center; padding:64px 0 36px}
+  .hero .vt{writing-mode:vertical-rl; font-family:var(--serif); font-weight:900; font-size:clamp(54px,8vw,96px); letter-spacing:.18em; color:var(--ink); line-height:1;
+    border-left:3px double var(--line); border-right:3px double var(--line); padding:18px 14px; position:relative}
+  .hero .vt .stamp{position:absolute; bottom:-14px; left:-26px; writing-mode:horizontal-tb; width:54px; height:54px; display:grid; place-items:center; background:var(--red); color:#fff8ee;
+    font-size:15px; letter-spacing:0; line-height:1.1; border-radius:4px; transform:rotate(-6deg); box-shadow:inset 0 0 0 3px rgba(255,255,255,.3); text-align:center}
+  .hero h1{font-size:clamp(32px,5vw,54px); font-weight:900; line-height:1.22; margin:12px 0 18px}
+  .hero h1 em{font-style:normal; color:var(--red)}
+  .hero p{font-size:17.5px; color:var(--ink2); max-width:620px}
+  .hero .cta{display:flex; gap:10px; flex-wrap:wrap; margin-top:22px}
+  @media (max-width:720px){ .hero{grid-template-columns:1fr; gap:24px; padding-top:36px} .hero .vt{writing-mode:horizontal-tb; border:none; border-top:3px double var(--line); border-bottom:3px double var(--line); padding:10px 0; font-size:48px} .hero .vt .stamp{left:auto; right:0; bottom:-10px} }
+
+  /* ── 서가 ── */
+  .shelfwrap{background:linear-gradient(180deg, color-mix(in srgb,var(--wood) 18%,var(--paper)) 0%, var(--paper2) 100%); border:1px solid var(--line); border-radius:6px; padding:22px 22px 6px; box-shadow:inset 0 2px 10px rgba(60,30,10,.12)}
+  .shelf-h{display:flex; justify-content:space-between; align-items:baseline; margin:0 4px 6px; flex-wrap:wrap; gap:8px}
+  .shelf-h h3{margin:0; font-size:18px} .shelf-h h3 .hj{color:var(--red); margin-right:8px}
+  .shelf-h span{font-size:13px; color:var(--ink3)}
+  .row{display:flex; gap:14px; align-items:flex-end; padding:18px 12px 0; overflow-x:auto; overflow-y:visible; scrollbar-width:none}
+  .plank{height:16px; margin:0 -8px 26px; background:linear-gradient(180deg, var(--wood2), var(--wood)); border-radius:3px; box-shadow:0 6px 10px rgba(40,20,5,.25)}
+  .book{flex:0 0 auto; position:relative; width:122px; height:172px; border-radius:2px 5px 5px 2px; color:var(--ink); text-decoration:none;
+    background-color:var(--c); background-image:
+      linear-gradient(90deg, rgba(0,0,0,.0) 0 82%, rgba(0,0,0,.18) 82% 83%, rgba(255,255,255,.08) 83% 100%),
+      repeating-linear-gradient(35deg, rgba(255,255,255,.05) 0 2px, transparent 2px 6px),
+      radial-gradient(circle at 30% 20%, rgba(255,255,255,.18), transparent 60%);
+    box-shadow:2px 3px 0 rgba(0,0,0,.18), 4px 6px 14px rgba(40,20,5,.25); transition:transform .2s, box-shadow .2s; transform-origin:bottom center}
+  .book:hover{transform:translateY(-10px) rotate(-1.5deg); text-decoration:none; box-shadow:2px 3px 0 rgba(0,0,0,.18), 8px 16px 22px rgba(40,20,5,.3)}
+  /* 오침안정법: 오른쪽 가장자리 다섯 구멍과 실 */
+  .book .stitch{position:absolute; right:7px; top:10px; bottom:10px; width:8px;
+    background:radial-gradient(circle, rgba(250,240,220,.95) 0 1.6px, transparent 2px) 0 0/8px 20%;}
+  .book .stitch:after{content:''; position:absolute; right:-7px; top:4%; bottom:4%; width:8px;
+    background:repeating-linear-gradient(180deg, transparent 0 calc(10% - 1px), rgba(250,240,220,.85) calc(10% - 1px) calc(10% + 1px), transparent calc(10% + 1px) 20%)}
+  /* 제첨: 왼쪽 위 제목 종이 */
+  .book .slip{position:absolute; left:10px; top:12px; min-height:96px; padding:8px 3px; background:#f6eedb; border:1px solid rgba(0,0,0,.15); white-space:nowrap;
+    writing-mode:vertical-rl; text-orientation:upright; font-family:var(--serif); font-weight:900; font-size:13.5px; line-height:1.4; color:#2a221a; letter-spacing:.08em; box-shadow:inset 0 0 0 2px #f6eedb, inset 0 0 0 3px rgba(120,80,40,.35)}
+  .book .slip small{display:none; font-weight:400; font-size:10px; letter-spacing:.05em; color:#6b5a48}
+  .book .kr{position:absolute; left:46px; right:20px; bottom:30px; font-size:11.5px; line-height:1.35; color:rgba(255,248,235,.92); font-weight:700; word-break:keep-all}
+  .book .code{position:absolute; left:46px; bottom:12px; font-family:var(--mono); font-size:10px; color:rgba(255,248,235,.65); letter-spacing:.1em}
+  .book .ribbon{position:absolute; top:-8px; right:22px; background:var(--red); color:#fff8ee; font-size:10.5px; padding:2px 6px; border-radius:2px; font-weight:700; letter-spacing:.05em}
+  .book.soon{filter:saturate(.55); opacity:.78}
+  .book.soon:hover{transform:translateY(-4px)}
+  .book.soon .ribbon{background:var(--ink3)}
+  .hint-row{font-size:13px; color:var(--ink3); text-align:right; margin:-14px 6px 12px}
+
+  section.block{padding:48px 0 10px}
+  section.block > h2{font-size:28px; margin:6px 0 8px; font-weight:900}
+  section.block > p.sub{color:var(--ink2); margin:0 0 22px; max-width:760px}
+  .parts{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px}
+  .part{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px; position:relative; overflow:hidden}
+  .part .hj{font-family:var(--serif); font-size:40px; font-weight:900; color:var(--red); line-height:1}
+  .part b{display:block; font-family:var(--serif); font-size:17px; margin:6px 0 2px}
+  .part p{margin:0; font-size:13.5px; color:var(--ink2)}
+  .part .cnt{position:absolute; right:14px; top:14px; font-size:12px; color:var(--ink3)}
+
+  .exps{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px}
+  .exp{display:flex; flex-direction:column; background:var(--card); border:1px solid var(--line); border-radius:4px; overflow:hidden; color:var(--ink); transition:transform .15s, box-shadow .15s}
+  .exp:hover{transform:translateY(-3px); box-shadow:var(--shadow); text-decoration:none; border-color:var(--jade)}
+  .exp svg{display:block; width:100%; height:120px; background:var(--paper2)}
+  .exp .bd{padding:14px 16px 16px}
+  .exp .bk{font-family:var(--mono); font-size:11px; color:var(--jade); letter-spacing:.1em}
+  .exp h3{margin:4px 0 6px; font-size:17px}
+  .exp p{margin:0 0 8px; font-size:13.5px; color:var(--ink2)}
+  .exp .go{font-size:13.5px; color:var(--red); font-weight:700}
+
+  .preface{display:grid; grid-template-columns:1fr; background:var(--card); border:1px solid var(--line); border-radius:4px; padding:30px 34px; position:relative;
+    background-image:repeating-linear-gradient(90deg, transparent 0 46px, var(--line2) 46px 47px); box-shadow:inset 0 0 0 6px var(--card), inset 0 0 0 7px var(--line)}
+  .preface h2{margin:0 0 12px; font-size:24px}
+  .preface p{margin:0 0 12px; background:var(--card); display:inline; line-height:2.05; box-decoration-break:clone; -webkit-box-decoration-break:clone}
+  .preface .pbody p{display:block; background:none}
+  .preface .pbody{background:color-mix(in srgb,var(--card) 92%,transparent)}
+  .preface .sign{text-align:right; font-family:var(--serif); color:var(--ink2); margin-top:12px}
+  .preface .sign .s{display:inline-grid; place-items:center; width:40px; height:40px; background:var(--red); color:#fff8ee; border-radius:3px; font-size:12px; line-height:1.05; writing-mode:vertical-rl; margin-left:10px; vertical-align:middle; transform:rotate(3deg)}
+  @media (max-width:640px){ .preface{padding:22px 18px} }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><span class="seal">集賢</span><span>집현전<small>JADE HALL</small></span></a>
+  <span class="spacer"></span>
+  <nav><a href="#shelf">서가</a><a href="#parts">분야</a><a href="#exp">실험</a><a href="#preface">서문</a></nav>
+  <button class="iconbtn" onclick="J.toggleTheme()" aria-label="밝기 전환">◐</button>
+</header>
+
+<div class="wrap">
+<section class="hero">
+  <div class="vt">集賢殿<span class="stamp">玉<br>堂</span></div>
+  <div>
+    <div class="kicker">The Interactive Library · 集賢殿 叢書</div>
+    <h1>책을 펼치면,<br><em>원리</em>가 움직입니다.</h1>
+    <p>집현전(Jade Hall)은 직접 만지며 배우는 인터랙티브 교과서 시리즈입니다. 옛 서책처럼 실로 엮은 한 권 한 권 안에, 슬라이더를 움직이고 3D 구조를 돌려 보는 실험이 가득합니다. 첫 권은 반도체 메모리의 심장, <b>DRAM</b>입니다.</p>
+    <div class="cta"><a class="btn red" href="dram/index.html">DRAM 書 펼치기 →</a><a class="btn ghost" href="#shelf">서가 둘러보기</a></div>
+  </div>
+</section>
+
+<section id="shelf" style="padding-top:10px">
+  <div class="shelfwrap" id="shelves"></div>
+</section>
+
+<section class="block" id="parts">
+  <div class="kicker">Five departments · 五部</div>
+  <h2>다섯 갈래의 서가</h2>
+  <p class="sub">옛 집현전이 학문을 나눠 연구했듯, 이 서가도 다섯 부(部)로 나뉩니다. 일하는 데 필요한 지식과 살아가는 데 필요한 지식을 함께 엮어 갑니다.</p>
+  <div class="parts" id="partList"></div>
+</section>
+
+<section class="block" id="exp">
+  <div class="kicker">Try it now · 直接 해보기</div>
+  <h2>궁금한 장면에서 시작해 보세요</h2>
+  <p class="sub">질문 하나를 고르고 직접 움직여 보세요. 각 실험은 해당 교과서의 장면으로 이어집니다.</p>
+  <div class="exps" id="expList"></div>
+</section>
+
+<section class="block" id="preface">
+  <div class="preface">
+    <h2>序 · 서문</h2>
+    <div class="pbody">
+      <p>1420년 세종은 궁 안에 집현전(集賢殿)을 두었습니다. 이름 그대로 "현명한 이들이 모이는 집"이었고, 학자들은 그곳에서 책을 모으고, 읽고, 토론하고, 마침내 누구나 쉽게 익힐 수 있는 글자를 만들었습니다. 어려운 지식을 모두의 것으로 만드는 일 — 이 시리즈가 그 이름을 빌린 이유입니다.</p>
+      <p>요즘 우리 곁의 어려운 지식은 반도체, 인공지능, 금융 같은 것들입니다. 회의실에서는 HBM, 리프레시, 로우해머 같은 단어가 매일 오가지만, 그 뒤에서 무슨 일이 벌어지는지 설명하기는 쉽지 않습니다. 그래서 이 책들은 밑줄 대신 실험을 택했습니다. 커패시터에서 전하가 새는 속도를 슬라이더로 바꿔 보고, 리페어 퍼즐을 직접 풀어 보며, 숫자가 왜 그 값인지 손끝으로 확인합니다.</p>
+      <p>책의 모양은 우리 옛 서책을 따랐습니다. 다섯 땀으로 엮은 오침안정법의 표지, 제목을 적은 제첨, 장마다 판심의 어미 문양을 두었습니다. 내용은 공대 학부 수준을 목표로 하되, 처음 보는 분도 그림과 실험만으로 큰 흐름을 잡을 수 있도록 썼습니다. 수치는 교육용 근사이며, 틀린 곳을 발견하시면 알려 주세요. 그것이 이 집현전을 키우는 토론입니다.</p>
+    </div>
+    <div class="sign">集賢殿 編纂室 <span class="s">玉堂</span></div>
+  </div>
+</section>
+</div>
+
+<footer class="site">집현전 Jade Hall — 한국형 인터랙티브 교과서 시리즈 · 수치는 교육용 근사 모델입니다.<br>콘텐츠 CC BY 4.0 · 코드 MIT</footer>
+
+<script>
+const SHELVES = [
+  {hj:'器', name:'기부(器部) · 반도체와 기기', note:'칩이 설계되고 만들어지고 쓰이기까지', books:[
+    {t:'DRAM 書', s:'記憶', kr:'디램: 전하 한 줌에서 데이터센터까지', code:'器 · 壹', c:'#2b4a7c', href:'dram/index.html'},
+    {t:'NAND 書', s:'貯藏', kr:'낸드 플래시와 SSD', code:'器 · 貳', c:'#7b3a5d'},
+    {t:'工程 書', s:'製造', kr:'반도체 제조 공정', code:'器 · 參', c:'#6b4426'},
+    {t:'包裝 書', s:'封止', kr:'패키징과 적층', code:'器 · 肆', c:'#2c7a68'},
+    {t:'感光 書', s:'映像', kr:'이미지 센서', code:'器 · 伍', c:'#8a2f28'},
+    {t:'顯示 書', s:'畫面', kr:'디스플레이', code:'器 · 陸', c:'#3c3a6b'}
+  ]},
+  {hj:'算', name:'산부(算部) · 컴퓨팅과 AI', note:'계산하는 기계와 배우는 기계', books:[
+    {t:'演算 書', s:'CPU', kr:'컴퓨터는 어떻게 계산하나', code:'算 · 壹', c:'#24564d'},
+    {t:'人工知能 書', s:'學習', kr:'신경망에서 LLM까지', code:'算 · 貳', c:'#5a2d4a'},
+    {t:'通信 書', s:'網', kr:'누구나 읽는 네트워크', code:'算 · 參', c:'#2f4f6f'}
+  ]},
+  {hj:'理', name:'이부(理部) · 자연의 이치', note:'빛, 소리, 힘이 움직이는 원리', books:[
+    {t:'光 書', s:'色', kr:'빛과 색', code:'理 · 壹', c:'#9a6a1f'},
+    {t:'電磁 書', s:'場', kr:'전기와 자기', code:'理 · 貳', c:'#38506a'}
+  ]},
+  {hj:'財', name:'재부(財部) · 돈과 경제', note:'월급을 받는 순간부터 필요한 지식', books:[
+    {t:'貨幣 書', s:'複利', kr:'돈과 금융의 기초', code:'財 · 壹', c:'#7a5a1c'},
+    {t:'株式 書', s:'市場', kr:'주식은 어떻게 움직이나', code:'財 · 貳', c:'#5c2a26'}
+  ]},
+  {hj:'生', name:'생부(生部) · 몸과 삶', note:'몸의 원리와 생활의 교양', books:[
+    {t:'身體 書', s:'循環', kr:'몸의 원리', code:'生 · 壹', c:'#7a2f3b'},
+    {t:'音樂 書', s:'律呂', kr:'소리와 음악', code:'生 · 貳', c:'#3b4f3a'}
+  ]}
+];
+(function(){
+  const el = document.getElementById('shelves');
+  el.innerHTML = SHELVES.map(s => `
+    <div class="shelf-h"><h3><span class="hj">${s.hj}</span>${s.name}</h3><span>${s.note} · ${s.books.filter(b=>b.href).length} / ${s.books.length}권 출간</span></div>
+    <div class="row">${s.books.map(b => `
+      <a class="book ${b.href ? '' : 'soon'}" style="--c:${b.c}" href="${b.href || '#shelf'}" ${b.href ? '' : 'aria-disabled="true" onclick="return false"'} title="${b.kr}">
+        <span class="ribbon">${b.href ? '出刊' : '近刊'}</span>
+        <span class="slip">${b.t}<small>${b.s}</small></span>
+        <span class="stitch"></span>
+        <span class="kr">${b.kr}</span>
+        <span class="code">${b.code}</span>
+      </a>`).join('')}</div>
+    <div class="plank"></div>`).join('') + '<p class="hint-row">출간(出刊)된 책을 누르면 바로 펼쳐집니다 · 근간(近刊)은 준비 중</p>';
+
+  const parts = [['器','기부 · 반도체와 기기','소자, 메모리, 공정, 패키징, 센서, 디스플레이'],['算','산부 · 컴퓨팅과 AI','CPU, 운영체제, 네트워크, 신경망과 LLM'],['理','이부 · 자연의 이치','빛과 색, 전기와 자기, 열과 힘'],['財','재부 · 돈과 경제','복리와 금리, 주식, 보험, 연금'],['生','생부 · 몸과 삶','몸의 원리, 소리와 음악, 사진']];
+  document.getElementById('partList').innerHTML = parts.map((p,i) => `<div class="part"><span class="cnt">${SHELVES[i].books.filter(b=>b.href).length} / ${SHELVES[i].books.length}권</span><div class="hj">${p[0]}</div><b>${p[1]}</b><p>${p[2]}</p></div>`).join('');
+
+  const E = [
+    ['DRAM 書 · 2장','1 비트는 정말 물통 하나일까?','셀에 1을 쓰고, 읽는 순간 사라지는 전하를 직접 확인','dram/chapters/cell.html#s2','cell'],
+    ['DRAM 書 · 3장','리프레시를 늦추면 무슨 일이?','약한 셀이 무너지기 전에 채우는 스케줄러 게임','dram/chapters/refresh.html#s3','refresh'],
+    ['DRAM 書 · 6장','메모리는 왜 기다려야 할까?','ACT·RD·PRE를 직접 보내 타이밍도를 그려 보기','dram/chapters/timing.html#s2','timing'],
+    ['DRAM 書 · 10장','고장 난 칩을 고칠 수 있을까?','여분 행·열 3개씩으로 불량을 덮는 리페어 퍼즐','dram/chapters/fab.html#s3','repair'],
+    ['DRAM 書 · 11장','옆집을 두드리면 비트가 뒤집힌다?','로우해머 공격과 TRR 방어를 실험대에서','dram/chapters/reliability.html#s1','hammer'],
+    ['DRAM 書 · 12장','AI는 왜 HBM이 필요할까?','12단 HBM 스택을 돌려 보고 루프라인으로 확인','dram/chapters/hbm.html#s1','hbm']
+  ];
+  const art = {
+    cell:`<rect x="40" y="20" width="16" height="90" fill="var(--indigo)"/><line x1="20" y1="35" x2="280" y2="35" stroke="var(--gold)" stroke-width="5"/><rect x="150" y="50" width="60" height="60" fill="var(--card)" stroke="var(--jade)" stroke-width="2"/><rect x="151" y="70" width="58" height="39" fill="var(--jade)"/><path d="M56 70 H120 V80 H150" stroke="var(--ink3)" stroke-width="2" fill="none"/>`,
+    refresh:Array.from({length:6},(_,r)=>Array.from({length:14},(_,c)=>`<rect x="${20+c*19}" y="${12+r*17}" width="16" height="14" fill="var(--jade)" opacity="${(0.2+((r*7+c*3)%10)/12).toFixed(2)}"/>`).join('')).join('')+`<rect x="18" y="45" width="268" height="18" fill="none" stroke="var(--red)" stroke-width="2.5"/>`,
+    timing:`<rect x="30" y="20" width="40" height="22" fill="var(--red)"/><rect x="120" y="20" width="34" height="22" fill="var(--indigo)"/><rect x="200" y="74" width="70" height="22" fill="var(--jade)"/><rect x="70" y="50" width="50" height="14" fill="var(--gold)" opacity=".6"/><path d="M137 44 L210 72" stroke="var(--ink3)" stroke-dasharray="3 3"/><text x="160" y="56" font-size="11" fill="var(--ink2)">CL</text><text x="78" y="61" font-size="10" fill="var(--ink2)">tRCD</text>`,
+    repair:Array.from({length:6},(_,r)=>Array.from({length:12},(_,c)=>`<rect x="${40+c*18}" y="${10+r*17}" width="16" height="15" fill="${r===2?'var(--gold-soft)':c===7?'var(--indigo-soft)':'var(--card)'}" stroke="var(--line2)"/>`).join('')).join('')+[[2,1],[2,5],[2,9],[0,7],[4,7],[5,3]].map(([r,c])=>`<circle cx="${48+c*18}" cy="${17+r*17}" r="5" fill="${(r===2||c===7)?'var(--jade)':'var(--red)'}"/>`).join(''),
+    hammer:Array.from({length:5},(_,r)=>`<rect x="30" y="${12+r*20}" width="240" height="16" fill="${r===2?'var(--red)':'var(--jade)'}" opacity="${r===2?.7:.45}"/>`).join('')+`<text x="150" y="58" font-size="13" text-anchor="middle" fill="#fff" font-weight="700">⚒ ⚒ ⚒</text><text x="210" y="37" font-size="13" fill="var(--red)" font-weight="700">✕</text><text x="90" y="77" font-size="13" fill="var(--red)" font-weight="700">✕</text>`,
+    hbm:`<rect x="30" y="80" width="250" height="14" fill="var(--paper)" stroke="var(--line)"/><rect x="45" y="50" width="90" height="30" fill="var(--plum)"/>`+Array.from({length:8},(_,i)=>`<rect x="170" y="${74-i*8}" width="90" height="6" fill="${i?'var(--jade)':'var(--indigo)'}" opacity="${i%2?.65:.95}"/>`).join('')+`<line x1="215" y1="18" x2="215" y2="80" stroke="var(--gold)" stroke-width="3"/>`
+  };
+  document.getElementById('expList').innerHTML = E.map(e => `<a class="exp" href="${e[3]}"><svg viewBox="0 0 300 120" aria-hidden="true">${art[e[4]]}</svg><div class="bd"><div class="bk">${e[0]}</div><h3>${e[1]}</h3><p>${e[2]}</p><span class="go">실험 열기 →</span></div></a>`).join('');
+})();
+</script>
+</body>
+</html>

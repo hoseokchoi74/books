@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>인터페이스: SDRAM에서 DDR5까지 · DRAM 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="interface">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 07 <span class="hanja">第七章 · 速</span></div>
+  <h1>인터페이스: SDRAM에서 DDR5까지</h1>
+  <p class="lead">셀 어레이는 20년 동안 거의 빨라지지 않았는데, DRAM 칩이 내보내는 데이터 속도는 수십 배가 되었다. 비결은 안쪽에서 넓게 읽어 바깥에서 빠르게 내보내는 것 — 프리페치와 직렬화다. 이 장은 클록의 양쪽 모서리, 버스트, 뱅크 그룹, 그리고 모바일·그래픽용 변종들을 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>SDR과 DDR의 차이, 데이터 스트로브(DQS)의 역할을 파형으로 설명할 수 있다.</li>
+  <li>프리페치 \(n\)과 코어 주파수, 인터페이스 속도의 관계를 계산한다.</li>
+  <li>모듈 대역폭 = 전송률 × 버스 폭 공식을 쓰고, DDR4와 DDR5 DIMM 구조 차이를 안다.</li>
+  <li>뱅크 그룹이 tCCD_S/tCCD_L을 통해 대역폭에 미치는 영향을 이해한다.</li>
+  <li>LPDDR·GDDR·HBM이 각각 무엇을 위해 무엇을 포기했는지 비교할 수 있다.</li>
+  <li>아이 다이어그램으로 신호 품질과 등화(equalization)의 필요성을 확인한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>클록의 양쪽 모서리</h2>
+<p>1990년대 중반의 <span class="term">SDRAM</span>(Synchronous DRAM)은 시스템 클록에 맞춰 명령과 데이터를 주고받기 시작했다. 클록이 올라가는 모서리(상승 에지)마다 데이터 한 비트. 2000년 무렵의 <span class="term">DDR</span>(Double Data Rate)은 내려가는 모서리(하강 에지)에서도 데이터를 보낸다. 같은 클록으로 두 배의 데이터. 그래서 "DDR5-4800"의 4800은 클록 주파수(2400 MHz)가 아니라 초당 전송 횟수(MT/s, mega-transfers per second)다.</p>
+<p>속도가 올라가면 데이터가 도착하는 시점이 선마다 조금씩 어긋난다. 그래서 DDR은 데이터와 함께 <span class="term">DQS</span>(data strobe)라는 별도의 "박자 신호"를 같이 보낸다. 받는 쪽은 시스템 클록이 아니라 DQS의 모서리에 맞춰 데이터를 샘플링한다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-1</span><span class="ttl">SDR · DDR · QDR 파형 비교</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">클록 주파수 <output data-o="f"></output></span><input type="range" data-k="f" min="100" max="3200" step="100" value="1600" data-d="0" data-u="MHz"></label>
+      <label class="ctrl"><span class="lab">방식</span><select data-k="m"><option value="1">SDR (상승 에지만)</option><option value="2" selected>DDR (양쪽 에지)</option><option value="4">QDR/PAM4 (주기당 4)</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="250"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">전송률</span><span class="v" data-r="mt"></span></div>
+      <div class="ro"><span class="k">비트 하나의 시간 (UI)</span><span class="v" data-r="ui"></span></div>
+      <div class="ro"><span class="k">빛이 그동안 가는 거리 (보드 위)</span><span class="v" data-r="d"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 위는 클록, 가운데는 DQS, 아래는 데이터(DQ) 선 하나다. 세로 점선이 데이터를 잡는 순간. 단위 간격(UI) 동안 신호는 PCB 위에서 겨우 몇 cm를 간다 — 그래서 고속 DDR에서는 배선 길이 1 mm까지 맞추고(length matching), 칩이 스스로 타이밍을 보정하는 트레이닝을 한다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>프리페치: 안에서 넓게, 밖에서 빠르게</h2>
+<p>셀 어레이와 열 경로는 수백 MHz 정도로밖에 돌지 못한다. 그런데 바깥 핀은 수 GHz로 데이터를 내보낸다. 이 차이를 메우는 방법이 <span class="term">n-비트 프리페치</span>다. RD 명령 한 번에 어레이에서 핀당 \(n\)비트를 한꺼번에 병렬로 꺼낸 뒤, 직렬화기(serializer)로 줄 세워 빠르게 내보낸다. 이 \(n\)비트 묶음이 곧 <span class="term">버스트 길이(BL)</span>다.</p>
+<div class="eq">$$\text{코어 주파수} = \frac{\text{전송률}}{n_{prefetch}}, \qquad \text{예: DDR5-6400} \Rightarrow \frac{6400}{16} = 400\ \text{MHz}$$</div>
+
+<div class="tbwrap"><table class="tb">
+<tr><th>세대</th><th>전송률 (MT/s)</th><th>프리페치 / BL</th><th>코어 주파수</th><th>전압 V_DD</th><th>뱅크 (그룹)</th></tr>
+<tr><td>SDRAM</td><td class="num">66–133</td><td>1n</td><td class="num">66–133 MHz</td><td class="num">3.3 V</td><td>2–4</td></tr>
+<tr><td>DDR</td><td class="num">200–400</td><td>2n</td><td class="num">100–200 MHz</td><td class="num">2.5 V</td><td>4</td></tr>
+<tr><td>DDR2</td><td class="num">400–1066</td><td>4n</td><td class="num">100–266 MHz</td><td class="num">1.8 V</td><td>4–8</td></tr>
+<tr><td>DDR3</td><td class="num">800–2133</td><td>8n</td><td class="num">100–266 MHz</td><td class="num">1.5 V</td><td>8</td></tr>
+<tr><td>DDR4</td><td class="num">1600–3200</td><td>8n (BL8)</td><td class="num">200–400 MHz</td><td class="num">1.2 V</td><td>16 (4 그룹)</td></tr>
+<tr><td>DDR5</td><td class="num">4800–8800</td><td>16n (BL16)</td><td class="num">300–550 MHz</td><td class="num">1.1 V</td><td>32 (8 그룹)</td></tr>
+</table></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-2</span><span class="ttl">프리페치와 직렬화기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">프리페치 n <output data-o="n"></output></span><input type="range" data-k="n" min="0" max="4" step="1" value="4" data-d="0"></label>
+      <label class="ctrl"><span class="lab">코어 주파수 <output data-o="core"></output></span><input type="range" data-k="core" min="100" max="600" step="25" value="400" data-d="0" data-u="MHz"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="pfPlay">▶ 버스트 하나 보내기</button></div>
+    <div class="canvas-box"><canvas id="cv2" data-h="260"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">버스트 길이</span><span class="v" data-r="bl"></span></div>
+      <div class="ro"><span class="k">핀 전송률</span><span class="v" data-r="mt"></span></div>
+      <div class="ro"><span class="k">버스트 하나 = (x8 칩)</span><span class="v" data-r="by"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>그림 설명.</b> 왼쪽 어레이가 코어 클록 한 번에 n비트를 병렬로 내놓으면, 오른쪽 직렬화기가 그것을 핀 하나로 줄 세운다. 코어는 그대로인데 n을 2배로 할 때마다 핀 속도도 2배가 된다. 대신 한 번에 꺼내는 양(접근 단위)도 커진다. DDR5가 BL16에서 64바이트 캐시 라인을 맞추기 위해 채널을 32비트 두 개로 쪼갠 이유다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>대역폭 계산</h2>
+<div class="eq">$$\text{대역폭 [GB/s]} = \frac{\text{전송률 [MT/s]} \times \text{버스 폭 [bit]}}{8 \times 1000}$$
+<div class="note">DDR5-6400 DIMM 하나(데이터 64비트) = 6400 × 64 / 8000 = 51.2 GB/s. 서버 CPU는 이런 채널을 8–12개 가진다.</div></div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-3</span><span class="ttl">메모리 종류별 대역폭 계산기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">종류</span><select data-k="t">
+        <option value="ddr4">DDR4 DIMM (64비트)</option><option value="ddr5" selected>DDR5 DIMM (2×32비트)</option><option value="lp5">LPDDR5X 패키지 (x64)</option><option value="gddr">GDDR6X/7 칩 (x32)</option><option value="hbm3">HBM3E 스택 (1024비트)</option><option value="hbm4">HBM4 스택 (2048비트)</option></select></label>
+      <label class="ctrl"><span class="lab">핀당 속도 <output data-o="r"></output></span><input type="range" data-k="r" min="1" max="40" step="0.1" value="6.4" data-d="1" data-u="Gb/s"></label>
+      <label class="ctrl"><span class="lab">개수 (채널/칩/스택) <output data-o="k"></output></span><input type="range" data-k="k" min="1" max="12" step="1" value="8" data-d="0"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="270"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">하나당 대역폭</span><span class="v" data-r="one"></span></div>
+      <div class="ro"><span class="k">시스템 총 대역폭</span><span class="v" data-r="tot"></span></div>
+      <div class="ro"><span class="k">70B 모델 (140 GB) 한 번 읽기</span><span class="v" data-r="llm"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>참고.</b> 종류를 바꾸면 대표 속도로 슬라이더가 맞춰진다. 막대는 각 종류의 대표 구성(하나당) 대역폭을 로그 눈금으로 비교한 것. 마지막 칸은 거대 언어 모델이 토큰 하나를 만들 때 가중치를 한 번 다 읽어야 한다고 가정한, 토큰당 최소 시간이다 — AI 추론이 왜 "메모리 대역폭 문제"인지 보여 준다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>뱅크 그룹: 빠른 길과 느린 길</h2>
+<p>DDR4부터 뱅크는 <span class="term">뱅크 그룹</span>으로 묶인다. 그룹 안의 뱅크들은 칩 안쪽의 데이터 경로(글로벌 I/O)를 공유하므로, 같은 그룹에 연속으로 RD를 보내면 <span class="term">tCCD_L</span>(long)만큼 기다려야 한다. 다른 그룹이면 경로가 달라 <span class="term">tCCD_S</span>(short)만에 다음 RD가 가능하다. 그래서 컨트롤러는 연속된 요청을 서로 다른 뱅크 그룹으로 흩뿌린다.</p>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-4</span><span class="ttl">같은 그룹 vs 다른 그룹 연속 읽기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">다른 그룹으로 가는 비율 <output data-o="x"></output></span><input type="range" data-k="x" min="0" max="100" step="5" value="50" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">tCCD_L <output data-o="l"></output></span><input type="range" data-k="l" min="8" max="16" step="1" value="12" data-d="0" data-u="clk"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="190"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">데이터 버스 사용률</span><span class="v" data-r="u"></span></div>
+      <div class="ro"><span class="k">빈 칸 (버블)</span><span class="v" data-r="b"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>그림 설명.</b> 위 줄은 RD 명령(색 = 뱅크 그룹), 아래 줄은 데이터 버스다. tCCD_S = 8 clk(= 버스트 길이)이면 다른 그룹 사이에는 빈틈이 없지만, 같은 그룹이 연속되면 tCCD_L − 8 만큼의 빈칸이 생긴다.</p>
+</div>
+
+<h2 id="s5"><span class="n">05</span>신호 품질: 아이 다이어그램</h2>
+<p>수 Gb/s에서 PCB 배선은 더 이상 단순한 전선이 아니다. 고주파 성분이 더 많이 감쇠해 앞 비트의 잔상이 다음 비트에 번지는 <span class="term">심볼 간 간섭(ISI)</span>이 생기고, 이웃 선의 크로스토크와 전원 잡음이 겹친다. 수많은 비트의 파형을 한 UI 폭에 겹쳐 그리면 눈 모양이 나타나는데, 이 <span class="term">아이(eye)</span>가 열려 있어야 수신기가 0과 1을 가를 수 있다. DDR5는 이를 위해 수신단에 <span class="term">DFE</span>(결정 궤환 등화기)를 넣었다.</p>
+
+<div class="sim" id="sim5">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-5</span><span class="ttl">아이 다이어그램</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">채널 손실 (ISI) <output data-o="isi"></output></span><input type="range" data-k="isi" min="0" max="0.6" step="0.01" value="0.25" data-d="2"></label>
+      <label class="ctrl"><span class="lab">잡음 σ <output data-o="nz"></output></span><input type="range" data-k="nz" min="0" max="0.15" step="0.005" value="0.03" data-d="3"></label>
+      <label class="ctrl"><span class="lab">지터 σ <output data-o="jt"></output></span><input type="range" data-k="jt" min="0" max="0.15" step="0.005" value="0.03" data-d="3" data-u="UI"></label>
+      <label class="ctrl"><span class="lab">DFE 등화</span><select data-k="dfe"><option value="0">끔</option><option value="1">켬</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv5" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">아이 높이 (근사)</span><span class="v" data-r="eh"></span></div>
+      <div class="ro"><span class="k">판정</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 볼 것.</b> 채널 손실을 0.4 이상으로 올리면 눈이 감긴다. DFE를 켜면 직전 비트의 잔상을 빼 주어 눈이 다시 열린다. 잡음과 지터는 등화로도 지울 수 없다.</p>
+</div>
+
+<h2 id="s6"><span class="n">06</span>가족들: LPDDR, GDDR, HBM</h2>
+<div class="tbwrap"><table class="tb">
+<tr><th></th><th>DDR5</th><th>LPDDR5X</th><th>GDDR7</th><th>HBM3E</th></tr>
+<tr><td>주 용도</td><td>PC·서버</td><td>스마트폰·노트북·AI PC</td><td>그래픽카드</td><td>AI 가속기·HPC</td></tr>
+<tr><td>핀당 속도</td><td class="num">4.8–8.8 Gb/s</td><td class="num">~8.5–10.7 Gb/s</td><td class="num">~28–32 Gb/s (PAM3)</td><td class="num">~9.6 Gb/s</td></tr>
+<tr><td>버스 폭 (단위당)</td><td>64비트 / DIMM</td><td>16비트 채널 여러 개</td><td>32비트 / 칩</td><td>1024비트 / 스택</td></tr>
+<tr><td>강점</td><td>용량, 교체 가능, 저렴</td><td>저전력(저전압 I/O, 깊은 절전)</td><td>칩당 대역폭</td><td>대역폭·에너지 효율</td></tr>
+<tr><td>포기한 것</td><td>대역폭 밀도</td><td>용량 확장성, 교체(기판에 직접 실장)</td><td>전력, 용량</td><td>가격, 용량, 실리콘 인터포저 필요</td></tr>
+</table></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">DDR5-5600에서 클록 주파수는?</p><ol><li>5600 MHz</li><li>2800 MHz</li><li>1400 MHz</li><li>350 MHz</li></ol>
+<p class="explain">DDR은 클록 한 주기에 두 번 전송한다. 5600 MT/s ÷ 2 = 2800 MHz. (코어는 5600/16 = 350 MHz)</p></div>
+<div class="quiz" data-a="2"><p class="q">DDR5-6400 DIMM(데이터 64비트) 하나의 최대 대역폭은?</p><ol><li>6.4 GB/s</li><li>25.6 GB/s</li><li>51.2 GB/s</li><li>409.6 GB/s</li></ol>
+<p class="explain">6400 × 64 / 8 = 51,200 MB/s.</p></div>
+<div class="quiz" data-a="0"><p class="q">프리페치 n을 늘리는 것의 대가는?</p><ol><li>최소 접근 단위(버스트 크기)가 커진다</li><li>셀 커패시턴스가 줄어든다</li><li>리프레시가 더 자주 필요하다</li><li>CL이 클록 수로 줄어든다</li></ol>
+<p class="explain">한 번 RD에 핀당 n비트가 나오므로 접근 단위가 커진다. 그래서 DDR5는 채널을 32비트 두 개로 나눠 BL16 × 32비트 = 64바이트를 맞췄다.</p></div>
+<div class="quiz" data-a="3"><p class="q">같은 뱅크 그룹에 연속 RD를 보낼 때 더 오래 기다려야 하는 이유는?</p><ol><li>리프레시 때문에</li><li>셀이 파괴적으로 읽히기 때문에</li><li>tFAW 때문에</li><li>그룹 내부의 데이터 경로를 공유해 tCCD_L이 적용되기 때문에</li></ol>
+<p class="explain">다른 그룹은 경로가 분리되어 tCCD_S만 지키면 된다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 7-1 파형 */
+J.sim('sim1', (v, box) => {
+  const {ctx, w, h} = J.fit(document.getElementById('cv1'));
+  ctx.clearRect(0,0,w,h);
+  const cyc = 6, L = 70, W = w - L - 10, per = W/cyc;
+  const lanes = [['CLK',40],['DQS',110],['DQ',180]];
+  ctx.font = '12px "JetBrains Mono"'; ctx.fillStyle = J.c('--ink2'); ctx.textAlign='right'; ctx.textBaseline='middle';
+  lanes.forEach(l => ctx.fillText(l[0], L-10, l[1]));
+  const A = 18;
+  // CLK
+  ctx.strokeStyle = J.c('--ink'); ctx.lineWidth = 2; ctx.beginPath();
+  for(let i=0;i<cyc;i++){ const x = L + i*per; ctx.lineTo(x, 40+A); ctx.lineTo(x, 40-A); ctx.lineTo(x+per/2, 40-A); ctx.lineTo(x+per/2, 40+A); }
+  ctx.stroke();
+  // DQS (데이터와 함께 토글)
+  const m = +v.m, n = cyc*m;
+  ctx.strokeStyle = J.c('--gold'); ctx.beginPath();
+  for(let i=0;i<n;i++){ const x = L + i*W/n, y = i%2 ? 110+A : 110-A; ctx.lineTo(x, i%2 ? 110-A : 110+A); ctx.lineTo(x, y); ctx.lineTo(x + W/n, y); }
+  ctx.stroke();
+  // DQ 데이터 눈
+  const R = J.rng(4);
+  for(let i=0;i<n;i++){
+    const x0 = L + i*W/n, x1 = x0 + W/n, e = Math.min(6, W/n*0.15);
+    ctx.strokeStyle = J.c('--jade'); ctx.fillStyle = J.c('--jade-soft');
+    ctx.beginPath(); ctx.moveTo(x0, 180); ctx.lineTo(x0+e, 180-A); ctx.lineTo(x1-e, 180-A); ctx.lineTo(x1, 180); ctx.lineTo(x1-e, 180+A); ctx.lineTo(x0+e, 180+A); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = J.c('--ink'); ctx.textAlign='center'; ctx.font = `${Math.min(12, W/n*0.4)}px "JetBrains Mono"`; ctx.fillText(R()<.5?'0':'1', (x0+x1)/2, 180);
+    ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 1; ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo((x0+x1)/2, 70); ctx.lineTo((x0+x1)/2, 205); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 2;
+  }
+  ctx.lineWidth = 1;
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left';
+  ctx.fillText(`클록 ${cyc}주기 동안 데이터 ${n}비트`, L, h-12);
+  const mt = v.f*m, ui = 1e3/mt;
+  J.out(box,'mt', J.fmt(mt,0)+' MT/s');
+  J.out(box,'ui', J.fmt(ui*1000,1)+' ps');
+  J.out(box,'d', J.fmt(ui*1e-9*1.5e8*100,1)+' cm');
+});
+
+/* 7-2 프리페치 */
+(function(){
+  let anim = -1;
+  const s = J.sim('sim2', (v, box) => {
+    const n = Math.pow(2, v.n);
+    J.$('[data-o="n"]', box).textContent = n + 'n';
+    const mt = v.core*n;
+    J.out(box,'bl', 'BL'+n); J.out(box,'mt', J.fmt(mt,0)+' MT/s'); J.out(box,'by', (n*8/8)+' 바이트');
+    const {ctx, w, h} = J.fit(document.getElementById('cv2'));
+    ctx.clearRect(0,0,w,h);
+    const R = J.rng(17), bits = Array.from({length:n}, () => R()<.5?0:1);
+    // 어레이
+    ctx.fillStyle = J.c('--jade-soft'); ctx.fillRect(14, 30, 120, 190); ctx.strokeStyle = J.c('--jade'); ctx.strokeRect(14.5, 30.5, 120, 190);
+    ctx.fillStyle = J.c('--ink'); ctx.font = '600 13px "Noto Sans KR"'; ctx.textAlign='center'; ctx.fillText('셀 어레이', 74, 22);
+    ctx.font = '11px "Noto Sans KR"'; ctx.fillStyle = J.c('--ink2'); ctx.fillText(v.core+' MHz', 74, 236);
+    // 병렬 선
+    const sx = 150, sxe = Math.min(w*0.45, 320), bh = Math.min(10, 180/n);
+    const prog = anim < 0 ? 1 : anim;
+    for(let i=0;i<n;i++){
+      const y = 40 + i*(180/n) + (180/n)/2;
+      ctx.strokeStyle = J.c('--indigo'); ctx.lineWidth = Math.max(1, bh*0.3); ctx.beginPath(); ctx.moveTo(134, y); ctx.lineTo(sxe, y); ctx.stroke();
+      ctx.fillStyle = J.c(bits[i] ? '--jade' : '--paper2'); ctx.fillRect(sx + (sxe-sx-14)*Math.min(1, prog*2) , y-bh/2, 12, bh);
+    }
+    ctx.lineWidth = 1;
+    // 직렬화기
+    ctx.fillStyle = J.c('--gold-soft'); ctx.fillRect(sxe, 30, 60, 190); ctx.strokeStyle = J.c('--gold'); ctx.strokeRect(sxe+.5, 30.5, 60, 190);
+    ctx.fillStyle = J.c('--ink'); ctx.font = '600 12px "Noto Sans KR"'; ctx.fillText('직렬화기', sxe+30, 22);
+    ctx.fillText(n+' : 1', sxe+30, 128);
+    // 핀 출력
+    const px = sxe + 70, pw = w - px - 20, ub = pw/n, py = 125;
+    ctx.strokeStyle = J.c('--ink3'); ctx.beginPath(); ctx.moveTo(sxe+60, py); ctx.lineTo(w-10, py); ctx.stroke();
+    const shown = anim < 0 ? n : Math.max(0, Math.floor((anim-0.5)*2*n));
+    for(let i=0;i<shown && i<n;i++){
+      const x = px + i*ub;
+      ctx.fillStyle = J.c(bits[i] ? '--jade' : '--paper2'); ctx.strokeStyle = J.c('--jade'); ctx.fillRect(x+1, py-14, ub-2, 28); ctx.strokeRect(x+1.5, py-13.5, ub-3, 27);
+      if(ub > 12){ ctx.fillStyle = J.c('--ink'); ctx.font = '11px "JetBrains Mono"'; ctx.fillText(bits[i], x+ub/2, py+4); }
+    }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left';
+    ctx.fillText('핀 DQ: '+J.fmt(mt,0)+' MT/s → 코어 클록 1주기('+J.fmt(1000/v.core,2)+' ns) 동안 '+n+'비트', px, py+40);
+  });
+  document.getElementById('pfPlay').onclick = () => { anim = 0; };
+  J.loop(document.getElementById('cv2'), dt => { if(anim >= 0){ anim += dt*0.6; if(anim >= 1){ anim = -1; } s.run(); } });
+})();
+
+/* 7-3 대역폭 */
+(function(){
+  const T = {ddr4:{w:64,r:3.2,k:8,n:'DDR4 DIMM'}, ddr5:{w:64,r:6.4,k:8,n:'DDR5 DIMM'}, lp5:{w:64,r:8.533,k:4,n:'LPDDR5X'}, gddr:{w:32,r:32,k:12,n:'GDDR7'}, hbm3:{w:1024,r:9.6,k:8,n:'HBM3E'}, hbm4:{w:2048,r:8,k:8,n:'HBM4'}};
+  let lastT = 'ddr5';
+  const s = J.sim('sim3', (v, box) => {
+    if(v.t !== lastT){ lastT = v.t; const sl = J.$('[data-k="r"]', box), kl = J.$('[data-k="k"]', box); sl.value = T[v.t].r; kl.value = T[v.t].k; return s.run(); }
+    const one = v.r*T[v.t].w/8, tot = one*v.k;
+    J.out(box,'one', J.fmt(one,1)+' GB/s'); J.out(box,'tot', tot >= 1000 ? J.fmt(tot/1000,2)+' TB/s' : J.fmt(tot,0)+' GB/s');
+    const ms = 140/tot*1000;
+    J.out(box,'llm', J.fmt(ms,1)+' ms → 최대 '+J.fmt(1000/ms,0)+' 토큰/s', ms > 100 ? 'bad' : ms > 20 ? 'warn' : 'good');
+    const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+    ctx.clearRect(0,0,w,h);
+    const keys = Object.keys(T), P = {l:120, r:90, t:14, b:20}, bh = (h-P.t-P.b)/keys.length;
+    const X = gb => P.l + (Math.log10(gb) - 0)/(Math.log10(3000))*(w-P.l-P.r);
+    keys.forEach((k,i) => {
+      const val = k === v.t ? one : T[k].r*T[k].w/8, y = P.t + i*bh;
+      ctx.fillStyle = J.c(k === v.t ? '--red' : k.startsWith('hbm') ? '--plum' : '--jade'); ctx.globalAlpha = k === v.t ? 1 : .7;
+      ctx.fillRect(P.l, y+4, X(val)-P.l, bh-8); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c('--ink'); ctx.font = '12.5px "Noto Sans KR"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(T[k].n, P.l-8, y+bh/2);
+      ctx.textAlign='left'; ctx.font = '12px "JetBrains Mono"'; ctx.fillText(J.fmt(val,1)+' GB/s', X(val)+6, y+bh/2);
+    });
+  });
+})();
+
+/* 7-4 뱅크 그룹 */
+J.sim('sim4', (v, box) => {
+  const R = J.rng(21); const S = 8; let t = 0, g = 0; const rds = [];
+  for(let i=0;i<24;i++){ const ng = R() < v.x/100 ? (g + 1 + Math.floor(R()*7)) % 8 : g; if(i) t += (ng === g ? v.l : S); g = ng; rds.push({t, g}); }
+  const end = rds[rds.length-1].t + S, busy = rds.length*S;
+  const {ctx, w, h} = J.fit(document.getElementById('cv4'));
+  ctx.clearRect(0,0,w,h);
+  const L = 60, X = c => L + c/Math.max(end, 200)*(w-L-10);
+  const cols = ['--red','--jade','--indigo','--gold','--plum','--ink3','--red','--jade'];
+  ctx.font = '12px "Noto Sans KR"'; ctx.fillStyle = J.c('--ink2'); ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText('RD', L-8, 50); ctx.fillText('DQ', L-8, 120);
+  rds.forEach(r => {
+    ctx.fillStyle = J.c(cols[r.g]); ctx.globalAlpha = r.g >= 6 ? .55 : .9;
+    ctx.fillRect(X(r.t), 38, Math.max(3, X(r.t+2)-X(r.t)), 24);
+    ctx.fillRect(X(r.t+40), 108, X(r.t+40+S)-X(r.t+40)-1, 24); ctx.globalAlpha = 1;
+    if(X(r.t+2)-X(r.t) > 12){ ctx.fillStyle='#fff'; ctx.font='10px "JetBrains Mono"'; ctx.textAlign='left'; ctx.fillText('G'+r.g, X(r.t)+2, 50); }
+  });
+  ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('색 = 뱅크 그룹 · RD 후 CL(40 clk) 뒤에 데이터', L, 170);
+  J.out(box,'u', J.fmt(busy/(end)*100,0)+' %', busy/end > .9 ? 'good' : busy/end > .7 ? 'warn' : 'bad');
+  J.out(box,'b', (end - busy)+' clk');
+});
+
+/* 7-5 아이 다이어그램 */
+J.sim('sim5', (v, box) => {
+  const {ctx, w, h} = J.fit(document.getElementById('cv5'));
+  ctx.clearRect(0,0,w,h);
+  const R = J.rng(5), N = 400, sps = 40, a = v.isi, dfe = v.dfe === '1';
+  const x = Array.from({length:N}, () => R()<.5 ? -1 : 1);
+  // 비트 단위 채널: v_i = (1-a)x_i + a v_(i-1)  (1차 저역통과 ISI)
+  const lv = []; x.forEach((b,i) => lv.push((1-a)*b + a*(i ? lv[i-1] : 0)));
+  // DFE: 이미 판정한 직전 비트의 꼬리 a·v_(i-1)를 빼 준다
+  const out = lv.map((q,i) => dfe ? q - a*(i ? lv[i-1] : 0) : q);
+  const W = w - 60, H = h - 40, ox = 40, oy = 20, smp = 0.8;
+  ctx.strokeStyle = J.c('--line2'); ctx.strokeRect(ox+.5, oy+.5, W, H);
+  ctx.strokeStyle = J.c('--jade'); ctx.globalAlpha = .13; ctx.lineWidth = 1.2;
+  let minHi = 9, maxLo = -9;
+  for(let i=2;i<N-2;i++){
+    const jit = J.gauss(R)*v.jt*W/2;
+    ctx.beginPath();
+    for(let u=0; u<2; u++){
+      const p = out[i+u-1], c = out[i+u];
+      for(let s=0;s<=sps;s++){
+        const f = Math.min(1, s/(sps*0.6)), val = p + (c-p)*(0.5-0.5*Math.cos(Math.PI*f)) + J.gauss(R)*v.nz;
+        const xx = ox + (u + s/sps)/2*W + jit, yv = oy + H/2 - val*H*0.42;
+        (u===0 && s===0) ? ctx.moveTo(xx, yv) : ctx.lineTo(xx, yv);
+        if(u === 0 && s === Math.round(sps*smp)){ if(x[i] > 0) minHi = Math.min(minHi, val); else maxLo = Math.max(maxLo, val); }
+      }
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1; ctx.lineWidth = 1;
+  ctx.strokeStyle = J.c('--red'); ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(ox + W*smp/2, oy); ctx.lineTo(ox + W*smp/2, oy+H); ctx.stroke(); ctx.setLineDash([]);
+  const eh = Math.max(0, minHi - maxLo)/2;
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('2 UI 폭으로 400비트 겹쳐 그림 · 빨간 점선 = 샘플 시점', ox, h-6);
+  J.out(box,'eh', J.fmt(eh*100,0)+' %', eh > .35 ? 'good' : eh > .12 ? 'warn' : 'bad');
+  J.out(box,'ok', eh > .12 ? '눈이 열림 — 수신 가능' : '눈이 감김 — 오류 다발', eh > .12 ? 'good' : 'bad');
+});
+</script>
+</body>
+</html>

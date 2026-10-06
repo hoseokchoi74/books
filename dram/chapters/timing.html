@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>명령과 타이밍 · DRAM 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="timing">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 06 <span class="hanja">第六章 · 時</span></div>
+  <h1>명령과 타이밍</h1>
+  <p class="lead">DRAM은 스스로 생각하지 않는다. 컨트롤러가 보내는 몇 가지 명령 — 행을 열고(ACT), 읽고(RD), 쓰고(WR), 닫는(PRE) — 을 정해진 시간 간격에 맞춰 수행할 뿐이다. 그 간격들, tRCD·CL·tRP·tRAS가 메모리 성능의 문법이다. 이 장에서는 직접 명령을 보내 보며 그 문법을 익힌다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>ACT·RD·WR·PRE·REF 명령의 의미와 뱅크 상태 변화를 설명할 수 있다.</li>
+  <li>tRCD, CL, tRP, tRAS, tRC, tWR의 물리적 원인을 앞 장의 회로와 연결한다.</li>
+  <li>로우 버퍼 히트·미스·충돌의 지연을 계산하고, 오픈/클로즈 페이지 정책을 비교한다.</li>
+  <li>"CL 숫자는 커졌는데 지연은 그대로"인 이유를 클록 주기로 설명할 수 있다.</li>
+  <li>뱅크 병렬성과 tRRD·tFAW 제약이 대역폭에 미치는 영향을 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>명령의 문법</h2>
+<p>각 뱅크는 단순한 상태 기계다. 닫힌(idle, 프리차지된) 상태에서 <code>ACT</code>(activate)를 받으면 행 하나를 센스 앰프로 올려 <strong>열린(active)</strong> 상태가 된다. 열린 행에 대해 <code>RD</code>/<code>WR</code>를 원하는 만큼 보낼 수 있다. 다른 행이 필요하면 <code>PRE</code>(precharge)로 행을 닫고 비트라인을 \(V_{DD}/2\)로 되돌린 뒤 다시 ACT 한다. <code>REF</code>는 닫힌 상태에서만 받는다.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 760 230" role="img" aria-label="뱅크 상태 기계">
+  <defs><marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink2)"/></marker></defs>
+  <rect x="40" y="80" width="150" height="70" rx="35" class="s-paper2" stroke="var(--ink3)" stroke-width="2"/>
+  <text x="115" y="112" text-anchor="middle" class="t-l">닫힘 (Idle)</text><text x="115" y="132" text-anchor="middle" class="t-s">BL = V_DD/2</text>
+  <rect x="320" y="80" width="150" height="70" rx="35" class="s-jadesoft" stroke="var(--jade)" stroke-width="2"/>
+  <text x="395" y="112" text-anchor="middle" class="t-l">열림 (Active)</text><text x="395" y="132" text-anchor="middle" class="t-s">행 하나가 SA에</text>
+  <rect x="580" y="80" width="150" height="70" rx="35" class="s-goldsoft" stroke="var(--gold)" stroke-width="2"/>
+  <text x="655" y="112" text-anchor="middle" class="t-l">리프레시</text><text x="655" y="132" text-anchor="middle" class="t-s">tRFC 동안</text>
+  <path d="M190 100 Q255 60 320 100" fill="none" stroke="var(--ink2)" stroke-width="2" marker-end="url(#a6)"/><text x="255" y="62" text-anchor="middle" class="t-m mono" style="fill:var(--red)">ACT (행 주소)</text>
+  <path d="M320 135 Q255 175 190 135" fill="none" stroke="var(--ink2)" stroke-width="2" marker-end="url(#a6)"/><text x="255" y="190" text-anchor="middle" class="t-m mono" style="fill:var(--ink2)">PRE</text>
+  <path d="M370 80 C350 20 440 20 420 80" fill="none" stroke="var(--ink2)" stroke-width="2" marker-end="url(#a6)"/><text x="395" y="20" text-anchor="middle" class="t-m mono" style="fill:var(--indigo)">RD / WR (열 주소)</text>
+  <path d="M115 150 C140 225 600 225 640 150" fill="none" stroke="var(--ink3)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a6)"/><text x="400" y="222" text-anchor="middle" class="t-s">REF (모든 뱅크가 닫혀 있을 때)</text>
+</svg>
+<figcaption><b>그림 6-1.</b> 뱅크 하나의 상태 기계(단순화). 실제 칩에는 파워다운·셀프 리프레시 등 상태가 더 있다.</figcaption>
+</figure>
+
+<h2 id="s2"><span class="n">02</span>시간 간격들은 어디서 오는가</h2>
+<div class="tbwrap"><table class="tb">
+<tr><th>파라미터</th><th>뜻</th><th>물리적 원인</th><th>DDR5-4800 (근사)</th></tr>
+<tr><td><b>tRCD</b></td><td>ACT → RD/WR 최소 간격</td><td>워드라인 상승 + 전하 공유 + 센싱(4장 ①–③)</td><td class="num">~16 ns</td></tr>
+<tr><td><b>CL</b> (tCL)</td><td>RD → 첫 데이터</td><td>열 선택, 로컬/글로벌 I/O 증폭, 파이프라인, 출력 드라이버</td><td class="num">40 클록 ≈ 16.7 ns</td></tr>
+<tr><td><b>tRAS</b></td><td>ACT → PRE 최소 간격</td><td>센싱 + 재저장 완료(셀이 다시 꽉 차야 함)</td><td class="num">~32 ns</td></tr>
+<tr><td><b>tRP</b></td><td>PRE → 다음 ACT</td><td>워드라인 하강 + 비트라인 이퀄라이즈</td><td class="num">~16 ns</td></tr>
+<tr><td><b>tRC</b></td><td>같은 뱅크 ACT → ACT</td><td>tRAS + tRP</td><td class="num">~48 ns</td></tr>
+<tr><td><b>tWR</b></td><td>마지막 쓰기 데이터 → PRE</td><td>쓴 값이 셀 커패시터에 충분히 차오를 시간</td><td class="num">~30 ns</td></tr>
+<tr><td><b>tRRD / tFAW</b></td><td>다른 뱅크 ACT 간격 / 4개 ACT 창</td><td>ACT 순간 전류(전원망 잡음) 제한</td><td class="num">~5 ns / ~13 ns</td></tr>
+</table></div>
+<p>제품 사양에 흔히 적히는 "40-39-39-77"은 순서대로 CL–tRCD–tRP–tRAS를 <strong>클록 수</strong>로 쓴 것이다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-1</span><span class="ttl">명령 보내기 — 타이밍도 만들기</span></div>
+  <div class="sim-b">
+    <div class="btnrow">
+      <select id="grade"><option value="ddr4">DDR4-3200 (22-22-22-52)</option><option value="ddr5" selected>DDR5-4800 (40-39-39-77)</option><option value="ddr56">DDR5-6400 (52-52-52-102)</option></select>
+      <label class="hint">행 <select id="rowSel"><option>7</option><option>12</option><option>300</option></select></label>
+    </div>
+    <div class="btnrow">
+      <button class="sbtn" data-cmd="ACT" style="border-color:var(--red);color:var(--red)">ACT</button>
+      <button class="sbtn" data-cmd="RD" style="border-color:var(--indigo);color:var(--indigo)">RD</button>
+      <button class="sbtn" data-cmd="WR" style="border-color:var(--plum);color:var(--plum)">WR</button>
+      <button class="sbtn" data-cmd="PRE">PRE</button>
+      <button class="sbtn warn" id="tReset">처음부터</button>
+      <button class="sbtn" id="tDemo">예시: 히트 2번 → 충돌</button>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="250"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">뱅크 상태</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">경과 시간</span><span class="v" data-r="tm"></span></div>
+      <div class="ro"><span class="k">마지막 명령</span><span class="v" data-r="msg" style="font-size:13px;font-family:var(--sans)"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>사용법.</b> 버튼을 누르면 그 명령이 <em>규칙상 가장 빠른 시점</em>에 들어간다. 기다려야 했다면 이유(tRCD, tRAS…)가 표시된다. 순서가 틀리면(예: 닫힌 뱅크에 RD) 거부된다. ACT → RD를 보내 첫 데이터까지의 시간을 확인하고, 다른 행을 고른 뒤 ACT를 눌러 보자 — 먼저 PRE가 필요하다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>로우 버퍼: 히트, 미스, 충돌</h2>
+<p>센스 앰프에 올라와 있는 행을 <span class="term">로우 버퍼(row buffer)</span>라 부른다. 요청한 데이터가 이미 열린 행에 있으면 <span class="term">히트</span>로 CL만 기다리면 된다. 뱅크가 닫혀 있으면 <span class="term">미스</span>로 tRCD + CL, 다른 행이 열려 있으면 <span class="term">충돌(conflict)</span>로 tRP + tRCD + CL이 걸린다.</p>
+<div class="eq">$$t_{hit} = t_{CL},\qquad t_{miss} = t_{RCD} + t_{CL},\qquad t_{conflict} = t_{RP} + t_{RCD} + t_{CL}$$</div>
+<p>행을 열어 둔 채 다음 요청을 기다리는 <span class="term">오픈 페이지 정책</span>은 지역성이 높을 때 유리하고, 매번 바로 닫는 <span class="term">클로즈 페이지 정책</span>은 무작위 접근이 많을 때 충돌을 피한다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-2</span><span class="ttl">오픈 페이지 vs 클로즈 페이지</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">같은 행 재접근 확률 (지역성) <output data-o="p"></output></span><input type="range" data-k="p" min="0" max="100" step="1" value="60" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">정책</span><select data-k="pol"><option value="open">오픈 페이지</option><option value="close">클로즈 페이지</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="250"></canvas></div>
+    <div class="readouts">
+      <div class="ro good"><span class="k">히트</span><span class="v" data-r="h"></span></div>
+      <div class="ro warn"><span class="k">미스</span><span class="v" data-r="m"></span></div>
+      <div class="ro bad"><span class="k">충돌</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">평균 지연 (500회 접근)</span><span class="v" data-r="avg"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 두 선은 지역성에 따른 이론 평균 지연이다(DDR5-4800). 두 선이 만나는 지점보다 지역성이 낮으면 클로즈 페이지가 낫다. 빨간 점은 현재 설정으로 무작위 접근 500회를 실제로 흉내 낸 결과다. 실제 컨트롤러는 둘을 섞은 적응형 정책을 쓴다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>CL은 커졌는데 왜 빨라졌다고 할까</h2>
+<p>DDR-400의 CL은 3이었고 DDR5-4800의 CL은 40이다. 열 배 넘게 느려진 걸까? 아니다. CL은 <strong>클록 수</strong>이고, 클록 주기는 그만큼 짧아졌다. 나노초로 환산하면 20년 넘게 DRAM의 첫 데이터 지연은 13–17 ns 근처에 머물러 있다. 셀과 비트라인의 물리(전하 공유, 센싱, 재저장)가 거의 그대로이기 때문이다. 빨라진 것은 <strong>대역폭</strong>, 즉 데이터가 한 번 나오기 시작한 뒤 쏟아지는 속도다.</p>
+<div class="eq">$$t_{CL}[\text{ns}] = \frac{CL \times 2000}{\text{데이터 전송률 [MT/s]}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-3</span><span class="ttl">세대별 CL: 클록 수 vs 나노초</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">데이터 전송률 <output data-o="mt"></output></span><input type="range" data-k="mt" min="400" max="8800" step="100" value="4800" data-d="0" data-u="MT/s"></label>
+      <label class="ctrl"><span class="lab">CL (클록) <output data-o="cl"></output></span><input type="range" data-k="cl" min="3" max="70" step="1" value="40" data-d="0"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">클록 주기 tCK</span><span class="v" data-r="tck"></span></div>
+      <div class="ro"><span class="k">CL 지연</span><span class="v" data-r="ns"></span></div>
+      <div class="ro"><span class="k">핀당 대역폭</span><span class="v" data-r="bw"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 막대(왼쪽 축)는 각 세대 대표 규격의 CL을 나노초로 바꾼 값, 선(오른쪽 축)은 데이터 전송률이다. 막대는 거의 평평하고 선은 가파르게 오른다. 빨간 점이 슬라이더로 만든 가상의 규격.</p>
+</div>
+
+<h2 id="s5"><span class="n">05</span>뱅크 병렬성: 기다리는 동안 다른 뱅크를</h2>
+<p>한 뱅크가 tRP·tRCD를 기다리는 동안 데이터 버스는 놀게 된다. 해결책은 여러 뱅크를 번갈아 쓰는 것이다. 뱅크 A가 행을 여는 동안 뱅크 B의 데이터를 보내고, B가 닫히는 동안 C를 연다. 다만 ACT는 순간적으로 큰 전류를 끌어 쓰므로, 다른 뱅크끼리라도 ACT 간격은 tRRD 이상이어야 하고, 어떤 tFAW 창 안에도 ACT는 4개까지만 허용된다.</p>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-4</span><span class="ttl">뱅크 인터리빙 간트 차트</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">사용하는 뱅크 수 <output data-o="nb"></output></span><input type="range" data-k="nb" min="1" max="16" step="1" value="4" data-d="0"></label>
+      <label class="ctrl"><span class="lab">행당 읽기 수 (버스트) <output data-o="rpb"></output></span><input type="range" data-k="rpb" min="1" max="8" step="1" value="1" data-d="0"></label>
+      <label class="ctrl"><span class="lab">tFAW 제약</span><select data-k="faw"><option value="1">적용</option><option value="0">무시</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="340"></canvas></div>
+    <div class="legend"><span><i style="background:var(--red)"></i>ACT</span><span><i style="background:var(--gold)"></i>행 여는 중 (tRCD)</span><span><i style="background:var(--indigo)"></i>RD</span><span><i style="background:var(--ink3)"></i>PRE·tRP</span><span><i style="background:var(--jade)"></i>데이터 버스 사용</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">데이터 버스 사용률</span><span class="v" data-r="u"></span></div>
+      <div class="ro"><span class="k">실효 대역폭 (x16 칩, 4800)</span><span class="v" data-r="bw"></span></div>
+      <div class="ro"><span class="k">병목</span><span class="v" data-r="bn" style="font-size:13.5px;font-family:var(--sans)"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 볼 것.</b> 뱅크 1개, 행당 읽기 1회는 무작위 접근의 최악이다 — 버스는 대부분 논다. 뱅크를 4, 8개로 늘려 보자. 어느 순간부터 tFAW가 병목이 된다. 행당 읽기를 늘리면(지역성) 적은 뱅크로도 버스를 채울 수 있다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="3"><p class="q">로우 버퍼 충돌 시 지연은?</p><ol><li>CL</li><li>tRCD + CL</li><li>tRAS + CL</li><li>tRP + tRCD + CL</li></ol>
+<p class="explain">열린 다른 행을 닫고(tRP), 새 행을 열고(tRCD), 읽는다(CL).</p></div>
+<div class="quiz" data-a="1"><p class="q">DDR4-3200 CL22와 DDR5-6400 CL52 중 첫 데이터가 더 빨리 나오는 것은?</p><ol><li>DDR5-6400 (CL이 크지만 클록이 두 배)</li><li>DDR4-3200 (13.75 ns vs 16.25 ns)</li><li>둘 다 같다</li><li>판단할 수 없다</li></ol>
+<p class="explain">22×2000/3200 = 13.75 ns, 52×2000/6400 = 16.25 ns. 대역폭은 DDR5가 두 배지만 첫 데이터 지연은 약간 길다.</p></div>
+<div class="quiz" data-a="0"><p class="q">tRAS가 존재하는 이유는?</p><ol><li>PRE 전에 센싱과 재저장이 끝나 셀이 다시 채워져야 하므로</li><li>데이터 버스를 비우기 위해</li><li>리프레시 카운터를 갱신하기 위해</li><li>열 디코더를 초기화하기 위해</li></ol>
+<p class="explain">행을 너무 빨리 닫으면 파괴적 읽기 후 재저장이 끝나지 않아 데이터가 약해진다.</p></div>
+<div class="quiz" data-a="2"><p class="q">tFAW 제약의 목적은?</p><ol><li>리텐션 시간 확보</li><li>센스 앰프 오프셋 보상</li><li>짧은 시간에 ACT가 몰려 전원망이 흔들리는 것을 막기 위해</li><li>데이터 버스 충돌 방지</li></ol>
+<p class="explain">ACT는 수천 개 비트라인을 한꺼번에 충방전해 큰 순간 전류를 만든다. 4개 ACT를 tFAW 창 안으로 제한한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const G = {
+  ddr4: {name:'DDR4-3200', tck:0.625, CL:22, RCD:22, RP:22, RAS:52, CWL:16, WR:24, RTP:12, BURST:4},
+  ddr5: {name:'DDR5-4800', tck:0.4167, CL:40, RCD:39, RP:39, RAS:77, CWL:38, WR:72, RTP:18, BURST:8},
+  ddr56:{name:'DDR5-6400', tck:0.3125, CL:52, RCD:52, RP:52, RAS:102, CWL:50, WR:96, RTP:24, BURST:8}
+};
+
+/* 실험 6-1 */
+(function(){
+  const box = document.getElementById('sim1'), cv = document.getElementById('cv1');
+  let cmds, st, msg;
+  const g = () => G[document.getElementById('grade').value];
+  function reset(){ cmds = []; st = {open:null, act:-1e9, pre:-1e9, rd:-1e9, col:-1e9, wrEnd:-1e9, now:0}; msg = '명령을 보내 보세요'; draw(); }
+  function issue(c){
+    const P = g(), row = +document.getElementById('rowSel').value;
+    let t = st.now, why = [];
+    const need = (v, name) => { if(v > t){ t = v; why = [name]; } else if(v === t && v > st.now) why.push(name); };
+    if(c === 'ACT'){
+      if(st.open !== null){ msg = st.open === row ? `행 ${row}은 이미 열려 있다 — RD/WR를 보내면 된다` : `행 ${st.open}이 열려 있다 — 먼저 PRE로 닫아야 한다 (충돌)`; draw(); return; }
+      need(st.pre + P.RP, 'tRP');
+      cmds.push({c, t, row}); st.open = row; st.act = t;
+    } else if(c === 'RD' || c === 'WR'){
+      if(st.open === null){ msg = '닫힌 뱅크에는 RD/WR를 보낼 수 없다 — 먼저 ACT'; draw(); return; }
+      need(st.act + P.RCD, 'tRCD'); need(st.col + P.BURST, 'tCCD');
+      cmds.push({c, t, row:st.open}); st.col = t;
+      if(c === 'RD') st.rd = t; else st.wrEnd = t + P.CWL + P.BURST;
+    } else if(c === 'PRE'){
+      if(st.open === null){ msg = '이미 닫혀 있다'; draw(); return; }
+      need(st.act + P.RAS, 'tRAS'); need(st.rd + P.RTP, 'tRTP'); need(st.wrEnd + P.WR, 'tWR');
+      cmds.push({c, t}); st.open = null; st.pre = t;
+    }
+    const waited = t - st.now;
+    msg = `${c} @ ${t} clk` + (waited > 0 && why.length ? ` — ${why.join('·')} 때문에 ${waited} clk (${J.fmt(waited*P.tck,1)} ns) 대기` : ' — 바로 실행');
+    st.now = t + 1;
+    draw();
+  }
+  function draw(){
+    const P = g();
+    const {ctx, w, h} = J.fit(cv);
+    ctx.clearRect(0,0,w,h);
+    const lastT = Math.max(60, ...cmds.map(c => c.t + (c.c==='RD'?P.CL+P.BURST:c.c==='WR'?P.CWL+P.BURST:c.c==='PRE'?P.RP:P.RCD))) + 10;
+    const L = 70, X = t => L + t/lastT*(w-L-10);
+    const lanes = {CLK:24, CMD:70, BANK:120, DQ:170};
+    ctx.font = '12px "Noto Sans KR"'; ctx.fillStyle = J.c('--ink2'); ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText('클록', L-8, lanes.CLK); ctx.fillText('명령', L-8, lanes.CMD); ctx.fillText('뱅크', L-8, lanes.BANK); ctx.fillText('데이터 DQ', L-8, lanes.DQ);
+    // 클록 눈금
+    const step = J.niceTicks(0, lastT, 8)[1] || 10;
+    ctx.strokeStyle = J.c('--line2'); ctx.fillStyle = J.c('--ink3'); ctx.font = '10.5px "JetBrains Mono"'; ctx.textAlign='center';
+    for(let t=0; t<=lastT; t+=step){ ctx.beginPath(); ctx.moveTo(X(t), lanes.CLK+10); ctx.lineTo(X(t), h-30); ctx.stroke(); ctx.fillText(t, X(t), lanes.CLK); }
+    ctx.fillText('(클록 · 1 clk = '+P.tck+' ns)', w/2, h-12);
+    // 뱅크 상태 띠
+    let open = null, from = 0;
+    const seg = (a, b, col, txt) => { ctx.fillStyle = J.c(col); ctx.globalAlpha = .35; ctx.fillRect(X(a), lanes.BANK-12, X(b)-X(a), 24); ctx.globalAlpha = 1; if(txt && X(b)-X(a) > 40){ ctx.fillStyle = J.c('--ink'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText(txt, X(a)+4, lanes.BANK); } };
+    cmds.forEach(c => {
+      if(c.c === 'ACT'){ seg(from, c.t, '--paper2', '닫힘'); from = c.t; open = c.row; seg(c.t, Math.min(c.t+P.RCD, lastT), '--gold', '여는 중 tRCD'); from = c.t + P.RCD; }
+      if(c.c === 'PRE'){ if(from < c.t) seg(from, c.t, '--jade', '열림 · 행 '+open); seg(c.t, c.t+P.RP, '--ink3', 'tRP'); from = c.t + P.RP; open = null; }
+    });
+    seg(from, lastT, open === null ? '--paper2' : '--jade', open === null ? '닫힘' : '열림 · 행 '+open);
+    // 명령 상자
+    cmds.forEach(c => {
+      const col = {ACT:'--red', RD:'--indigo', WR:'--plum', PRE:'--ink3'}[c.c];
+      const bw = Math.max(26, X(c.t+3)-X(c.t));
+      ctx.fillStyle = J.c(col); ctx.fillRect(X(c.t), lanes.CMD-11, bw, 22);
+      ctx.fillStyle = '#fff'; ctx.font = '600 11px "JetBrains Mono"'; ctx.textAlign='center'; ctx.fillText(c.c, X(c.t)+bw/2, lanes.CMD);
+      if(c.c === 'RD' || c.c === 'WR'){
+        const d0 = c.t + (c.c==='RD' ? P.CL : P.CWL);
+        ctx.fillStyle = J.c(c.c==='RD' ? '--jade' : '--plum'); ctx.globalAlpha = .85; ctx.fillRect(X(d0), lanes.DQ-11, X(d0+P.BURST)-X(d0), 22); ctx.globalAlpha = 1;
+        ctx.strokeStyle = J.c('--ink3'); ctx.setLineDash([2,3]); ctx.beginPath(); ctx.moveTo(X(c.t)+4, lanes.CMD+12); ctx.lineTo(X(d0), lanes.DQ-12); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = J.c('--ink2'); ctx.font = '10.5px "JetBrains Mono"'; ctx.textAlign='left'; ctx.fillText(c.c==='RD' ? 'CL '+P.CL : 'CWL', X(c.t)+6 + (X(d0)-X(c.t))/2, lanes.DQ-24);
+      }
+    });
+    const end = cmds.length ? Math.max(...cmds.map(c => c.t + (c.c==='RD'?P.CL+P.BURST:c.c==='WR'?P.CWL+P.BURST:0))) : 0;
+    J.out(box,'st', st.open === null ? '닫힘' : '열림 (행 '+st.open+')');
+    J.out(box,'tm', end+' clk = '+J.fmt(end*P.tck,1)+' ns');
+    J.out(box,'msg', msg);
+  }
+  J.$$('[data-cmd]', box).forEach(b => b.onclick = () => issue(b.dataset.cmd));
+  document.getElementById('tReset').onclick = reset;
+  document.getElementById('grade').onchange = reset;
+  document.getElementById('tDemo').onclick = () => {
+    reset(); const rs = document.getElementById('rowSel');
+    rs.value = '7'; issue('ACT'); issue('RD'); issue('RD'); issue('PRE'); rs.value = '12'; issue('ACT'); issue('RD');
+  };
+  reset(); J.live(draw);
+})();
+
+/* 실험 6-2 */
+J.sim('sim2', (v, box) => {
+  const P = G.ddr5, ns = c => c*P.tck;
+  const tH = ns(P.CL), tM = ns(P.RCD+P.CL), tC = ns(P.RP+P.RCD+P.CL);
+  const R = J.rng(9); let open = null, row = 0, hit=0, miss=0, conf=0, sum=0;
+  for(let i=0;i<500;i++){
+    if(R() >= v.p/100) row = Math.floor(R()*4096);
+    if(v.pol === 'open'){
+      if(open === row){ hit++; sum += tH; } else if(open === null){ miss++; sum += tM; } else { conf++; sum += tC; }
+      open = row;
+    } else {
+      miss++; sum += tM;
+    }
+  }
+  const openLine = [], closeLine = [];
+  for(let p=0;p<=100;p+=2){ openLine.push([p, (p/100)*tH + (1-p/100)*tC]); closeLine.push([p, tM]); }
+  const cross = (tC - tM)/(tC - tH)*100;
+  J.plot(document.getElementById('cv2'), {x:[0,100], y:[0,60], xlab:'같은 행 재접근 확률 (%)', ylab:'평균 지연 (ns)', series:[{pts:openLine, color:'--jade', w:2.5},{pts:closeLine, color:'--indigo', w:2.5, dash:[6,4]}],
+    vlines:[{x:cross, color:'--gold', label:'교차 '+J.fmt(cross,0)+'%'}], points:[{x:v.p, y:sum/500, color:'--red', r:6, label:J.fmt(sum/500,1)+' ns'}],
+    hlines:[{y:tH, color:'--ink3', label:'히트 '+J.fmt(tH,1)+' ns', dash:[2,3]},{y:tC, color:'--ink3', label:'충돌 '+J.fmt(tC,1)+' ns', dash:[2,3]}]});
+  J.out(box,'h', hit); J.out(box,'m', miss); J.out(box,'c', conf);
+  J.out(box,'avg', J.fmt(sum/500,1)+' ns');
+});
+
+/* 실험 6-3 */
+J.sim('sim3', (v, box) => {
+  const gens = [['DDR\n400',400,3],['DDR2\n800',800,5],['DDR3\n1600',1600,11],['DDR4\n2400',2400,17],['DDR4\n3200',3200,22],['DDR5\n4800',4800,40],['DDR5\n6400',6400,52],['DDR5\n8800',8800,62]];
+  const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+  ctx.clearRect(0,0,w,h);
+  const P = {l:50, r:60, t:20, b:46}, n = gens.length + 1, gw = (w-P.l-P.r)/n;
+  const Y = x => h-P.b - x/20*(h-P.t-P.b), Y2 = x => h-P.b - x/9000*(h-P.t-P.b);
+  ctx.strokeStyle = J.c('--line2'); ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='right'; ctx.textBaseline='middle';
+  [0,5,10,15,20].forEach(y => { ctx.beginPath(); ctx.moveTo(P.l, Y(y)); ctx.lineTo(w-P.r, Y(y)); ctx.stroke(); ctx.fillText(y+' ns', P.l-6, Y(y)); });
+  ctx.textAlign='left'; ctx.fillStyle = J.c('--plum'); [0,3000,6000,9000].forEach(y => ctx.fillText(y, w-P.r+6, Y2(y)));
+  const all = gens.concat([['슬라이더', v.mt, v.cl]]);
+  const linePts = [];
+  all.forEach((g,i) => {
+    const ns = g[2]*2000/g[1], x = P.l + i*gw + gw*0.2, bw = gw*0.6, last = i === gens.length;
+    ctx.fillStyle = J.c(last ? '--red' : '--jade'); ctx.globalAlpha = last ? 1 : .8; ctx.fillRect(x, Y(Math.min(ns,20)), bw, Y(0)-Y(Math.min(ns,20))); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.font = '10.5px "JetBrains Mono"'; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText(J.fmt(ns,1), x+bw/2, Y(Math.min(ns,20))-2);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '10.5px "Noto Sans KR"'; ctx.textBaseline='top';
+    g[0].split('\n').forEach((s,k) => ctx.fillText(s, x+bw/2, h-P.b+4+k*13));
+    if(!last) linePts.push([x+bw/2, Y2(g[1])]);
+  });
+  ctx.strokeStyle = J.c('--plum'); ctx.lineWidth = 2.5; ctx.beginPath(); linePts.forEach((p,i) => i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1])); ctx.stroke(); ctx.lineWidth = 1;
+  linePts.forEach(p => { ctx.fillStyle = J.c('--plum'); ctx.beginPath(); ctx.arc(p[0],p[1],3.5,0,7); ctx.fill(); });
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillText('막대: CL 지연 (ns)   선: 전송률 MT/s (오른쪽 축)', P.l, 2);
+  const tck = 2000/v.mt;
+  J.out(box,'tck', J.fmt(tck,4)+' ns');
+  J.out(box,'ns', J.fmt(v.cl*tck,2)+' ns');
+  J.out(box,'bw', J.fmt(v.mt/8,0)+' MB/s');
+});
+
+/* 실험 6-4 간트 */
+J.sim('sim4', (v, box) => {
+  const P = G.ddr5, RRD = 8, FAW = 40; // x16 (2 KB 페이지) 기준
+  const banks = Array.from({length:v.nb}, () => ({ready:0}));
+  const acts = [], ev = []; let busFree = 0, busy = 0, lastAct = -1e9;
+  const horizon = 2400;
+  let bi = 0, actFawWaits = 0, rrdWaits = 0;
+  while(true){
+    const b = banks[bi];
+    let t = Math.max(b.ready, lastAct + RRD);
+    if(lastAct + RRD > b.ready) rrdWaits++;
+    if(v.faw === '1' && acts.length >= 4){ const w4 = acts[acts.length-4] + FAW; if(w4 > t){ t = w4; actFawWaits++; } }
+    if(t > horizon) break;
+    acts.push(t); lastAct = t;
+    ev.push({b:bi, k:'ACT', a:t, z:t+2}); ev.push({b:bi, k:'RCD', a:t+2, z:t+P.RCD});
+    let rd = t + P.RCD, lastRd = rd;
+    for(let r=0;r<v.rpb;r++){
+      rd = Math.max(rd, busFree - P.CL);
+      ev.push({b:bi, k:'RD', a:rd, z:rd+2});
+      ev.push({b:-1, k:'DQ', a:rd+P.CL, z:rd+P.CL+P.BURST});
+      busFree = rd + P.CL + P.BURST; busy += P.BURST; lastRd = rd;
+      rd += P.BURST;
+    }
+    const pre = Math.max(t + P.RAS, lastRd + P.RTP);
+    ev.push({b:bi, k:'PRE', a:pre, z:pre+P.RP});
+    b.ready = pre + P.RP;
+    bi = (bi+1) % v.nb;
+  }
+  const util = Math.min(1, busy/horizon);
+  const {ctx, w, h} = J.fit(document.getElementById('cv4'));
+  ctx.clearRect(0,0,w,h);
+  const show = 400, L = 56, X = t => L + t/show*(w-L-10);
+  const lanes = Math.min(v.nb, 8), lh = (h-70)/(lanes+1);
+  ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let i=0;i<lanes;i++){ ctx.fillStyle = J.c('--ink2'); ctx.fillText('뱅크'+i, L-6, 20 + i*lh + lh/2); ctx.strokeStyle = J.c('--line2'); ctx.beginPath(); ctx.moveTo(L, 20+(i+1)*lh); ctx.lineTo(w-10, 20+(i+1)*lh); ctx.stroke(); }
+  ctx.fillStyle = J.c('--ink'); ctx.fillText('DQ', L-6, 20 + lanes*lh + lh/2 + 8);
+  const col = {ACT:'--red', RCD:'--gold', RD:'--indigo', PRE:'--ink3', DQ:'--jade'};
+  ev.forEach(e => {
+    if(e.a > show) return;
+    const lane = e.b < 0 ? lanes : e.b; if(lane >= lanes && e.b >= 0) return;
+    const y = 20 + lane*lh + (e.b < 0 ? 8 : 0);
+    ctx.fillStyle = J.c(col[e.k]); ctx.globalAlpha = e.k === 'RCD' || e.k === 'PRE' ? .45 : .95;
+    ctx.fillRect(X(e.a), y + lh*0.2, Math.max(2, X(Math.min(e.z, show)) - X(e.a)), lh*0.6); ctx.globalAlpha = 1;
+  });
+  ctx.fillStyle = J.c('--ink3'); ctx.textAlign='center'; ctx.font = '10.5px "JetBrains Mono"';
+  [0,100,200,300,400].forEach(t => ctx.fillText(t+' clk', X(t), h-10));
+  if(v.nb > 8){ ctx.textAlign='left'; ctx.fillStyle = J.c('--ink2'); ctx.fillText('(뱅크 8–'+(v.nb-1)+' 생략)', L, h-26); }
+  J.out(box,'u', J.fmt(util*100,0)+' %', util > .8 ? 'good' : util > .4 ? 'warn' : 'bad');
+  J.out(box,'bw', J.fmt(util*4800*16/8/1000,2)+' GB/s (최대 9.6)');
+  const bn = util > .97 ? '데이터 버스가 꽉 찼다 (이상적)' : (v.faw==='1' && actFawWaits > acts.length*0.3) ? 'tFAW (ACT 4개 창)' : rrdWaits > acts.length*0.5 ? 'tRRD (ACT 간격)' : '뱅크 수 부족 (tRC를 숨기지 못함)';
+  J.out(box,'bn', bn);
+});
+</script>
+</body>
+</html>

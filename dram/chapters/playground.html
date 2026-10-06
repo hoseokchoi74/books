@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAM 설계 놀이터 · DRAM 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+  .pg-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:760px){.pg-grid{grid-template-columns:1fr}}
+  .spec{background:var(--paper); border:1px solid var(--line2); border-radius:5px; padding:12px 14px; font-size:14px}
+  .spec table{width:100%; border-collapse:collapse}
+  .spec td{padding:3px 4px; border-bottom:1px dashed var(--line2)}
+  .spec td:last-child{text-align:right; font-family:var(--mono); font-weight:600}
+  .grade{font-family:var(--serif); font-size:42px; font-weight:900; color:var(--red); line-height:1}
+  .grp{font-size:12px; color:var(--ink3); letter-spacing:.1em; margin:4px 0 2px}
+</style>
+</head>
+<body data-ch="playground">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 13 <span class="hanja">第十三章 · 設</span></div>
+  <h1>DRAM 설계 놀이터</h1>
+  <p class="lead">지금까지 배운 변수들은 따로 놀지 않는다. 셀을 줄이면 밀도는 오르지만 신호가 줄고, 신호를 지키려 비트라인을 짧게 하면 면적이 늘고, 온도가 오르면 리프레시가 늘어 대역폭을 갉아먹는다. 이 장에서는 그 모든 손잡이를 한 화면에 모아 직접 칩을 설계해 본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>셀·어레이·리프레시·인터페이스 변수 사이의 트레이드오프를 한 번에 체험한다.</li>
+  <li>모바일·서버·AI 용도에 따라 최적 설계가 어떻게 달라지는지 비교한다.</li>
+  <li>설계안 두 개를 저장해 레이더 차트로 비교한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>설계실</h2>
+<p>프리셋에서 출발해 슬라이더를 움직여 보자. 오른쪽 사양서의 빨간 항목이 설계 규칙 위반이다. 모든 숫자는 앞 장들의 단순 모델을 이어 붙인 교육용 근사다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-1</span><span class="ttl">나만의 DRAM 설계하기</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="presets">
+      <span class="hint">프리셋:</span>
+      <button class="sbtn" data-p="mobile">모바일 (LPDDR)</button>
+      <button class="sbtn on" data-p="server">서버 (DDR5)</button>
+      <button class="sbtn" data-p="ai">AI (HBM 코어 다이)</button>
+      <button class="sbtn" data-p="retro">1990년대 감성</button>
+    </div>
+    <div class="pg-grid">
+      <div>
+        <div class="grp">셀 · 공정</div>
+        <div class="ctrls" style="grid-template-columns:1fr">
+          <label class="ctrl"><span class="lab">F (하프 피치) <output data-o="f"></output></span><input type="range" data-k="f" min="10" max="90" step="0.5" value="12.5" data-d="1" data-u="nm"></label>
+          <label class="ctrl"><span class="lab">셀 커패시턴스 C_s <output data-o="cs"></output></span><input type="range" data-k="cs" min="4" max="40" step="0.5" value="10" data-d="1" data-u="fF"></label>
+          <label class="ctrl"><span class="lab">셀 구조</span><select data-k="arch"><option value="6">6F² (오픈 BL)</option><option value="8">8F² (폴디드 BL)</option><option value="4">4F² (VCT)</option></select></label>
+        </div>
+        <div class="grp">어레이</div>
+        <div class="ctrls" style="grid-template-columns:1fr">
+          <label class="ctrl"><span class="lab">비트라인당 셀 수 <output data-o="nbl"></output></span><input type="range" data-k="nbl" min="128" max="2048" step="64" value="640" data-d="0"></label>
+          <label class="ctrl"><span class="lab">어레이 전압 V_DD <output data-o="vdd"></output></span><input type="range" data-k="vdd" min="0.8" max="1.6" step="0.05" value="1.1" data-d="2" data-u="V"></label>
+        </div>
+        <div class="grp">동작 환경 · 인터페이스</div>
+        <div class="ctrls" style="grid-template-columns:1fr">
+          <label class="ctrl"><span class="lab">최고 동작 온도 <output data-o="temp"></output></span><input type="range" data-k="temp" min="45" max="105" step="5" value="85" data-d="0" data-u="°C"></label>
+          <label class="ctrl"><span class="lab">핀 속도 <output data-o="rate"></output></span><input type="range" data-k="rate" min="1" max="12" step="0.1" value="6.4" data-d="1" data-u="Gb/s"></label>
+          <label class="ctrl"><span class="lab">데이터 버스 폭 <output data-o="bus"></output></span><input type="range" data-k="bus" min="3" max="11" step="1" value="6" data-d="0"></label>
+        </div>
+      </div>
+      <div>
+        <div class="canvas-box"><canvas id="radar" data-h="300"></canvas></div>
+        <div class="btnrow" style="margin-top:8px"><button class="sbtn" id="saveA">설계 A로 저장</button><button class="sbtn" id="saveB">설계 B로 저장</button><span class="hint">저장한 설계가 점선으로 겹쳐진다</span></div>
+        <div class="spec" id="spec"></div>
+      </div>
+    </div>
+  </div>
+  <p class="cap"><b>모델 요약.</b> 신호 ΔV = (V_DD/2)·C_s/(C_s + 0.08·N_BL + 8) [2·5장] · 센싱 여유 = (ΔV − 10 mV)/σ, σ ∝ F^(−½) [4장] · 리텐션 꼬리 중앙값 ∝ C_s·V_DD, 온도 아레니우스(0.55 eV) [3장] · 리프레시 오버헤드 = tRFC/tREFI, tRFC ∝ 용량 [3장] · 밀도 = 효율/(kF²) [9장], 효율은 N_BL로 결정 [5장] · 대역폭 = 핀 속도 × 버스 폭 [7장] · I/O 에너지는 버스가 넓고 느릴수록 작다 [12장].</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>도전 과제</h2>
+<div class="note-box"><div class="h" data-h="題">설계 미션</div>
+<ol style="margin:4px 0 0; padding-left:20px">
+<li><b>모바일의 꿈</b>: 등급 A 이상을 유지하면서 접근 에너지를 5 pJ/bit 아래로 (힌트: 전압과 버스 폭).</li>
+<li><b>서버의 고집</b>: 105 °C에서도 리프레시 오버헤드 15 % 이하, 센싱 여유 6σ 이상.</li>
+<li><b>밀도 왕</b>: 16 Gb 다이를 40 mm² 안에 넣되, 신호 60 mV 이상 유지.</li>
+<li><b>AI 스택</b>: 단일 스택 대역폭 2 TB/s 이상 (힌트: 버스 폭을 끝까지).</li>
+</ol></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>생각해 볼 문제</h2>
+<div class="quiz" data-a="1"><p class="q">F를 줄여 밀도를 높였더니 센싱 여유가 무너졌다. 가장 직접적인 처방은?</p><ol><li>핀 속도를 올린다</li><li>비트라인당 셀 수를 줄이거나 C_s를 키운다</li><li>버스 폭을 줄인다</li><li>온도를 올린다</li></ol>
+<p class="explain">신호 ΔV는 전달비 C_s/(C_s+C_BL)에 비례한다. 둘 다 면적(또는 공정 난이도)이라는 대가가 따른다.</p></div>
+<div class="quiz" data-a="2"><p class="q">고온에서 리프레시 오버헤드가 커지는 이유는?</p><ol><li>핀 속도가 느려져서</li><li>셀 커패시턴스가 커져서</li><li>누설이 늘어 리텐션이 짧아지고, tREFI를 줄여야 해서</li><li>버스 폭이 줄어서</li></ol>
+<p class="explain">아레니우스 관계로 리텐션이 줄면 더 자주 리프레시해야 한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+(function(){
+  const box = document.getElementById('sim1');
+  const PRESETS = {
+    mobile:{f:12.5, cs:9, arch:'6', nbl:512, vdd:1.05, temp:85, rate:9.6, bus:5},
+    server:{f:12.5, cs:10, arch:'6', nbl:640, vdd:1.1, temp:85, rate:6.4, bus:6},
+    ai:{f:12, cs:10, arch:'6', nbl:640, vdd:1.1, temp:95, rate:9.6, bus:11},
+    retro:{f:70, cs:30, arch:'8', nbl:256, vdd:3.3, temp:70, rate:1, bus:6}
+  };
+  let saved = {A:null, B:null}, cur = null;
+  function model(v){
+    const busBits = Math.pow(2, v.bus);
+    const k = +v.arch;
+    const cbl = 0.08*v.nbl + 8;
+    const dv = v.vdd/2*v.cs/(v.cs + cbl)*1000; // mV
+    const sigma = 9*Math.sqrt(12.5/v.f);
+    const margin = (dv - 10)/sigma;
+    const eff = (v.nbl/(v.nbl+40))*(512/(512+30))*0.62;
+    const dens = eff/(k*v.f*v.f*1e-18)/1e15; // Gb/mm²
+    const die16 = 16/dens;
+    const tret = 2*(v.cs/10)*(v.vdd/1.1)*Math.exp(0.55/8.617e-5*(1/(v.temp+273.15) - 1/318.15)); // 꼬리 중앙값 s
+    const tREFW = Math.min(64, Math.max(4, tret*1000/6)); // 꼬리의 약 -2.5σ 이전으로
+    const trefi = tREFW/8192*1000; // µs
+    const trfc = 0.295*1; // µs (16 Gb)
+    const refOv = trfc/trefi;
+    const bw = v.rate*busBits/8; // GB/s
+    const io = busBits <= 32 ? 0.8 : busBits <= 64 ? 1.4 : busBits <= 256 ? 0.6 : 0.35;
+    const ebit = 2*(v.vdd/1.1)*(v.vdd/1.1) + io*(2 + v.rate*0.6);
+    const effBw = bw*(1 - Math.min(0.9, refOv));
+    return {dv, margin, dens, die16, tREFW, refOv, bw, effBw, ebit, busBits};
+  }
+  function scores(m){
+    const c = x => J.clamp(x, 0, 1);
+    return [c(m.dens/1.0), c(m.margin/8), c(m.tREFW/64), c(1 - m.refOv/0.3), c(Math.log10(m.effBw)/Math.log10(3000)), c((15 - m.ebit)/13)];
+  }
+  const AX = ['밀도','신호 여유','리텐션','리프레시 효율','대역폭','에너지 효율'];
+  function radar(){
+    const {ctx, w, h} = J.fit(document.getElementById('radar'));
+    ctx.clearRect(0,0,w,h);
+    const cx = w/2, cy = h/2 + 4, R = Math.min(w, h)/2 - 46, n = AX.length;
+    const pt = (i, r) => [cx + Math.sin(i/n*Math.PI*2)*R*r, cy - Math.cos(i/n*Math.PI*2)*R*r];
+    ctx.strokeStyle = J.c('--line2');
+    [0.25,0.5,0.75,1].forEach(r => { ctx.beginPath(); for(let i=0;i<=n;i++){ const p = pt(i%n, r); i ? ctx.lineTo(...p) : ctx.moveTo(...p); } ctx.stroke(); });
+    for(let i=0;i<n;i++){ ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(...pt(i,1)); ctx.stroke();
+      const p = pt(i, 1.16); ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(AX[i], p[0], p[1]); }
+    const poly = (s, col, dash, fill) => { ctx.strokeStyle = J.c(col); ctx.lineWidth = 2.5; ctx.setLineDash(dash); ctx.beginPath(); s.forEach((r,i) => { const p = pt(i, Math.max(0.03,r)); i ? ctx.lineTo(...p) : ctx.moveTo(...p); }); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]); if(fill){ ctx.globalAlpha = .18; ctx.fillStyle = J.c(col); ctx.fill(); ctx.globalAlpha = 1; } ctx.lineWidth = 1; };
+    if(saved.A) poly(saved.A, '--indigo', [6,4]);
+    if(saved.B) poly(saved.B, '--gold', [6,4]);
+    if(cur) poly(cur, '--red', [], true);
+    ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign='left'; ctx.textBaseline='top';
+    let ly = 4; [['현재','--red'],['A','--indigo'],['B','--gold']].forEach(([t,c]) => { if(t==='현재' || saved[t]){ ctx.fillStyle = J.c(c); ctx.fillRect(6, ly+4, 12, 3); ctx.fillStyle = J.c('--ink2'); ctx.fillText(t, 22, ly); ly += 16; } });
+  }
+  const s = J.sim('sim1', (v) => {
+    J.$('[data-o="bus"]', box).textContent = Math.pow(2, v.bus)+' 비트';
+    const m = model(v); cur = scores(m);
+    const avg = cur.reduce((a,b)=>a+b,0)/cur.length;
+    const viol = [];
+    if(m.margin < 6) viol.push('margin'); if(m.dv < 60) viol.push('dv'); if(m.refOv > 0.15) viol.push('ref'); if(v.f < 10.5) viol.push('f');
+    const grade = viol.length ? (avg > .6 ? 'B' : 'C') : avg > .72 ? 'S' : avg > .6 ? 'A' : 'B';
+    const row = (k, val, bad) => `<tr><td>${k}</td><td style="color:${bad ? 'var(--red)' : 'inherit'}">${val}</td></tr>`;
+    document.getElementById('spec').innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="font-family:var(--serif)">사양서 · 規格</b><span class="grade">${grade}</span></div><table>
+      ${row('신호 ΔV', J.fmt(m.dv,0)+' mV', m.dv < 60)}
+      ${row('센싱 여유', J.fmt(m.margin,1)+' σ', m.margin < 6)}
+      ${row('16 Gb 다이 면적', J.fmt(m.die16,1)+' mm²', false)}
+      ${row('밀도', J.fmt(m.dens,2)+' Gb/mm²', false)}
+      ${row('필요 리프레시 윈도', J.fmt(m.tREFW,1)+' ms', m.tREFW < 16)}
+      ${row('리프레시 오버헤드', J.fmt(m.refOv*100,1)+' %', m.refOv > 0.15)}
+      ${row('대역폭 (버스 '+m.busBits+'비트)', m.bw >= 1000 ? J.fmt(m.bw/1000,2)+' TB/s' : J.fmt(m.bw,1)+' GB/s', false)}
+      ${row('실효 대역폭', m.effBw >= 1000 ? J.fmt(m.effBw/1000,2)+' TB/s' : J.fmt(m.effBw,1)+' GB/s', false)}
+      ${row('접근 에너지', J.fmt(m.ebit,1)+' pJ/bit', m.ebit > 12)}
+      ${v.f < 10.5 ? row('공정', 'F &lt; 10.5 nm: 2D 한계 너머', true) : ''}
+    </table>`;
+    radar();
+  });
+  J.$$('#presets button').forEach(b => b.onclick = () => {
+    J.$$('#presets button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    const p = PRESETS[b.dataset.p]; for(const k in p){ J.$(`[data-k="${k}"]`, box).value = p[k]; } s.run();
+  });
+  document.getElementById('saveA').onclick = () => { saved.A = cur.slice(); radar(); };
+  document.getElementById('saveB').onclick = () => { saved.B = cur.slice(); radar(); };
+  // 버스 폭 표시: 2^k 비트
+  const busIn = J.$('[data-k="bus"]', box), busOut = J.$('[data-o="bus"]', box);
+  const upd = () => busOut.textContent = Math.pow(2, +busIn.value)+' 비트';
+  busIn.addEventListener('input', upd); upd();
+  J.live(radar);
+})();
+</script>
+</body>
+</html>

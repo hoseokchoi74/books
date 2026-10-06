@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>미세화와 셀 구조 · DRAM 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../../assets/iso3d.js"></script>
+</head>
+<body data-ch="scaling">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 09 <span class="hanja">第九章 · 細</span></div>
+  <h1>미세화와 셀 구조</h1>
+  <p class="lead">셀을 작게 만들면 칩 하나에 더 많은 비트가 들어간다. 그런데 커패시터는 작아지면 안 된다 — 신호가 사라지기 때문이다. DRAM 미세화의 역사는 "바닥 면적은 줄이고 커패시턴스는 지키는" 싸움이었다. 그 결과 셀 커패시터는 지름 수십 nm, 높이 1 µm가 넘는 초고층 기둥이 되었다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>F, 하프 피치, 6F² 셀 면적으로 비트 밀도를 계산할 수 있다.</li>
+  <li>평행판 커패시터 식으로 셀 커패시터의 높이·지름·유전율이 \(C_s\)에 미치는 영향을 계산한다.</li>
+  <li>종횡비(aspect ratio)가 왜 공정의 한계가 되는지 안다.</li>
+  <li>셀 트랜지스터의 진화(평면 → 리세스 → 매립 워드라인 → 수직 채널)를 설명할 수 있다.</li>
+  <li>4F² 셀과 3D DRAM이 왜 다음 단계로 거론되는지 이해한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>F와 6F²</h2>
+<p>공정 세대를 나타내는 <span class="term">F</span>(feature size)는 대략 워드라인·비트라인 같은 반복 패턴의 하프 피치(half pitch)다. DRAM 업계는 10 nm대에 들어선 뒤 세대를 1x, 1y, 1z, 1a(1α), 1b(1β), 1c(1γ)처럼 부른다. 숫자가 정확히 공개되지는 않지만 대략 18 nm에서 11–12 nm 근처까지 내려왔다. 오픈 비트라인 6F² 셀은 워드라인 방향으로 2F, 비트라인 방향으로 3F를 차지한다.</p>
+<div class="eq">$$A_{cell} = 6F^2, \qquad \text{비트 밀도} = \frac{\eta_{cell}}{6F^2}$$
+<div class="note">\(\eta_{cell}\): 칩 면적 중 셀이 차지하는 비율(셀 효율, 보통 50–60 %).</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-1</span><span class="ttl">F를 줄이면 칩에 몇 비트?</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">F (하프 피치) <output data-o="f"></output></span><input type="range" data-k="f" min="8" max="90" step="0.5" value="12.5" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">셀 면적 계수 <output data-o="k"></output></span><input type="range" data-k="k" min="4" max="8" step="1" value="6" data-d="0" data-u="F²"></label>
+      <label class="ctrl"><span class="lab">셀 효율 <output data-o="eta"></output></span><input type="range" data-k="eta" min="30" max="75" step="1" value="55" data-d="0" data-u="%"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="270"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">셀 하나 면적</span><span class="v" data-r="a"></span></div>
+      <div class="ro"><span class="k">비트 밀도</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">16 Gb 다이 면적</span><span class="v" data-r="die"></span></div>
+      <div class="ro"><span class="k">대략적인 세대</span><span class="v" data-r="gen"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 곡선은 F에 따른 비트 밀도(Gb/mm², 로그)다. 6F²에서 F를 절반으로 줄이면 밀도는 4배. 그런데 같은 F에서 4F²로 바꾸면 1.5배를 공짜로 얻는다 — 이것이 수직 채널 트랜지스터(VCT)가 주목받는 이유다. (셀 효율·세대 매핑은 교육용 근사)</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>커패시터: 바닥은 좁게, 키는 높게</h2>
+<p>셀 커패시터는 결국 두 전극 사이에 유전막을 끼운 평행판이다. 셀 바닥 면적이 F² 단위로 줄어드는 동안 \(C_s\)는 10 fF 근처를 지켜야 했다. 방법은 세 가지뿐이다: 면적 \(A\)를 키우거나(높이 ↑), 유전율 \(k\)를 키우거나(고유전 물질), 두께 \(t\)를 줄이거나.</p>
+<div class="eq">$$C_s = \frac{\varepsilon_0 k A}{t},\qquad A_{\text{기둥}} \approx \pi D H,\qquad \text{종횡비 AR} = \frac{H}{D}$$
+<div class="note">유전막은 SiO₂(k≈3.9) → Si₃N₄/ONO(k≈7) → Ta₂O₅·Al₂O₃ → ZrO₂/Al₂O₃/ZrO₂ 적층(ZAZ, k≈30–45)으로 바뀌어 왔다. 두께를 줄이면 누설(3장 ④)이 급증하므로 5 nm 근처가 한계다.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-2</span><span class="ttl">셀 커패시터 설계 + 3D 셀 어레이</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">기둥 지름 D <output data-o="d"></output></span><input type="range" data-k="d" min="15" max="80" step="1" value="30" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">높이 H <output data-o="h"></output></span><input type="range" data-k="h" min="200" max="2500" step="50" value="1500" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">유전율 k <output data-o="k"></output></span><input type="range" data-k="k" min="4" max="60" step="1" value="40" data-d="0"></label>
+      <label class="ctrl"><span class="lab">유전막 두께 t <output data-o="t"></output></span><input type="range" data-k="t" min="3" max="12" step="0.5" value="6" data-d="1" data-u="nm"></label>
+    </div>
+    <div class="btnrow" id="layerBtns">
+      <span class="hint">층 보기:</span>
+      <label class="hint"><input type="checkbox" data-l="cap" checked> 커패시터</label>
+      <label class="hint"><input type="checkbox" data-l="bl" checked> 비트라인</label>
+      <label class="hint"><input type="checkbox" data-l="wl" checked> 매립 워드라인</label>
+      <label class="hint"><input type="checkbox" data-l="act" checked> 활성 영역</label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="420"></canvas></div>
+    <div class="legend"><span><i style="background:var(--jade)"></i>커패시터 (스토리지 노드)</span><span><i style="background:var(--indigo)"></i>비트라인</span><span><i style="background:var(--gold)"></i>매립 워드라인</span><span><i style="background:var(--plum)"></i>활성 영역</span><span><i style="background:var(--ink3)"></i>콘택</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">셀 커패시턴스 C_s</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">종횡비 H/D</span><span class="v" data-r="ar"></span></div>
+      <div class="ro"><span class="k">전달비 (C_BL 60 fF)</span><span class="v" data-r="tr"></span></div>
+      <div class="ro"><span class="k">공정 판정</span><span class="v" data-r="ok" style="font-size:14px;font-family:var(--sans)"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>사용법.</b> 3D 모델은 드래그해 돌릴 수 있다. 층 체크를 하나씩 끄며 커패시터 아래에 숨은 비트라인과, 실리콘 속에 묻힌 워드라인을 확인해 보자. 지름을 줄이면 같은 C_s를 위해 높이를 키워야 하고, 종횡비가 60을 넘으면 식각과 증착이 어려워지고 기둥이 휘거나 쓰러진다(빨간 기둥). 요즘은 기둥들을 중간에서 붙잡아 주는 지지대(서포터)를 넣는다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>셀 트랜지스터의 진화</h2>
+<p>셀 바닥이 줄면 트랜지스터 채널도 짧아진다. 짧은 채널은 꺼진 상태에서도 전류가 새는 단채널 효과를 일으켜 리텐션을 망친다. 그래서 DRAM 셀 트랜지스터는 채널을 <strong>아래로 굽혀</strong> 길이를 확보하는 쪽으로 진화했다.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 780 250" id="trEvo" role="img" aria-label="셀 트랜지스터 진화"></svg>
+<figcaption><b>그림 9-1.</b> 셀 트랜지스터의 진화(개념도). 빨간 선은 채널 경로. 평면형 → 리세스 채널(RCAT, 2000년대 중반) → 매립 워드라인(BCAT, 2010년 무렵부터 주류) → 수직 채널(VCT, 4F²를 위한 차세대).</figcaption>
+</figure>
+
+<p>현재 주류인 <span class="term">BCAT</span>(Buried Channel Array Transistor)는 워드라인을 실리콘 표면 아래 홈에 통째로 묻는다. 워드라인이 표면 위로 올라오지 않으니 비트라인·콘택과의 기생 커패시턴스가 줄고, U자 모양 채널이 길이를 확보해 준다. 다음 단계인 <span class="term">VCT</span>(Vertical Channel Transistor)는 채널을 세로로 세워, 비트라인은 아래에, 커패시터는 위에 두는 구조로 4F²를 노린다.</p>
+
+<h2 id="s4"><span class="n">04</span>다음 걸음: 4F²와 3D DRAM</h2>
+<p>2D 미세화가 10 nm 근처에서 벽에 부딪히자, 업계는 NAND 플래시가 그랬듯 <strong>위로 쌓는</strong> 길을 모색하고 있다. 3D DRAM의 대표적인 아이디어는 셀을 옆으로 눕혀(커패시터를 수평으로) 여러 층으로 쌓고, 비트라인을 수직으로 세우는 것이다. 층 하나의 셀은 오히려 크지만 층 수로 밀도를 올린다. 커패시터를 아예 없앤 2T0C(트랜지스터 두 개로 게이트에 전하 저장, IGZO 같은 산화물 반도체 활용) 같은 연구도 진행 중이다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-3</span><span class="ttl">밀도 경쟁: 6F² vs 4F² vs 3D 적층</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">3D 적층 층수 <output data-o="n"></output></span><input type="range" data-k="n" min="8" max="256" step="8" value="64" data-d="0" data-u="층"></label>
+      <label class="ctrl"><span class="lab">3D 층당 셀 면적 <output data-o="a3"></output></span><input type="range" data-k="a3" min="20" max="200" step="5" value="80" data-d="0" data-u="F²"></label>
+      <label class="ctrl"><span class="lab">3D 공정의 F <output data-o="f3"></output></span><input type="range" data-k="f3" min="15" max="40" step="1" value="25" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">6F² @ 12 nm</span><span class="v" data-r="a"></span></div>
+      <div class="ro"><span class="k">4F² @ 12 nm</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">3D 적층</span><span class="v" data-r="c"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 막대는 셀 어레이의 이상적 밀도(Gb/mm², 셀 효율 무시)다. 3D는 층당 셀이 커도(여기선 80F²) 층을 쌓아 밀도를 따라잡는다. NAND가 200층을 넘긴 것처럼, 3D DRAM이 몇 층에서 2D를 넘어서는지 찾아보자. 실제로는 층마다 공정 비용이 들기 때문에 "밀도 ÷ 비용"이 진짜 승부처다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">F = 12 nm, 6F² 셀의 면적은?</p><ol><li>72 nm²</li><li>864 nm²</li><li>144 nm²</li><li>8,640 nm²</li></ol>
+<p class="explain">6 × 12² = 864 nm² ≈ 0.000864 µm².</p></div>
+<div class="quiz" data-a="3"><p class="q">C_s를 유지하면서 기둥 지름을 절반으로 줄이려면 (k, t 고정) 높이를?</p><ol><li>절반으로</li><li>그대로</li><li>4배로</li><li>2배로</li></ol>
+<p class="explain">A ≈ πDH이므로 D가 절반이면 H가 2배여야 같은 면적. 종횡비는 4배가 된다.</p></div>
+<div class="quiz" data-a="0"><p class="q">매립 워드라인(BCAT)의 장점이 아닌 것은?</p><ol><li>셀 커패시터의 유전율이 높아진다</li><li>채널 길이를 확보해 누설이 줄어든다</li><li>워드라인–비트라인 기생 커패시턴스가 줄어든다</li><li>표면 위 구조가 단순해진다</li></ol>
+<p class="explain">유전율은 커패시터 유전막 물질의 성질로, 트랜지스터 구조와 무관하다.</p></div>
+<div class="quiz" data-a="2"><p class="q">유전막을 계속 얇게 만들 수 없는 주된 이유는?</p><ol><li>커패시턴스가 줄어들기 때문에</li><li>종횡비가 커지기 때문에</li><li>터널링 누설 전류가 급증해 리텐션이 무너지기 때문에</li><li>워드라인 전압이 낮아지기 때문에</li></ol>
+<p class="explain">얇은 유전막은 C를 키우지만, 누설이 지수적으로 늘어난다. 그래서 두께 대신 유전율(k)을 키우는 방향으로 왔다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 9-1 밀도 */
+J.sim('sim1', (v, box) => {
+  const a = v.k*v.f*v.f; // nm²
+  const dens = v.eta/100/(a*1e-18)/1e9*1e-6; // Gb/mm²
+  const gens = [[18,'1x'],[17,'1y'],[15.5,'1z'],[14,'1a (1α)'],[12.5,'1b (1β)'],[11.5,'1c (1γ)'],[10.5,'1d 이후']];
+  let gen = v.f > 20 ? '20 nm 이상 (2x 이전)' : gens.reduce((b,g) => Math.abs(g[0]-v.f) < Math.abs(b[0]-v.f) ? g : b)[1];
+  J.out(box,'a', J.fmt(a,0)+' nm²');
+  J.out(box,'d', J.fmt(dens,2)+' Gb/mm²');
+  J.out(box,'die', J.fmt(16/dens,1)+' mm²');
+  J.out(box,'gen', gen);
+  const s6 = [], s4 = [];
+  for(let f=8; f<=90; f+=0.5){ s6.push([f, v.eta/100/(6*f*f*1e-18)/1e15]); s4.push([f, v.eta/100/(4*f*f*1e-18)/1e15]); }
+  J.plot(document.getElementById('cv1'), {x:[8,90], y:[0.01, 10], logx:true, logy:true, xlab:'F (nm, 로그)', ylab:'Gb/mm² (로그)', xf:t=>t, yf:t=>t,
+    series:[{pts:s6, color:'--jade', w:2.5},{pts:s4, color:'--plum', w:2, dash:[6,4]}],
+    points:[{x:v.f, y:dens, color:'--red', r:6, label:J.fmt(dens,2)+' Gb/mm²'}], vlines:[{x:v.f, color:'--ink3', dash:[2,3]}]});
+});
+
+/* 9-2 커패시터 + 3D */
+(function(){
+  const cv = document.getElementById('cv2'), box = document.getElementById('sim2');
+  const cam = {yaw:-0.75, pitch:0.5, scale:30};
+  const layers = {cap:true, bl:true, wl:true, act:true};
+  let V = {d:30, h:1500, k:40, t:6};
+  function draw(){
+    const {ctx, w, h} = J.fit(cv);
+    cam.scale = Math.min(w, h*1.4)/14;
+    cam.oy = h*0.18;
+    const S = new J3.Scene();
+    const NX = 3, NZ = 4; // 활성 영역 배치
+    const ar = V.h/V.d, capH = Math.min(6.5, V.h/1500*3.6), capR = Math.max(0.18, V.d/30*0.32);
+    const lean = ar > 60;
+    S.box(-5.4, -1.2, -4.2, 10.8, 1.2, 8.4, '--paper2', {layer:0});
+    // 매립 워드라인 (z 방향으로 달림) — 표면 아래
+    if(layers.wl) for(let i=-3;i<=3;i++){ S.box(i*1.5 - 0.22, -0.9, -4.0, 0.44, 0.92, 8.0, '--gold', {layer:1}); }
+    // 활성 영역 (x 방향 짧은 막대, 엇갈림)
+    const caps = [];
+    for(let j=0;j<NZ;j++) for(let i=0;i<NX;i++){
+      const z = -3 + j*2, x = -3.75 + i*3 + (j%2)*1.5;
+      if(layers.act) S.box(x-1.3, -0.25, z-0.3, 2.6, 0.3, 0.6, '--plum', {layer:1});
+      caps.push([x-1.0, z], [x+1.0, z]);
+      // 비트라인 콘택 (가운데)
+      if(layers.bl) S.box(x-0.18, 0.05, z-0.18, 0.36, 0.35, 0.36, '--ink3', {layer:2});
+    }
+    // 비트라인 (x 방향, 각 행 위)
+    if(layers.bl) for(let j=0;j<NZ;j++){ const z = -3 + j*2; S.box(-5.2, 0.4, z-0.2, 10.4, 0.35, 0.4, '--indigo', {layer:3}); }
+    // 스토리지 콘택 + 커패시터 (비트라인 사이로 올라감)
+    caps.forEach(([x,z],n) => {
+      const zc = z + 0.85; // 비트라인을 피해 옆으로
+      S.box(x-0.15, 0.05, zc-0.15, 0.3, 0.95, 0.3, '--ink3', {layer:2});
+      if(layers.cap){
+        const bad = lean && (n % 3 === 0);
+        S.prism(x + (bad ? 0.25 : 0), 1.0, zc, capR, capH, bad ? '--red' : '--jade', {layer:4, n:10});
+      }
+    });
+    S.render(ctx, cam, w, h);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left';
+    ctx.fillText('드래그해서 돌려 보세요 · 기둥 높이·굵기는 슬라이더와 연동 (축척 과장)', 10, 18);
+  }
+  J3.drag(cv, cam, draw);
+  J.$$('#layerBtns input').forEach(c => c.onchange = () => { layers[c.dataset.l] = c.checked; draw(); });
+  J.sim('sim2', (v, b) => {
+    V = v;
+    const eps0 = 8.854e-12, A = Math.PI*v.d*1e-9*v.h*1e-9 + Math.PI*Math.pow(v.d*1e-9/2,2);
+    const C = eps0*v.k*A/(v.t*1e-9)*1e15;
+    const ar = v.h/v.d;
+    J.out(b,'c', J.fmt(C,1)+' fF', C >= 9 ? 'good' : C >= 6 ? 'warn' : 'bad');
+    J.out(b,'ar', J.fmt(ar,0)+' : 1', ar > 60 ? 'bad' : ar > 45 ? 'warn' : 'good');
+    J.out(b,'tr', J.fmt(C/(C+60),3), C/(C+60) > .12 ? 'good' : 'warn');
+    const leak = v.t < 4.5;
+    J.out(b,'ok', ar > 60 ? '기둥이 휜다 — 서포터 필요/불가' : leak ? '유전막이 너무 얇아 누설 급증' : C < 6 ? '용량 부족 — 신호가 작다' : '양산 가능한 설계', ar > 60 || leak || C < 6 ? 'bad' : 'good');
+    draw();
+  });
+  J.loop(cv, dt => { if(!cam.user){ cam.yaw += dt*0.1; draw(); } });
+})();
+
+/* 그림 9-1 트랜지스터 진화 */
+(function(){
+  const s = document.getElementById('trEvo');
+  const names = ['평면형 (Planar)','리세스 채널 (RCAT)','매립 워드라인 (BCAT)','수직 채널 (VCT)'];
+  names.forEach((nm, i) => {
+    const ox = 15 + i*192, g = J.svg('g', {transform:`translate(${ox},0)`}, s);
+    J.svg('text', {x:85, y:18, 'text-anchor':'middle', class:'t-m', text:nm, style:'font-weight:700'}, g);
+    J.svg('rect', {x:5, y:110, width:165, height:110, fill:'var(--paper2)', stroke:'var(--line)'}, g);
+    if(i < 3){
+      J.svg('rect', {x:15, y:100, width:40, height:22, fill:'var(--indigo)', opacity:.6}, g);
+      J.svg('rect', {x:120, y:100, width:40, height:22, fill:'var(--red)', opacity:.6}, g);
+      J.svg('text', {x:20, y:94, class:'t-s', text:'BL'}, g); J.svg('text', {x:126, y:94, class:'t-s', text:'SN'}, g);
+    }
+    if(i === 0){
+      J.svg('rect', {x:62, y:70, width:52, height:34, fill:'var(--gold)', opacity:.85}, g);
+      J.svg('path', {d:'M55 116 H120', stroke:'var(--red)', 'stroke-width':3, fill:'none'}, g);
+      J.svg('text', {x:88, y:240, 'text-anchor':'middle', class:'t-s', text:'짧은 채널 → 누설 ↑'}, g);
+    } else if(i === 1){
+      J.svg('path', {d:'M62 70 H114 V160 Q88 176 62 160 Z', fill:'var(--gold)', opacity:.85}, g);
+      J.svg('path', {d:'M55 118 V166 Q88 186 120 166 V118', stroke:'var(--red)', 'stroke-width':3, fill:'none'}, g);
+      J.svg('text', {x:88, y:240, 'text-anchor':'middle', class:'t-s', text:'홈을 파 채널을 U자로'}, g);
+    } else if(i === 2){
+      J.svg('path', {d:'M64 124 H112 V168 Q88 184 64 168 Z', fill:'var(--gold)', opacity:.9}, g);
+      J.svg('rect', {x:64, y:110, width:48, height:14, fill:'var(--card)', stroke:'var(--line)'}, g);
+      J.svg('path', {d:'M55 122 V172 Q88 194 120 172 V122', stroke:'var(--red)', 'stroke-width':3, fill:'none'}, g);
+      J.svg('text', {x:88, y:240, 'text-anchor':'middle', class:'t-s', text:'워드라인을 통째로 매립'}, g);
+    } else {
+      J.svg('rect', {x:5, y:196, width:165, height:20, fill:'var(--indigo)', opacity:.6}, g);
+      J.svg('text', {x:12, y:211, class:'t-s', text:'매립 비트라인', style:'fill:#fff'}, g);
+      J.svg('rect', {x:72, y:112, width:30, height:86, fill:'var(--paper)', stroke:'var(--ink3)'}, g);
+      J.svg('rect', {x:52, y:130, width:16, height:50, fill:'var(--gold)', opacity:.9}, g);
+      J.svg('rect', {x:106, y:130, width:16, height:50, fill:'var(--gold)', opacity:.9}, g);
+      J.svg('path', {d:'M87 196 V114', stroke:'var(--red)', 'stroke-width':3}, g);
+      J.svg('rect', {x:66, y:40, width:42, height:72, rx:6, fill:'none', stroke:'var(--jade)', 'stroke-width':4}, g);
+      J.svg('text', {x:88, y:240, 'text-anchor':'middle', class:'t-s', text:'채널을 세워 4F²'}, g);
+    }
+    if(i < 3) J.svg('rect', {x:122, y:30, width:36, height:70, rx:5, fill:'none', stroke:'var(--jade)', 'stroke-width':3}, g);
+  });
+})();
+
+/* 9-3 3D 적층 */
+J.sim('sim3', (v, box) => {
+  const d = (k, f) => 1/(k*f*f*1e-18)/1e15;
+  const a = d(6,12), b = d(4,12), c = d(v.a3, v.f3)*v.n;
+  J.out(box,'a', J.fmt(a,2)+' Gb/mm²'); J.out(box,'b', J.fmt(b,2)+' Gb/mm²'); J.out(box,'c', J.fmt(c,2)+' Gb/mm²', c > b ? 'good' : c > a ? 'warn' : 'bad');
+  const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+  ctx.clearRect(0,0,w,h);
+  const items = [['6F² 2D (12 nm)', a, '--jade'],['4F² VCT (12 nm)', b, '--plum'],['3D '+v.n+'층 ('+v.f3+' nm, '+v.a3+'F²)', c, '--red']];
+  const mx = Math.max(a,b,c)*1.15, P = {l:170, r:70, t:20, b:20}, bh = (h-P.t-P.b)/3;
+  items.forEach((it,i) => { const y = P.t + i*bh, len = it[1]/mx*(w-P.l-P.r);
+    ctx.fillStyle = J.c(it[2]); ctx.globalAlpha = .85; ctx.fillRect(P.l, y+10, len, bh-20); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(it[0], P.l-8, y+bh/2);
+    ctx.textAlign='left'; ctx.font = '12px "JetBrains Mono"'; ctx.fillText(J.fmt(it[1],2), P.l+len+6, y+bh/2); });
+  // 3D 층 표현
+  if(w > 500){ const sx = w - 60, n = Math.min(24, Math.round(v.n/8));
+    for(let i=0;i<n;i++){ ctx.fillStyle = J.c(i%2 ? '--red' : '--red-soft'); ctx.fillRect(sx, h-30 - i*((h-60)/24), 40, (h-60)/24-1); } }
+});
+</script>
+</body>
+</html>

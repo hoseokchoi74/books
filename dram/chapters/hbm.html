@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HBM과 미래 메모리 · DRAM 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../../assets/iso3d.js"></script>
+</head>
+<body data-ch="hbm">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 12 <span class="hanja">第十二章 · 層</span></div>
+  <h1>HBM과 미래 메모리</h1>
+  <p class="lead">AI 가속기 하나가 1초에 수천조 번 계산하려면, 1초에 수 TB의 데이터를 먹여 줘야 한다. 핀 몇십 개를 아무리 빨리 돌려도 닿을 수 없는 숫자다. 답은 핀을 천 개, 이천 개로 늘리는 것 — 그러려면 칩을 쌓고, 구멍을 뚫고, 프로세서 바로 옆에 붙여야 한다. 이것이 HBM(High Bandwidth Memory)이다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>HBM 스택의 구조(베이스 다이, 코어 다이, TSV, 마이크로범프, 인터포저)를 3D로 설명할 수 있다.</li>
+  <li>"넓고 느린" 버스가 "좁고 빠른" 버스보다 에너지 효율이 좋은 이유를 안다.</li>
+  <li>HBM 세대별 대역폭과 용량을 계산한다.</li>
+  <li>루프라인 모델로 AI 작업이 왜 메모리 대역폭에 묶이는지 확인한다.</li>
+  <li>CXL, PIM, 3D DRAM 등 다음 메모리 기술의 방향을 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>쌓고, 뚫고, 붙인다</h2>
+<p>HBM 스택은 맨 아래 <span class="term">베이스 다이(로직 다이)</span> 위에 DRAM <span class="term">코어 다이</span>를 8–16장 쌓은 것이다. 각 다이를 수직으로 관통하는 수천 개의 <span class="term">TSV</span>(Through-Silicon Via, 실리콘 관통 전극)가 신호와 전원을 위아래로 전달하고, 다이 사이는 지름 수십 µm의 <span class="term">마이크로범프</span>나 범프 없이 구리를 직접 붙이는 <span class="term">하이브리드 본딩</span>으로 연결된다. 스택은 GPU와 함께 실리콘 <span class="term">인터포저</span> 위에 나란히 놓인다. 인터포저 안의 미세 배선이 1024개(HBM4는 2048개)의 데이터 선을 수 mm 거리로 GPU에 잇는다. 이런 패키징을 2.5D라 한다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-1</span><span class="ttl">HBM 스택 3D 모형</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">적층 수 <output data-o="n"></output></span><input type="range" data-k="n" min="4" max="16" step="4" value="12" data-d="0" data-u="단"></label>
+      <label class="ctrl"><span class="lab">다이 용량</span><select data-k="die" data-num><option value="16">16 Gb</option><option value="24" selected>24 Gb</option><option value="32">32 Gb</option></select></label>
+      <label class="ctrl"><span class="lab">분해도 <output data-o="ex"></output></span><input type="range" data-k="ex" min="0" max="100" step="1" value="35" data-d="0" data-u="%"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="430"></canvas></div>
+    <div class="legend"><span><i style="background:var(--jade)"></i>DRAM 코어 다이</span><span><i style="background:var(--indigo)"></i>베이스(로직) 다이</span><span><i style="background:var(--gold)"></i>TSV</span><span><i style="background:var(--plum)"></i>GPU</span><span><i style="background:var(--paper2)"></i>실리콘 인터포저</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">스택 용량</span><span class="v" data-r="cap"></span></div>
+      <div class="ro"><span class="k">다이 한 장 두께 (스택 ≤ 775 µm)</span><span class="v" data-r="th"></span></div>
+      <div class="ro"><span class="k">GPU 하나에 6스택이면</span><span class="v" data-r="sys"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>사용법.</b> 드래그로 돌리고, 분해도를 올려 다이 사이를 벌려 보자. 금색 기둥이 TSV다. 패키지 높이 규격이 정해져 있어 단수를 늘릴수록 다이를 더 얇게(수십 µm) 갈아야 한다 — 16단에서는 종이 한 장 두께의 절반 남짓이다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>넓고 느린 버스가 이기는 이유</h2>
+<p>DDR5 DIMM은 64개의 데이터 선을 수 Gb/s로 돌린다. HBM3E는 1024개를 9.6 Gb/s 정도로 돌린다. 선 하나의 속도는 비슷하거나 오히려 느린데 선이 16배 많다. 더 중요한 것은 <strong>거리</strong>다. 메인보드 위 수 cm를 달리는 DDR 신호는 큰 드라이버와 종단 저항, 등화기가 필요하지만, 인터포저 위 수 mm 배선은 작은 드라이버로 충분하다. 비트 하나를 옮기는 에너지가 몇 배 작아진다.</p>
+<div class="eq">$$P_{I/O} = E_{bit}\times BW, \qquad \text{예: } 4\ \text{pJ/bit} \times 8\ \text{TB/s} = 4\times10^{-12}\times 6.4\times10^{13} \approx 256\ \text{W}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-2</span><span class="ttl">같은 대역폭, 다른 전력</span></div>
+  <div class="sim-b">
+    <div class="ctrls"><label class="ctrl"><span class="lab">필요한 대역폭 <output data-o="bw"></output></span><input type="range" data-k="bw" min="0.5" max="20" step="0.5" value="8" data-d="1" data-u="TB/s"></label></div>
+    <div class="canvas-box"><canvas id="cv2" data-h="260"></canvas></div>
+    <div class="readouts" id="ro2"></div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 막대는 그 대역폭을 각 메모리로 낼 때의 메모리 접근 전력(DRAM 내부 + I/O)이고, 숫자는 필요한 개수다. 비트당 에너지는 공개 자료를 바탕으로 한 대략값(DDR5 ~15, LPDDR5X ~6, GDDR7 ~7, HBM3E ~4 pJ/bit)이다. DDR5로 8 TB/s를 내려면 DIMM 백 수십 개와 1 kW에 가까운 전력이 필요하다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>세대별 HBM</h2>
+<div class="tbwrap"><table class="tb">
+<tr><th>세대</th><th>등장</th><th>버스 폭</th><th>핀 속도</th><th>스택 대역폭</th><th>최대 적층 · 용량</th></tr>
+<tr><td>HBM</td><td>2013–15</td><td class="num">1024</td><td class="num">1 Gb/s</td><td class="num">128 GB/s</td><td>4단 · 1 GB</td></tr>
+<tr><td>HBM2</td><td>2016</td><td class="num">1024</td><td class="num">2 Gb/s</td><td class="num">256 GB/s</td><td>8단 · 8 GB</td></tr>
+<tr><td>HBM2E</td><td>2019–20</td><td class="num">1024</td><td class="num">3.6 Gb/s</td><td class="num">~460 GB/s</td><td>8단 · 16 GB</td></tr>
+<tr><td>HBM3</td><td>2022</td><td class="num">1024</td><td class="num">6.4 Gb/s</td><td class="num">819 GB/s</td><td>12단 · 24 GB</td></tr>
+<tr><td>HBM3E</td><td>2024</td><td class="num">1024</td><td class="num">~9.6 Gb/s</td><td class="num">~1.2 TB/s</td><td>12단 · 36 GB</td></tr>
+<tr><td>HBM4</td><td>2025–26</td><td class="num">2048</td><td class="num">~8–10 Gb/s</td><td class="num">~2–2.5 TB/s</td><td>12–16단 · 48–64 GB</td></tr>
+</table></div>
+<p>HBM4부터는 베이스 다이를 메모리 공정이 아닌 파운드리 로직 공정으로 만들기 시작했다. 베이스 다이에 고객 맞춤 로직을 넣는 <span class="term">커스텀 HBM</span>도 논의된다. 메모리가 더 이상 범용 부품이 아니라 프로세서의 일부가 되어 가는 것이다.</p>
+
+<h2 id="s4"><span class="n">04</span>루프라인: AI는 왜 메모리에 목마른가</h2>
+<p>어떤 계산이 연산 장치에 묶이는지 메모리에 묶이는지는 <span class="term">연산 강도</span>(arithmetic intensity) \(I\) = 연산 수 ÷ 메모리에서 읽은 바이트 수로 판단한다. 도달 가능한 성능은</p>
+<div class="eq">$$P = \min\big(P_{peak},\ I \times BW\big)$$
+<div class="note">거대 언어 모델이 토큰을 하나씩 생성하는 디코딩 단계는 가중치를 매번 다 읽으면서 바이트당 연산이 2 FLOP 남짓이다. 배치가 작으면 연산 장치는 대부분 놀고, 성능은 메모리 대역폭이 정한다.</div></div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-3</span><span class="ttl">루프라인 모델</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">가속기 최대 연산 <output data-o="pk"></output></span><input type="range" data-k="pk" min="100" max="5000" step="50" value="2000" data-d="0" data-u="TFLOPS"></label>
+      <label class="ctrl"><span class="lab">메모리 대역폭 <output data-o="bw"></output></span><input type="range" data-k="bw" min="0.5" max="20" step="0.1" value="8" data-d="1" data-u="TB/s"></label>
+      <label class="ctrl"><span class="lab">LLM 디코딩 배치 크기 <output data-o="b"></output></span><input type="range" data-k="b" min="1" max="512" step="1" value="8" data-d="0"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">능선(ridge) 연산 강도</span><span class="v" data-r="ridge"></span></div>
+      <div class="ro"><span class="k">디코딩 연산 강도 (≈ 2×배치/2바이트)</span><span class="v" data-r="ai"></span></div>
+      <div class="ro"><span class="k">디코딩 달성 성능 / 연산 활용률</span><span class="v" data-r="perf"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 꺾인 선이 지붕(roofline)이다. 왼쪽 경사 구간에 있는 작업은 메모리 대역폭이, 오른쪽 평평한 구간은 연산 능력이 성능을 정한다. 배치를 키우면 같은 가중치를 여러 요청이 나눠 써 연산 강도가 오른다. 대역폭 슬라이더를 올리면 경사가 왼쪽 위로 올라가며 같은 작업이 빨라진다 — HBM 세대가 바뀔 때마다 AI 성능이 뛰는 이유다.</p>
+</div>
+
+<h2 id="s5"><span class="n">05</span>그다음: CXL, PIM, 3D DRAM</h2>
+<div class="tbwrap"><table class="tb">
+<tr><th>기술</th><th>아이디어</th><th>풀려는 문제</th></tr>
+<tr><td><b>CXL 메모리</b></td><td>PCIe 물리층 위에서 캐시 일관성을 지키며 메모리를 연결. 확장 카드나 메모리 풀로 DRAM을 붙인다</td><td>CPU 채널 수에 묶인 용량 한계, 서버 간 메모리 낭비</td></tr>
+<tr><td><b>PIM / PNM</b></td><td>메모리 안(뱅크 옆)이나 근처(베이스 다이)에 연산기를 넣어 데이터를 밖으로 옮기지 않고 계산</td><td>데이터 이동 에너지와 대역폭 병목</td></tr>
+<tr><td><b>LPDDR 기반 모듈 (LPCAMM, SOCAMM)</b></td><td>저전력 LPDDR를 교체 가능한 모듈로</td><td>AI PC·서버의 전력 효율</td></tr>
+<tr><td><b>3D DRAM / 4F²</b></td><td>셀을 수직 채널로 세우거나 층으로 쌓기 (9장)</td><td>2D 미세화의 한계</td></tr>
+<tr><td><b>하이브리드 본딩 HBM</b></td><td>범프 없이 구리끼리 직접 접합</td><td>16단 이상 적층 시 높이·열·신호 밀도</td></tr>
+</table></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">HBM3E 스택(1024비트, 9.6 Gb/s/핀)의 대역폭은?</p><ol><li>약 120 GB/s</li><li>약 9.6 GB/s</li><li>약 1.2 TB/s</li><li>약 9.8 TB/s</li></ol>
+<p class="explain">1024 × 9.6 / 8 ≈ 1,229 GB/s.</p></div>
+<div class="quiz" data-a="0"><p class="q">TSV의 역할은?</p><ol><li>쌓인 다이들을 수직으로 관통해 신호·전원을 연결</li><li>셀 커패시터의 전극</li><li>메인보드 배선</li><li>열을 차단하는 절연층</li></ol>
+<p class="explain">Through-Silicon Via: 실리콘을 관통하는 전극.</p></div>
+<div class="quiz" data-a="3"><p class="q">LLM 디코딩이 메모리 대역폭에 묶이는 이유는?</p><ol><li>연산 장치가 느려서</li><li>리프레시가 많아서</li><li>ECC 때문에</li><li>토큰 하나마다 가중치 전체를 읽지만 바이트당 연산이 적어(연산 강도가 낮아) 루프라인의 경사 구간에 있기 때문에</li></ol>
+<p class="explain">연산 강도가 능선보다 훨씬 낮으면 성능 = 강도 × 대역폭.</p></div>
+<div class="quiz" data-a="1"><p class="q">HBM이 DDR보다 비트당 에너지가 작은 주된 이유는?</p><ol><li>셀이 더 크기 때문에</li><li>인터포저 위 짧은 배선으로 작은 드라이버를 써 넓고 느리게 보내기 때문에</li><li>리프레시를 하지 않기 때문에</li><li>전압이 0이라서</li></ol>
+<p class="explain">짧은 거리 + 많은 선 + 적당한 속도 = 낮은 I/O 에너지.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 12-1 HBM 3D */
+(function(){
+  const cv = document.getElementById('cv1');
+  const cam = {yaw:-0.6, pitch:0.42, scale:20};
+  let V = {n:12, die:24, ex:35};
+  function draw(){
+    const {ctx, w, h} = J.fit(cv);
+    cam.scale = Math.min(w, h*1.5)/24;
+    cam.oy = h*0.22;
+    const S = new J3.Scene();
+    // 인터포저 + 기판
+    S.box(-11, -1.6, -5, 22, 0.8, 10, '--gold-soft', {layer:0});
+    S.box(-10, -0.8, -4.2, 20, 0.6, 8.4, '--paper2', {layer:1});
+    // GPU
+    S.box(-9.2, -0.2, -3.4, 8.2, 1.4, 6.8, '--plum', {layer:2});
+    // HBM 스택 (오른쪽)
+    const x0 = 1.0, wS = 4.4, dS = 5.6, z0 = -2.8;
+    const gap = V.ex/100*1.0, th = Math.max(0.12, 3.6/(V.n+1));
+    let y = -0.2;
+    S.box(x0, y, z0, wS, th*1.3, dS, '--indigo', {layer:2}); y += th*1.3 + gap;
+    for(let i=0;i<V.n;i++){
+      S.box(x0, y, z0, wS, th, dS, i%2 ? '--jade' : '--jade-soft', {layer:3 + i});
+      y += th + gap;
+    }
+    // TSV 기둥 (가운데 열)
+    const yTop = y - gap;
+    for(let k=0;k<5;k++){ const zz = z0 + 1 + k*0.9; S.box(x0 + wS/2 - 0.08, -0.2, zz, 0.16, yTop + 0.2, 0.16, '--gold', {layer:3 + V.n + 1}); }
+    S.render(ctx, cam, w, h);
+    // 라벨
+    ctx.font = '12px "Noto Sans KR"'; ctx.fillStyle = J.c('--ink2'); ctx.textAlign='left';
+    const pg = J3.project([-5, 1.4, -3.4], cam, w, h); ctx.fillText('GPU / 가속기', pg[0]-30, pg[1]-8);
+    const ph = J3.project([x0 + wS, yTop, z0], cam, w, h); ctx.fillText('HBM '+V.n+'단 스택', ph[0]+8, ph[1]);
+    const pi = J3.project([10, -0.4, 4.2], cam, w, h); ctx.fillText('실리콘 인터포저', pi[0]-40, pi[1]+18);
+  }
+  J3.drag(cv, cam, draw);
+  J.sim('sim1', (v, box) => {
+    V = v;
+    const cap = v.n*v.die/8;
+    J.out(box,'cap', cap+' GB');
+    J.out(box,'th', '~'+J.fmt(Math.min(100, (720 - 60)/v.n),0)+' µm', v.n >= 16 ? 'warn' : '');
+    J.out(box,'sys', (cap*6)+' GB · '+(v.n >= 12 ? '~7–12 TB/s' : '~5–7 TB/s'));
+    draw();
+  });
+  J.loop(cv, dt => { if(!cam.user){ cam.yaw += dt*0.12; draw(); } });
+})();
+
+/* 12-2 전력 */
+J.sim('sim2', (v, box) => {
+  const T = [['DDR5-6400 DIMM', 51.2, 15, '--indigo'],['LPDDR5X (x64)', 68, 6, '--gold'],['GDDR7 칩 (x32)', 128, 7, '--plum'],['HBM3E 스택', 1229, 4, '--jade']];
+  const bw = v.bw*1000; // GB/s
+  const {ctx, w, h} = J.fit(document.getElementById('cv2'));
+  ctx.clearRect(0,0,w,h);
+  const P = {l:150, r:120, t:16, b:16}, bh = (h-P.t-P.b)/T.length;
+  const pw = T.map(t => t[2]*1e-12*bw*1e9*8);
+  const mx = Math.max(...pw)*1.05;
+  T.forEach((t,i) => { const y = P.t + i*bh, len = pw[i]/mx*(w-P.l-P.r);
+    ctx.fillStyle = J.c(t[3]); ctx.globalAlpha = .85; ctx.fillRect(P.l, y+8, len, bh-16); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(t[0], P.l-8, y+bh/2);
+    ctx.textAlign='left'; ctx.font = '12px "JetBrains Mono"'; ctx.fillText(J.fmt(pw[i],0)+' W · '+Math.ceil(bw/t[1])+'개', P.l+len+6, y+bh/2); });
+  document.getElementById('ro2').innerHTML = `<div class="ro bad"><span class="k">DDR5로 낼 때</span><span class="v">${J.fmt(pw[0],0)} W</span></div><div class="ro good"><span class="k">HBM3E로 낼 때</span><span class="v">${J.fmt(pw[3],0)} W</span></div><div class="ro"><span class="k">절감</span><span class="v">${J.fmt(pw[0]/pw[3],1)} 배</span></div>`;
+});
+
+/* 12-3 루프라인 */
+J.sim('sim3', (v, box) => {
+  const pk = v.pk, bw = v.bw; // TFLOPS, TB/s
+  const ridge = pk/bw;
+  const roof = []; for(let e=-1; e<=4; e+=0.02){ const I = Math.pow(10,e); roof.push([I, Math.min(pk, I*bw)]); }
+  const ai = v.b; // FLOP/byte (2*batch FLOP per 2-byte weight)
+  const perf = Math.min(pk, ai*bw);
+  const jobs = [{x:ai, y:perf, color:'--red', r:7, label:'LLM 디코딩 (배치 '+v.b+')'},{x:300, y:Math.min(pk,300*bw), color:'--jade', r:5, label:'LLM 프리필'},{x:1000, y:Math.min(pk,1000*bw), color:'--indigo', r:5, label:'큰 행렬 곱 (학습)', align:'right'},{x:0.25, y:Math.min(pk,0.25*bw), color:'--gold', r:5, label:'벡터 덧셈'}];
+  J.plot(document.getElementById('cv3'), {x:[0.1,1e4], y:[0.05, 1e4], logx:true, logy:true, xlab:'연산 강도 (FLOP/바이트, 로그)', ylab:'성능 (TFLOPS, 로그)', xf:t=>t, yf:t=>t,
+    series:[{pts:roof, color:'--ink', w:3}], points:jobs, vlines:[{x:ridge, color:'--ink3', label:'능선 '+J.fmt(ridge,0), dash:[3,3]}]});
+  J.out(box,'ridge', J.fmt(ridge,0)+' FLOP/B');
+  J.out(box,'ai', J.fmt(ai,0)+' FLOP/B', ai < ridge ? 'bad' : 'good');
+  J.out(box,'perf', J.fmt(perf,0)+' TFLOPS / '+J.fmt(perf/pk*100,1)+' %', perf/pk < .2 ? 'bad' : perf/pk < .7 ? 'warn' : 'good');
+});
+</script>
+</body>
+</html>

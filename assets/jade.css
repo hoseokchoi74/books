@@ -1,0 +1,101 @@
+/* 집현전 Jade Hall — 공통 스타일 (한지 · 먹 · 주칠 · 옥색) */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root{
+  --paper:#f3ead7; --paper2:#e9dcc0; --card:#fbf6ea; --card2:#f6eedc;
+  --ink:#231d16; --ink2:#5b5044; --ink3:#8a7d6b;
+  --line:#cdbb98; --line2:#e0d2b4;
+  --red:#b0372b; --red-soft:#f1d5cc;
+  --jade:#2c7a68; --jade-soft:#d4e9e1;
+  --indigo:#2b4a7c; --indigo-soft:#d6dff0;
+  --gold:#b0832a; --gold-soft:#f0e1bd;
+  --plum:#7b3a5d; --plum-soft:#ecd5df;
+  --wood:#6b4426; --wood2:#8a5a33;
+  --shadow:0 1px 2px rgba(60,40,10,.08),0 6px 18px rgba(60,40,10,.08);
+  --serif:'Noto Serif KR',serif; --sans:'Noto Sans KR',system-ui,sans-serif; --mono:'JetBrains Mono','Noto Sans KR',ui-monospace,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#16130f; --paper2:#1f1b15; --card:#221d17; --card2:#2a241c;
+    --ink:#ede3cd; --ink2:#bcae94; --ink3:#8c806b;
+    --line:#4d4334; --line2:#3a3227;
+    --red:#e2695b; --red-soft:#4a2520;
+    --jade:#5cc0a6; --jade-soft:#1d3a33;
+    --indigo:#86a6dc; --indigo-soft:#1f2b42;
+    --gold:#e1b65c; --gold-soft:#3d3018;
+    --plum:#d48ab0; --plum-soft:#3e2533;
+    --wood:#3a2717; --wood2:#5a3c22;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 20px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#16130f; --paper2:#1f1b15; --card:#221d17; --card2:#2a241c;
+  --ink:#ede3cd; --ink2:#bcae94; --ink3:#8c806b;
+  --line:#4d4334; --line2:#3a3227;
+  --red:#e2695b; --red-soft:#4a2520;
+  --jade:#5cc0a6; --jade-soft:#1d3a33;
+  --indigo:#86a6dc; --indigo-soft:#1f2b42;
+  --gold:#e1b65c; --gold-soft:#3d3018;
+  --plum:#d48ab0; --plum-soft:#3e2533;
+  --wood:#3a2717; --wood2:#5a3c22;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 20px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:16.5px; line-height:1.8; word-break:keep-all; overflow-wrap:break-word;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(176,131,42,.06), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(44,122,104,.05), transparent 45%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .35 0 0 0 0 .2 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+a{color:var(--indigo); text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3,h4{font-family:var(--serif); line-height:1.35; letter-spacing:-.01em}
+code,.mono{font-family:var(--mono); font-size:.92em}
+img,svg,canvas{max-width:100%}
+
+/* ── 상단 바 ── */
+.topbar{position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:14px;
+  padding:10px 20px; background:color-mix(in srgb,var(--paper) 88%,transparent);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line)}
+.brand{display:flex; align-items:center; gap:10px; color:var(--ink); font-family:var(--serif); font-weight:700}
+.brand:hover{text-decoration:none}
+.seal{display:inline-grid; place-items:center; width:34px; height:34px; background:var(--red); color:#fff8ee;
+  border-radius:4px; font-family:var(--serif); font-weight:900; font-size:12px; line-height:1.05;
+  writing-mode:vertical-rl; letter-spacing:1px; box-shadow:inset 0 0 0 2px rgba(255,255,255,.25); transform:rotate(-2deg)}
+.brand small{display:block; font-family:var(--sans); font-weight:400; font-size:11px; color:var(--ink3); letter-spacing:.08em}
+.topbar .spacer{flex:1}
+.topbar nav{display:flex; gap:4px; flex-wrap:wrap}
+.topbar nav a{color:var(--ink2); font-size:14px; padding:6px 10px; border-radius:6px}
+.topbar nav a:hover{background:var(--paper2); text-decoration:none}
+.iconbtn{border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:8px; height:34px; min-width:34px;
+  padding:0 10px; cursor:pointer; font-size:14px; font-family:var(--sans)}
+.iconbtn:hover{border-color:var(--ink3)}
+
+/* ── 공통 버튼 ── */
+.btn{display:inline-flex; align-items:center; gap:8px; padding:11px 20px; border-radius:6px; font-weight:700; font-size:15px;
+  border:1px solid var(--ink); background:var(--ink); color:var(--paper); cursor:pointer; font-family:var(--sans)}
+.btn:hover{text-decoration:none; opacity:.9}
+.btn.ghost{background:transparent; color:var(--ink)}
+.btn.red{background:var(--red); border-color:var(--red); color:#fff8ee}
+.tag{display:inline-block; font-size:12px; padding:1px 8px; border-radius:3px; border:1px solid var(--line); color:var(--ink2); background:var(--card)}
+.tag.sim{border-color:var(--jade); color:var(--jade)}
+.tag.d3{border-color:var(--plum); color:var(--plum)}
+
+.kicker{font-family:var(--mono); font-size:12px; letter-spacing:.2em; color:var(--red); text-transform:uppercase}
+.wrap{max-width:1180px; margin:0 auto; padding:0 20px}
+
+footer.site{border-top:1px solid var(--line); padding:28px 20px 40px; color:var(--ink3); font-size:13px; text-align:center; margin-top:60px}
+
+@media (max-width:640px){
+  body{font-size:15.5px}
+  .topbar{padding:8px 16px}
+  .topbar nav{display:none}
+  .wrap{padding:0 16px}
+}

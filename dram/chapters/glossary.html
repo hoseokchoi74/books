@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>용어집 & 종합 퀴즈 · DRAM 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+  .gsearch{width:100%; font-size:16px; padding:11px 14px; border:1.5px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink); font-family:var(--sans)}
+  .gsearch:focus{outline:none; border-color:var(--jade)}
+  .gfilter{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 16px}
+  .glist{display:grid; gap:8px}
+  .gi{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:10px 14px}
+  .gi b{font-family:var(--serif); font-size:16.5px}
+  .gi .en{margin-left:6px}
+  .gi p{margin:4px 0 0; font-size:14.5px; color:var(--ink2)}
+  .gi a.ch{float:right; font-family:var(--mono); font-size:12px; color:var(--red)}
+  .score{font-family:var(--serif); font-size:20px; font-weight:700}
+</style>
+</head>
+<body data-ch="glossary">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 14 <span class="hanja">第十四章 · 結</span></div>
+  <h1>용어집 & 종합 퀴즈</h1>
+  <p class="lead">책 전체의 핵심 용어를 한곳에 모았다. 검색하거나 분류로 걸러 보고, 마지막의 종합 문제로 실력을 점검해 보자.</p>
+</header>
+
+<h2 id="s1"><span class="n">01</span>용어집</h2>
+<input class="gsearch" id="gq" placeholder="용어 검색 (예: 리프레시, tRCD, HBM)" aria-label="용어 검색">
+<div class="gfilter" id="gf"></div>
+<p class="hint" id="gcount"></p>
+<div class="glist" id="gl"></div>
+
+<h2 id="s2"><span class="n">02</span>종합 퀴즈</h2>
+<p>15문제. 각 문제를 누르면 바로 채점되고 해설이 열린다.</p>
+<div class="readouts" style="margin-bottom:10px"><div class="ro"><span class="k">점수</span><span class="v score" id="score">0 / 15</span></div><div class="ro"><span class="k">푼 문제</span><span class="v" id="done">0</span></div></div>
+<div id="qz"></div>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const G = [
+ ['DRAM','Dynamic Random-Access Memory','커패시터에 전하로 비트를 저장하고 주기적으로 리프레시해야 하는 휘발성 메모리.','기초','hierarchy'],
+ ['SRAM','Static RAM','교차 결합 인버터(6T)로 비트를 유지. 빠르지만 셀이 커서 캐시에 쓴다.','기초','hierarchy'],
+ ['메모리 계층','memory hierarchy','레지스터–캐시–DRAM–SSD로 이어지는 속도·용량·비용의 층 구조.','기초','hierarchy'],
+ ['AMAT','Average Memory Access Time','평균 메모리 접근 시간. 각 층의 지연과 적중률로 계산한다.','기초','hierarchy'],
+ ['지역성','locality','최근 쓴 데이터(시간)나 그 이웃(공간)을 곧 다시 쓰는 경향. 계층 구조의 근거.','기초','hierarchy'],
+ ['메모리 벽','memory wall','프로세서 성능 증가를 메모리 지연·대역폭이 따라가지 못해 생기는 병목.','기초','hierarchy'],
+ ['1T1C','one-transistor one-capacitor','트랜지스터 하나와 커패시터 하나로 된 DRAM 셀. 데나드가 1966년 고안.','셀','cell'],
+ ['워드라인','word line, WL','셀 트랜지스터의 게이트를 잇는 선. 행 하나를 선택한다.','셀','cell'],
+ ['비트라인','bit line, BL','셀의 드레인을 잇는 선. 데이터를 센스 앰프로 전달한다.','셀','cell'],
+ ['스토리지 노드','storage node, SN','커패시터와 트랜지스터 소스가 만나는 노드. 전하가 저장되는 곳.','셀','cell'],
+ ['전하 공유','charge sharing','워드라인이 켜질 때 셀과 비트라인이 전하를 나눠 갖는 현상. 신호 ΔV를 만든다.','셀','cell'],
+ ['전달비','transfer ratio','C_s/(C_s+C_BL). 셀 전압 변화가 비트라인에 얼마나 전달되는지.','셀','cell'],
+ ['파괴적 읽기','destructive read','읽는 순간 셀 전하가 비트라인과 같아져 원래 값을 잃는 DRAM 읽기의 성질.','셀','cell'],
+ ['VPP','word line boost voltage','워드라인 승압 전압. 셀에 V_DD를 끝까지 쓰기 위해 V_DD+V_th 이상으로 구동.','셀','cell'],
+ ['음의 워드라인','negative word line, NWL','대기 중 워드라인을 음전압으로 눌러 서브문턱 누설을 줄이는 기법.','셀','cell'],
+ ['리텐션 시간','retention time','셀이 데이터를 잃지 않고 버티는 시간. 꼬리 분포가 리프레시 주기를 정한다.','리프레시','refresh'],
+ ['GIDL','Gate-Induced Drain Leakage','게이트와 겹친 드레인 영역의 강한 전계로 생기는 누설.','리프레시','refresh'],
+ ['리프레시','refresh','행을 열어 센싱·재저장함으로써 셀 전하를 다시 채우는 동작.','리프레시','refresh'],
+ ['tREFI','refresh interval','REF 명령 사이 평균 간격. DDR5는 약 3.9 µs.','리프레시','refresh'],
+ ['tRFC','refresh cycle time','REF 한 번에 걸리는 시간. 용량이 클수록 길다.','리프레시','refresh'],
+ ['tREFW','refresh window','모든 행을 한 번씩 리프레시하는 주기. DDR4 64 ms, DDR5 32 ms.','리프레시','refresh'],
+ ['VRT','Variable Retention Time','결함 트랩의 상태 변화로 리텐션 시간이 무작위로 바뀌는 현상.','리프레시','refresh'],
+ ['셀프 리프레시','self refresh','절전 시 DRAM이 내부 타이머로 스스로 리프레시하는 모드.','리프레시','refresh'],
+ ['센스 앰프','sense amplifier, SA','교차 결합 래치로 비트라인 쌍의 작은 차이를 풀 스윙으로 증폭하는 회로.','회로','senseamp'],
+ ['프리차지','precharge','비트라인을 V_DD/2로 맞춰 다음 읽기를 준비하는 동작(PRE).','회로','senseamp'],
+ ['재저장','restore','센스 앰프가 증폭한 전압을 셀에 다시 써 파괴된 데이터를 복원하는 과정.','회로','senseamp'],
+ ['오프셋','offset','트랜지스터 불일치로 센스 앰프가 한쪽으로 치우친 정도. 센싱 여유를 깎는다.','회로','senseamp'],
+ ['펠그롬 법칙','Pelgrom\'s law','문턱 전압 불일치의 표준편차가 √(면적)에 반비례한다는 관계.','회로','senseamp'],
+ ['매트','mat','센스 앰프 띠와 서브 워드라인 드라이버 띠로 둘러싸인 셀 배열 단위.','구조','array'],
+ ['뱅크','bank','독립적으로 행을 열고 닫을 수 있는 단위. DDR5는 32개.','구조','array'],
+ ['뱅크 그룹','bank group','내부 데이터 경로를 공유하는 뱅크 묶음. tCCD_L/tCCD_S를 구분한다.','구조','interface'],
+ ['페이지','page / row buffer','ACT 한 번에 센스 앰프로 올라오는 행. x8 DDR5에서 1 KB.','구조','array'],
+ ['오픈 비트라인','open bit line','BL과 BL̅이 서로 다른 매트에 있는 구조. 6F² 셀을 가능하게 한다.','구조','array'],
+ ['폴디드 비트라인','folded bit line','BL과 BL̅이 같은 매트에 나란히 있는 구조. 잡음에 강하지만 8F².','구조','array'],
+ ['ACT','activate','행 하나를 열어 센스 앰프로 올리는 명령.','타이밍','timing'],
+ ['PRE','precharge command','열린 행을 닫고 비트라인을 프리차지하는 명령.','타이밍','timing'],
+ ['tRCD','RAS-to-CAS delay','ACT에서 RD/WR까지 최소 간격.','타이밍','timing'],
+ ['CL','CAS latency','RD 명령에서 첫 데이터까지 클록 수.','타이밍','timing'],
+ ['tRP','row precharge time','PRE에서 다음 ACT까지 최소 간격.','타이밍','timing'],
+ ['tRAS','row active time','ACT에서 PRE까지 최소 간격. 재저장 완료 시간.','타이밍','timing'],
+ ['tFAW','four activate window','어떤 시간 창 안에서도 ACT는 4개까지만 허용하는 제약.','타이밍','timing'],
+ ['로우 버퍼 히트','row buffer hit','요청한 데이터가 이미 열린 행에 있는 경우. CL만 기다린다.','타이밍','timing'],
+ ['DDR','Double Data Rate','클록의 상승·하강 에지 모두에서 데이터를 전송하는 방식.','인터페이스','interface'],
+ ['MT/s','mega-transfers per second','초당 전송 횟수(백만). DDR5-6400은 6400 MT/s.','인터페이스','interface'],
+ ['DQS','data strobe','데이터와 함께 보내는 샘플링 기준 신호.','인터페이스','interface'],
+ ['프리페치','prefetch','RD 한 번에 핀당 n비트를 병렬로 꺼내 직렬화하는 구조. 버스트 길이를 정한다.','인터페이스','interface'],
+ ['버스트 길이','burst length, BL','RD/WR 한 번에 연속 전송되는 데이터 수. DDR5는 BL16.','인터페이스','interface'],
+ ['아이 다이어그램','eye diagram','여러 비트 파형을 한 UI 폭에 겹친 그림. 신호 품질 평가에 쓴다.','인터페이스','interface'],
+ ['DFE','Decision Feedback Equalizer','직전 판정 비트의 잔상을 빼 주는 수신 등화기.','인터페이스','interface'],
+ ['LPDDR','Low-Power DDR','모바일용 저전력 DRAM. 저전압 I/O와 깊은 절전 모드.','인터페이스','interface'],
+ ['GDDR','Graphics DDR','그래픽카드용 고속 DRAM. 칩당 대역폭이 크다.','인터페이스','interface'],
+ ['메모리 컨트롤러','memory controller','요청을 DRAM 명령으로 바꾸고 타이밍·스케줄링·리프레시를 관리하는 회로.','시스템','controller'],
+ ['주소 매핑','address mapping','물리 주소 비트를 채널·뱅크·행·열로 나누는 규칙.','시스템','controller'],
+ ['FR-FCFS','First-Ready FCFS','로우 버퍼 히트 요청을 우선 처리하는 스케줄링 정책.','시스템','controller'],
+ ['tWTR','write-to-read delay','쓰기 후 읽기로 전환할 때 기다려야 하는 시간.','시스템','controller'],
+ ['F','feature size','공정의 최소 선폭(하프 피치). 셀 면적을 F² 단위로 표현한다.','공정','scaling'],
+ ['6F²','6F-squared cell','오픈 비트라인의 셀 면적. 현재 주류.','공정','scaling'],
+ ['4F²','4F-squared cell','수직 채널 트랜지스터로 가능한 최소 셀 면적.','공정','scaling'],
+ ['종횡비','aspect ratio','구조의 높이 ÷ 폭. 셀 커패시터는 50:1을 넘는다.','공정','scaling'],
+ ['BCAT','Buried Channel Array Transistor','워드라인을 실리콘 속에 묻은 셀 트랜지스터.','공정','scaling'],
+ ['VCT','Vertical Channel Transistor','채널을 수직으로 세운 셀 트랜지스터. 4F²를 위한 기술.','공정','scaling'],
+ ['고유전막','high-k dielectric','ZrO₂ 등 유전율이 높은 커패시터 절연막.','공정','scaling'],
+ ['3D DRAM','3D DRAM','셀을 여러 층으로 쌓아 밀도를 높이는 차세대 구조.','공정','scaling'],
+ ['EUV','Extreme Ultraviolet lithography','13.5 nm 파장의 극자외선 노광. 가장 촘촘한 층에 쓴다.','공정','fab'],
+ ['수율','yield','웨이퍼에서 나온 다이 중 양품의 비율.','공정','fab'],
+ ['리던던시','redundancy','불량 셀을 대체하기 위한 여분 행·열.','공정','fab'],
+ ['리페어','repair','퓨즈를 프로그래밍해 불량 주소를 여분 줄로 우회시키는 작업.','공정','fab'],
+ ['PPR','Post-Package Repair','패키징 후에도 불량 행을 여분 행으로 바꾸는 기능.','공정','fab'],
+ ['로우해머','RowHammer','한 행을 반복 활성화해 이웃 행의 비트를 뒤집는 현상·공격.','신뢰성','reliability'],
+ ['TRR','Target Row Refresh','자주 열린 행의 이웃을 추가 리프레시하는 DRAM 내부 완화 기법.','신뢰성','reliability'],
+ ['RFM / PRAC','Refresh Management / Per-Row Activation Counting','DDR5의 로우해머 대응 표준 기능.','신뢰성','reliability'],
+ ['ECC','Error-Correcting Code','패리티를 추가해 오류를 찾아 고치는 부호.','신뢰성','reliability'],
+ ['해밍 부호','Hamming code','신드롬으로 1비트 오류의 위치를 찾는 고전적 ECC.','신뢰성','reliability'],
+ ['SECDED','Single Error Correction, Double Error Detection','1비트 정정·2비트 감지 ECC.','신뢰성','reliability'],
+ ['온다이 ECC','on-die ECC','DRAM 칩 내부에서 계산·정정하는 ECC. DDR5에 도입.','신뢰성','reliability'],
+ ['HBM','High Bandwidth Memory','DRAM 다이를 TSV로 쌓아 1024–2048비트 버스로 연결한 메모리.','트렌드','hbm'],
+ ['TSV','Through-Silicon Via','실리콘을 관통하는 수직 전극.','트렌드','hbm'],
+ ['인터포저','interposer','GPU와 HBM을 나란히 올리고 미세 배선으로 잇는 실리콘 기판.','트렌드','hbm'],
+ ['하이브리드 본딩','hybrid bonding','범프 없이 구리 패드끼리 직접 접합하는 적층 기술.','트렌드','hbm'],
+ ['루프라인','roofline model','연산 강도에 따라 성능 상한을 연산과 대역폭으로 나타내는 모델.','트렌드','hbm'],
+ ['CXL','Compute Express Link','PCIe 기반의 캐시 일관 인터커넥트. 메모리 확장·풀링에 쓴다.','트렌드','hbm'],
+ ['PIM','Processing-In-Memory','메모리 내부나 근처에서 연산해 데이터 이동을 줄이는 기술.','트렌드','hbm']
+];
+(function(){
+  const cats = ['전체', ...new Set(G.map(g => g[3]))];
+  let cat = '전체';
+  const gf = document.getElementById('gf'), gl = document.getElementById('gl'), gq = document.getElementById('gq');
+  gf.innerHTML = cats.map(c => `<button class="sbtn ${c==='전체'?'on':''}" data-c="${c}">${c}</button>`).join('');
+  const chn = s => BOOK.chapters.find(c => c.slug === s).n;
+  function render(){
+    const q = gq.value.trim().toLowerCase();
+    const list = G.filter(g => (cat === '전체' || g[3] === cat) && (!q || (g[0]+g[1]+g[2]).toLowerCase().includes(q)));
+    gl.innerHTML = list.map(g => `<div class="gi"><a class="ch" href="${g[4]}.html">Ch.${chn(g[4])} →</a><b>${g[0]}</b><span class="en">${g[1]}</span><p>${g[2]}</p></div>`).join('') || '<p class="hint">찾는 용어가 없습니다.</p>';
+    document.getElementById('gcount').textContent = `${list.length}개 용어`;
+  }
+  gf.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; J.$$('button', gf).forEach(x => x.classList.remove('on')); b.classList.add('on'); cat = b.dataset.c; render(); });
+  gq.addEventListener('input', render);
+  render();
+
+  const Q = [
+    ['DRAM 셀이 "다이내믹"한 이유는?', ['클록이 빨라서','전하가 새서 주기적 리프레시가 필요해서','주소가 바뀌어서','전압이 변해서'], 1, '2·3장: 커패시터 전하는 누설로 사라진다.'],
+    ['C_s=10 fF, C_BL=90 fF, V_DD=1.2 V일 때 "1" 읽기 신호는?', ['60 mV','120 mV','600 mV','6 mV'], 0, '0.6 × 10/100 = 60 mV.'],
+    ['리프레시 주기를 정하는 셀은?', ['평균적인 셀','가장 강한 셀','리페어 후 남은 가장 약한 셀','센스 앰프'], 2, '3장: 꼬리 분포.'],
+    ['온도가 올라가면 리텐션은?', ['늘어난다','변하지 않는다','지수적으로 줄어든다','진동한다'], 2, '아레니우스 관계.'],
+    ['센스 앰프가 증폭에 쓰는 원리는?', ['음의 되먹임','양의 되먹임(래치)','변압기','저항 분배'], 1, '4장.'],
+    ['로우 버퍼 충돌 지연은?', ['CL','tRCD+CL','tRP+tRCD+CL','tRAS'], 2, '6장.'],
+    ['DDR5-4800의 클록 주파수는?', ['4800 MHz','2400 MHz','1200 MHz','600 MHz'], 1, '7장: DDR은 클록당 2회 전송.'],
+    ['DDR5 DIMM이 32비트 서브채널 두 개로 나뉜 이유는?', ['전력 때문에','BL16에서 64바이트 접근 단위를 맞추려고','ECC 때문에','리프레시 때문에'], 1, '7장: 16 × 32비트 = 64바이트.'],
+    ['FR-FCFS의 우선순위 첫 번째 기준은?', ['도착 순서','로우 버퍼 히트 여부','요청 크기','뱅크 번호'], 1, '8장.'],
+    ['6F² 셀을 가능하게 한 비트라인 구조는?', ['폴디드','오픈','계층형','듀얼'], 1, '5장.'],
+    ['셀 커패시터 지름을 절반으로 줄이면서 C_s를 유지하려면 높이는?', ['절반','같음','2배','4배'], 2, '9장: A ≈ πDH.'],
+    ['리던던시가 없다면 대용량 칩 수율은?', ['거의 0에 가깝다','100 %','50 %','변화 없음'], 0, '10장: 수만 개 매트 중 하나만 불량이어도 버려야 한다.'],
+    ['해밍 (7,4) 부호로 할 수 있는 것은?', ['2비트 정정','1비트 정정','오류 감지만','압축'], 1, '11장.'],
+    ['HBM이 높은 대역폭을 얻는 주된 방법은?', ['핀 하나를 50 Gb/s로','버스 폭을 1024–2048비트로 넓힘','셀을 키움','리프레시 제거'], 1, '12장.'],
+    ['LLM 디코딩이 메모리에 묶이는 이유는?', ['연산 강도가 낮아서','ECC 때문에','온도 때문에','tFAW 때문에'], 0, '12장 루프라인.']
+  ];
+  let score = 0, done = 0;
+  document.getElementById('qz').innerHTML = Q.map((q,i) => `<div class="quiz" data-a="${q[2]}"><p class="q" data-n="${i+1}">${q[0]}</p><ol>${q[1].map(o => `<li>${o}</li>`).join('')}</ol><p class="explain">${q[3]}</p></div>`).join('');
+  J.$$('#qz .quiz').forEach(qe => J.$$('li', qe).forEach((li, k) => li.addEventListener('click', () => {
+    if(qe.dataset.scored) return; qe.dataset.scored = 1; done++;
+    if(k === +qe.dataset.a) score++;
+    document.getElementById('score').textContent = `${score} / ${Q.length}`;
+    document.getElementById('done').textContent = done + (done === Q.length ? (score >= 13 ? ' · 집현전 학사 合格!' : score >= 9 ? ' · 잘했어요' : ' · 다시 읽어 보기') : '');
+  })));
+})();
+</script>
+</body>
+</html>

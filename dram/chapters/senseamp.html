@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>센스 앰프 · DRAM 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="senseamp">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 04 <span class="hanja">第四章 · 感</span></div>
+  <h1>센스 앰프</h1>
+  <p class="lead">전하 공유가 남긴 신호는 고작 수십 mV. 이것을 1 V 넘는 디지털 값으로 키우고, 동시에 셀에 다시 써 주는 회로가 센스 앰프다. 두 개의 인버터를 서로 물려 놓은 이 단순한 래치가 어떻게 "누가 조금이라도 높은가"를 순식간에 판정하는지 파형으로 따라가 보자.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>래치형 센스 앰프(교차 결합 인버터)의 회로와 동작 원리를 설명할 수 있다.</li>
+  <li>프리차지 → 워드라인 → 센싱 → 재저장 → 프리차지의 파형을 순서대로 그릴 수 있다.</li>
+  <li>양의 되먹임에 의한 지수적 증폭과 시정수 \(\tau = C/g_m\)의 의미를 안다.</li>
+  <li>센스 앰프 오프셋(문턱 전압 불일치)이 센싱 여유를 어떻게 깎는지 몬테카를로로 확인한다.</li>
+  <li>오프셋 보상, 비트라인 쌍의 잡음 상쇄 같은 설계 기법을 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>시소 위의 두 사람</h2>
+<p>센스 앰프(SA, sense amplifier)는 비트라인 쌍 BL과 BL̅ 사이에 놓인다. 한쪽 비트라인에는 읽을 셀이 연결되고, 다른 쪽은 기준(reference) 역할로 \(V_{DD}/2\)에 머문다. 회로의 핵심은 두 개의 CMOS 인버터를 서로의 입력과 출력에 물린 <span class="term">교차 결합 래치(cross-coupled latch)</span>다. 아래쪽 NMOS 한 쌍은 <span class="term">SAN</span> 노드를 통해 접지로, 위쪽 PMOS 한 쌍은 <span class="term">SAP</span> 노드를 통해 \(V_{DD}\)로 연결된다.</p>
+<p>비유하면 <strong>정확히 균형 잡힌 시소</strong>다. 한쪽이 아주 조금만 무거워도, 시소가 기울기 시작하면 그 기울기가 다시 기우는 힘을 키운다(양의 되먹임). 결국 한쪽은 바닥(0 V), 다른 쪽은 꼭대기(\(V_{DD}\))에 닿는다.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 760 330" role="img" aria-label="래치형 센스 앰프 회로">
+  <line x1="120" y1="20" x2="120" y2="310" class="st-indigo" stroke-width="4"/><text x="100" y="16" class="t-m" style="fill:var(--indigo);font-weight:700">BL</text>
+  <line x1="640" y1="20" x2="640" y2="310" class="st-indigo" stroke-width="4"/><text x="626" y="16" class="t-m" style="fill:var(--indigo);font-weight:700">BL̅</text>
+  <!-- PMOS pair -->
+  <line x1="260" y1="60" x2="500" y2="60" class="st-red" stroke-width="3"/><text x="510" y="64" class="t-m" style="fill:var(--red)">SAP → V_DD</text>
+  <rect x="270" y="80" width="40" height="40" rx="4" class="s-redsoft" stroke="var(--red)"/><text x="276" y="105" class="t-s">P1</text>
+  <rect x="450" y="80" width="40" height="40" rx="4" class="s-redsoft" stroke="var(--red)"/><text x="456" y="105" class="t-s">P2</text>
+  <line x1="290" y1="60" x2="290" y2="80" class="st-ink" stroke-width="1.5"/><line x1="470" y1="60" x2="470" y2="80" class="st-ink" stroke-width="1.5"/>
+  <!-- NMOS pair -->
+  <rect x="270" y="200" width="40" height="40" rx="4" class="s-jadesoft" stroke="var(--jade)"/><text x="276" y="225" class="t-s">N1</text>
+  <rect x="450" y="200" width="40" height="40" rx="4" class="s-jadesoft" stroke="var(--jade)"/><text x="456" y="225" class="t-s">N2</text>
+  <line x1="260" y1="260" x2="500" y2="260" class="st-jade" stroke-width="3"/><text x="510" y="264" class="t-m" style="fill:var(--jade)">SAN → 0 V</text>
+  <line x1="290" y1="240" x2="290" y2="260" class="st-ink" stroke-width="1.5"/><line x1="470" y1="240" x2="470" y2="260" class="st-ink" stroke-width="1.5"/>
+  <!-- drains to BL -->
+  <path d="M290 120 V200 M120 160 H290" class="s-stroke" stroke-width="2"/><circle cx="290" cy="160" r="4" class="s-ink"/>
+  <path d="M470 120 V200 M640 160 H470" class="s-stroke" stroke-width="2"/><circle cx="470" cy="160" r="4" class="s-ink"/>
+  <!-- cross gates -->
+  <path d="M310 100 L450 150 M310 220 L450 170" class="st-gold" stroke-width="2" fill="none"/>
+  <path d="M450 100 L310 150 M450 220 L310 170" class="st-plum" stroke-width="2" fill="none"/>
+  <text x="380" y="130" text-anchor="middle" class="t-s">게이트 교차 연결</text>
+  <text x="380" y="196" text-anchor="middle" class="t-s">(양의 되먹임)</text>
+  <!-- cell & EQ -->
+  <rect x="40" y="200" width="60" height="40" rx="4" class="s-paper2" stroke="var(--ink3)"/><text x="48" y="224" class="t-s">셀 + WL</text>
+  <line x1="100" y1="220" x2="120" y2="220" class="s-stroke" stroke-width="1.5"/>
+  <rect x="320" y="285" width="120" height="30" rx="4" class="s-goldsoft" stroke="var(--gold)"/><text x="380" y="305" text-anchor="middle" class="t-s">EQ: BL = BL̅ = V_DD/2</text>
+  <path d="M120 300 H320 M440 300 H640" class="s-stroke2" stroke-dasharray="3 3"/>
+  <text x="660" y="160" class="t-s">→ 열 선택(CSL)</text><text x="660" y="176" class="t-s">→ 로컬 I/O</text>
+</svg>
+<figcaption><b>그림 4-1.</b> 래치형 비트라인 센스 앰프. BL이 조금 높으면 N2가 조금 더 켜져 BL̅을 끌어내리고, 낮아진 BL̅은 다시 P1을 더 켜 BL을 끌어올린다. EQ(이퀄라이저)는 다음 읽기를 위해 두 선을 V_DD/2로 맞춘다.</figcaption>
+</figure>
+
+<h2 id="s2"><span class="n">02</span>읽기 한 번의 파형</h2>
+<p>한 번의 읽기(정확히는 행 활성화)는 다섯 장면으로 나뉜다.</p>
+<ol>
+<li><b>프리차지·이퀄라이즈</b>: EQ가 BL과 BL̅을 \(V_{DD}/2\)로 맞춘다.</li>
+<li><b>워드라인 상승 → 전하 공유</b>: 셀이 BL에 연결되어 BL이 \(\Delta V\)만큼 움직인다. BL̅은 그대로.</li>
+<li><b>센싱</b>: SAN을 0 V로 끌어내리면 NMOS 쌍이 먼저 깨어나 낮은 쪽을 끌어내린다. 이어 SAP를 \(V_{DD}\)로 올리면 PMOS 쌍이 높은 쪽을 끌어올린다.</li>
+<li><b>재저장(restore)</b>: 워드라인이 여전히 켜져 있으므로 BL의 풀 스윙 전압이 셀로 다시 써진다. 이 시간이 tRAS의 상당 부분이다.</li>
+<li><b>프리차지</b>: 워드라인을 내리고 EQ를 켜 다음 행을 준비한다(tRP).</li>
+</ol>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-1</span><span class="ttl">센스 앰프 파형 따라가기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">시간 <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="60" step="0.2" value="60" data-d="1" data-u="ns"></label>
+      <label class="ctrl"><span class="lab">저장된 값</span><select data-k="bit"><option value="1">1</option><option value="0">0</option></select></label>
+      <label class="ctrl"><span class="lab">셀 남은 전하 <output data-o="keep"></output></span><input type="range" data-k="keep" min="0" max="100" step="1" value="100" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">SA 오프셋 (+ = BL 쪽 불리) <output data-o="off"></output></span><input type="range" data-k="off" min="-60" max="60" step="1" value="0" data-d="0" data-u="mV"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="play1">▶ 재생</button><span class="hint">슬라이더로 시간을 앞뒤로 움직여 장면을 하나씩 볼 수 있다.</span></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="340"></canvas></div>
+    <div class="legend"><span><i style="background:var(--indigo)"></i>BL</span><span><i style="background:var(--plum)"></i>BL̅</span><span><i style="background:var(--jade)"></i>셀 V_SN</span><span><i style="background:var(--gold)"></i>WL (축소)</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">현재 장면</span><span class="v" data-r="ph" style="font-size:14px;font-family:var(--sans)"></span></div>
+      <div class="ro"><span class="k">센싱 시작 시 ΔV</span><span class="v" data-r="dv"></span></div>
+      <div class="ro"><span class="k">판정 결과</span><span class="v" data-r="res"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 볼 것.</b> 남은 전하를 30 % 아래로 줄이면 ΔV가 오프셋보다 작아진다. 오프셋을 +30 mV로 두고 "1"을 읽어 보자. 래치가 엉뚱한 쪽으로 기울고, 재저장 단계에서 <em>틀린 값이 셀에 확정</em>된다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>양의 되먹임: 지수적으로 커지는 차이</h2>
+<p>래치가 막 켜진 순간, 두 노드의 전압 차 \(v_d = V_{BL} - V_{\overline{BL}}\)은 작고 두 인버터는 거의 선형 증폭기처럼 동작한다. 각 노드의 커패시턴스를 \(C\), 트랜지스터의 전달컨덕턴스를 \(g_m\)이라 하면</p>
+<div class="eq">$$C\frac{dv_d}{dt} = g_m v_d \quad\Longrightarrow\quad v_d(t) = v_d(0)\,e^{t/\tau},\qquad \tau = \frac{C}{g_m}$$
+<div class="note">차이가 시정수 \(\tau\)마다 \(e\)배(약 2.7배)로 불어난다. 초기 신호가 절반이면 같은 크기에 도달하는 데 \(\tau\ln 2\)만큼 더 걸린다.</div></div>
+<p>비트라인 커패시턴스가 큰 DRAM에서 \(\tau\)는 수백 ps~1 ns 정도다. 80 mV를 1.1 V로 키우려면 \(\ln(1100/80) \approx 2.6\)배의 \(\tau\), 즉 수 ns가 걸린다. 초기 신호가 작으면 센싱이 느려지고, 그만큼 tRCD가 길어진다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-2</span><span class="ttl">래치의 지수 증폭</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">초기 신호 v_d(0) <output data-o="v0"></output></span><input type="range" data-k="v0" min="1" max="200" step="1" value="80" data-d="0" data-u="mV"></label>
+      <label class="ctrl"><span class="lab">비트라인 C <output data-o="c"></output></span><input type="range" data-k="c" min="20" max="200" step="5" value="60" data-d="0" data-u="fF"></label>
+      <label class="ctrl"><span class="lab">g_m <output data-o="gm"></output></span><input type="range" data-k="gm" min="20" max="400" step="5" value="120" data-d="0" data-u="µS"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="260"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">시정수 τ = C/g_m</span><span class="v" data-r="tau"></span></div>
+      <div class="ro"><span class="k">1 V 차이까지 걸리는 시간</span><span class="v" data-r="ts"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 실선은 선형 축, 점선은 같은 곡선을 로그 축으로 본 것(오른쪽 축)이다. 로그 축에서 직선이라는 것이 곧 지수 증폭이다. 실제 래치는 전압이 전원에 닿으면 포화한다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>오프셋: 시소가 처음부터 기울어 있다면</h2>
+<p>이상적인 래치는 두 쪽이 완벽하게 대칭이다. 실제로는 이웃한 두 트랜지스터의 문턱 전압이 도펀트 원자 수의 요동 같은 이유로 조금씩 다르다. 이 <span class="term">문턱 전압 불일치(\(V_{th}\) mismatch)</span>는 시소에 미리 얹혀 있는 작은 추처럼 작용해, 신호가 그보다 작으면 잘못된 쪽으로 기운다. 불일치의 표준편차는 트랜지스터 면적의 제곱근에 반비례한다(펠그롬 법칙).</p>
+<div class="eq">$$\sigma(\Delta V_{th}) = \frac{A_{VT}}{\sqrt{W L}}$$
+<div class="note">\(A_{VT}\)는 공정마다 정해진 상수(대략 1–3 mV·µm). 센스 앰프는 비트라인 피치 안에 들어가야 하므로 트랜지스터를 마음껏 키울 수 없다.</div></div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-3</span><span class="ttl">몬테카를로: 백만 개 센스 앰프 중 몇 개가 틀릴까</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">신호 ΔV <output data-o="sig"></output></span><input type="range" data-k="sig" min="10" max="150" step="1" value="70" data-d="0" data-u="mV"></label>
+      <label class="ctrl"><span class="lab">오프셋 σ <output data-o="sd"></output></span><input type="range" data-k="sd" min="3" max="40" step="0.5" value="12" data-d="1" data-u="mV"></label>
+      <label class="ctrl"><span class="lab">잡음·결합 손실 <output data-o="ns"></output></span><input type="range" data-k="ns" min="0" max="50" step="1" value="10" data-d="0" data-u="mV"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="mcRun">샘플 2,000개 다시 뽑기</button></div>
+    <div class="canvas-box"><canvas id="cv3" data-h="270"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">유효 신호 (ΔV − 손실)</span><span class="v" data-r="eff"></span></div>
+      <div class="ro"><span class="k">여유 (σ 단위)</span><span class="v" data-r="z"></span></div>
+      <div class="ro"><span class="k">실패 확률 (이론)</span><span class="v" data-r="p"></span></div>
+      <div class="ro"><span class="k">16 Gb 칩에서 틀릴 SA 판정 (행 열 때마다)</span><span class="v" data-r="n"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 회색 종 모양은 오프셋 분포, 빨간 선은 유효 신호다. 오프셋이 신호보다 큰(빨간 선 오른쪽) 센스 앰프는 "1"을 0으로 읽는다. 점은 무작위로 뽑은 2,000개의 센스 앰프. 칩에는 수천만 개가 있으니, 여유는 6σ 이상이어야 안심이다.</p>
+</div>
+
+<h2 id="s5"><span class="n">05</span>여유를 지키는 설계 기법</h2>
+<div class="tbwrap"><table class="tb">
+<tr><th>기법</th><th>아이디어</th><th>대가</th></tr>
+<tr><td>폴디드/오픈 비트라인 쌍</td><td>BL과 BL̅을 나란히 두어 공통 잡음을 상쇄(5장)</td><td>셀 배치 제약(8F² vs 6F²)</td></tr>
+<tr><td>오프셋 보상 SA</td><td>센싱 전 각 트랜지스터의 V_th를 비트라인에 미리 저장해 상쇄</td><td>스위치 추가, 시간 증가</td></tr>
+<tr><td>프리센싱 / 2단 증폭</td><td>작은 차이를 먼저 별도 단에서 키운 뒤 래치</td><td>면적, 제어 신호</td></tr>
+<tr><td>NMOS 선 센싱</td><td>SAN을 먼저 내려 낮은 쪽부터 확정 (NMOS 매칭이 더 좋음)</td><td>타이밍 제어 정밀도</td></tr>
+<tr><td>짧은 비트라인</td><td>C_BL을 줄여 ΔV 자체를 키움</td><td>SA 개수 증가 → 면적</td></tr>
+</table></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">래치형 센스 앰프가 작은 신호를 크게 만드는 원리는?</p><ol>
+<li>저항 분배</li><li>교차 결합 인버터의 양의 되먹임</li><li>커패시터 충전 펌프</li><li>변압기 결합</li></ol>
+<p class="explain">한쪽이 조금 높으면 상대편을 더 끌어내리고, 그것이 다시 자기 쪽을 끌어올린다. 차이가 지수적으로 커진다.</p></div>
+<div class="quiz" data-a="2"><p class="q">초기 신호 v_d(0)가 절반으로 줄면 센싱 시간은?</p><ol>
+<li>두 배가 된다</li><li>변하지 않는다</li><li>τ·ln2만큼 늘어난다</li><li>절반이 된다</li></ol>
+<p class="explain">v_d(t) = v_d(0)e^(t/τ)에서 같은 목표에 이르려면 e^(Δt/τ) = 2, 즉 Δt = τ ln 2.</p></div>
+<div class="quiz" data-a="0"><p class="q">센스 앰프 트랜지스터의 면적을 4배로 키우면 오프셋 σ는?</p><ol>
+<li>절반이 된다</li><li>4분의 1이 된다</li><li>그대로다</li><li>두 배가 된다</li></ol>
+<p class="explain">펠그롬 법칙: σ ∝ 1/√(WL). 면적 4배 → σ 1/2. 하지만 비트라인 피치가 허락하지 않는 경우가 많다.</p></div>
+<div class="quiz" data-a="3"><p class="q">센싱이 끝난 뒤에도 워드라인을 한동안 켜 두는 이유는?</p><ol>
+<li>비트라인을 프리차지하기 위해</li><li>센스 앰프의 오프셋을 보상하기 위해</li><li>리프레시 카운터를 증가시키기 위해</li><li>증폭된 풀 스윙 전압을 셀에 다시 써(재저장) 파괴된 데이터를 복원하기 위해</li></ol>
+<p class="explain">DRAM 읽기는 파괴적이므로 재저장이 필수다. 이 시간이 tRAS(최소 행 활성 시간)를 정한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 실험 4-1: 파형 */
+(function(){
+  const VDD = 1.1, H = VDD/2, CS = 10, CB = 60;
+  const box = document.getElementById('sim1');
+  // 장면 경계 (ns)
+  const T = {wl:8, sn:18, sp:21, wlOff:44, eq:48, end:60};
+  function wave(p){
+    const vc0 = p.bit === '1' ? H + H*p.keep/100 : H - H*p.keep/100;
+    const dv = (vc0 - H)*CS/(CS+CB);
+    const eff = dv - p.off/1000; // 오프셋을 BL 쪽 불리로
+    const win = eff >= 0; // BL이 이기면 BL→VDD
+    const res = [];
+    let bl = H, blb = H, sn = vc0;
+    for(let t=0; t<=T.end; t+=0.2){
+      let wl = (t >= T.wl && t < T.wlOff) ? 1 : 0;
+      if(t < T.wl){ bl = H; blb = H; sn = vc0; }
+      else if(t < T.sn){ const k = 1 - Math.exp(-(t-T.wl)/1.8); bl = H + dv*k; sn = vc0 + (H+dv - vc0)*k; blb = H; }
+      else if(t < T.wlOff){
+        const ts = t - T.sn;
+        // 지수 증폭 후 포화
+        const d0 = Math.max(Math.abs(eff), 0.002);
+        const grow = Math.min(H, d0*Math.exp(ts/1.3));
+        const hi = H + grow*(t >= T.sp ? 1 : 0.6), lo = H - grow;
+        const tgtBL = win ? Math.min(VDD, hi) : Math.max(0, lo), tgtBLB = win ? Math.max(0, lo) : Math.min(VDD, hi);
+        bl = tgtBL; blb = tgtBLB;
+        sn += (bl - sn)*0.12;
+      }
+      else if(t < T.eq){ sn = sn; /* WL off: 셀 고립 */ }
+      else { const k = 1 - Math.exp(-(t-T.eq)/1.2); bl = bl + (H - bl)*k*0.5; blb = blb + (H - blb)*k*0.5; }
+      res.push({t, bl, blb, sn, wl});
+    }
+    return {res, dv, eff, win, vc0};
+  }
+  let playing = false;
+  const s = J.sim('sim1', (p) => {
+    const w = wave(p);
+    const cur = w.res.filter(r => r.t <= p.t);
+    J.plot(document.getElementById('cv1'), {x:[0,T.end], y:[-0.05, 1.2], xlab:'시간 (ns)', ylab:'전압 (V)', series:[
+      {pts:cur.map(r=>[r.t, r.wl*0.25+0.92]), color:'--gold', w:1.5, step:true},
+      {pts:cur.map(r=>[r.t, r.sn]), color:'--jade', w:2, dash:[5,3]},
+      {pts:cur.map(r=>[r.t, r.blb]), color:'--plum', w:2.5},
+      {pts:cur.map(r=>[r.t, r.bl]), color:'--indigo', w:2.5}],
+      bands:[{x0:0,x1:T.wl,color:'--gold',alpha:.07},{x0:T.wl,x1:T.sn,color:'--indigo',alpha:.07},{x0:T.sn,x1:T.sp+6,color:'--red',alpha:.07},{x0:T.sp+6,x1:T.wlOff,color:'--jade',alpha:.07},{x0:T.eq,x1:T.end,color:'--gold',alpha:.07}],
+      vlines:[{x:T.wl,color:'--ink3',label:'WL↑',dash:[2,3]},{x:T.sn,color:'--ink3',label:'SAN↓',dash:[2,3]},{x:T.sp,color:'--ink3',label:'SAP↑',dash:[2,3]},{x:T.wlOff,color:'--ink3',label:'WL↓',dash:[2,3]},{x:T.eq,color:'--ink3',label:'EQ',dash:[2,3]}],
+      hlines:[{y:H, color:'--line', dash:[3,3]}], pad:{l:46}});
+    const ph = p.t < T.wl ? '① 프리차지·이퀄라이즈' : p.t < T.sn ? '② 전하 공유' : p.t < T.sp + 6 ? '③ 센싱 (래치 증폭)' : p.t < T.wlOff ? '④ 재저장' : p.t < T.eq ? '워드라인 닫힘' : '⑤ 프리차지';
+    J.out(box,'ph', ph);
+    J.out(box,'dv', (w.dv>=0?'+':'')+J.fmt(w.dv*1000,1)+' mV');
+    const correct = (p.bit === '1') === w.win;
+    J.out(box,"res", `판정 "${w.win ? 1 : 0}" · ${correct ? "정답" : "오류!"}`, correct ? 'good' : 'bad');
+  });
+  const tIn = J.$('[data-k="t"]', box), btn = document.getElementById('play1');
+  btn.onclick = () => { playing = !playing; if(playing && +tIn.value >= 60) tIn.value = 0; btn.textContent = playing ? '❚❚ 멈춤' : '▶ 재생'; };
+  J.loop(document.getElementById('cv1'), dt => { if(!playing) return; tIn.value = Math.min(60, +tIn.value + dt*12); s.run(); if(+tIn.value >= 60){ playing = false; btn.textContent = '▶ 재생'; } });
+})();
+
+/* 실험 4-2: 지수 증폭 */
+J.sim('sim2', (v, box) => {
+  const tau = v.c*1e-15/(v.gm*1e-6); // s
+  const tns = tau*1e9;
+  const tEnd = Math.max(5, tns*Math.log(1100/v.v0)*1.3);
+  const lin = [], lg = [];
+  for(let t=0; t<=tEnd; t+=tEnd/300){ const vd = Math.min(1100, v.v0*Math.exp(t/tns)); lin.push([t, vd]); }
+  const r = J.plot(document.getElementById('cv2'), {x:[0,tEnd], y:[0,1200], xlab:'시간 (ns)', ylab:'v_d (mV)', series:[{pts:lin, color:'--jade', w:2.5}], hlines:[{y:1000, color:'--red', label:'1 V'}], pad:{r:56}});
+  // 로그 곡선 (오른쪽 축)
+  const ctx = r.ctx, Ylog = y => r.h - r.P.b - (Math.log10(y) - 0)/(Math.log10(2000) - 0)*(r.h - r.P.t - r.P.b);
+  ctx.strokeStyle = J.c('--plum'); ctx.setLineDash([5,4]); ctx.lineWidth = 2; ctx.beginPath();
+  lin.forEach((p,i) => { const x = r.X(p[0]), y = Ylog(p[1]); i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); }); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = J.c('--plum'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign = 'left'; ctx.textBaseline='middle';
+  [1,10,100,1000].forEach(y => ctx.fillText(y+' mV', r.w - r.P.r + 4, Ylog(y)));
+  J.out(box,'tau', J.fmt(tns*1000,0)+' ps');
+  const ts = tns*Math.log(1000/v.v0);
+  J.out(box,'ts', J.fmt(Math.max(0,ts),2)+' ns', ts > 5 ? 'bad' : ts > 3 ? 'warn' : 'good');
+});
+
+/* 실험 4-3: 몬테카를로 */
+(function(){
+  let seed = 1;
+  function Phi(z){ const t = 1/(1+0.2316419*Math.abs(z)), d = 0.3989423*Math.exp(-z*z/2); const p = d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274)))); return z > 0 ? 1-p : p; }
+  const s = J.sim('sim3', (v, box) => {
+    const eff = v.sig - v.ns, z = eff/v.sd, p = 1 - Phi(z);
+    const R = J.rng(seed), N = 2000;
+    const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+    ctx.clearRect(0,0,w,h);
+    const xr = 160, X = x => w/2 + x/xr*(w/2-20), base = h - 34;
+    // 분포 곡선
+    ctx.fillStyle = J.c('--ink3'); ctx.globalAlpha = .18; ctx.beginPath(); ctx.moveTo(X(-xr), base);
+    for(let x=-xr; x<=xr; x+=1){ const y = Math.exp(-(x*x)/(2*v.sd*v.sd)); ctx.lineTo(X(x), base - y*(h-100)); }
+    ctx.lineTo(X(xr), base); ctx.fill(); ctx.globalAlpha = 1;
+    // 실패 영역
+    ctx.fillStyle = J.c('--red'); ctx.globalAlpha = .35; ctx.beginPath(); ctx.moveTo(X(eff), base);
+    for(let x=eff; x<=xr; x+=1){ const y = Math.exp(-(x*x)/(2*v.sd*v.sd)); ctx.lineTo(X(x), base - y*(h-100)); }
+    ctx.lineTo(X(xr), base); ctx.fill(); ctx.globalAlpha = 1;
+    // 샘플 점
+    let bad = 0;
+    for(let i=0;i<N;i++){ const o = J.gauss(R)*v.sd, y = 14 + R()*40; const f = o > eff; if(f) bad++;
+      ctx.fillStyle = J.c(f ? '--red' : '--jade'); ctx.globalAlpha = f ? 1 : .45; ctx.beginPath(); ctx.arc(X(o), y, f ? 3 : 1.8, 0, 7); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(eff), 8); ctx.lineTo(X(eff), base); ctx.stroke(); ctx.lineWidth = 1;
+    ctx.strokeStyle = J.c('--ink3'); ctx.beginPath(); ctx.moveTo(10, base); ctx.lineTo(w-10, base); ctx.stroke();
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign = 'center';
+    [-150,-100,-50,0,50,100,150].forEach(x => ctx.fillText(x, X(x), base+14));
+    ctx.font = '12px "Noto Sans KR"'; ctx.fillText('센스 앰프 오프셋 (mV)', w/2, h-4);
+    ctx.textAlign = 'left'; ctx.fillStyle = J.c('--red'); ctx.fillText('유효 신호 '+eff+' mV → 이보다 오른쪽은 오판', X(eff)+6, base-8);
+    ctx.fillStyle = J.c('--ink2'); ctx.fillText(`샘플 오판: ${bad} / ${N}`, 12, h-60);
+    J.out(box,'eff', eff+' mV', eff <= 0 ? 'bad' : '');
+    J.out(box,'z', J.fmt(z,2)+' σ', z >= 6 ? 'good' : z >= 4 ? 'warn' : 'bad');
+    J.out(box,'p', p < 1e-15 ? '< 10⁻¹⁵' : p.toExponential(2));
+    const n = p * 16*Math.pow(2,30) / 1024; // 1024셀/비트라인 중 하나씩 → SA 1.6×10⁷개
+    J.out(box,'n', n < 0.01 ? '≈ 0 개' : J.fmt(n, 2)+' 개', n >= 1 ? 'bad' : n > 0.01 ? 'warn' : 'good');
+  });
+  document.getElementById('mcRun').onclick = () => { seed++; s.run(); };
+})();
+</script>
+</body>
+</html>

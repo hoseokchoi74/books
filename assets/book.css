@@ -1,0 +1,137 @@
+/* 집현전 서책(書冊) 레이아웃 — 챕터 페이지 공통 */
+.layout{display:grid; grid-template-columns:270px minmax(0,1fr); gap:0; min-height:100vh}
+.toc{position:sticky; top:55px; height:calc(100vh - 55px); overflow:auto; border-right:1px solid var(--line);
+  padding:22px 14px 40px; background:color-mix(in srgb,var(--paper2) 60%,transparent)}
+.toc h4{margin:0 8px 10px; font-size:13px; color:var(--ink3); font-family:var(--sans); letter-spacing:.12em}
+.toc a{display:flex; gap:10px; align-items:baseline; padding:6px 8px; border-radius:6px; color:var(--ink2); font-size:14px; line-height:1.45}
+.toc a b{font-family:var(--mono); font-size:11.5px; color:var(--ink3); font-weight:600; min-width:20px}
+.toc a:hover{background:var(--card); text-decoration:none}
+.toc a.on{background:var(--card); color:var(--ink); box-shadow:inset 3px 0 0 var(--red)}
+.toc a.on b{color:var(--red)}
+.toc .sub{margin:2px 0 8px 36px; border-left:1px dashed var(--line); padding-left:8px}
+.toc .sub a{font-size:12.5px; padding:3px 6px}
+
+main.chapter{padding:40px 48px 80px; max-width:900px; width:100%; margin:0 auto}
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr}
+  .toc{position:fixed; left:0; top:51px; width:290px; z-index:40; transform:translateX(-105%); transition:transform .25s; background:var(--paper); box-shadow:var(--shadow)}
+  .toc.open{transform:none}
+  main.chapter{padding:28px 16px 60px}
+}
+.tocbtn{display:none}
+@media (max-width:980px){.tocbtn{display:inline-block}}
+
+/* ── 장 머리: 판심(版心) 어미 장식 ── */
+.chead{position:relative; padding:8px 0 22px 0; margin-bottom:26px; border-bottom:3px double var(--line)}
+.chead .kicker{display:flex; align-items:center; gap:10px}
+.chead .kicker .hanja{font-family:var(--serif); letter-spacing:.1em; color:var(--ink3); font-size:13px; text-transform:none}
+.chead h1{font-size:clamp(28px,4.4vw,40px); margin:10px 0 12px; font-weight:900}
+.chead .lead{color:var(--ink2); font-size:17px; margin:0}
+.chead .pansim{position:absolute; right:0; top:0; width:44px; height:118px; opacity:.85}
+@media (max-width:640px){.chead .pansim{display:none}}
+
+.learn{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 20px 12px; margin:0 0 34px; position:relative}
+.learn:before{content:'學習目標 · 이 장에서 배우는 것'; display:block; font-size:12px; letter-spacing:.1em; color:var(--ink3); margin-bottom:6px}
+.learn ul{margin:0; padding-left:20px}
+.learn li::marker{color:var(--jade)}
+
+main.chapter h2{font-size:25px; margin:54px 0 14px; display:flex; gap:12px; align-items:baseline; scroll-margin-top:70px}
+main.chapter h2 .n{font-family:var(--mono); color:var(--red); font-size:16px; font-weight:600}
+main.chapter h3{font-size:19px; margin:30px 0 8px}
+main.chapter p{margin:0 0 14px}
+main.chapter strong{color:var(--ink); background:linear-gradient(transparent 62%, var(--gold-soft) 62%)}
+.term{font-weight:700; color:var(--indigo)}
+.en{color:var(--ink3); font-size:.92em}
+
+/* ── 그림: 광곽(匡郭) 이중선 프레임 ── */
+figure.fig{margin:26px 0; padding:14px; background:var(--card); border:1px solid var(--line); border-radius:3px;
+  box-shadow:inset 0 0 0 4px var(--card), inset 0 0 0 5px var(--line2)}
+figure.fig svg{display:block; width:100%; height:auto}
+figure.fig figcaption, .sim .cap{font-size:13.5px; color:var(--ink2); margin-top:10px; line-height:1.6}
+figcaption b, .sim .cap b{color:var(--ink); font-family:var(--serif)}
+.fig-row{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+@media (max-width:700px){.fig-row{grid-template-columns:1fr}}
+
+/* SVG 내부 공통 클래스 */
+.s-ink{fill:var(--ink)} .s-ink2{fill:var(--ink2)} .s-ink3{fill:var(--ink3)}
+.s-stroke{stroke:var(--ink); fill:none} .s-stroke2{stroke:var(--ink3); fill:none}
+.s-paper{fill:var(--card)} .s-paper2{fill:var(--paper2)}
+.s-red{fill:var(--red)} .s-jade{fill:var(--jade)} .s-indigo{fill:var(--indigo)} .s-gold{fill:var(--gold)} .s-plum{fill:var(--plum)}
+.s-redsoft{fill:var(--red-soft)} .s-jadesoft{fill:var(--jade-soft)} .s-indigosoft{fill:var(--indigo-soft)} .s-goldsoft{fill:var(--gold-soft)} .s-plumsoft{fill:var(--plum-soft)}
+.st-red{stroke:var(--red)} .st-jade{stroke:var(--jade)} .st-indigo{stroke:var(--indigo)} .st-gold{stroke:var(--gold)} .st-plum{stroke:var(--plum)} .st-ink{stroke:var(--ink)} .st-ink3{stroke:var(--ink3)} .st-line{stroke:var(--line)}
+svg text{font-family:var(--sans); fill:var(--ink)}
+svg text.t-s{font-size:11px; fill:var(--ink2)}
+svg text.t-m{font-size:13px}
+svg text.t-l{font-size:16px; font-weight:700; font-family:var(--serif)}
+svg text.mono{font-family:var(--mono)}
+
+/* ── 실험(實驗) 박스 ── */
+.sim{margin:30px 0; border:1.5px solid var(--jade); border-radius:6px; background:var(--card); overflow:hidden; box-shadow:var(--shadow)}
+.sim-h{display:flex; align-items:center; gap:10px; padding:10px 16px; background:var(--jade-soft); border-bottom:1px solid color-mix(in srgb,var(--jade) 40%,transparent)}
+.sim-h .stamp{display:inline-grid; place-items:center; width:30px; height:30px; border:2px solid var(--red); color:var(--red); border-radius:3px;
+  font-family:var(--serif); font-weight:900; font-size:10px; line-height:1; writing-mode:vertical-rl; transform:rotate(3deg)}
+.sim-h .no{font-family:var(--mono); font-size:12px; color:var(--jade); font-weight:600}
+.sim-h .ttl{font-family:var(--serif); font-weight:700; font-size:16.5px}
+.sim-b{padding:16px}
+.sim .cap{padding:0 16px 14px; margin-top:0}
+.ctrls{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px 18px; margin-bottom:14px}
+.ctrl{display:flex; flex-direction:column; gap:2px; font-size:13.5px}
+.ctrl .lab{display:flex; justify-content:space-between; gap:8px; color:var(--ink2)}
+.ctrl output, .ctrl .val{font-family:var(--mono); color:var(--ink); font-weight:600; font-size:13px}
+input[type=range]{width:100%; accent-color:var(--jade); height:22px}
+select, .sim input[type=number], .sim input[type=text]{font-family:var(--sans); font-size:14px; padding:6px 8px; border-radius:5px; border:1px solid var(--line); background:var(--paper); color:var(--ink)}
+.sbtn{font-family:var(--sans); font-size:13.5px; padding:7px 13px; border-radius:5px; border:1px solid var(--line); background:var(--paper); color:var(--ink); cursor:pointer; font-weight:500}
+.sbtn:hover{border-color:var(--jade)}
+.sbtn.on, .sbtn.pri{background:var(--jade); border-color:var(--jade); color:#fff}
+.sbtn.warn{border-color:var(--red); color:var(--red)}
+.btnrow{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; align-items:center}
+.readouts{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-top:12px}
+.ro{background:var(--paper); border:1px solid var(--line2); border-radius:5px; padding:7px 10px}
+.ro .k{font-size:11.5px; color:var(--ink3); display:block}
+.ro .v{font-family:var(--mono); font-size:17px; font-weight:600}
+.ro.good .v{color:var(--jade)} .ro.bad .v{color:var(--red)} .ro.warn .v{color:var(--gold)}
+.canvas-box{position:relative; width:100%; background:var(--paper); border:1px solid var(--line2); border-radius:4px}
+.canvas-box canvas{display:block; width:100%}
+.legend{display:flex; flex-wrap:wrap; gap:14px; font-size:12.5px; color:var(--ink2); margin-top:6px}
+.legend i{display:inline-block; width:14px; height:3px; vertical-align:middle; margin-right:5px; border-radius:2px}
+.hint{font-size:13px; color:var(--ink3)}
+
+/* ── 수식 ── */
+.eq{margin:16px 0; padding:12px 16px; background:var(--card2); border-left:3px solid var(--gold); overflow-x:auto; border-radius:0 4px 4px 0}
+.eq .note{font-size:13px; color:var(--ink2); margin-top:4px}
+
+/* ── 주석/박스 ── */
+.note-box{margin:22px 0; padding:14px 18px; border:1px solid var(--line); border-radius:4px; background:var(--card); position:relative}
+.note-box .h{font-family:var(--serif); font-weight:700; margin-bottom:4px; display:flex; gap:8px; align-items:center}
+.note-box .h:before{content:attr(data-h); font-size:11px; padding:1px 6px; border:1px solid var(--red); color:var(--red); border-radius:2px; font-family:var(--serif)}
+.note-box.calc{border-color:var(--indigo)}
+.note-box.calc .h:before{border-color:var(--indigo); color:var(--indigo)}
+.note-box.hist{border-color:var(--gold)}
+.note-box.hist .h:before{border-color:var(--gold); color:var(--gold)}
+
+table.tb{width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px; background:var(--card)}
+.tbwrap{overflow-x:auto}
+table.tb th, table.tb td{border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top}
+table.tb th{background:var(--paper2); font-family:var(--serif)}
+table.tb td.num{font-family:var(--mono); text-align:right}
+
+/* ── 문제(問題) ── */
+.quiz-sec{margin-top:56px}
+.quiz{border:1px solid var(--line); border-radius:6px; background:var(--card); padding:16px 18px; margin:14px 0}
+.quiz .q{font-weight:700; margin:0 0 10px}
+.quiz .q:before{content:'問 ' attr(data-n); color:var(--red); font-family:var(--serif); margin-right:6px}
+.quiz ol{list-style:none; padding:0; margin:0; display:grid; gap:6px}
+.quiz li{padding:8px 12px; border:1px solid var(--line2); border-radius:5px; cursor:pointer; background:var(--paper); font-size:15px}
+.quiz li:hover{border-color:var(--ink3)}
+.quiz li.right{border-color:var(--jade); background:var(--jade-soft)}
+.quiz li.wrong{border-color:var(--red); background:var(--red-soft)}
+.quiz .explain{display:none; margin:10px 0 0; font-size:14px; color:var(--ink2); padding-top:10px; border-top:1px dashed var(--line)}
+.quiz.done .explain{display:block}
+
+/* 이전/다음 */
+.pager{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:60px}
+.pager a{border:1px solid var(--line); border-radius:6px; padding:14px 16px; background:var(--card); color:var(--ink)}
+.pager a:hover{border-color:var(--red); text-decoration:none}
+.pager a small{display:block; color:var(--ink3); font-size:12px}
+.pager a.next{text-align:right}
+.pager a b{font-family:var(--serif)}

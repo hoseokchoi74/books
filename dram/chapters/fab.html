@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>제조 공정·수율·리페어 · DRAM 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0372b'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="fab">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 10 <span class="hanja">第十章 · 造</span></div>
+  <h1>제조 공정·수율·리페어</h1>
+  <p class="lead">DRAM 웨이퍼 한 장은 수백 개의 공정 단계를 석 달 가까이 거친다. 그 끝에서 수백억 개의 셀이 모두 완벽할 리는 없다. 그래서 DRAM은 처음부터 "고장 날 것을 알고" 여분의 행과 열을 품고 태어난다. 이 장은 셀이 쌓이는 순서, 결함과 수율의 수학, 그리고 여분으로 고치는 리페어를 직접 해 본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>DRAM 셀 어레이의 주요 공정 순서를 단면 그림으로 따라갈 수 있다.</li>
+  <li>웨이퍼당 다이 수와 푸아송·머피 수율 모델을 계산한다.</li>
+  <li>여분 행·열(리던던시)과 퓨즈로 불량 셀을 대체하는 리페어 원리를 이해한다.</li>
+  <li>리페어 할당 문제를 직접 풀어 보고, 리던던시가 수율을 얼마나 끌어올리는지 정량적으로 본다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>셀이 쌓이는 순서</h2>
+<p>DRAM 공정은 크게 <span class="term">셀 트랜지스터 형성(FEOL)</span>, <span class="term">비트라인과 콘택</span>, <span class="term">커패시터</span>, <span class="term">금속 배선(BEOL)</span>으로 나뉜다. 사진(리소그래피)–식각–증착–평탄화(CMP)–이온 주입–세정이 수백 번 반복된다. 10 nm대 공정에서는 가장 촘촘한 층 몇 개에 EUV(극자외선) 노광을 쓴다. 아래 단면은 그 과정을 아주 크게 줄인 것이다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-1</span><span class="ttl">공정 단계별 단면 쌓기</span></div>
+  <div class="sim-b">
+    <div class="ctrls"><label class="ctrl"><span class="lab">공정 단계 <output data-o="s"></output></span><input type="range" data-k="s" min="0" max="10" step="1" value="0" data-d="0" data-u="/ 10"></label></div>
+    <div class="btnrow"><button class="sbtn" id="pPrev">◀ 이전</button><button class="sbtn pri" id="pNext">다음 ▶</button></div>
+    <div class="canvas-box"><svg id="xsec" viewBox="0 0 720 360" style="display:block;width:100%"></svg></div>
+    <p id="stepTxt" style="margin:10px 2px 0;font-size:14.5px"></p>
+  </div>
+  <p class="cap"><b>그림 설명.</b> 셀 두 개(가운데 비트라인 콘택을 공유)의 단면. 색: 실리콘(베이지), 산화막(회색), 워드라인(금색), 비트라인(파랑), 커패시터 전극(초록), 유전막(자주). 실제 높이 비율은 커패시터가 훨씬 더 높다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>웨이퍼, 다이, 그리고 수율</h2>
+<p>지름 300 mm 웨이퍼 하나에서 나오는 다이 수는 다이 면적 \(A\)에 반비례하고, 가장자리에서 잘려 나가는 손실이 있다. 결함이 웨이퍼 위에 무작위로(면적당 밀도 \(D_0\)) 떨어진다면, 다이 하나에 결함이 하나도 없을 확률이 수율이다.</p>
+<div class="eq">$$\text{DPW} \approx \frac{\pi (d/2)^2}{A} - \frac{\pi d}{\sqrt{2A}}, \qquad Y_{\text{Poisson}} = e^{-A D_0}, \qquad Y_{\text{Murphy}} = \left(\frac{1-e^{-AD_0}}{AD_0}\right)^2$$
+<div class="note">실제 결함은 뭉쳐서 떨어지는 경향이 있어 푸아송 모델보다 수율이 조금 높게 나온다(머피·음이항 모델).</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-2</span><span class="ttl">웨이퍼 맵과 수율</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">다이 면적 <output data-o="a"></output></span><input type="range" data-k="a" min="20" max="300" step="5" value="70" data-d="0" data-u="mm²"></label>
+      <label class="ctrl"><span class="lab">치명 결함 밀도 D₀ <output data-o="d0"></output></span><input type="range" data-k="d0" min="0.02" max="1.5" step="0.01" value="0.25" data-d="2" data-u="/cm²"></label>
+      <label class="ctrl"><span class="lab">결함 뭉침 (클러스터) <output data-o="cl"></output></span><input type="range" data-k="cl" min="0" max="1" step="0.05" value="0.3" data-d="2"></label>
+      <label class="ctrl"><span class="lab">난수 씨앗 <output data-o="seed"></output></span><input type="range" data-k="seed" min="1" max="40" step="1" value="3" data-d="0"></label>
+    </div>
+    <div class="fig-row" style="align-items:stretch">
+      <div class="canvas-box"><canvas id="cv2" data-h="330"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="330"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">웨이퍼당 다이</span><span class="v" data-r="n"></span></div>
+      <div class="ro good"><span class="k">양품 다이 (이 웨이퍼)</span><span class="v" data-r="g"></span></div>
+      <div class="ro"><span class="k">시뮬 수율</span><span class="v" data-r="y"></span></div>
+      <div class="ro"><span class="k">푸아송 / 머피 예측</span><span class="v" data-r="m"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽은 웨이퍼 맵(초록 = 양품, 빨강 = 결함 다이, 점 = 결함). 오른쪽은 다이 면적에 따른 수율 곡선이다. 다이가 크면 결함에 맞을 확률이 커져 수율이 지수적으로 떨어진다 — 그래서 HBM처럼 큰 칩이나 여러 다이를 쌓는 제품은 수율 관리가 생명이다. 클러스터를 키우면 결함이 몇몇 다이에 몰려 실제 수율이 푸아송보다 좋아지는 것도 확인해 보자.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>리페어: 고장 날 것을 알고 태어나다</h2>
+<p>DRAM 다이에는 결함이 거의 반드시 있다. 3장의 리텐션 꼬리 셀, 입자 결함으로 끊기거나 붙은 워드라인·비트라인 등. 그래서 각 매트에는 <span class="term">여분 행(spare row)</span>과 <span class="term">여분 열(spare column)</span>이 몇 개씩 들어 있다. 웨이퍼 테스트에서 불량 셀의 주소를 찾아내면, 레이저로 <span class="term">퓨즈</span>를 끊거나 전기 퓨즈(e-fuse, 안티퓨즈)를 프로그래밍해 그 주소가 들어오면 여분 줄로 우회하도록 만든다. 패키징 후에도 고칠 수 있도록 PPR(Post-Package Repair) 기능도 있다.</p>
+<p>어떤 줄을 여분으로 바꿀지 고르는 문제는 의외로 어렵다(NP-완전). 원칙 하나는 분명하다 — 한 행에 불량이 여분 열 개수보다 많으면 그 행은 반드시 여분 행으로 바꿔야 한다(<span class="term">must-repair</span>).</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-3</span><span class="ttl">리페어 퍼즐 — 여분 행 3개, 여분 열 3개</span></div>
+  <div class="sim-b">
+    <div class="btnrow">
+      <button class="sbtn pri" id="rpNew">새 매트</button>
+      <button class="sbtn" id="rpAuto">자동 할당 (must-repair + 탐욕)</button>
+      <button class="sbtn warn" id="rpClear">할당 지우기</button>
+      <span class="hint">행 번호(왼쪽)나 열 번호(위)를 눌러 여분으로 교체</span>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="400"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">남은 여분 행 / 열</span><span class="v" data-r="sp"></span></div>
+      <div class="ro"><span class="k">남은 불량 셀</span><span class="v" data-r="left"></span></div>
+      <div class="ro"><span class="k">결과</span><span class="v" data-r="res" style="font-size:15px;font-family:var(--sans)"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>규칙.</b> 16×16 매트에 불량 셀(빨강)이 흩어져 있다. 일부는 줄 전체가 망가진 불량(같은 행이나 열에 여러 개)이다. 여분 행 3개, 여분 열 3개로 모든 불량을 덮으면 성공. 막히면 "자동 할당"과 비교해 보자.</p>
+</div>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-4</span><span class="ttl">리던던시가 살리는 수율</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">매트당 평균 불량 셀 수 λ <output data-o="lam"></output></span><input type="range" data-k="lam" min="0.002" max="1" step="0.002" value="0.08" data-d="3"></label>
+      <label class="ctrl"><span class="lab">매트당 여분 (행+열) <output data-o="sp"></output></span><input type="range" data-k="sp" min="0" max="12" step="1" value="4" data-d="0"></label>
+      <label class="ctrl"><span class="lab">칩의 매트 수 <output data-o="m"></output></span><input type="range" data-k="m" min="100" max="40000" step="100" value="16000" data-d="0"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="270"></canvas></div>
+    <div class="legend"><span><i style="background:var(--red)"></i>여분 0</span><span><i style="background:var(--gold)"></i>여분 2</span><span><i style="background:var(--jade)"></i>여분 4</span><span><i style="background:var(--indigo)"></i>여분 8</span><span><i style="background:var(--plum)"></i>현재 설정(그 밖의 값)</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">리페어 없는 칩 수율</span><span class="v" data-r="y0"></span></div>
+      <div class="ro"><span class="k">리페어 후 칩 수율</span><span class="v" data-r="y1"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모델.</b> 매트마다 불량 셀 수가 평균 λ의 푸아송 분포를 따르고, 불량 하나에 여분 줄 하나가 필요하다고 단순화했다. 칩 수율 = (매트 하나가 고쳐질 확률)<sup>매트 수</sup>. 리던던시가 없으면 수만 개 매트 중 하나만 불량이어도 칩을 버려야 하니 수율은 0에 가깝다. 여분 몇 줄이 그 0을 90 % 이상으로 바꾼다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">D₀ = 0.2 /cm², 다이 면적 1 cm²일 때 푸아송 수율은?</p><ol><li>20 %</li><li>80 %</li><li>약 82 %</li><li>약 98 %</li></ol>
+<p class="explain">e^(−0.2) ≈ 0.819.</p></div>
+<div class="quiz" data-a="0"><p class="q">must-repair 규칙이 말하는 것은?</p><ol><li>한 행의 불량 수가 남은 여분 열 수보다 많으면 그 행은 반드시 여분 행으로 바꿔야 한다</li><li>불량은 항상 열로 고쳐야 한다</li><li>여분은 모두 써야 한다</li><li>불량이 하나면 리페어하지 않는다</li></ol>
+<p class="explain">열로 덮으려면 불량 수만큼 열이 필요한데 그만큼 없으면, 행 하나로 덮는 수밖에 없다.</p></div>
+<div class="quiz" data-a="3"><p class="q">커패시터 공정에서 '몰드'의 역할은?</p><ol><li>워드라인을 묻는 홈</li><li>비트라인 절연</li><li>금속 배선층</li><li>깊은 구멍을 파서 하부 전극을 증착할 틀 — 이후 제거된다</li></ol>
+<p class="explain">두꺼운 산화막(몰드)에 높은 종횡비의 구멍을 뚫고 전극을 입힌 뒤, 몰드를 녹여 내면 기둥/실린더 전극이 남는다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 10-1 공정 단면 */
+(function(){
+  const svg = document.getElementById('xsec'), txt = document.getElementById('stepTxt');
+  const steps = [
+    ['출발: p형 실리콘 웨이퍼', '깨끗한 단결정 실리콘 웨이퍼에서 시작한다. 셀 영역은 p형 웰로 만든다.'],
+    ['① 소자 분리 (STI)', '활성 영역 사이에 얕은 트렌치를 식각하고 산화막으로 채워, 이웃 셀끼리 전기적으로 분리한다.'],
+    ['② 매립 워드라인', '활성 영역을 가로지르는 홈을 판 뒤, 게이트 산화막과 금속(TiN/W)을 채우고 윗부분을 절연막으로 덮는다(BCAT).'],
+    ['③ 소스/드레인 이온 주입', '워드라인 양옆의 실리콘에 n형 불순물을 주입해 비트라인 쪽(가운데)과 스토리지 노드 쪽(양 끝) 접합을 만든다.'],
+    ['④ 비트라인 콘택과 비트라인', '가운데 접합 위로 콘택을 뚫고, 그 위로 비트라인(폴리/W) 패턴을 만든 뒤 절연 스페이서로 감싼다.'],
+    ['⑤ 스토리지 노드 콘택', '비트라인 사이 틈으로 양 끝 접합까지 내려가는 콘택(BC)과 랜딩 패드를 만든다. 가장 정렬이 까다로운 층 중 하나다.'],
+    ['⑥ 몰드 증착', '수 µm 두께의 산화막(몰드)과 중간 지지막(질화막)을 쌓는다. 이 두께가 곧 커패시터 높이다.'],
+    ['⑦ 고종횡비 홀 식각', '몰드에 지름 수십 nm, 깊이 1 µm 이상의 구멍을 뚫는다. 종횡비 50:1이 넘는, DRAM에서 가장 어려운 식각이다.'],
+    ['⑧ 하부 전극 증착 후 몰드 제거', '구멍 안에 TiN 하부 전극을 얇게 입히고, 몰드 산화막을 습식으로 녹여 낸다. 지지막이 기둥들을 붙잡아 쓰러지지 않게 한다.'],
+    ['⑨ 고유전막 + 상부 전극', '원자층 증착(ALD)으로 ZrO₂/Al₂O₃/ZrO₂ 유전막을 수 nm 입히고, 상부 전극(셀 플레이트)으로 전체를 덮는다.'],
+    ['⑩ 금속 배선', '층간 절연막 위로 금속 배선을 2–4층 올려 주변 회로와 연결한다. 이후 웨이퍼 테스트 → 리페어 → 패키징.']
+  ];
+  function draw(s){
+    svg.innerHTML = '';
+    txt.innerHTML = `<b style="font-family:var(--serif)">${steps[s][0]}</b> — ${steps[s][1]}`;
+    const R = (x,y,w,h,f,o={}) => J.svg('rect', Object.assign({x,y,width:w,height:h,fill:f},o), svg);
+    const T = (x,y,t,st) => J.svg('text', {x, y, class:'t-s', text:t, style:st||''}, svg);
+    const base = 260;
+    R(20, base, 680, 90, 'var(--gold-soft)', {stroke:'var(--line)'});
+    T(30, 340, 'p형 실리콘');
+    if(s >= 1){ R(20, base, 60, 70, 'var(--ink3)', {opacity:.45}); R(640, base, 60, 70, 'var(--ink3)', {opacity:.45}); T(28, base+40, 'STI'); }
+    const wlx = [230, 450];
+    if(s >= 2) wlx.forEach(x => { J.svg('path', {d:`M${x} ${base} V${base+58} Q${x+20} ${base+72} ${x+40} ${base+58} V${base} Z`, fill:'var(--gold)'}, svg); R(x, base, 40, 18, 'var(--ink3)', {opacity:.6}); });
+    if(s >= 3){ [[90,130,'--red'],[300,130,'--indigo'],[510,120,'--red']].forEach(([x,w,c]) => R(x, base, w, 22, `var(${c})`, {opacity:.5})); }
+    if(s >= 4){ R(345, base-60, 40, 60, 'var(--ink3)', {opacity:.7}); R(250, base-100, 230, 40, 'var(--indigo)'); R(244, base-106, 242, 52, 'none', {stroke:'var(--ink3)', 'stroke-dasharray':'3 2'}); T(300, base-75, '비트라인', 'fill:#fff'); }
+    if(s >= 5){ [140, 560].forEach(x => { R(x, base-120, 28, 120, 'var(--ink3)', {opacity:.75}); R(x-16, base-132, 60, 14, 'var(--ink3)'); }); }
+    const top = 30, capB = base - 132;
+    if(s === 6 || s === 7){ R(20, top, 680, capB-top, 'var(--paper2)', {stroke:'var(--line)'}); R(20, top+60, 680, 10, 'var(--ink3)', {opacity:.5}); J.svg('text', {x:300, y:top+30, class:'t-m', text:'몰드 산화막 (수 µm)'}, svg); T(520, top+56, '지지막'); }
+    if(s === 7){ [126, 546].forEach(x => R(x, top, 56, capB-top, 'var(--card)', {stroke:'var(--red)', 'stroke-width':2})); T(196, 120, '← 종횡비 50:1+ 구멍', 'fill:var(--red)'); }
+    if(s >= 8){
+      [126, 546].forEach(x => { J.svg('path', {d:`M${x} ${top} V${capB} H${x+56} V${top}`, fill:'none', stroke:'var(--jade)', 'stroke-width':6}, svg); });
+      R(110, top+60, 490, 8, 'var(--ink3)', {opacity:.5});
+    }
+    if(s >= 9){
+      [126, 546].forEach(x => { J.svg('path', {d:`M${x-6} ${top-6} V${capB} M${x+62} ${top-6} V${capB} M${x-6} ${top-6} H${x+62}`, fill:'none', stroke:'var(--plum)', 'stroke-width':3}, svg); });
+      J.svg('path', {d:`M100 ${capB} V${top-14} H210 V${capB} M520 ${capB} V${top-14} H630 V${capB}`, fill:'none', stroke:'var(--jade)', 'stroke-width':3, opacity:.6}, svg);
+      R(100, top-24, 530, 12, 'var(--jade)', {opacity:.5});
+      T(250, top-28, '셀 플레이트 (상부 전극)');
+    }
+    if(s >= 10){ R(20, 0, 680, 14, 'var(--indigo)', {opacity:.55}); R(20, 0, 680, 4, 'var(--ink3)'); T(620, 11, '금속 배선', 'fill:#fff'); }
+  }
+
+  const box = document.getElementById('sim1'), inp = J.$('[data-k="s"]', box);
+  J.sim('sim1', v => draw(v.s));
+  document.getElementById('pPrev').onclick = () => { inp.value = Math.max(0, +inp.value-1); inp.dispatchEvent(new Event('input')); };
+  document.getElementById('pNext').onclick = () => { inp.value = Math.min(10, +inp.value+1); inp.dispatchEvent(new Event('input')); };
+})();
+
+/* 10-2 웨이퍼 */
+J.sim('sim2', (v, box) => {
+  const R = J.rng(v.seed*13+1);
+  const D = 300, A = v.a, side = Math.sqrt(A); // mm
+  const {ctx, w, h} = J.fit(document.getElementById('cv2'));
+  ctx.clearRect(0,0,w,h);
+  const S = Math.min(w, h) - 20, sc = S/D, cx = w/2, cy = h/2;
+  // 결함 생성
+  const area = Math.PI*150*150/100; // cm²
+  const nDef = Math.round(v.d0*area);
+  const defs = [];
+  const centers = Array.from({length:Math.max(1, Math.round(nDef*0.08))}, () => { const r = 145*Math.sqrt(R()), a = R()*7; return [r*Math.cos(a), r*Math.sin(a)]; });
+  for(let i=0;i<nDef;i++){
+    if(R() < v.cl){ const c = centers[Math.floor(R()*centers.length)]; defs.push([c[0] + J.gauss(R)*8, c[1] + J.gauss(R)*8]); }
+    else { const r = 150*Math.sqrt(R()), a = R()*7; defs.push([r*Math.cos(a), r*Math.sin(a)]); }
+  }
+  ctx.fillStyle = J.c('--paper2'); ctx.beginPath(); ctx.arc(cx, cy, 150*sc, 0, 7); ctx.fill();
+  let n = 0, good = 0;
+  const nn = Math.ceil(150/side)+1;
+  for(let i=-nn;i<nn;i++) for(let j=-nn;j<nn;j++){
+    const x0 = i*side, y0 = j*side, x1 = x0+side, y1 = y0+side;
+    const far = Math.max(Math.hypot(x0,y0), Math.hypot(x1,y0), Math.hypot(x0,y1), Math.hypot(x1,y1));
+    if(far > 147) continue;
+    n++;
+    const bad = defs.some(d => d[0] >= x0 && d[0] < x1 && d[1] >= y0 && d[1] < y1);
+    if(!bad) good++;
+    ctx.fillStyle = J.c(bad ? '--red' : '--jade'); ctx.globalAlpha = bad ? .7 : .6;
+    ctx.fillRect(cx + x0*sc + .5, cy + y0*sc + .5, side*sc - 1, side*sc - 1); ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = J.c('--ink'); defs.forEach(d => { if(Math.hypot(d[0],d[1]) < 150){ ctx.beginPath(); ctx.arc(cx + d[0]*sc, cy + d[1]*sc, 1.4, 0, 7); ctx.fill(); } });
+  ctx.strokeStyle = J.c('--ink3'); ctx.beginPath(); ctx.arc(cx, cy, 150*sc, 0, 7); ctx.stroke();
+  const ad = A/100*v.d0, yp = Math.exp(-ad), ym = Math.pow((1-Math.exp(-ad))/ad, 2);
+  J.out(box,'n', n); J.out(box,'g', good); J.out(box,'y', J.fmt(good/n*100,1)+' %');
+  J.out(box,'m', J.fmt(yp*100,1)+' % / '+J.fmt(ym*100,1)+' %');
+  // 오른쪽 곡선
+  const p = [], q = [];
+  for(let a=10;a<=400;a+=5){ const x = a/100*v.d0; p.push([a, Math.exp(-x)*100]); q.push([a, Math.pow((1-Math.exp(-x))/x,2)*100]); }
+  J.plot(document.getElementById('cv2b'), {x:[10,400], y:[0,100], xlab:'다이 면적 (mm²)', ylab:'수율 (%)', series:[{pts:p, color:'--red', w:2.5},{pts:q, color:'--indigo', w:2, dash:[6,4]}],
+    points:[{x:A, y:good/n*100, color:'--jade', r:6, label:'이 웨이퍼'}], vlines:[{x:A, color:'--ink3', dash:[2,3]}]});
+});
+
+/* 10-3 리페어 퍼즐 */
+(function(){
+  const box = document.getElementById('sim3'), cv = document.getElementById('cv3');
+  const N = 16, SR = 3, SC = 3;
+  let fails, rows, cols, seed = 5, geo;
+  function gen(){
+    const R = J.rng(seed*7+3); fails = new Set();
+    const add = (r,c) => fails.add(r*N+c);
+    // 줄 불량 2개
+    const lr = Math.floor(R()*N); for(let c=0;c<N;c++) if(R() < .45) add(lr, c);
+    const lc = Math.floor(R()*N); for(let r=0;r<N;r++) if(R() < .4) add(r, lc);
+    // 흩어진 단일 불량
+    const k = 3 + Math.floor(R()*3); for(let i=0;i<k;i++) add(Math.floor(R()*N), Math.floor(R()*N));
+    rows = new Set(); cols = new Set();
+  }
+  function remaining(){ return [...fails].filter(f => !rows.has(Math.floor(f/N)) && !cols.has(f%N)); }
+  function auto(){
+    rows = new Set(); cols = new Set();
+    let changed = true;
+    while(changed){ changed = false;
+      const rem = remaining();
+      for(let r=0;r<N;r++){ const k = rem.filter(f => Math.floor(f/N) === r).length; if(k > SC - cols.size && rows.size < SR && k){ rows.add(r); changed = true; break; } }
+      if(changed) continue;
+      for(let c=0;c<N;c++){ const k = rem.filter(f => f%N === c).length; if(k > SR - rows.size && cols.size < SC && k){ cols.add(c); changed = true; break; } }
+    }
+    // 탐욕: 가장 많이 덮는 줄
+    while(remaining().length && (rows.size < SR || cols.size < SC)){
+      const rem = remaining(); let best = null, bk = 0;
+      for(let r=0;r<N;r++){ const k = rem.filter(f => Math.floor(f/N) === r).length; if(rows.size < SR && k > bk){ bk = k; best = ['r', r]; } }
+      for(let c=0;c<N;c++){ const k = rem.filter(f => f%N === c).length; if(cols.size < SC && k > bk){ bk = k; best = ['c', c]; } }
+      if(!best) break; (best[0] === 'r' ? rows : cols).add(best[1]);
+    }
+    draw();
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(cv);
+    ctx.clearRect(0,0,w,h);
+    const cs = Math.min((w-60)/N, (h-50)/N), ox = 40, oy = 34;
+    geo = {cs, ox, oy};
+    ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    for(let i=0;i<N;i++){
+      ctx.fillStyle = J.c(cols.has(i) ? '--indigo' : '--paper2'); ctx.fillRect(ox + i*cs + 1, 6, cs-2, 24);
+      ctx.fillStyle = cols.has(i) ? '#fff' : J.c('--ink2'); ctx.fillText(i, ox + i*cs + cs/2, 18);
+      ctx.fillStyle = J.c(rows.has(i) ? '--gold' : '--paper2'); ctx.fillRect(6, oy + i*cs + 1, 30, cs-2);
+      ctx.fillStyle = rows.has(i) ? '#fff' : J.c('--ink2'); ctx.fillText(i, 21, oy + i*cs + cs/2);
+    }
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+      const f = fails.has(r*N+c), cov = rows.has(r) || cols.has(c);
+      ctx.fillStyle = J.c(cov ? (rows.has(r) ? '--gold-soft' : '--indigo-soft') : '--card'); ctx.fillRect(ox + c*cs + .5, oy + r*cs + .5, cs-1, cs-1);
+      ctx.strokeStyle = J.c('--line2'); ctx.strokeRect(ox + c*cs + .5, oy + r*cs + .5, cs-1, cs-1);
+      if(f){ ctx.fillStyle = J.c(cov ? '--jade' : '--red'); ctx.beginPath(); ctx.arc(ox + c*cs + cs/2, oy + r*cs + cs/2, cs*0.28, 0, 7); ctx.fill(); }
+    }
+    const left = remaining().length;
+    J.out(box,'sp', (SR-rows.size)+' / '+(SC-cols.size));
+    J.out(box,'left', left, left ? 'bad' : 'good');
+    J.out(box,'res', left === 0 ? '리페어 성공 — 양품!' : (rows.size === SR && cols.size === SC) ? '여분 소진 — 불량 칩' : '진행 중', left === 0 ? 'good' : (rows.size === SR && cols.size === SC) ? 'bad' : '');
+  }
+  cv.addEventListener('click', e => {
+    const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, {cs, ox, oy} = geo;
+    if(y < 32 && x > ox){ const c = Math.floor((x-ox)/cs); if(c >= 0 && c < N){ if(cols.has(c)) cols.delete(c); else if(cols.size < SC) cols.add(c); draw(); } }
+    else if(x < 38 && y > oy){ const rr = Math.floor((y-oy)/cs); if(rr >= 0 && rr < N){ if(rows.has(rr)) rows.delete(rr); else if(rows.size < SR) rows.add(rr); draw(); } }
+  });
+  cv.style.cursor = 'pointer';
+  document.getElementById('rpNew').onclick = () => { seed++; gen(); draw(); };
+  document.getElementById('rpAuto').onclick = auto;
+  document.getElementById('rpClear').onclick = () => { rows = new Set(); cols = new Set(); draw(); };
+  gen(); J.live(draw);
+})();
+
+/* 10-4 리던던시 수율 */
+J.sim('sim4', (v, box) => {
+  const pois = (lam, k) => { let s = 0, t = Math.exp(-lam); for(let i=0;i<=k;i++){ s += t; t *= lam/(i+1); } return s; };
+  const yOf = (lam, sp) => Math.pow(pois(lam, sp), v.m);
+  const series = [0,2,4,8].map((sp,i) => ({pts: Array.from({length:120}, (_,k) => { const l = 0.002 + k*0.0084; return [l, yOf(l, sp)*100]; }), color:['--red','--gold','--jade','--indigo'][i], w: sp === v.sp ? 3.5 : 1.8, dash: sp === v.sp ? [] : [4,3]}));
+  if(![0,2,4,8].includes(v.sp)) series.push({pts: Array.from({length:120}, (_,k) => { const l = 0.002 + k*0.0084; return [l, yOf(l, v.sp)*100]; }), color:'--plum', w:3.5});
+  J.plot(document.getElementById("cv4"), {x:[0,1], y:[0,100], xlab:'매트당 평균 불량 λ', ylab:'칩 수율 (%)', series, vlines:[{x:v.lam, color:'--ink3', label:'현재 λ', dash:[2,3]}], points:[{x:v.lam, y:yOf(v.lam, v.sp)*100, color:'--red', r:6}]});
+  const y0 = Math.exp(-v.lam*v.m), y1 = yOf(v.lam, v.sp);
+  J.out(box,'y0', y0 < 1e-6 ? '≈ 0 %' : J.fmt(y0*100,2)+' %', 'bad');
+  J.out(box,'y1', J.fmt(y1*100,2)+' %', y1 > .9 ? 'good' : y1 > .5 ? 'warn' : 'bad');
+});
+</script>
+</body>
+</html>
