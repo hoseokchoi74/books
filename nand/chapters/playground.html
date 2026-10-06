@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SSD 설계 놀이터 · NAND 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%237b3a5d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E藏%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+  .pg-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:760px){.pg-grid{grid-template-columns:1fr}}
+  .spec{background:var(--paper); border:1px solid var(--line2); border-radius:5px; padding:12px 14px; font-size:14px}
+  .spec table{width:100%; border-collapse:collapse}
+  .spec td{padding:3px 4px; border-bottom:1px dashed var(--line2)}
+  .spec td:last-child{text-align:right; font-family:var(--mono); font-weight:600}
+  .grade{font-family:var(--serif); font-size:42px; font-weight:900; color:var(--red); line-height:1}
+  .grp{font-size:12px; color:var(--ink3); letter-spacing:.1em; margin:4px 0 2px}
+</style>
+</head>
+<body data-ch="playground">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 12 <span class="hanja">第十二章 · 設</span></div>
+  <h1>SSD 설계 놀이터</h1>
+  <p class="lead">셀당 비트를 늘리면 용량과 원가는 좋아지지만 수명과 쓰기 속도가 줄고, OP를 늘리면 수명은 늘지만 팔 수 있는 용량이 준다. 채널을 늘리면 빨라지지만 컨트롤러가 비싸진다. 지금까지 배운 손잡이를 한 화면에 모아 직접 SSD를 설계해 보자.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>셀 방식·층수·다이 수·OP·채널·ECC 사이의 트레이드오프를 한 번에 체험한다.</li>
+  <li>노트북·데이터센터·쓰기 집중·산업용 SSD의 설계가 왜 다른지 비교한다.</li>
+  <li>TBW·DWPD 같은 수명 사양이 어디서 나오는지 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>설계실</h2>
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-1</span><span class="ttl">나만의 SSD 설계하기</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="presets">
+      <span class="hint">프리셋:</span>
+      <button class="sbtn on" data-p="laptop">노트북 (TLC)</button>
+      <button class="sbtn" data-p="dcread">AI 데이터 레이크 (QLC)</button>
+      <button class="sbtn" data-p="write">쓰기 집중 엔터프라이즈</button>
+      <button class="sbtn" data-p="ind">산업용 (SLC)</button>
+    </div>
+    <div class="pg-grid">
+      <div>
+        <div class="grp">셀 · 다이</div>
+        <div class="ctrls" style="grid-template-columns:1fr">
+          <label class="ctrl"><span class="lab">셀당 비트</span><select data-k="b" data-num><option value="1">SLC (1)</option><option value="2">MLC (2)</option><option value="3" selected>TLC (3)</option><option value="4">QLC (4)</option></select></label>
+          <label class="ctrl"><span class="lab">워드라인 층수 <output data-o="L"></output></span><input type="range" data-k="L" min="96" max="600" step="2" value="238" data-d="0" data-u="층"></label>
+          <label class="ctrl"><span class="lab">다이 수 <output data-o="nd"></output></span><input type="range" data-k="nd" min="2" max="512" step="2" value="8" data-d="0" data-u="개"></label>
+        </div>
+        <div class="grp">컨트롤러 · 펌웨어</div>
+        <div class="ctrls" style="grid-template-columns:1fr">
+          <label class="ctrl"><span class="lab">채널 수 <output data-o="ch"></output></span><input type="range" data-k="ch" min="2" max="16" step="2" value="4" data-d="0"></label>
+          <label class="ctrl"><span class="lab">오버프로비저닝 OP <output data-o="op"></output></span><input type="range" data-k="op" min="3" max="60" step="1" value="7" data-d="0" data-u="%"></label>
+          <label class="ctrl"><span class="lab">ECC</span><select data-k="ecc"><option value="bch">BCH</option><option value="hard">LDPC 하드</option><option value="soft" selected>LDPC 하드 + 소프트</option></select></label>
+          <label class="ctrl"><span class="lab">인터페이스</span><select data-k="if" data-num><option value="3.5">PCIe 3.0 x4 (3.5 GB/s)</option><option value="7" >PCIe 4.0 x4 (7 GB/s)</option><option value="14" selected>PCIe 5.0 x4 (14 GB/s)</option><option value="28">PCIe 6.0 x4 (28 GB/s)</option></select></label>
+        </div>
+      </div>
+      <div>
+        <div class="canvas-box"><canvas id="radar" data-h="300"></canvas></div>
+        <div class="btnrow" style="margin-top:8px"><button class="sbtn" id="saveA">설계 A로 저장</button><button class="sbtn" id="saveB">설계 B로 저장</button><span class="hint">저장한 설계가 점선으로 겹쳐진다</span></div>
+        <div class="spec" id="spec"></div>
+      </div>
+    </div>
+  </div>
+  <p class="cap"><b>모델 요약.</b> 다이 용량 ≈ 1 Tb × (층수/238) × (비트/3) [6장] · 순차 쓰기 = min(다이×4플레인×16 KB/tPROG, 채널×2.4 GB/s, 인터페이스) [10장] · tPROG: SLC 0.15 / MLC 0.4 / TLC 0.6 / QLC 2 ms, tR: 25/40/50/90 µs [3·5장] · P/E 수명 × ECC 계수(BCH 0.5, 하드 1, 소프트 1.5) [7·8장] · 무작위 쓰기 WAF ≈ (1+OP)/(2·OP) [9장] · TBW = 사용자 용량 × P/E ÷ WAF, DWPD는 5년 기준.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>도전 과제</h2>
+<div class="note-box"><div class="h" data-h="題">설계 미션</div>
+<ol style="margin:4px 0 0; padding-left:20px">
+<li><b>노트북</b>: 2 TB 이상, 순차 읽기 7 GB/s 이상을 다이 16개 이하로.</li>
+<li><b>AI 데이터 레이크</b>: 사용자 용량 100 TB 이상, 비용 효율 최고 등급.</li>
+<li><b>쓰기 집중</b>: 무작위 쓰기 기준 3 DWPD 이상 (힌트: OP와 셀 방식).</li>
+<li><b>균형</b>: 레이더의 모든 축이 절반 이상인 설계 찾기.</li>
+</ol></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>생각해 볼 문제</h2>
+<div class="quiz" data-a="1"><p class="q">같은 NAND로 DWPD를 가장 크게 올리는 손잡이는?</p><ol><li>채널 수</li><li>OP를 늘려 WAF를 낮추기</li><li>인터페이스 세대</li><li>다이 수</li></ol>
+<p class="explain">TBW ∝ P/E ÷ WAF. OP가 커지면 WAF가 급격히 준다(대신 사용자 용량 감소).</p></div>
+<div class="quiz" data-a="2"><p class="q">다이 수가 적은 SSD에서 순차 쓰기가 느린 주된 이유는?</p><ol><li>PCIe 세대가 낮아서</li><li>ECC 때문에</li><li>tPROG 동안 숨길 병렬 다이가 부족해서</li><li>OP가 커서</li></ol>
+<p class="explain">다이 하나의 쓰기 처리량은 수십~백 MB/s 수준이다. 병렬성이 곧 속도다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+(function(){
+  const box = document.getElementById('sim1');
+  const PRE = {
+    laptop:{b:'3', L:238, nd:8, ch:4, op:7, ecc:'soft', if:'14'},
+    dcread:{b:"4", L:300, nd:512, ch:16, op:7, ecc:'soft', if:'14'},
+    write:{b:'3', L:238, nd:64, ch:16, op:40, ecc:'soft', if:'14'},
+    ind:{b:'1', L:112, nd:8, ch:4, op:20, ecc:'hard', if:'3.5'}
+  };
+  let saved = {A:null, B:null}, cur = null;
+  const tP = {1:0.15, 2:0.4, 3:0.6, 4:2.0}, tR = {1:25, 2:40, 3:50, 4:90}, PE = {1:60000, 2:6000, 3:3000, 4:1000}, EF = {bch:0.5, hard:1, soft:1.5};
+  function model(v){
+    const b = +v.b, dieTb = (v.L/238)*(b/3)*1.0;
+    const raw = dieTb*v.nd/8; // TB
+    const user = raw/(1 + v.op/100);
+    const perDieW = 4*16384/(tP[b]*1e-3)/1e9, perDieR = 4*16384/(tR[b]*1e-6)/1e9;
+    const busC = v.ch*2.4;
+    const sw = Math.min(perDieW*v.nd, busC, +v.if), sr = Math.min(perDieR*v.nd, busC, +v.if);
+    const op = v.op/100, waf = (1+op)/(2*op);
+    const pe = PE[b]*EF[v.ecc];
+    const tbw = user*pe/waf;
+    const dwpd = tbw/(user*365*5);
+    const cost = (1/(v.L/238*b/3*(0.62 - 0.00025*v.L)/0.56))*(1 + v.op/100) + 0.04*v.ch/Math.max(1,raw);
+    return {dieTb, raw, user, sw, sr, waf, pe, tbw, dwpd, cost, b};
+  }
+  const AX = ['용량','순차 쓰기','순차 읽기','수명 (DWPD)','비용 효율','무작위 쓰기 효율'];
+  function scores(m){ const c = x => J.clamp(x,0,1);
+    return [c(Math.log10(m.user*10)/Math.log10(2000)), c(m.sw/14), c(m.sr/14), c(Math.log10(m.dwpd*10 + 1)/Math.log10(200)), c(0.6/m.cost), c(1/m.waf)]; }
+  function radar(){
+    const {ctx, w, h} = J.fit(document.getElementById('radar'));
+    ctx.clearRect(0,0,w,h);
+    const cx = w/2, cy = h/2 + 4, R = Math.min(w, h)/2 - 46, n = AX.length;
+    const pt = (i, r) => [cx + Math.sin(i/n*Math.PI*2)*R*r, cy - Math.cos(i/n*Math.PI*2)*R*r];
+    ctx.strokeStyle = J.c('--line2');
+    [0.25,0.5,0.75,1].forEach(r => { ctx.beginPath(); for(let i=0;i<=n;i++){ const p = pt(i%n, r); i ? ctx.lineTo(...p) : ctx.moveTo(...p); } ctx.stroke(); });
+    for(let i=0;i<n;i++){ ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(...pt(i,1)); ctx.stroke(); const p = pt(i, 1.17); ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(AX[i], p[0], p[1]); }
+    const poly = (s, col, dash, fill) => { ctx.strokeStyle = J.c(col); ctx.lineWidth = 2.5; ctx.setLineDash(dash); ctx.beginPath(); s.forEach((r,i) => { const p = pt(i, Math.max(0.03,r)); i ? ctx.lineTo(...p) : ctx.moveTo(...p); }); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]); if(fill){ ctx.globalAlpha = .18; ctx.fillStyle = J.c(col); ctx.fill(); ctx.globalAlpha = 1; } ctx.lineWidth = 1; };
+    if(saved.A) poly(saved.A, '--indigo', [6,4]); if(saved.B) poly(saved.B, '--gold', [6,4]); if(cur) poly(cur, '--plum', [], true);
+    ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign='left'; ctx.textBaseline='top';
+    let ly = 4; [['현재','--plum'],['A','--indigo'],['B','--gold']].forEach(([t,c]) => { if(t==='현재' || saved[t]){ ctx.fillStyle = J.c(c); ctx.fillRect(6, ly+4, 12, 3); ctx.fillStyle = J.c('--ink2'); ctx.fillText(t, 22, ly); ly += 16; } });
+  }
+  const s = J.sim('sim1', v => {
+    const m = model(v); cur = scores(m);
+    const avg = cur.reduce((a,b)=>a+b,0)/cur.length;
+    const grade = avg > .72 ? 'S' : avg > .58 ? 'A' : avg > .42 ? 'B' : 'C';
+    const capS = x => x >= 1 ? J.fmt(x,1)+' TB' : J.fmt(x*1000,0)+' GB';
+    const row = (k, val, bad) => `<tr><td>${k}</td><td style="color:${bad ? 'var(--red)' : 'inherit'}">${val}</td></tr>`;
+    document.getElementById('spec').innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="font-family:var(--serif)">사양서 · 規格</b><span class="grade">${grade}</span></div><table>
+      ${row('다이 하나', J.fmt(m.dieTb,2)+' Tb', false)}
+      ${row('사용자 용량', capS(m.user), false)}
+      ${row('순차 쓰기 (캐시 이후)', J.fmt(m.sw,2)+' GB/s', m.sw < 1)}
+      ${row('순차 읽기', J.fmt(m.sr,2)+' GB/s', false)}
+      ${row('무작위 쓰기 WAF', J.fmt(m.waf,2), m.waf > 5)}
+      ${row('유효 P/E 수명', Math.round(m.pe).toLocaleString('ko-KR')+' 회', false)}
+      ${row('TBW', m.tbw >= 1000 ? J.fmt(m.tbw/1000,1)+' PB' : J.fmt(m.tbw,0)+' TB', false)}
+      ${row('DWPD (5년)', J.fmt(m.dwpd,2), m.dwpd < 0.3)}
+      ${row('비트 원가 (TLC 238층 = 1)', J.fmt(m.cost,2), m.cost > 2)}
+    </table>`;
+    radar();
+  });
+  J.$$('#presets button').forEach(b => b.onclick = () => { J.$$('#presets button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    const p = PRE[b.dataset.p]; for(const k in p) J.$(`[data-k="${k}"]`, box).value = p[k]; s.run(); });
+  document.getElementById('saveA').onclick = () => { saved.A = cur.slice(); radar(); };
+  document.getElementById('saveB').onclick = () => { saved.B = cur.slice(); radar(); };
+  J.live(radar);
+})();
+</script>
+</body>
+</html>

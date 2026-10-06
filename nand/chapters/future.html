@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NAND의 미래 · NAND 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%237b3a5d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E藏%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="future">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 11 <span class="hanja">第十一章 · 來</span></div>
+  <h1>NAND의 미래</h1>
+  <p class="lead">층을 쌓는 것만으로 비트 원가가 끝없이 내려갈까? 층이 늘면 공정 단계와 장비 시간도 늘고, 계단·데크·식각이 점점 어려워진다. 한편 AI 데이터센터는 수백 TB짜리 SSD와 새로운 인터페이스를 요구한다. 이 장은 NAND 앞에 놓인 갈림길들을 계산으로 짚어 본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>층수와 웨이퍼 비용·비트 수의 관계로 비트 원가의 최적점을 계산한다.</li>
+  <li>PLC, 웨이퍼 본딩, 몰리브덴 워드라인, 강유전체 NAND 같은 기술 방향을 안다.</li>
+  <li>ZNS(Zoned Namespace)가 쓰기 증폭과 OP·DRAM 비용을 어떻게 줄이는지 이해한다.</li>
+  <li>AI 학습 파이프라인이 요구하는 스토리지 대역폭과 용량을 어림한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>층수와 비트 원가</h2>
+<p>웨이퍼 한 장에서 나오는 비트는 층수에 거의 비례한다. 하지만 웨이퍼 한 장을 만드는 비용도 층마다 증착·식각 시간이 늘고, 일정 층을 넘으면 데크를 하나 더 쌓아야 하며, 계단 영역이 커져 셀 효율이 떨어진다. 결국 비트당 원가는 층수에 대해 U자 곡선을 그린다. 업계는 장비·공정 혁신으로 이 곡선의 바닥을 계속 오른쪽으로 밀어 왔다.</p>
+<div class="eq">$$\frac{\text{원가}}{\text{비트}} \propto \frac{C_0 + c_L N + C_{deck}\lceil N/N_{deck}\rceil}{N\cdot\eta(N)}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-1</span><span class="ttl">비트 원가 곡선</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">층당 추가 비용 (웨이퍼 기본비 대비) <output data-o="cl"></output></span><input type="range" data-k="cl" min="0.1" max="1.5" step="0.05" value="0.45" data-d="2" data-u="%"></label>
+      <label class="ctrl"><span class="lab">데크 하나 추가 비용 <output data-o="cd"></output></span><input type="range" data-k="cd" min="0" max="40" step="1" value="15" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">데크당 최대 층수 <output data-o="nd"></output></span><input type="range" data-k="nd" min="64" max="300" step="8" value="160" data-d="0" data-u="층"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">원가 최소 층수</span><span class="v" data-r="opt"></span></div>
+      <div class="ro"><span class="k">200층 대비 원가 (최적점)</span><span class="v" data-r="rel"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 곡선은 200층의 비트 원가를 100으로 둔 상대값이다. 톱니처럼 튀는 곳이 데크가 하나 늘어나는 지점이다. 층당 비용을 낮추거나(빠른 증착, 얇은 층) 데크당 층수를 늘리면(더 깊은 식각) 최적점이 오른쪽으로, 더 낮게 이동한다. (교육용 모델: 계단 영역으로 인한 효율 감소 포함)</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>기술 갈림길</h2>
+<div class="tbwrap"><table class="tb">
+<tr><th>방향</th><th>내용</th><th>숙제</th></tr>
+<tr><td><b>400층 이상 + 웨이퍼 본딩</b></td><td>셀 웨이퍼와 CMOS 웨이퍼를 따로 만들어 붙임. 2025년 무렵부터 300–400층대 양산</td><td>본딩 정렬·수율, 열 예산</td></tr>
+<tr><td><b>얇은 층·Mo 워드라인</b></td><td>층 두께를 줄여 같은 높이에 더 많은 층</td><td>워드라인 저항, 층간 간섭</td></tr>
+<tr><td><b>PLC (5비트/셀)</b></td><td>32개 상태. 용량 +25 %(QLC 대비)</td><td>상태 간격 ~0.2 V, 내구성 수백 회, 느린 쓰기 → 아카이브용</td></tr>
+<tr><td><b>셀 분할 (split cell)</b></td><td>채널 홀 하나를 반으로 나눠 셀 두 개로</td><td>공정 복잡도, 셀 간 간섭</td></tr>
+<tr><td><b>강유전체 NAND (FeNAND)</b></td><td>전하 대신 강유전체 분극으로 문턱 이동, 저전압 동작</td><td>내구성, 다중 레벨 균일성</td></tr>
+<tr><td><b>HBF (고대역 플래시) 제안</b></td><td>HBM처럼 NAND 다이를 쌓아 AI 가속기 옆에 붙이자는 제안</td><td>읽기 지연·내구성, 패키징 비용</td></tr>
+</table></div>
+
+<h2 id="s3"><span class="n">03</span>ZNS: 호스트와 SSD가 일을 나누면</h2>
+<p>9장의 쓰기 증폭은 호스트가 "아무 데나 덮어쓴다"는 가정에서 나온다. <span class="term">ZNS(Zoned Namespace)</span>는 LBA 공간을 여러 <span class="term">존(zone)</span>으로 나누고, 존 안에서는 순차로만 쓰며, 비울 때는 존 단위로 리셋하게 한다. 존을 NAND 블록에 맞추면 SSD 내부 GC가 거의 필요 없어 WAF ≈ 1, OP와 거대한 매핑 테이블용 DRAM도 줄어든다. 대신 데이터 배치와 정리는 호스트(파일 시스템·데이터베이스)가 맡는다. 로그 구조 DB(RocksDB 등)처럼 원래 순차로 쓰는 소프트웨어에 잘 맞는다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-2</span><span class="ttl">기존 SSD vs ZNS SSD</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">기존 SSD의 OP <output data-o="op"></output></span><input type="range" data-k="op" min="5" max="40" step="1" value="7" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">호스트 측 정리 증폭 (ZNS) <output data-o="hw"></output></span><input type="range" data-k="hw" min="1" max="3" step="0.05" value="1.3" data-d="2"></label>
+      <label class="ctrl"><span class="lab">SSD 용량 <output data-o="tb"></output></span><input type="range" data-k="tb" min="2" max="128" step="2" value="32" data-d="0" data-u="TB"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="260"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">기존: 총 쓰기 증폭</span><span class="v" data-r="a"></span></div>
+      <div class="ro"><span class="k">ZNS: 총 쓰기 증폭</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">수명 이득</span><span class="v" data-r="life"></span></div>
+      <div class="ro"><span class="k">매핑용 DRAM (기존 / ZNS)</span><span class="v" data-r="dram"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모델.</b> 기존 SSD는 균일 무작위 부하에서 WAF ≈ (1+OP)/(2·OP)(9장), ZNS는 장치 WAF ≈ 1에 호스트 정리 증폭만 곱한다. 매핑 DRAM은 4 KB 페이지 매핑 시 용량의 약 1/1000, ZNS는 존 단위 매핑으로 수백 분의 1 이하로 준다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>AI 시대의 스토리지</h2>
+<p>거대 모델 학습은 수 PB의 데이터를 반복해 읽고, 학습이 중단될 때를 대비해 수 TB 크기의 체크포인트를 주기적으로 쓴다. 추론 서버는 수백 GB의 모델과 벡터 데이터베이스, 긴 문맥의 KV 캐시를 SSD로 넘겨 받기도 한다. 그래서 읽기 위주의 대용량 QLC SSD(60–120 TB 이상)와, 체크포인트를 빨리 받아 낼 고성능 TLC SSD가 함께 늘고 있다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-3</span><span class="ttl">학습 클러스터 스토리지 어림</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">모델 파라미터 <output data-o="p"></output></span><input type="range" data-k="p" min="7" max="2000" step="1" value="400" data-d="0" data-u="B개"></label>
+      <label class="ctrl"><span class="lab">체크포인트 주기 <output data-o="ci"></output></span><input type="range" data-k="ci" min="5" max="240" step="5" value="30" data-d="0" data-u="분"></label>
+      <label class="ctrl"><span class="lab">체크포인트 저장 허용 시간 <output data-o="ct"></output></span><input type="range" data-k="ct" min="10" max="600" step="10" value="60" data-d="0" data-u="초"></label>
+      <label class="ctrl"><span class="lab">학습 데이터 <output data-o="ds"></output></span><input type="range" data-k="ds" min="10" max="5000" step="10" value="1000" data-d="0" data-u="TB"></label>
+      <label class="ctrl"><span class="lab">데이터 읽기 속도 요구 <output data-o="rd"></output></span><input type="range" data-k="rd" min="10" max="2000" step="10" value="300" data-d="0" data-u="GB/s"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="230"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">체크포인트 크기 (파라미터 × 14 B)</span><span class="v" data-r="ck"></span></div>
+      <div class="ro"><span class="k">필요 쓰기 대역폭</span><span class="v" data-r="wbw"></span></div>
+      <div class="ro"><span class="k">TLC SSD (쓰기 6 GB/s, 15 TB)</span><span class="v" data-r="tlc"></span></div>
+      <div class="ro"><span class="k">QLC SSD (읽기 12 GB/s, 122 TB)</span><span class="v" data-r="qlc"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모델.</b> 혼합 정밀도 + Adam 학습에서 체크포인트는 파라미터당 약 14바이트(가중치·기울기 통계·마스터 사본)로 어림했다. 체크포인트 계층은 쓰기 대역폭으로, 데이터 계층은 용량과 읽기 대역폭 중 큰 쪽으로 개수가 정해진다(복제·여유 공간 제외).</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">층수를 무한정 늘려도 비트 원가가 계속 내려가지 않는 이유는?</p><ol><li>비트가 늘지 않아서</li><li>ECC가 필요 없어서</li><li>층당 공정 비용, 데크 추가, 계단 면적이 함께 늘어서</li><li>셀이 커져서</li></ol>
+<p class="explain">비용 증가와 효율 감소가 비트 증가를 상쇄하는 지점이 생긴다.</p></div>
+<div class="quiz" data-a="0"><p class="q">ZNS에서 SSD 내부 WAF가 1에 가까운 이유는?</p><ol><li>존 안에서 순차로 쓰고 존 단위로 리셋해, 블록 단위로 데이터가 함께 무효화되기 때문에</li><li>OP가 없어서</li><li>ECC가 강해서</li><li>SLC만 써서</li></ol>
+<p class="explain">9장의 순차 쓰기 실험과 같은 원리다. 대신 정리 책임이 호스트로 간다.</p></div>
+<div class="quiz" data-a="3"><p class="q">PLC가 주로 겨냥하는 용도는?</p><ol><li>CPU 캐시</li><li>쓰기 집중 데이터베이스</li><li>게임 로딩</li><li>자주 쓰지 않고 오래 보관하는 대용량 아카이브</li></ol>
+<p class="explain">내구성과 쓰기 속도를 크게 희생해 용량을 얻는다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 11-1 */
+J.sim('sim1', (v, box) => {
+  const eta = N => 0.62 - 0.00025*N; // 계단·주변 회로로 효율 감소
+  const cost = N => (100 + v.cl*N + v.cd*Math.max(0, Math.ceil(N/v.nd) - 1))/(N*Math.max(0.15, eta(N)));
+  const ref = cost(200);
+  const pts = []; let best = 32, bv = 1e9;
+  for(let N=32; N<=1000; N+=2){ const c = cost(N)/ref*100; pts.push([N, c]); if(c < bv){ bv = c; best = N; } }
+  J.plot(document.getElementById('cv1'), {x:[32,1000], y:[0, 300], xlab:'층수', ylab:'비트 원가 (200층 = 100)', series:[{pts, color:'--plum', w:2.5}],
+    points:[{x:best, y:bv, color:'--red', r:6, label:'최소 '+best+'층'}], hlines:[{y:100, color:'--ink3', dash:[2,3]}]});
+  J.out(box,'opt', best+' 층'); J.out(box,'rel', J.fmt(bv,0));
+});
+
+/* 11-2 */
+J.sim('sim2', (v, box) => {
+  const op = v.op/100, wa = (1+op)/(2*op), wz = 1.05*v.hw;
+  J.out(box,'a', J.fmt(wa,2), wa > 3 ? 'bad' : 'warn');
+  J.out(box,'b', J.fmt(wz,2), 'good');
+  J.out(box,'life', J.fmt(wa/wz,1)+' 배');
+  J.out(box,'dram', '~'+J.fmt(v.tb,0)+' GB / ~'+J.fmt(v.tb*8,0)+' KB');
+  const {ctx, w, h} = J.fit(document.getElementById('cv2'));
+  ctx.clearRect(0,0,w,h);
+  const items = [['기존: 장치 WAF', wa, '--red'],['ZNS: 장치 WAF', 1.05, '--jade'],['ZNS: 호스트 정리', v.hw, '--gold'],['ZNS: 합계', wz, '--plum']];
+  const P = {l:140, r:60, t:14, b:14}, bh = (h-P.t-P.b)/items.length, mx = Math.max(wa, wz)*1.1;
+  items.forEach((it,i) => { const y = P.t + i*bh, len = it[1]/mx*(w-P.l-P.r);
+    ctx.fillStyle = J.c(it[2]); ctx.globalAlpha = .85; ctx.fillRect(P.l, y+8, len, bh-16); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(it[0], P.l-8, y+bh/2);
+    ctx.textAlign='left'; ctx.font = '12px "JetBrains Mono"'; ctx.fillText('× '+J.fmt(it[1],2), P.l+len+6, y+bh/2); });
+});
+
+/* 11-3 */
+J.sim('sim3', (v, box) => {
+  const ck = v.p*1e9*14/1e12; // TB
+  const wbw = ck*1000/v.ct; // GB/s
+  const nT = Math.max(Math.ceil(wbw/6), Math.ceil(ck*3/15)); // 체크포인트 3개 보관
+  const nQ = Math.max(Math.ceil(v.ds/122), Math.ceil(v.rd/12));
+  J.out(box,'ck', J.fmt(ck,2)+' TB');
+  J.out(box,'wbw', J.fmt(wbw,0)+' GB/s');
+  J.out(box,'tlc', nT+' 개');
+  J.out(box,'qlc', nQ+' 개 ('+(Math.ceil(v.ds/122) >= Math.ceil(v.rd/12) ? '용량' : '읽기 속도')+' 기준)');
+  const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+  ctx.clearRect(0,0,w,h);
+  const draw = (y, n, col, lab) => { ctx.fillStyle = J.c('--ink2'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText(lab+' × '+n, 10, y-8);
+    const cols = Math.floor((w-20)/14), show = Math.min(n, cols*4);
+    for(let i=0;i<show;i++){ const x = 10 + (i%cols)*14, yy = y + Math.floor(i/cols)*16; ctx.fillStyle = J.c(col); ctx.fillRect(x, yy, 11, 13); }
+    if(n > show){ ctx.fillStyle = J.c('--ink3'); ctx.fillText('… +'+(n-show), 10, y + 4*16 + 10); } };
+  draw(30, nT, '--indigo', '체크포인트용 TLC');
+  draw(130, nQ, '--plum', '데이터용 QLC');
+});
+</script>
+</body>
+</html>

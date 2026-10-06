@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>오류 정정: BCH에서 LDPC까지 · NAND 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%237b3a5d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E藏%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="ecc">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 08 <span class="hanja">第八章 · 正</span></div>
+  <h1>오류 정정: BCH에서 LDPC까지</h1>
+  <p class="lead">TLC·QLC NAND는 1,000비트 중 몇 개가 틀린 채로 읽혀 나오는 것이 정상이다. 그런데 SSD는 10<sup>15</sup>비트에 하나도 틀리면 안 된다. 그 사이 12자릿수를 메우는 것이 오류 정정 부호다. 이 장은 정정 능력의 확률 계산, 그래프 위에서 오류를 지워 나가는 LDPC 복호, 그리고 "얼마나 확신하는가"까지 읽어 내는 소프트 읽기를 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>원시 비트 오류율(RBER)과 정정 후 오류율(UBER)의 관계를 이항·푸아송 분포로 계산한다.</li>
+  <li>BCH와 LDPC의 차이, 부호율과 정정 능력의 트레이드오프를 안다.</li>
+  <li>태너 그래프 위에서 비트 뒤집기(bit-flipping) 복호를 직접 실행해 본다.</li>
+  <li>여러 번 읽어 얻는 소프트 정보(LLR)가 정정 능력을 어떻게 높이는지 이해한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>몇 개까지 고칠 수 있으면 충분한가</h2>
+<p>코드워드 하나(데이터 + 패리티)가 \(n\)비트이고 각 비트가 독립적으로 확률 \(p\)(=RBER)로 틀린다면, 틀린 비트 수는 평균 \(np\)의 이항(≈푸아송) 분포를 따른다. 부호가 \(t\)개까지 고칠 수 있다면 코드워드가 실패할 확률은 \(t\)개를 넘게 틀릴 확률이다.</p>
+<div class="eq">$$P_{fail} = \sum_{k=t+1}^{n}\binom{n}{k}p^k(1-p)^{n-k} \approx 1 - \sum_{k=0}^{t} e^{-np}\frac{(np)^k}{k!}$$
+<div class="note">2D SLC 시절에는 512바이트당 1–4비트를 고치는 해밍·BCH로 충분했다. MLC·TLC로 가며 1 KB당 40–72비트 BCH, 지금은 수 KB 단위의 LDPC가 표준이다.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-1</span><span class="ttl">RBER → 코드워드 실패 확률</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">원시 비트 오류율 RBER (로그) <output data-o="p"></output></span><input type="range" data-k="p" min="-5" max="-1.3" step="0.02" value="-2.5" data-log="1" data-d="5"></label>
+      <label class="ctrl"><span class="lab">BCH 정정 능력 t (1 KB당) <output data-o="t"></output></span><input type="range" data-k="t" min="1" max="120" step="1" value="72" data-d="0" data-u="비트"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="320"></canvas></div>
+    <div class="legend"><span><i style="background:var(--ink3)"></i>ECC 없음 (1 KB)</span><span><i style="background:var(--gold)"></i>BCH t (1 KB)</span><span><i style="background:var(--indigo)"></i>LDPC 하드 (4 KB, 근사)</span><span><i style="background:var(--jade)"></i>LDPC 소프트 (4 KB, 근사)</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">1 KB당 평균 오류 비트</span><span class="v" data-r="m"></span></div>
+      <div class="ro"><span class="k">BCH 실패 확률</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">LDPC 하드 / 소프트</span><span class="v" data-r="l"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로축 RBER, 세로축 코드워드 실패 확률(둘 다 로그). 곡선이 거의 수직으로 떨어지는 "폭포(waterfall)" 구간 덕분에 RBER이 몇 배만 좋아져도 실패 확률은 수십 자릿수 좋아진다. 목표선(10⁻¹⁵) 아래에 있어야 한다. LDPC 곡선은 같은 패리티 비율에서 하드 판정 RBER 약 0.45 %, 소프트 판정 약 1 %를 정정 한계로 가정한 근사다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>LDPC: 그래프 위의 투표</h2>
+<p>LDPC(Low-Density Parity-Check) 부호는 1960년대 갤러거(R. Gallager)가 고안했다가 1990년대에 재발견되었다. 각 패리티 검사가 소수의 비트만 묶는 성긴(low-density) 행렬로 정의되고, <span class="term">태너 그래프</span>로 그리면 비트 노드(원)와 검사 노드(네모)를 잇는 선의 그물이 된다. 복호는 투표다. 만족되지 않은 검사(XOR이 1)는 자기와 연결된 비트들에게 "너희 중 누군가 틀렸다"고 알린다. 가장 많은 불만을 받는 비트를 뒤집고, 다시 투표한다. 이 단순한 <span class="term">비트 뒤집기</span>를 확률로 확장한 것이 실제 SSD가 쓰는 신뢰 전파(belief propagation, min-sum) 복호다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-2</span><span class="ttl">비트 뒤집기 복호기</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><span class="hint">① 아래 비트(원)를 눌러 오류를 넣는다 → ② 복호</span>
+      <button class="sbtn pri" id="bfStep">한 번 투표·뒤집기</button><button class="sbtn" id="bfRun">끝까지</button><button class="sbtn warn" id="bfReset">원래 코드워드로</button><button class="sbtn" id="bfRand">무작위 오류 2개</button></div>
+    <div class="canvas-box"><svg id="tanner" viewBox="0 0 720 330" style="display:block;width:100%"></svg></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">불만족 검사</span><span class="v" data-r="u"></span></div>
+      <div class="ro"><span class="k">반복 횟수</span><span class="v" data-r="it"></span></div>
+      <div class="ro"><span class="k">남은 오류 비트</span><span class="v" data-r="e"></span></div>
+      <div class="ro"><span class="k">상태</span><span class="v" data-r="st" style="font-size:14.5px;font-family:var(--sans)"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 위 네모 7개가 검사 노드, 아래 원 12개가 비트 노드다. 빨간 네모는 불만족 검사, 원 안 숫자는 그 비트가 받은 불만 수. 이 작은 부호는 비트 12개를 3×4 격자로 놓고 가로·세로 패리티를 건 것과 같다(어느 두 검사도 비트를 둘 이상 공유하지 않는다). 오류 하나는 언제나 한 번에 고쳐진다. 오류 두 개는 불만이 흩어져 엉뚱한 비트를 뒤집거나 다른 코드워드로 수렴한다 — 실제 LDPC는 수천 비트 길이와 확률 메시지로 수백 개의 오류를 고친다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>소프트 읽기: 얼마나 확신하는가</h2>
+<p>보통의 읽기는 기준 전압 하나로 0/1만 판정한다(하드 판정). 그런데 문턱 전압이 기준 바로 옆에 있는 셀과 멀리 떨어진 셀은 똑같이 믿을 만하지 않다. 기준 주변에 전압을 몇 개 더 걸어 읽으면 각 셀이 어느 구간에 있는지 알 수 있고, 구간마다 "이 셀이 0일 가능성의 로그 비"인 <span class="term">LLR(log-likelihood ratio)</span>을 줄 수 있다. LDPC 복호기는 확신이 약한 비트부터 의심해 훨씬 많은 오류를 고친다. 대가는 읽기 횟수, 즉 지연이다. 그래서 SSD는 먼저 하드로 읽고, 실패할 때만 소프트 읽기로 넘어간다.</p>
+<div class="eq">$$\text{LLR}(y) = \ln\frac{P(y\,|\,x=0)}{P(y\,|\,x=1)}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-3</span><span class="ttl">읽기 횟수와 소프트 정보</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">읽기 횟수 (감지 수) <output data-o="k"></output></span><input type="range" data-k="k" min="1" max="7" step="2" value="3" data-d="0" data-u="회"></label>
+      <label class="ctrl"><span class="lab">구간 간격 <output data-o="g"></output></span><input type="range" data-k="g" min="0.05" max="0.4" step="0.01" value="0.15" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">분포 겹침 (σ) <output data-o="s"></output></span><input type="range" data-k="s" min="0.1" max="0.45" step="0.01" value="0.33" data-d="2" data-u="V"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">하드 판정 RBER</span><span class="v" data-r="ber"></span></div>
+      <div class="ro"><span class="k">얻은 정보량 I(X;Y)</span><span class="v" data-r="mi"></span></div>
+      <div class="ro"><span class="k">하드 대비 정보 증가</span><span class="v" data-r="gain"></span></div>
+      <div class="ro"><span class="k">읽기 지연 (회당 50 µs)</span><span class="v" data-r="lat"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 초록·보라 분포는 각각 0과 1로 저장된 셀. 세로선이 읽기 기준들이고, 구간 아래 막대 색과 숫자가 그 구간의 LLR이다(양수 = 0 쪽, 음수 = 1 쪽, 크기 = 확신). 정보량은 셀 하나에서 얻을 수 있는 비트(최대 1)이며, 이 값이 클수록 같은 부호로 더 많은 오류를 고칠 수 있다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">RBER = 10⁻³, 1 KB(8192비트) 코드워드의 평균 오류 비트 수는?</p><ol><li>0.8</li><li>약 8</li><li>80</li><li>8192</li></ol>
+<p class="explain">8192 × 0.001 ≈ 8.2.</p></div>
+<div class="quiz" data-a="3"><p class="q">LDPC 비트 뒤집기 복호에서 뒤집을 비트를 고르는 기준은?</p><ol><li>무작위</li><li>가장 앞쪽 비트</li><li>값이 1인 비트</li><li>불만족 검사와 가장 많이 연결된 비트</li></ol>
+<p class="explain">불만이 많은 비트가 틀렸을 가능성이 높다.</p></div>
+<div class="quiz" data-a="0"><p class="q">소프트 읽기의 대가는?</p><ol><li>읽기 횟수가 늘어 지연이 커진다</li><li>셀 수명이 준다</li><li>용량이 준다</li><li>전압이 오른다</li></ol>
+<p class="explain">기준 전압을 여러 번 걸어 감지해야 한다. 그래서 하드 실패 시에만 쓴다.</p></div>
+<div class="quiz" data-a="2"><p class="q">"폭포" 구간이 의미하는 것은?</p><ol><li>오류율이 일정하다</li><li>패리티가 필요 없다</li><li>RBER이 조금만 좋아져도 실패 확률이 수십 자릿수 떨어진다</li><li>ECC가 동작하지 않는다</li></ol>
+<p class="explain">정정 한계 근처에서 실패 확률이 급격히 변한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 푸아송 꼬리: P(X > t), 로그 공간에서 안정적으로 */
+function poisTail(lam, t){
+  if(lam <= 0) return 0;
+  // t 이하 합
+  let logT = -lam, s = 0, terms = [];
+  for(let k=0;k<=t;k++){ if(k) logT += Math.log(lam) - Math.log(k); terms.push(logT); }
+  const mx = Math.max(...terms); s = terms.reduce((a,x) => a + Math.exp(x - mx), 0);
+  const cdf = Math.exp(mx)*s;
+  if(cdf < 0.999999) return Math.max(1e-300, 1 - cdf);
+  // 꼬리를 직접 합산
+  let lt = terms[terms.length-1], acc = 0, k = t;
+  for(let i=0;i<4000;i++){ k++; lt += Math.log(lam) - Math.log(k); const v = Math.exp(lt); acc += v; if(v < acc*1e-16) break; }
+  return Math.max(1e-300, acc);
+}
+J.sim('sim1', (v, box) => {
+  const n1 = 8192 + 14*v.t, nL = 36864;
+  const curves = [[], [], [], []];
+  for(let e=-5; e<=-1.3; e+=0.02){ const p = Math.pow(10,e);
+    curves[0].push([p, Math.max(1e-30, 1 - Math.pow(1-p, 8192))]);
+    curves[1].push([p, Math.max(1e-30, poisTail(n1*p, v.t))]);
+    curves[2].push([p, Math.max(1e-30, poisTail(nL*p, Math.round(nL*0.0045)))]);
+    curves[3].push([p, Math.max(1e-30, poisTail(nL*p, Math.round(nL*0.0105)))]);
+  }
+  J.plot(document.getElementById('cv1'), {x:[1e-5, 0.05], y:[1e-30, 1], logx:true, logy:true, xlab:'RBER (로그)', ylab:'실패 확률 (로그)', xf:t=>'1e'+Math.round(Math.log10(t)), yf:t=>'1e'+Math.round(Math.log10(t)),
+    series:[{pts:curves[0], color:'--ink3', w:2},{pts:curves[1], color:'--gold', w:2.5},{pts:curves[2], color:'--indigo', w:2.5},{pts:curves[3], color:'--jade', w:2.5}],
+    hlines:[{y:1e-15, color:'--red', label:'목표 10⁻¹⁵'}], vlines:[{x:v.p, color:'--ink', dash:[2,3]}], pad:{l:56}});
+  const pb = poisTail(n1*v.p, v.t), ph = poisTail(nL*v.p, Math.round(nL*0.0045)), ps = poisTail(nL*v.p, Math.round(nL*0.0105));
+  const f = x => x < 1e-30 ? '< 1e-30' : x.toExponential(1);
+  J.out(box,'m', J.fmt(8192*v.p,1)+' 개');
+  J.out(box,'b', f(pb), pb < 1e-15 ? 'good' : pb < 1e-6 ? 'warn' : 'bad');
+  J.out(box,'l', f(ph)+' / '+f(ps), ps < 1e-15 ? 'good' : 'bad');
+});
+
+/* 8-2 태너 그래프 */
+(function(){
+  const box = document.getElementById('sim2'), svg = document.getElementById('tanner');
+  const H = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[0,4,8],[1,5,9],[2,6,10],[3,7,11]]; // 4-사이클 없는 작은 LDPC
+  const N = 12;
+  // 유효한 코드워드 하나 찾기 (무게 6 근처)
+  let cw = new Array(N).fill(0);
+  for(let m=1;m<4096;m++){ const x = Array.from({length:N}, (_,i) => (m>>i)&1); if(H.every(r => r.reduce((a,i)=>a^x[i],0) === 0) && x.reduce((a,b)=>a+b,0) >= 5){ cw = x; break; } }
+  let rx, it, msg;
+  const syn = () => H.map(r => r.reduce((a,i) => a ^ rx[i], 0));
+  function reset(){ rx = cw.slice(); it = 0; msg = '오류를 넣어 보세요'; draw(); }
+  function step(){
+    const s = syn(); if(s.every(x => !x)){ msg = rx.every((b,i)=>b===cw[i]) ? '모든 검사 만족 — 복호 완료' : '검사는 만족하지만 다른 코드워드로 잘못 수렴'; draw(); return false; }
+    const votes = new Array(N).fill(0); H.forEach((r,c) => { if(s[c]) r.forEach(i => votes[i]++); });
+    const mx = Math.max(...votes); votes.forEach((v,i) => { if(v === mx) rx[i] ^= 1; });
+    it++; const s2 = syn();
+    msg = s2.every(x => !x) ? (rx.every((b,i)=>b===cw[i]) ? '복호 성공!' : '검사는 만족하지만 다른 코드워드로 잘못 수렴') : it >= 10 ? '수렴 실패 (맴돎)' : '진행 중';
+    draw(); return !s2.every(x => !x) && it < 10;
+  }
+  function draw(){
+    svg.innerHTML = '';
+    const s = syn(), votes = new Array(N).fill(0); H.forEach((r,c) => { if(s[c]) r.forEach(i => votes[i]++); });
+    const bx = i => 40 + i*58, cx = c => 60 + c*100;
+    H.forEach((r,c) => r.forEach(i => J.svg('line', {x1:cx(c), y1:70, x2:bx(i), y2:250, stroke: s[c] ? 'var(--red)' : 'var(--line)', 'stroke-width': s[c] ? 2 : 1.2, opacity: s[c] ? .8 : 1}, svg)));
+    H.forEach((r,c) => { J.svg('rect', {x:cx(c)-22, y:40, width:44, height:32, rx:4, fill: s[c] ? 'var(--red)' : 'var(--jade-soft)', stroke: s[c] ? 'var(--red)' : 'var(--jade)'}, svg);
+      J.svg('text', {x:cx(c), y:61, 'text-anchor':'middle', class:'t-m mono', text:'c'+c, style:`fill:${s[c] ? '#fff' : 'var(--ink)'}`}, svg); });
+    J.svg('text', {x:10, y:24, class:'t-s', text:'검사 노드: 연결된 비트들의 XOR = 0 이어야 함'}, svg);
+    for(let i=0;i<N;i++){
+      const g = J.svg('g', {style:'cursor:pointer'}, svg), err = rx[i] !== cw[i];
+      J.svg('circle', {cx:bx(i), cy:262, r:20, fill: err ? 'var(--red-soft)' : 'var(--card)', stroke: err ? 'var(--red)' : 'var(--indigo)', 'stroke-width':2.5}, g);
+      J.svg('text', {x:bx(i), y:268, 'text-anchor':'middle', class:'t-l mono', text:rx[i]}, g);
+      J.svg('text', {x:bx(i), y:300, 'text-anchor':'middle', class:'t-s', text:'b'+i}, g);
+      if(votes[i]) J.svg('text', {x:bx(i)+16, y:244, class:'t-s mono', text:'×'+votes[i], style:'fill:var(--red);font-weight:700'}, g);
+      g.addEventListener('click', () => { rx[i] ^= 1; it = 0; msg = '오류 주입됨 — 복호해 보세요'; draw(); });
+    }
+    J.svg('text', {x:10, y:324, class:'t-s', text:'원래 코드워드: '+cw.join('')}, svg);
+    const u = s.filter(x => x).length, e = rx.filter((b,i) => b !== cw[i]).length;
+    J.out(box,'u', u, u ? 'bad' : 'good'); J.out(box,'it', it); J.out(box,'e', e, e ? 'bad' : 'good');
+    J.out(box,'st', msg, /성공|완료/.test(msg) && !e ? 'good' : /실패|잘못/.test(msg) ? 'bad' : '');
+  }
+  document.getElementById('bfStep').onclick = step;
+  document.getElementById('bfRun').onclick = () => { let k = 0; const go = () => { if(step() && ++k < 10) setTimeout(go, 450); }; go(); };
+  document.getElementById('bfReset').onclick = reset;
+  document.getElementById('bfRand').onclick = () => { reset(); const a = Math.floor(Math.random()*N); let b; do { b = Math.floor(Math.random()*N); } while(b === a); rx[a] ^= 1; rx[b] ^= 1; msg = '무작위 오류 2개'; draw(); };
+  reset();
+})();
+
+/* 8-3 소프트 읽기 */
+J.sim('sim3', (v, box) => {
+  const m0 = -0.7, m1 = 0.7, s = v.s;
+  const Phi = x => 1 - (function(z){ const t = 1/(1+0.2316419*Math.abs(z)), d = 0.3989423*Math.exp(-z*z/2); const p = d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274)))); return z > 0 ? p : 1-p; })(x);
+  const refs = []; const h = (v.k-1)/2; for(let i=-h;i<=h;i++) refs.push(i*v.g);
+  const edges = [-Infinity, ...refs, Infinity];
+  const bins = [];
+  for(let i=0;i<edges.length-1;i++){
+    const a = edges[i], b = edges[i+1];
+    const p0 = Phi((b-m0)/s) - Phi((a-m0)/s), p1 = Phi((b-m1)/s) - Phi((a-m1)/s);
+    bins.push({a, b, p0, p1, llr: Math.log(Math.max(p0,1e-12)/Math.max(p1,1e-12))});
+  }
+  const MI = bs => bs.reduce((acc, q) => { const py = 0.5*(q.p0+q.p1); let t = 0; if(q.p0 > 1e-15) t += 0.5*q.p0*Math.log2(q.p0/py); if(q.p1 > 1e-15) t += 0.5*q.p1*Math.log2(q.p1/py); return acc + t; }, 0);
+  const hard = [{p0:Phi(-m0/s), p1:Phi(-m1/s)}, {p0:1-Phi(-m0/s), p1:1-Phi(-m1/s)}];
+  const mi = MI(bins), mh = MI(hard);
+  const g = (x, m) => Math.exp(-(x-m)*(x-m)/(2*s*s));
+  const a = [], b = []; for(let x=-2.2; x<=2.2; x+=0.01){ a.push([x, g(x,m0)]); b.push([x, g(x,m1)]); }
+  const r = J.plot(document.getElementById('cv3'), {x:[-2.2,2.2], y:[-0.45,1.1], xlab:'V_th (V)', ylab:'', yf:()=>'', series:[{pts:a, color:'--jade', w:2.5, fill:.2},{pts:b, color:'--plum', w:2.5, fill:.2}],
+    vlines: refs.map((x,i) => ({x, color: i === h ? '--red' : '--ink3', dash: i === h ? [] : [3,3]})), pad:{l:14}});
+  const ctx = r.ctx;
+  bins.forEach(q => { const xa = r.X(Math.max(-2.2, q.a)), xb = r.X(Math.min(2.2, q.b)), L = Math.max(-8, Math.min(8, q.llr));
+    ctx.fillStyle = J.c(L >= 0 ? '--jade' : '--plum'); ctx.globalAlpha = 0.15 + Math.min(0.8, Math.abs(L)/8); ctx.fillRect(xa+1, r.Y(-0.12), xb-xa-2, r.Y(-0.4)-r.Y(-0.12)); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='center'; ctx.textBaseline='middle'; if(xb-xa > 26) ctx.fillText((L>0?'+':'')+L.toFixed(1), (xa+xb)/2, r.Y(-0.26)); });
+  J.out(box,'ber', Phi(-m1/s).toExponential(2));
+  J.out(box,'mi', J.fmt(mi,4)+' 비트');
+  J.out(box,'gain', '+'+J.fmt((mi/mh - 1)*100,1)+' %', mi > mh*1.03 ? 'good' : '');
+  J.out(box,'lat', v.k*50+' µs', v.k > 3 ? 'warn' : 'good');
+});
+</script>
+</body>
+</html>

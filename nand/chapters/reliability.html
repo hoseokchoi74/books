@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>내구성·리텐션·간섭 · NAND 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%237b3a5d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E藏%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="reliability">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 07 <span class="hanja">第七章 · 耗</span></div>
+  <h1>내구성·리텐션·간섭</h1>
+  <p class="lead">NAND 셀은 쓸수록 닳고, 가만히 두어도 잊고, 읽기만 해도 흔들리고, 이웃이 쓰면 따라 움직인다. 이 장은 문턱 전압 분포를 흐트러뜨리는 네 가지 원인 — P/E 마모, 리텐션, 읽기 교란, 셀 간 간섭 — 을 하나씩 실험한다. 모두 결국 5장의 분포 겹침, 즉 오류율로 돌아온다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>P/E 사이클이 터널 산화막에 트랩을 만들어 분포를 넓히는 과정을 설명할 수 있다.</li>
+  <li>리텐션 손실의 온도 의존성을 아레니우스 관계로 계산하고, 가속 시험의 원리를 안다.</li>
+  <li>읽기 교란과 그 대응(읽기 횟수 기반 리프레시)을 이해한다.</li>
+  <li>셀 간 간섭의 원리와 다단계 프로그램 같은 완화 방법을 실험한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>P/E 사이클: 쓸수록 닳는다</h2>
+<p>프로그램과 소거 때마다 수 MV/cm의 전계 속에서 전자가 터널 산화막을 지나간다. 그 과정에서 산화막과 계면에 결함(트랩)이 조금씩 생긴다. 트랩은 전자를 붙잡았다 놓으며 문턱 전압을 흔들고(분포 확대), 누설 경로가 되어 리텐션을 나쁘게 하며, 소거를 점점 어렵게 만든다. 셀이 버틸 수 있는 프로그램/소거 횟수를 <span class="term">내구성(endurance)</span>이라 한다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-1</span><span class="ttl">P/E 사이클과 오류율</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">P/E 사이클 <output data-o="c"></output></span><input type="range" data-k="c" min="0" max="20000" step="100" value="1000" data-d="0" data-u="회"></label>
+      <label class="ctrl"><span class="lab">셀 방식</span><select data-k="t"><option value="1">SLC</option><option value="2">MLC</option><option value="3" selected>TLC</option><option value="4">QLC</option></select></label>
+      <label class="ctrl"><span class="lab">ECC 정정 한계 RBER <output data-o="ecc"></output></span><input type="range" data-k="ecc" min="-4" max="-1.5" step="0.1" value="-2" data-log="1" data-d="4"></label>
+    </div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv1a" data-h="280"></canvas></div><div class="canvas-box"><canvas id="cv1b" data-h="280"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">현재 분포 σ</span><span class="v" data-r="sg"></span></div>
+      <div class="ro"><span class="k">현재 RBER</span><span class="v" data-r="ber"></span></div>
+      <div class="ro"><span class="k">수명 (ECC 한계 도달)</span><span class="v" data-r="life"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽은 이웃한 두 상태의 분포가 사이클에 따라 넓어지는 모습, 오른쪽은 사이클에 따른 RBER(로그)와 ECC 한계(빨간 선)다. 곡선이 빨간 선을 넘는 지점이 수명이다. 같은 셀이라도 상태 간격이 좁은 QLC는 훨씬 일찍 한계에 닿는다. (교육용 경험식: σ = σ₀(1 + 0.6·(c/1000)^0.6), 비트가 많을수록 σ₀를 더 좁게 프로그램)</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>리텐션: 가만히 두어도 잊는다</h2>
+<p>프로그램된 셀의 전자는 아주 천천히 빠져나간다. 전하 트랩 셀에서는 트랩에서 열적으로 풀려나는 디트래핑, 채널 방향으로의 터널링, 그리고 질화막 안에서 옆 셀 쪽으로 퍼지는 측면 확산이 주 경로다. 전자가 많은(높은) 상태일수록 내부 전계가 강해 더 빨리 잃는다. 열적 과정이므로 온도에 지수적으로 민감하다. 이 성질을 이용해 고온에서 짧게 구워(bake) 수년의 보존을 흉내 내는 것이 <span class="term">가속 시험</span>이다.</p>
+<div class="eq">$$AF = \exp\!\left[\frac{E_a}{k_B}\left(\frac{1}{T_{use}} - \frac{1}{T_{bake}}\right)\right],\qquad E_a \approx 1.1\ \text{eV}$$
+<div class="note">예: 30 °C에서 1년 ≈ 85 °C에서 \(8760/AF\) 시간. JEDEC은 소비자용 SSD에 수명 끝에서 30 °C·1년, 데이터센터용에 40 °C·3개월의 전원 차단 보존을 요구한다.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-2</span><span class="ttl">전원을 끄고 서랍에 넣어 둔 SSD</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">보관 시간 (로그) <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="5" step="0.05" value="3" data-d="0"></label>
+      <label class="ctrl"><span class="lab">보관 온도 <output data-o="T"></output></span><input type="range" data-k="T" min="20" max="90" step="1" value="30" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">이미 겪은 P/E <output data-o="c"></output></span><input type="range" data-k="c" min="0" max="3000" step="100" value="1000" data-d="0" data-u="회"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">보관 시간</span><span class="v" data-r="time"></span></div>
+      <div class="ro"><span class="k">최상위 상태 이동</span><span class="v" data-r="shift"></span></div>
+      <div class="ro"><span class="k">RBER (출고 기준 전압)</span><span class="v" data-r="ber"></span></div>
+      <div class="ro"><span class="k">85 °C 굽기로 환산</span><span class="v" data-r="bake"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> TLC의 8개 분포. 높은 상태(오른쪽)일수록 많이 왼쪽으로 내려온다. 점선은 출고 시의 읽기 기준 전압. 보관 온도를 60 °C 이상(여름 차 안)으로 올리고 시간을 늘려 보자. 그래서 수명 끝에 다다른 SSD를 뜨거운 곳에 전원 없이 오래 두면 위험하다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>읽기 교란: 읽기만 해도</h2>
+<p>4장에서 봤듯, 페이지를 읽을 때 같은 블록의 다른 워드라인에는 V<sub>pass</sub>(6–7 V)가 걸린다. 약한 프로그램 조건이다. 한 번은 무해하지만 같은 블록을 수만~수십만 번 읽으면 소거 상태 셀의 문턱이 조금씩 올라간다(<span class="term">읽기 교란</span>). 자주 읽히는 데이터(인덱스, 모델 가중치 등)가 있는 블록이 위험하다. 컨트롤러는 블록별 읽기 횟수를 세다가 기준을 넘으면 데이터를 새 블록으로 옮겨 쓴다(read reclaim).</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-3</span><span class="ttl">같은 블록을 계속 읽으면</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">블록 읽기 횟수 (로그) <output data-o="n"></output></span><input type="range" data-k="n" min="0" max="7" step="0.05" value="4" data-d="0"></label>
+      <label class="ctrl"><span class="lab">V_pass <output data-o="vp"></output></span><input type="range" data-k="vp" min="5" max="8" step="0.1" value="6.5" data-d="1" data-u="V"></label>
+      <label class="ctrl"><span class="lab">리클레임 기준 <output data-o="rc"></output></span><input type="range" data-k="rc" min="3" max="6.5" step="0.1" value="5" data-d="0"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="260"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">읽기 횟수</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">소거 상태 꼬리 이동</span><span class="v" data-r="sh"></span></div>
+      <div class="ro"><span class="k">E↔P1 오류율</span><span class="v" data-r="ber"></span></div>
+      <div class="ro"><span class="k">컨트롤러 판단</span><span class="v" data-r="act" style="font-size:14px;font-family:var(--sans)"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모델.</b> 소거 상태의 위쪽 꼬리가 log(읽기 횟수)에 비례해 오르고, V_pass가 0.5 V 오를 때마다 교란이 약 3배 강해진다고 가정했다. 리클레임 기준(로그 단위)보다 많이 읽히면 컨트롤러가 블록을 옮겨 쓴다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>셀 간 간섭: 이웃이 쓰면 나도 움직인다</h2>
+<p>셀이 촘촘해지면 이웃 셀의 저장 전하가 내 채널에도 전계를 미친다(정전 결합). 내가 먼저 정확히 프로그램된 뒤 이웃이 높은 상태로 프로그램되면, 나의 문턱 전압도 그 변화량의 몇 %만큼 따라 오른다. 이 <span class="term">셀 간 간섭(cell-to-cell interference)</span>은 이웃의 데이터에 따라 달라지므로 분포를 넓힌다. 대응책은 프로그램 순서다. 모든 셀을 먼저 대략(foggy) 올려 두고 나중에 정밀(fine)하게 마무리하면, 마무리 이후 이웃의 변화량이 작아 간섭이 줄어든다.</p>
+<div class="eq">$$\Delta V_{th,victim} = \sum_{i\,\in\,\text{이웃}} \gamma_i\,\Delta V_{th,i}^{\text{(내 마무리 이후)}}$$</div>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-4</span><span class="ttl">간섭과 프로그램 순서</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">결합 계수 γ (이웃 하나) <output data-o="g"></output></span><input type="range" data-k="g" min="0" max="0.15" step="0.005" value="0.06" data-d="3"></label>
+      <label class="ctrl"><span class="lab">프로그램 방식</span><select data-k="m"><option value="one">한 번에 (one-shot 순차)</option><option value="ff">2단계 (foggy → fine)</option></select></label>
+    </div>
+    <div class="fig-row"><div class="canvas-box"><svg id="ciSvg" viewBox="0 0 300 260" style="display:block;width:100%"></svg></div><div class="canvas-box"><canvas id="cv4" data-h="260"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">이웃 변화량 (마무리 이후)</span><span class="v" data-r="dv"></span></div>
+      <div class="ro"><span class="k">피해 셀 분포 폭 증가</span><span class="v" data-r="w"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 가운데 피해 셀과 위·아래 워드라인의 이웃 셀. 오른쪽: 이웃 데이터가 무작위일 때 피해 셀 상태 하나의 분포(회색 = 간섭 전, 보라 = 간섭 후). 2단계 프로그램으로 바꾸면 이웃이 마무리 단계에서만 조금 움직여 분포가 다시 좁아진다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">P/E 사이클이 쌓이면 일어나는 주된 변화는?</p><ol><li>셀이 커진다</li><li>상태 수가 늘어난다</li><li>터널 산화막에 트랩이 생겨 분포가 넓어지고 오류율이 오른다</li><li>읽기가 빨라진다</li></ol>
+<p class="explain">트랩 생성이 분포 확대·리텐션 악화·소거 어려움을 만든다.</p></div>
+<div class="quiz" data-a="0"><p class="q">고온 굽기 시험이 수년의 보존을 흉내 낼 수 있는 이유는?</p><ol><li>전하 손실이 열 활성 과정이라 온도를 올리면 지수적으로 빨라지기 때문에</li><li>고온에서 셀이 커지기 때문에</li><li>ECC가 꺼지기 때문에</li><li>전압이 높아지기 때문에</li></ol>
+<p class="explain">아레니우스 가속 계수 AF만큼 시간이 압축된다.</p></div>
+<div class="quiz" data-a="3"><p class="q">읽기 교란이 주로 올리는 것은?</p><ol><li>가장 높은 상태의 문턱</li><li>블록 크기</li><li>소거 전압</li><li>소거 상태(낮은 상태) 셀의 문턱</li></ol>
+<p class="explain">V_pass가 약한 프로그램 역할을 해 낮은 상태 셀이 위로 끌려 올라간다.</p></div>
+<div class="quiz" data-a="1"><p class="q">foggy–fine 2단계 프로그램이 간섭을 줄이는 이유는?</p><ol><li>γ를 0으로 만들어서</li><li>피해 셀 마무리 이후 이웃의 문턱 변화량을 작게 만들어서</li><li>프로그램 전압을 없애서</li><li>셀당 비트를 줄여서</li></ol>
+<p class="explain">간섭은 내가 확정된 이후 이웃이 얼마나 움직였는지에 비례한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+function Qf(x){ const t = 1/(1+0.2316419*Math.abs(x)), d = 0.3989423*Math.exp(-x*x/2); const p = d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274)))); return x > 0 ? p : 1-p; }
+const kB = 8.617e-5;
+const gauss = (x, m, s) => Math.exp(-(x-m)*(x-m)/(2*s*s));
+
+/* 7-1 */
+J.sim('sim1', (v, box) => {
+  const n = +v.t, L = Math.pow(2,n), d = 6.5/(L-1), s0 = [0.12, 0.1, 0.09, 0.06][n-1];
+  const sg = c => s0*(1 + 0.6*Math.pow(c/1000, 0.6));
+  const ber = c => Math.max(1e-12, 2*(L-1)/L/n*Qf(d/(2*sg(c))));
+  const s = sg(v.c);
+  const a = [], b = [];
+  for(let x=-1; x<=d+1; x+=0.01){ a.push([x, gauss(x,0,s)]); b.push([x, gauss(x,d,s)]); }
+  J.plot(document.getElementById('cv1a'), {x:[-1, d+1], y:[0,1.1], xlab:'V_th (이웃 두 상태)', ylab:'', yf:()=>'', series:[{pts:a, color:'--jade', w:2.5, fill:.2},{pts:b, color:'--plum', w:2.5, fill:.2}], vlines:[{x:d/2, color:'--ink3', dash:[3,3]}], pad:{l:14}});
+  const cur = []; for(let c=0; c<=20000; c+=100) cur.push([Math.max(c,1), ber(c)]);
+  let life = null; for(let c=0; c<=100000; c+=50){ if(ber(c) > v.ecc){ life = c; break; } }
+  J.plot(document.getElementById('cv1b'), {x:[1,20000], y:[1e-12, 1], logy:true, xlab:'P/E 사이클', ylab:'RBER (로그)', yf:t=>'1e'+Math.round(Math.log10(t)), series:[{pts:cur, color:'--plum', w:2.5}],
+    hlines:[{y:v.ecc, color:'--red', label:'ECC 한계'}], points:[{x:Math.max(1,v.c), y:ber(v.c), color:'--red', r:6}], vlines: life !== null && life <= 20000 ? [{x:life, color:'--red', label:'수명 '+life.toLocaleString()+'회', dash:[2,3]}] : [], pad:{l:52}});
+  J.out(box,'sg', J.fmt(s*1000,0)+' mV');
+  J.out(box,'ber', ber(v.c).toExponential(2), ber(v.c) > v.ecc ? 'bad' : ber(v.c) > v.ecc/10 ? 'warn' : 'good');
+  J.out(box,'life', life === null ? '10만 회 이상' : life.toLocaleString('ko-KR')+' 회');
+});
+
+/* 7-2 */
+J.sim('sim2', (v, box) => {
+  const hours = Math.pow(10, v.t);
+  const af = Math.exp(1.1/kB*(1/(30+273.15) - 1/(v.T+273.15))); // 30 °C 대비 가속
+  const teff = hours*af; // 30°C 등가 시간
+  const k = 0.004*(1 + v.c/1000);
+  const L = 8, d = 6.5/7, s0 = 0.09*(1 + 0.6*Math.pow(v.c/1000,0.6));
+  const shiftOf = i => -k*i*Math.log10(1 + teff);
+  const series = [];
+  const cols = ['--ink3','--jade','--indigo','--gold','--plum','--red','--jade','--indigo'];
+  for(let i=0;i<L;i++){ const m = -2.5 + i*d + (i ? shiftOf(i) : 0), s = i ? s0*(1 + 0.1*Math.log10(1+teff)) : s0*2; const pp = []; for(let x=-5; x<=5; x+=0.02) pp.push([x, gauss(x,m,s)/(i?1:2)]); series.push({pts:pp, color:cols[i], w:2, fill:.2}); }
+  const refs = []; for(let i=0;i<L-1;i++) refs.push({x:-2.5 + (i+.5)*d + (i===0 ? 0.1 : 0), color:'--ink3', dash:[3,3]});
+  J.plot(document.getElementById('cv2'), {x:[-5,5], y:[0,1.1], xlab:'V_th (V)', ylab:'', yf:()=>'', series, vlines:refs, pad:{l:14}});
+  // RBER: 각 상태가 아래 기준선을 넘는 확률
+  let err = 0; for(let i=1;i<L;i++){ const m = -2.5 + i*d + shiftOf(i), s = s0*(1 + 0.1*Math.log10(1+teff)), ref = -2.5 + (i-.5)*d; err += 1 - Qf((ref - m)/s) ; }
+  const ber = Math.max(1e-12, err/L/3);
+  const fmtH = h => h < 48 ? J.fmt(h,1)+' 시간' : h < 24*365 ? J.fmt(h/24,0)+' 일' : J.fmt(h/24/365,1)+' 년';
+  J.out(box,'time', fmtH(hours));
+  J.out(box,'shift', J.fmt(shiftOf(7)*1000,0)+' mV');
+  J.out(box,'ber', ber.toExponential(2), ber > 1e-2 ? 'bad' : ber > 1e-3 ? 'warn' : 'good');
+  const af85 = Math.exp(1.1/kB*(1/(v.T+273.15) - 1/(85+273.15)));
+  J.out(box,'bake', fmtH(hours/af85));
+  const o = J.$('[data-o="t"]', box); o.textContent = fmtH(hours);
+});
+
+/* 7-3 */
+J.sim('sim3', (v, box) => {
+  const n = Math.pow(10, v.n), str = Math.pow(3, (v.vp - 6.5)/0.5);
+  const sh = 0.09*Math.log10(1 + n*str/100);
+  const mE = -2.2, sE = 0.3, mP = 0.3, sP = 0.12;
+  const a = [], b = [], c = [];
+  for(let x=-4; x<=2; x+=0.01){ a.push([x, gauss(x, mE, sE)*0.6]); b.push([x, gauss(x, mE + sh*0.5, sE*(1 + sh*0.8))*0.6]); c.push([x, gauss(x, mP, sP)]); }
+  const ref = -0.45;
+  const ber = Math.max(1e-12, Qf((ref - (mE + sh*0.5))/(sE*(1 + sh*0.8))));
+  J.plot(document.getElementById('cv3'), {x:[-4,2], y:[0,1.1], xlab:'V_th (V)', ylab:'', yf:()=>'', series:[{pts:a, color:'--ink3', w:1.5, dash:[4,3]},{pts:b, color:'--indigo', w:2.5, fill:.25},{pts:c, color:'--jade', w:2.5, fill:.2}], vlines:[{x:ref, color:'--red', label:'E/P1 기준'}], pad:{l:14}});
+  J.out(box,'n', Math.round(n).toLocaleString('ko-KR'));
+  J.$('[data-o="n"]', box).textContent = Math.round(n).toLocaleString('ko-KR')+' 회';
+  J.$('[data-o="rc"]', box).textContent = Math.round(Math.pow(10, v.rc)).toLocaleString('ko-KR')+' 회';
+  J.out(box,'sh', '+'+J.fmt(sh*500,0)+' mV');
+  J.out(box,'ber', ber.toExponential(2), ber > 1e-3 ? 'bad' : ber > 1e-4 ? 'warn' : 'good');
+  J.out(box,'act', v.n >= v.rc ? '리클레임: 새 블록으로 옮겨 쓰기' : '계속 사용', v.n >= v.rc ? 'warn' : 'good');
+});
+
+/* 7-4 */
+J.sim('sim4', (v, box) => {
+  const ff = v.m === 'ff';
+  const dvN = ff ? 0.6 : 3.0; // 마무리 이후 이웃의 평균 최대 변화량
+  const R = J.rng(4), N = 4000, s0 = 0.1;
+  const before = [], after = [];
+  for(let i=0;i<N;i++){ const base = J.gauss(R)*s0; before.push(base); const n1 = R()*dvN, n2 = R()*dvN; after.push(base + v.g*(n1 + n2)); }
+  const hist = arr => { const h = new Array(80).fill(0); arr.forEach(x => { const b = Math.floor((x + 0.5)/1.5*80); if(b>=0&&b<80) h[b]++; }); return h.map((c,i) => [-0.5 + (i+.5)*1.5/80, c]); };
+  J.plot(document.getElementById('cv4'), {x:[-0.5,1], y:[0, 260], xlab:'V_th 이동 (V)', ylab:'셀 수', series:[{pts:hist(before), color:'--ink3', w:1.5, fill:.15, step:true},{pts:hist(after), color:'--plum', w:2.5, fill:.3, step:true}], pad:{l:40}});
+  const std = a => { const m = a.reduce((x,y)=>x+y,0)/a.length; return Math.sqrt(a.reduce((x,y)=>x+(y-m)*(y-m),0)/a.length); };
+  J.out(box,'dv', '최대 '+J.fmt(dvN,1)+' V');
+  const inc = (std(after)/std(before) - 1)*100;
+  J.out(box,'w', '+'+J.fmt(inc,0)+' %', inc > 50 ? 'bad' : inc > 15 ? 'warn' : 'good');
+  const s = document.getElementById('ciSvg'); s.innerHTML = '';
+  [[0,'WL n+1 (나중에 프로그램)'],[1,'WL n (피해 셀)'],[2,'WL n−1']].forEach(([i,lab]) => {
+    const y = 30 + i*80;
+    J.svg('rect', {x:100, y, width:90, height:50, rx:6, fill: i===1 ? 'var(--plum-soft)' : 'var(--card)', stroke: i===1 ? 'var(--plum)' : 'var(--ink3)', 'stroke-width':2}, s);
+    J.svg('text', {x:10, y:y+30, class:'t-s', text:lab}, s);
+    if(i !== 1){ J.svg('text', {x:145, y:y+31, 'text-anchor':'middle', class:'t-s mono', text:'ΔV ≤ '+dvN+' V'}, s); J.svg('path', {d:`M145 ${i===0 ? y+52 : y-2} L145 ${i===0 ? y+76 : y-26}`, stroke:'var(--red)', 'stroke-width':2, 'marker-end':'url(#ci)'}, s); }
+    else J.svg('text', {x:145, y:y+31, 'text-anchor':'middle', class:'t-s', text:'γ = '+v.g}, s);
+  });
+  J.svg('defs', {}, s).innerHTML = '<marker id="ci" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--red)"/></marker>';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NAND 스트링과 어레이 · NAND 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%237b3a5d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E藏%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="string">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 04 <span class="hanja">第四章 · 串</span></div>
+  <h1>NAND 스트링과 어레이</h1>
+  <p class="lead">NAND라는 이름은 논리 게이트에서 왔다. 직렬로 연결된 트랜지스터들은 모두 켜져야만 전류가 흐른다 — NOT-AND. 이 장에서는 그 직렬 스트링에서 셀 하나만 골라 읽는 법, 페이지와 블록이 어떻게 짜여 있는지, 그리고 같은 워드라인의 이웃 셀은 건드리지 않고 원하는 셀만 프로그램하는 "셀프 부스팅"의 묘기를 살펴본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>NAND 스트링의 구성(SSL·셀·GSL·비트라인·공통 소스)을 그릴 수 있다.</li>
+  <li>선택 셀에 V<sub>read</sub>, 나머지에 V<sub>pass</sub>를 거는 읽기 방식과 그 한계를 실험한다.</li>
+  <li>플레인·블록·페이지·스트링의 계층과 대표적인 크기를 안다.</li>
+  <li>프로그램 금지(셀프 부스팅)의 원리와 V<sub>pass</sub> 창(window)을 설명할 수 있다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>줄줄이 꿴 트랜지스터</h2>
+<p>하나의 <span class="term">스트링</span>은 위쪽 <span class="term">스트링 선택 트랜지스터(SSL)</span>, 그 아래로 직렬 연결된 셀 수십~수백 개, 맨 아래 <span class="term">접지 선택 트랜지스터(GSL)</span>로 이뤄진다. SSL 위는 비트라인(BL)에, GSL 아래는 공통 소스 라인(CSL)에 연결된다. 셀들의 게이트는 가로로 지나가는 워드라인(WL)에 연결되어, 같은 높이의 셀들은 같은 워드라인을 공유한다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-1</span><span class="ttl">스트링에서 셀 하나 읽기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">선택 워드라인 <output data-o="wl"></output></span><input type="range" data-k="wl" min="0" max="7" step="1" value="3" data-raw></label>
+      <label class="ctrl"><span class="lab">V_read (선택 셀) <output data-o="vr"></output></span><input type="range" data-k="vr" min="-1" max="5" step="0.1" value="0.5" data-d="1" data-u="V"></label>
+      <label class="ctrl"><span class="lab">V_pass (나머지 셀) <output data-o="vp"></output></span><input type="range" data-k="vp" min="2" max="9" step="0.1" value="6" data-d="1" data-u="V"></label>
+    </div>
+    <div class="fig-row" style="align-items:stretch"><div class="canvas-box"><svg id="strSvg" viewBox="0 0 320 420" style="display:block;width:100%"></svg></div>
+      <div class="canvas-box" style="padding:12px;font-size:14px" id="strTxt"></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">스트링 전류</span><span class="v" data-r="i"></span></div>
+      <div class="ro"><span class="k">읽힌 값</span><span class="v" data-r="bit"></span></div>
+      <div class="ro"><span class="k">실제 저장 값</span><span class="v" data-r="truth"></span></div>
+      <div class="ro"><span class="k">읽기 교란 위험 (V_pass)</span><span class="v" data-r="dist"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>사용법.</b> 셀을 누르면 상태가 E(소거, −2 V) → P1(1 V) → P2(2.5 V) → P3(4.5 V)로 바뀐다. 선택 셀은 V_read보다 V_th가 낮으면 켜진다. 나머지 셀은 V_pass로 무조건 켜져야 한다. V_pass를 4 V로 낮추고 다른 셀 하나를 P3로 만들어 보자. 그 셀이 길을 막아 선택 셀이 소거 상태여도 "0"으로 잘못 읽힌다. 반대로 V_pass를 너무 높이면 읽을 때마다 나머지 셀에 약한 프로그램이 걸린다(읽기 교란, 7장).</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>플레인, 블록, 페이지</h2>
+<p>NAND 다이는 2–6개의 <span class="term">플레인(plane)</span>으로 나뉜다. 플레인마다 독립된 페이지 버퍼(감지 회로)를 가져 동시에 다른 동작을 할 수 있다. 플레인 안에는 수천 개의 <span class="term">블록</span>이 있고, 블록은 같은 워드라인 묶음과 같은 웰을 공유하는 스트링들의 집합이다. 워드라인 하나에 매달린 셀 전체가 <span class="term">물리 페이지</span>이고, TLC라면 그 물리 페이지가 논리 페이지 3개(LSB·CSB·MSB)를 담는다(5장). 페이지 크기는 16 KB 남짓(+ ECC용 여분 영역)이다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-2</span><span class="ttl">다이에서 셀까지 줌인</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="zoomBtns"><button class="sbtn on" data-z="0">① 다이</button><button class="sbtn" data-z="1">② 플레인</button><button class="sbtn" data-z="2">③ 블록</button><button class="sbtn" data-z="3">④ 페이지와 스트링</button></div>
+    <div class="canvas-box"><svg id="zoomSvg" viewBox="0 0 720 360" style="display:block;width:100%"></svg></div>
+    <p class="hint" id="zoomTxt" style="margin:8px 2px 0"></p>
+  </div>
+  <p class="cap"><b>그림 설명.</b> 빨간 상자가 다음 단계에서 확대되는 부분이다. 숫자는 1 Tb TLC 다이를 가정한 대략값.</p>
+</div>
+
+<div class="sim" id="sim2b">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-3</span><span class="ttl">다이 구성 계산기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">플레인 수 <output data-o="pl"></output></span><input type="range" data-k="pl" min="1" max="6" step="1" value="4" data-d="0"></label>
+      <label class="ctrl"><span class="lab">플레인당 블록 <output data-o="bk"></output></span><input type="range" data-k="bk" min="500" max="4000" step="100" value="1400" data-d="0"></label>
+      <label class="ctrl"><span class="lab">블록당 워드라인 (층 × 스트링 묶음) <output data-o="wl"></output></span><input type="range" data-k="wl" min="64" max="2000" step="8" value="1200" data-d="0"></label>
+      <label class="ctrl"><span class="lab">페이지 크기 <output data-o="pg"></output></span><input type="range" data-k="pg" min="4" max="32" step="4" value="16" data-d="0" data-u="KB"></label>
+      <label class="ctrl"><span class="lab">셀당 비트 <output data-o="b"></output></span><input type="range" data-k="b" min="1" max="4" step="1" value="3" data-d="0"></label>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">블록 크기</span><span class="v" data-r="blk"></span></div>
+      <div class="ro"><span class="k">다이 용량</span><span class="v" data-r="die"></span></div>
+      <div class="ro"><span class="k">한 번에 지워지는 양 / 페이지 대비</span><span class="v" data-r="ratio"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>생각해 볼 것.</b> 3D NAND는 층이 늘수록 블록이 커진다. 블록이 수십 MB가 되면 "작은 데이터 하나를 고치려고 거대한 블록을 비워야 하는" 일이 잦아져 가비지 컬렉션 비용(9장)이 커진다. 그래서 블록을 쪼개 지우는 부분 블록 소거 같은 기능이 등장했다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>셀프 부스팅: 이웃을 건드리지 않고 쓰기</h2>
+<p>프로그램할 때 선택 워드라인에는 20 V 가까운 V<sub>pgm</sub>이 걸린다. 그런데 이 워드라인은 같은 페이지의 모든 셀이 공유한다. "1"(소거 상태 유지)로 남겨야 할 셀까지 프로그램되면 안 된다. 해결책은 그 셀의 채널 전압을 끌어올려 터널 산화막에 걸리는 전계를 줄이는 것이다. 금지할 스트링의 비트라인을 V<sub>CC</sub>로 두면 SSL이 곧 꺼져 채널이 전기적으로 떠 버린다. 이 상태에서 워드라인들이 V<sub>pass</sub>, V<sub>pgm</sub>으로 올라가면 정전 결합으로 떠 있는 채널 전압도 따라 올라간다(<span class="term">셀프 부스팅</span>).</p>
+<div class="eq">$$V_{ch} \approx V_{pre} + r_{boost}\,\frac{(N-1)V_{pass} + V_{pgm}}{N},\qquad E_{inhibit} \propto \alpha V_{pgm} - V_{ch}$$
+<div class="note">\(r_{boost}\): 채널 부스팅 효율(약 0.5–0.8). V<sub>pass</sub>가 낮으면 채널이 덜 올라가 금지 셀이 조금씩 프로그램되고(프로그램 교란), 너무 높으면 프로그램할 스트링(채널 0 V)의 비선택 셀에 V<sub>pass</sub>가 그대로 걸려 약하게 프로그램된다(패스 교란). 그 사이의 창을 찾아야 한다.</div></div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-4</span><span class="ttl">V_pass 창 찾기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">V_pass <output data-o="vp"></output></span><input type="range" data-k="vp" min="5" max="14" step="0.1" value="9" data-d="1" data-u="V"></label>
+      <label class="ctrl"><span class="lab">V_pgm <output data-o="vg"></output></span><input type="range" data-k="vg" min="15" max="24" step="0.5" value="20" data-d="1" data-u="V"></label>
+      <label class="ctrl"><span class="lab">부스팅 효율 <output data-o="r"></output></span><input type="range" data-k="r" min="0.3" max="0.9" step="0.01" value="0.65" data-d="2"></label>
+    </div>
+    <div class="fig-row"><div class="canvas-box"><svg id="boostSvg" viewBox="0 0 330 300" style="display:block;width:100%"></svg></div><div class="canvas-box"><canvas id="cv3" data-h="300"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">금지 스트링 채널 V_ch</span><span class="v" data-r="vch"></span></div>
+      <div class="ro"><span class="k">프로그램 교란 (금지 셀)</span><span class="v" data-r="pd"></span></div>
+      <div class="ro"><span class="k">패스 교란 (비선택 셀)</span><span class="v" data-r="ps"></span></div>
+      <div class="ro"><span class="k">판정</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 프로그램할 스트링(BL 0 V, 채널 0 V)과 금지 스트링(BL V_CC, 채널 부스팅)의 비교. 오른쪽: V_pass에 따른 두 교란의 상대 크기(로그). 두 곡선 합이 가장 낮은 골짜기가 V_pass 창이다. 부스팅 효율이 떨어지면 창이 좁아진다 — 셀이 작아지고 층이 늘면서 겪는 문제다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">스트링에서 선택 셀을 읽을 때 비선택 셀에 거는 전압은?</p><ol><li>0 V</li><li>V_read</li><li>모든 상태보다 높은 V_pass</li><li>V_pgm</li></ol>
+<p class="explain">비선택 셀은 저장 상태와 무관하게 켜져 길을 열어 줘야 한다.</p></div>
+<div class="quiz" data-a="0"><p class="q">셀프 부스팅에서 금지 스트링의 비트라인 전압은?</p><ol><li>V_CC (SSL을 꺼서 채널을 띄우기 위해)</li><li>0 V</li><li>V_pgm</li><li>음전압</li></ol>
+<p class="explain">BL = V_CC면 채널이 일정 전압까지 충전된 후 SSL이 꺼져 떠 있는 상태가 된다.</p></div>
+<div class="quiz" data-a="3"><p class="q">V_pass가 너무 높을 때 생기는 문제는?</p><ol><li>금지 셀이 프로그램된다</li><li>소거가 안 된다</li><li>페이지 크기가 줄어든다</li><li>프로그램할 스트링의 비선택 셀이 약하게 프로그램된다(패스 교란)</li></ol>
+<p class="explain">채널 0 V인 스트링의 비선택 셀에는 V_pass가 그대로 걸린다.</p></div>
+<div class="quiz" data-a="1"><p class="q">TLC에서 물리 페이지(워드라인 하나) 하나에 담기는 논리 페이지 수는?</p><ol><li>1</li><li>3</li><li>8</li><li>16</li></ol>
+<p class="explain">셀당 3비트 → LSB, CSB, MSB 세 페이지.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 4-1 스트링 읽기 */
+(function(){
+  const box = document.getElementById('sim1'), svg = document.getElementById('strSvg');
+  const ST = [-2, 1, 2.5, 4.5], NM = ['E','P1','P2','P3'];
+  let st = [0,2,0,0,1,3,0,2];
+  const s = J.sim('sim1', v => {
+    svg.innerHTML = '';
+    const x = 150, y0 = 40, dy = 40;
+    J.svg('line', {x1:x, y1:10, x2:x, y2:y0, stroke:'var(--indigo)', 'stroke-width':5}, svg); J.svg('text', {x:x+10, y:22, class:'t-s', text:'BL (프리차지 → 감지)'}, svg);
+    const on = st.map((k,i) => i === v.wl ? v.vr > ST[k] : v.vp > ST[k] + 0.5);
+    const cond = on.every(Boolean);
+    const box1 = (yy, lab, col, txt) => { J.svg('rect', {x:x-28, y:yy, width:56, height:28, rx:4, fill:col, stroke:'var(--ink3)'}, svg); J.svg('text', {x:x, y:yy+18, 'text-anchor':'middle', class:'t-s', text:lab, style:'font-weight:700'}, svg); if(txt) J.svg('text', {x:x+40, y:yy+18, class:'t-s', text:txt}, svg); };
+    box1(y0, 'SSL', 'var(--jade-soft)', 'ON');
+    for(let i=0;i<8;i++){
+      const yy = y0 + 34 + i*dy, sel = i === v.wl;
+      const g = J.svg('g', {style:'cursor:pointer'}, svg);
+      J.svg('line', {x1:20, y1:yy+14, x2:x-28, y2:yy+14, stroke: sel ? 'var(--red)' : 'var(--gold)', 'stroke-width': sel ? 3 : 2}, g);
+      J.svg('text', {x:20, y:yy+8, class:'t-s', text:`WL${i} ${sel ? 'V_read '+v.vr : 'V_pass'}`, style:`fill:${sel ? 'var(--red)' : 'var(--ink3)'}`}, g);
+      J.svg('rect', {x:x-28, y:yy, width:56, height:28, rx:4, fill: on[i] ? 'var(--jade-soft)' : 'var(--red-soft)', stroke: sel ? 'var(--red)' : 'var(--ink3)', 'stroke-width': sel ? 3 : 1}, g);
+      J.svg('rect', {x:x-20, y:yy+4, width:40*(st[i]/3)+2, height:6, fill:'var(--plum)'}, g);
+      J.svg('text', {x:x, y:yy+23, 'text-anchor':'middle', class:'t-s', text:NM[st[i]]}, g);
+      J.svg('text', {x:x+36, y:yy+18, class:'t-s mono', text:'V_th '+ST[st[i]]+' · '+(on[i] ? 'ON' : 'OFF'), style:`fill:${on[i] ? 'var(--jade)' : 'var(--red)'}`}, g);
+      g.addEventListener('click', () => { st[i] = (st[i]+1)%4; s.run(); });
+    }
+    box1(y0 + 34 + 8*dy, 'GSL', 'var(--jade-soft)', 'ON');
+    J.svg('line', {x1:x, y1:y0+34+8*dy+28, x2:x, y2:y0+34+8*dy+50, stroke:'var(--ink)', 'stroke-width':3}, svg);
+    J.svg('text', {x:x+10, y:y0+34+8*dy+46, class:'t-s', text:'CSL (0 V)'}, svg);
+    if(cond) J.svg('line', {x1:x-34, y1:y0, x2:x-34, y2:y0+34+8*dy+28, stroke:'var(--jade)', 'stroke-width':4, 'stroke-dasharray':'6 4'}, svg);
+    const truth = v.vr > ST[st[v.wl]] ? 1 : 0;
+    const blockers = on.map((o,i) => (!o && i !== v.wl) ? i : -1).filter(i => i >= 0);
+    J.out(box,'i', cond ? '흐름 (~100 nA)' : '거의 0', cond ? 'good' : '');
+    J.out(box,'bit', cond ? '"1" (켜짐)' : '"0" (꺼짐)');
+    J.out(box,'truth', `WL${v.wl}: ${NM[st[v.wl]]} → 기대 "${truth}"`, (cond ? 1 : 0) === truth ? 'good' : 'bad');
+    J.out(box,'dist', v.vp > 7.5 ? '높음' : v.vp > 6 ? '보통' : '낮음', v.vp > 7.5 ? 'bad' : v.vp > 6 ? 'warn' : 'good');
+    document.getElementById('strTxt').innerHTML = `<b style="font-family:var(--serif)">읽기 순서</b><ol style="margin:6px 0 0;padding-left:18px">
+      <li>비트라인을 약 0.5 V로 프리차지한다.</li><li>SSL·GSL과 비선택 WL을 켜고(V_pass), 선택 WL에 V_read를 건다.</li>
+      <li>선택 셀이 켜지면 스트링 전체가 도통해 비트라인 전하가 빠진다.</li><li>정해진 시간 뒤 페이지 버퍼가 비트라인 전압을 감지해 0/1을 판정한다.</li></ol>
+      <p style="margin:10px 0 0">${blockers.length ? `<b style="color:var(--red)">⚠ WL${blockers.join(', WL')}의 셀이 V_pass로도 켜지지 않아 스트링을 막고 있다.</b>` : '모든 비선택 셀이 켜져 있다. 판정은 선택 셀만으로 결정된다.'}</p>`;
+  });
+})();
+
+/* 4-2 줌 */
+(function(){
+  const svg = document.getElementById('zoomSvg'), txt = document.getElementById('zoomTxt');
+  const T = ['다이 하나: 셀 어레이가 4개 플레인으로 나뉘어 있고, 그 아래(3D에서는 어레이 밑에) 페이지 버퍼·디코더·전압 펌프 같은 주변 회로가 있다.',
+    '플레인 하나: 블록 약 1,400개가 세로로 늘어서 있다. 페이지 버퍼가 플레인의 비트라인 수만 개를 한꺼번에 감지한다.',
+    '블록 하나: 워드라인 층들 × 스트링 묶음. 가로 줄(워드라인) 하나가 물리 페이지다. 블록 전체가 함께 지워진다.',
+    '페이지와 스트링: 세로 스트링들이 비트라인마다 늘어서고, 같은 높이의 셀들이 워드라인을 공유한다. 빨간 줄 = 한 페이지.'];
+  function draw(z){
+    svg.innerHTML = ''; txt.textContent = T[z];
+    const R = (x,y,w,h,f,o={}) => J.svg('rect', Object.assign({x,y,width:w,height:h,fill:f,stroke:'var(--card)'},o), svg);
+    const Tx = (x,y,t,st='') => J.svg('text', {x,y,class:'t-s',text:t,style:st}, svg);
+    if(z === 0){ R(60,20,600,320,'var(--paper2)',{stroke:'var(--ink3)','stroke-width':2});
+      for(let p=0;p<4;p++) R(80+p*145, 40, 130, 230, 'var(--plum)', {opacity:.7});
+      R(80, 280, 565, 46, 'var(--gold)', {opacity:.6}); Tx(90, 306, '주변 회로 · 페이지 버퍼 · 패드', 'fill:var(--ink)');
+      R(80, 40, 130, 230, 'none', {stroke:'var(--red)','stroke-width':3}); Tx(90, 34, '플레인 0');
+    } else if(z === 1){ for(let b=0;b<14;b++) R(120, 20+b*21, 480, 18, b===5 ? 'var(--plum)' : 'var(--plum-soft)', {stroke:'var(--line)'});
+      R(120, 318, 480, 26, 'var(--indigo)', {opacity:.55}); Tx(130, 336, '페이지 버퍼 (비트라인 약 13만 개)', 'fill:#fff');
+      R(80, 20, 34, 294, 'var(--gold)', {opacity:.6}); Tx(84, 14, '행 디코더');
+      R(120, 125, 480, 18, 'none', {stroke:'var(--red)','stroke-width':3}); Tx(610, 140, '블록 #5');
+    } else if(z === 2){ for(let w=0;w<12;w++) R(100, 20+w*24, 520, 20, w===6 ? 'var(--red)' : 'var(--plum-soft)', {stroke:'var(--line)', opacity: w===6 ? .6 : 1});
+      Tx(630, 170, '← 워드라인 = 물리 페이지'); Tx(100, 320, '블록 = 워드라인 수백~천여 개 × 페이지 16 KB × 셀당 비트 → 수십 MB');
+      R(100, 20, 120, 284, 'none', {stroke:'var(--red)','stroke-width':3});
+    } else { const n = 12;
+      for(let s=0;s<n;s++){ const x = 80 + s*50; J.svg('line', {x1:x, y1:20, x2:x, y2:320, stroke:'var(--indigo)', 'stroke-width':3}, svg); }
+      for(let w=0;w<10;w++){ const y = 40 + w*28; J.svg('line', {x1:60, y1:y, x2:680, y2:y, stroke: w===4 ? 'var(--red)' : 'var(--gold)', 'stroke-width': w===4 ? 4 : 2, opacity:.85}, svg);
+        for(let s=0;s<n;s++) J.svg('rect', {x:72+s*50, y:y-8, width:16, height:16, rx:3, fill: w===4 ? 'var(--red)' : 'var(--plum)', opacity: w===4 ? .8 : .6}, svg); }
+      Tx(80, 14, '비트라인 →'); Tx(60, 340, '빨간 워드라인의 셀 전체 = 페이지 하나 (같은 순간 프로그램·읽기)');
+    }
+  }
+  J.$$('#zoomBtns button').forEach(b => b.onclick = () => { J.$$('#zoomBtns button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); draw(+b.dataset.z); });
+  draw(0);
+})();
+
+/* 4-3 다이 계산 */
+J.sim('sim2b', (v, box) => {
+  const blkB = v.wl*v.pg*1024*v.b; // 바이트 (물리 페이지 × 비트)
+  const die = blkB*v.bk*v.pl*8; // 비트
+  J.out(box,'blk', J.fmt(blkB/1048576,1)+' MB');
+  J.out(box,'die', die >= 1e12*1.0995 ? J.fmt(die/Math.pow(2,40),2)+' Tb' : J.fmt(die/Math.pow(2,30),0)+' Gb');
+  J.out(box,'ratio', '× '+J.fmt(blkB/(v.pg*1024),0), blkB > 64*1048576 ? 'warn' : '');
+});
+
+/* 4-4 셀프 부스팅 */
+J.sim('sim3', (v, box) => {
+  const N = 64, vpre = 1.5;
+  const vch = vpre + v.r*((N-1)*v.vp + v.vg)/N;
+  // 상대 교란 (FN 형태 근사)
+  const fn = e => Math.exp(-105/Math.max(e, 0.5) + 105/11); // 실제 프로그램(전계 11) 대비 상대값
+  const pdOf = vp => { const ch = vpre + v.r*((N-1)*vp + v.vg)/N; return fn(0.55*v.vg - ch); };
+  const psOf = vp => fn(0.55*vp);
+  const a = [], b = [], c = [];
+  for(let x=5; x<=14; x+=0.05){ a.push([x, pdOf(x)]); b.push([x, psOf(x)]); c.push([x, pdOf(x)+psOf(x)]); }
+  let best = 5, bv = 9; c.forEach(p => { if(p[1] < bv){ bv = p[1]; best = p[0]; } });
+  J.plot(document.getElementById('cv3'), {x:[5,14], y:[1e-14, 1], logy:true, xlab:'V_pass (V)', ylab:'교란 (상대, 로그)', yf:t=>'1e'+Math.round(Math.log10(t)),
+    series:[{pts:a, color:'--red', w:2.5},{pts:b, color:'--indigo', w:2.5},{pts:c, color:'--ink3', w:1.5, dash:[4,3]}],
+    vlines:[{x:v.vp, color:'--ink', label:'현재'}, {x:best, color:'--jade', label:'최적 '+J.fmt(best,1)+' V', align:'right', dash:[2,3]}], pad:{l:52}});
+  const pd = pdOf(v.vp), ps = psOf(v.vp);
+  J.out(box,'vch', J.fmt(vch,1)+' V');
+  J.out(box,'pd', pd.toExponential(1), pd > 1e-5 ? 'bad' : pd > 1e-6 ? 'warn' : 'good');
+  J.out(box,'ps', ps.toExponential(1), ps > 1e-5 ? 'bad' : ps > 1e-6 ? 'warn' : 'good');
+  J.out(box,'ok', Math.max(pd, ps) < 1e-5 ? '창 안' : '창 밖', Math.max(pd, ps) < 1e-5 ? 'good' : 'bad');
+  const s = document.getElementById('boostSvg'); s.innerHTML = '';
+  [[80,'프로그램','0 V',0,'--indigo'],[230,'금지','V_CC',vch,'--red']].forEach(([x,lab,bl,ch,col]) => {
+    J.svg('text', {x, y:18, 'text-anchor':'middle', class:'t-m', text:lab+' 스트링', style:'font-weight:700'}, s);
+    J.svg('text', {x, y:36, 'text-anchor':'middle', class:'t-s', text:'BL = '+bl}, s);
+    J.svg('rect', {x:x-30, y:50, width:60, height:220, rx:6, fill:`var(${col})`, opacity: .12 + Math.min(.7, ch/14)}, s);
+    J.svg('text', {x, y:290, 'text-anchor':'middle', class:'t-s mono', text:'채널 '+J.fmt(ch,1)+' V'}, s);
+    for(let i=0;i<6;i++){ const y = 64 + i*34, sel = i === 2;
+      J.svg('rect', {x:x-22, y, width:44, height:22, rx:3, fill: sel ? 'var(--red-soft)' : 'var(--card)', stroke: sel ? 'var(--red)' : 'var(--ink3)'}, s);
+      J.svg('text', {x, y:y+15, 'text-anchor':'middle', class:'t-s', text: sel ? 'V_pgm' : 'V_pass'}, s); }
+  });
+});
+</script>
+</body>
+</html>

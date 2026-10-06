@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SSD 시스템 · NAND 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%237b3a5d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E藏%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="ssd">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 10 <span class="hanja">第十章 · 庫</span></div>
+  <h1>SSD 시스템</h1>
+  <p class="lead">NAND 다이 하나는 느리다. 페이지 하나를 프로그램하는 데 0.5 ms, 초당 몇십 MB. 그런데 SSD는 초당 10 GB 넘게 쓴다. 비결은 병렬성이다. 수십~수백 개의 다이를 채널과 웨이로 엮어 동시에 일하게 하고, 빠른 SLC 영역을 캐시로 쓰고, 호스트와는 수만 개의 큐로 대화한다. 이 장은 SSD를 하나의 시스템으로 본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>SSD의 구성(컨트롤러, DRAM/HMB, NAND 패키지, 채널·웨이, PMIC)을 설명할 수 있다.</li>
+  <li>채널·웨이·플레인 병렬성으로 쓰기·읽기 처리량을 계산한다.</li>
+  <li>SLC 캐시가 왜 "처음엔 빠르다가 느려지는" 쓰기 곡선을 만드는지 안다.</li>
+  <li>리틀의 법칙으로 큐 깊이·IOPS·지연의 관계를 이해한다.</li>
+  <li>읽기 지연의 구성과 꼬리 지연(tail latency)의 원인을 분석한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>SSD를 열어 보면</h2>
+<figure class="fig">
+<svg viewBox="0 0 760 270" id="ssdFig" role="img" aria-label="SSD 구성도"></svg>
+<figcaption><b>그림 10-1.</b> M.2 SSD의 구성. 컨트롤러는 호스트 쪽으로 PCIe/NVMe, NAND 쪽으로 여러 개의 채널을 가진다. 채널마다 여러 다이(웨이)가 버스를 나눠 쓴다. DRAM은 매핑 테이블(대략 용량의 1/1000)을 캐시한다. DRAM이 없는 저가 SSD는 호스트 메모리 일부(HMB)를 빌린다.</figcaption>
+</figure>
+
+<h2 id="s2"><span class="n">02</span>채널과 웨이: 기다리는 동안 다른 다이를</h2>
+<p>채널은 컨트롤러와 NAND 다이 묶음을 잇는 8비트 버스다(오늘날 수 GT/s). 페이지 데이터를 다이의 페이지 버퍼로 보내는 데는 수 µs면 되지만, 그 다이가 프로그램을 끝내는 데는 수백 µs가 걸린다. 그동안 버스는 같은 채널의 다른 다이(<span class="term">웨이</span>)에게 데이터를 보낸다. 다이 안에서는 플레인들이 동시에 프로그램된다(멀티플레인).</p>
+<div class="eq">$$BW_{write} \approx \min\Big(N_{ch}\cdot N_{way}\cdot\frac{N_{plane}\cdot S_{page}}{t_{PROG}},\ N_{ch}\cdot BW_{bus}\Big)$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-1</span><span class="ttl">채널·웨이 간트 차트</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">채널 수 <output data-o="ch"></output></span><input type="range" data-k="ch" min="1" max="16" step="1" value="8" data-d="0"></label>
+      <label class="ctrl"><span class="lab">채널당 웨이(다이) <output data-o="w"></output></span><input type="range" data-k="w" min="1" max="8" step="1" value="4" data-d="0"></label>
+      <label class="ctrl"><span class="lab">다이당 플레인 <output data-o="pl"></output></span><input type="range" data-k="pl" min="1" max="6" step="1" value="4" data-d="0"></label>
+      <label class="ctrl"><span class="lab">동작</span><select data-k="op"><option value="w">쓰기 (TLC tPROG 600 µs)</option><option value="r">읽기 (tR 50 µs)</option><option value="q">쓰기 (QLC tPROG 2 ms)</option></select></label>
+      <label class="ctrl"><span class="lab">채널 버스 속도 <output data-o="bus"></output></span><input type="range" data-k="bus" min="400" max="4800" step="200" value="2400" data-d="0" data-u="MT/s"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="320"></canvas></div>
+    <div class="legend"><span><i style="background:var(--indigo)"></i>채널 버스 전송</span><span><i style="background:var(--plum)"></i>다이 내부 동작 (tPROG/tR)</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">다이 수</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">처리량</span><span class="v" data-r="bw"></span></div>
+      <div class="ro"><span class="k">병목</span><span class="v" data-r="bn" style="font-size:14px;font-family:var(--sans)"></span></div>
+      <div class="ro"><span class="k">PCIe 5.0 x4 한계 대비</span><span class="v" data-r="pcie"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 줄 하나가 다이 하나(처음 두 채널만 표시). 파란 칸은 그 다이로 데이터가 오가는 버스 시간, 보라 칸은 다이 혼자 일하는 시간이다. 쓰기에서는 보라가 길어 웨이를 늘릴수록 처리량이 오른다. 읽기에서는 버스 전송이 상대적으로 길어 채널 버스가 먼저 꽉 찬다. 페이지 16 KB 기준.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>SLC 캐시: 처음엔 빠르다가</h2>
+<p>TLC·QLC 블록 일부를 SLC 모드(셀당 1비트)로 쓰면 프로그램이 몇 배 빠르다. 그래서 소비자용 SSD는 빈 공간의 일부를 <span class="term">SLC 캐시</span>로 쓴다. 들어온 데이터를 먼저 SLC에 빠르게 받고, 한가할 때 TLC/QLC로 옮겨 접는다(<span class="term">폴딩</span>). 캐시가 바닥날 만큼 큰 파일을 한 번에 쓰면 속도가 뚝 떨어지고, QLC SSD는 HDD보다 느려지기도 한다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-2</span><span class="ttl">대용량 파일 복사 속도 곡선</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">SLC 캐시 크기 <output data-o="c"></output></span><input type="range" data-k="c" min="10" max="400" step="10" value="120" data-d="0" data-u="GB"></label>
+      <label class="ctrl"><span class="lab">캐시 이후 셀 방식</span><select data-k="t"><option value="tlc">TLC 직접 쓰기 (~1.8 GB/s)</option><option value="qlc">QLC 직접 쓰기 (~0.4 GB/s)</option></select></label>
+      <label class="ctrl"><span class="lab">복사할 파일 크기 <output data-o="f"></output></span><input type="range" data-k="f" min="10" max="1000" step="10" value="400" data-d="0" data-u="GB"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">총 복사 시간</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">평균 속도</span><span class="v" data-r="avg"></span></div>
+      <div class="ro"><span class="k">캐시가 바닥난 지점</span><span class="v" data-r="at"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로축은 지금까지 쓴 양, 세로축은 순간 쓰기 속도. SLC 캐시(약 7 GB/s) 구간이 끝나면 캐시 이후 속도로 떨어지고, 가장 느린 구간은 폴딩과 새 쓰기가 동시에 일어나는 때다. 회사 스펙의 "최대 순차 쓰기"는 첫 구간의 값이다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>큐 깊이와 리틀의 법칙</h2>
+<p>NVMe는 최대 64K개의 큐, 큐마다 64K개의 명령을 허용한다. 요청을 많이 겹쳐 보낼수록(큐 깊이 QD ↑) 더 많은 다이가 동시에 일할 수 있다. 그러나 다이 수만큼 요청이 찬 뒤로는 IOPS가 늘지 않고 기다림(지연)만 늘어난다. 이 관계를 묶는 것이 리틀의 법칙이다.</p>
+<div class="eq">$$\text{대기 중인 요청 수} = \text{처리율} \times \text{지연} \quad\Longrightarrow\quad \text{IOPS} = \frac{QD}{\text{지연}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-3</span><span class="ttl">4 KB 무작위 읽기: QD vs IOPS vs 지연</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">큐 깊이 QD (로그) <output data-o="qd"></output></span><input type="range" data-k="qd" min="0" max="10" step="1" value="5" data-d="0"></label>
+      <label class="ctrl"><span class="lab">병렬 처리 단위 (다이×플레인) <output data-o="n"></output></span><input type="range" data-k="n" min="8" max="256" step="8" value="128" data-d="0"></label>
+      <label class="ctrl"><span class="lab">요청 하나 서비스 시간 <output data-o="s"></output></span><input type="range" data-k="s" min="20" max="200" step="5" value="70" data-d="0" data-u="µs"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">QD</span><span class="v" data-r="qd"></span></div>
+      <div class="ro"><span class="k">IOPS</span><span class="v" data-r="iops"></span></div>
+      <div class="ro"><span class="k">평균 지연</span><span class="v" data-r="lat"></span></div>
+      <div class="ro"><span class="k">컨트롤러 한계 (200만 IOPS) 대비</span><span class="v" data-r="lim"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 초록 곡선은 IOPS(왼쪽 축), 보라 곡선은 평균 지연(오른쪽 축). QD 1에서는 다이 하나만 일해 IOPS가 1/서비스 시간에 묶인다. 데스크톱 작업은 대부분 QD 1–4라 스펙의 "최대 IOPS"를 거의 보지 못한다. 데이터베이스·AI 학습 데이터 로딩처럼 QD가 큰 서버 부하에서만 병렬성이 빛난다.</p>
+</div>
+
+<h2 id="s5"><span class="n">05</span>읽기 한 번은 어디서 시간을 쓰는가</h2>
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-4</span><span class="ttl">읽기 지연 분해와 꼬리 지연</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="latBtns">
+      <button class="sbtn on" data-s="0">TLC · 하드 디코딩 성공</button>
+      <button class="sbtn" data-s="1">TLC · 리드 리트라이 + 소프트</button>
+      <button class="sbtn" data-s="2">QLC · 하드</button>
+      <button class="sbtn" data-s="3">다이가 프로그램 중 (서스펜드 대기)</button>
+      <button class="sbtn" data-s="4">GC와 충돌</button>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="270"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">총 지연</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">가장 큰 몫</span><span class="v" data-r="big" style="font-size:14.5px;font-family:var(--sans)"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 막대는 4 KB 읽기 한 번의 시간 구성. 평균은 첫 번째 줄처럼 100 µs 안팎이지만, 드물게 아래 줄들의 상황이 겹치면 수 ms가 된다. 데이터센터는 평균보다 99.99 퍼센타일 지연(꼬리)을 따진다. 그래서 프로그램·소거 일시 정지(suspend), 읽기 우선 스케줄링, 다이별 GC 분산 같은 기법이 중요하다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">쓰기에서 웨이(채널당 다이) 수를 늘리면 처리량이 오르는 이유는?</p><ol><li>tPROG가 짧아져서</li><li>한 다이가 오래 프로그램하는 동안 버스가 다른 다이에 데이터를 보낼 수 있어서</li><li>ECC가 빨라져서</li><li>페이지가 커져서</li></ol>
+<p class="explain">다이 내부 시간을 겹쳐 숨기는 파이프라이닝이다.</p></div>
+<div class="quiz" data-a="0"><p class="q">SLC 캐시가 다 차면?</p><ol><li>TLC/QLC 직접 쓰기 속도로 떨어지고, 폴딩이 겹치면 더 느려진다</li><li>쓰기가 멈춘다</li><li>더 빨라진다</li><li>용량이 늘어난다</li></ol>
+<p class="explain">스펙의 최대 순차 쓰기는 캐시 구간 값이다.</p></div>
+<div class="quiz" data-a="3"><p class="q">QD = 32, 평균 지연 100 µs라면 IOPS는?</p><ol><li>3,200</li><li>32,000</li><li>100,000</li><li>320,000</li></ol>
+<p class="explain">32 / 100 µs = 320,000.</p></div>
+<div class="quiz" data-a="2"><p class="q">꼬리 지연을 키우는 원인이 아닌 것은?</p><ol><li>같은 다이에서 진행 중인 프로그램</li><li>소프트 디코딩 리트라이</li><li>로우 버퍼 히트</li><li>가비지 컬렉션 충돌</li></ol>
+<p class="explain">로우 버퍼는 DRAM 개념이다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 10-1 */
+(function(){
+  const s = document.getElementById('ssdFig');
+  J.svg('rect', {x:10, y:20, width:740, height:230, rx:12, fill:'var(--paper2)', stroke:'var(--line)'}, s);
+  J.svg('rect', {x:10, y:110, width:40, height:50, rx:3, fill:'var(--gold)'}, s); J.svg('text', {x:14, y:182, class:'t-s', text:'PCIe 커넥터'}, s);
+  J.svg('rect', {x:80, y:90, width:130, height:90, rx:6, fill:'var(--indigo)'}, s);
+  J.svg('text', {x:145, y:126, 'text-anchor':'middle', class:'t-m', text:'컨트롤러', style:'fill:#fff;font-weight:700'}, s);
+  J.svg('text', {x:145, y:146, 'text-anchor':'middle', class:'t-s', text:'CPU 코어 · LDPC', style:'fill:#fff'}, s);
+  J.svg('text', {x:145, y:162, 'text-anchor':'middle', class:'t-s', text:'FTL · 채널 8개', style:'fill:#fff'}, s);
+  J.svg('rect', {x:90, y:200, width:110, height:36, rx:4, fill:'var(--jade)'}, s); J.svg('text', {x:145, y:223, 'text-anchor':'middle', class:'t-s', text:'DRAM (매핑 캐시)', style:'fill:#fff'}, s);
+  J.svg('rect', {x:90, y:34, width:110, height:36, rx:4, fill:'var(--ink3)'}, s); J.svg('text', {x:145, y:57, 'text-anchor':'middle', class:'t-s', text:'PMIC · 전원', style:'fill:#fff'}, s);
+  J.svg('line', {x1:50, y1:135, x2:80, y2:135, stroke:'var(--ink)', 'stroke-width':3}, s);
+  for(let p=0;p<4;p++){
+    const x = 260 + p*122;
+    J.svg('rect', {x, y:40, width:110, height:196, rx:6, fill:'var(--plum)', opacity:.85}, s);
+    J.svg('text', {x:x+55, y:60, 'text-anchor':'middle', class:'t-s', text:'NAND 패키지 '+p, style:'fill:#fff'}, s);
+    for(let d=0;d<8;d++){ J.svg('rect', {x:x+12, y:72+d*20, width:86, height:15, rx:2, fill:'var(--plum-soft)'}, s); }
+    J.svg('text', {x:x+55, y:250 - 2, 'text-anchor':'middle', class:'t-s', text:'다이 8–16단 적층'}, s);
+    J.svg('path', {d:`M210 ${110+p*14} C 230 ${110+p*14}, 240 ${130}, ${x} ${130}`, stroke:'var(--indigo)', 'stroke-width':2, fill:'none', opacity:.7}, s);
+  }
+  J.svg('text', {x:226, y:100, class:'t-s', text:'채널', style:'fill:var(--indigo)'}, s);
+})();
+
+/* 10-1 간트 */
+J.sim('sim1', (v, box) => {
+  const page = 16384, xfer = page/(v.bus*1e6)*1e6; // µs per page (8비트 버스: 1바이트/전송)
+  const isR = v.op === 'r', tIn = isR ? 50 : v.op === 'q' ? 2000 : 600;
+  const xferAll = xfer*v.pl; // 플레인 수만큼 페이지 전송
+  const nd = v.ch*v.w;
+  const perDie = v.pl*page/((tIn + xferAll)*1e-6); // B/s
+  const dieBound = nd*perDie, busBound = v.ch*v.bus*1e6;
+  const bw = Math.min(dieBound, busBound);
+  // 간트: 채널 0,1 의 웨이들
+  const {ctx, w, h} = J.fit(document.getElementById('cv1'));
+  ctx.clearRect(0,0,w,h);
+  const showCh = Math.min(2, v.ch), lanes = showCh*v.w, L = 70, horizon = Math.max(tIn*2.3, 300);
+  const X = t => L + t/horizon*(w-L-10), lh = Math.min(28, (h-40)/lanes);
+  for(let c=0;c<showCh;c++){
+    let busT = 0;
+    const next = new Array(v.w).fill(0);
+    for(let iter=0; iter<20; iter++){
+      for(let wi=0; wi<v.w; wi++){
+        const lane = c*v.w + wi, y = 10 + lane*lh;
+        const st = Math.max(busT, next[wi]);
+        if(st > horizon) continue;
+        let xs, xe, ds, de;
+        if(isR){ ds = st; de = st + tIn; xs = Math.max(de, busT); xe = xs + xferAll; busT = xe; next[wi] = xe; }
+        else { xs = st; xe = st + xferAll; ds = xe; de = xe + tIn; busT = xe; next[wi] = de; }
+        ctx.fillStyle = J.c('--plum'); ctx.globalAlpha = .55; ctx.fillRect(X(ds), y+3, Math.max(1, X(Math.min(de,horizon))-X(ds)), lh-6); ctx.globalAlpha = 1;
+        ctx.fillStyle = J.c('--indigo'); ctx.fillRect(X(xs), y+3, Math.max(2, X(xe)-X(xs)), lh-6);
+      }
+    }
+    for(let wi=0; wi<v.w; wi++){ const y = 10 + (c*v.w+wi)*lh; ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(`CH${c}·W${wi}`, L-6, y+lh/2); }
+  }
+  ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='center';
+  J.niceTicks(0, horizon, 6).forEach(t => ctx.fillText(t+' µs', X(t), h-8));
+  J.out(box,'n', nd+' 개');
+  J.out(box,'bw', J.fmt(bw/1e9,2)+' GB/s');
+  J.out(box,'bn', dieBound < busBound ? '다이 내부 동작 (웨이·다이 추가 필요)' : '채널 버스 (채널·버스 속도 필요)');
+  J.out(box,'pcie', J.fmt(bw/14e9*100,0)+' %', bw > 14e9 ? 'warn' : '');
+});
+
+/* 10-2 SLC 캐시 */
+J.sim('sim2', (v, box) => {
+  const slc = 7, direct = v.t === 'tlc' ? 1.8 : 0.4, fold = direct*0.6;
+  const pts = []; let t = 0, at = null;
+  for(let g=0; g<=v.f; g+=1){
+    let sp;
+    if(g < v.c) sp = slc; else { sp = g < v.c*1.6 ? fold : direct; if(at === null) at = g; }
+    pts.push([g, sp]); if(g) t += 1/sp;
+  }
+  J.plot(document.getElementById('cv2'), {x:[0, v.f], y:[0,8], xlab:'쓴 양 (GB)', ylab:'쓰기 속도 (GB/s)', series:[{pts, color:'--plum', w:3, step:true, fill:.15}],
+    vlines: at !== null ? [{x:at, color:'--red', label:'캐시 바닥'}] : [], hlines:[{y:0.25, color:'--ink3', label:'HDD ~0.25 GB/s', dash:[2,3]}]});
+  J.out(box,'t', t > 120 ? J.fmt(t/60,1)+' 분' : J.fmt(t,0)+' 초');
+  J.out(box,'avg', J.fmt(v.f/t,2)+' GB/s', v.f/t > 3 ? 'good' : v.f/t > 1 ? 'warn' : 'bad');
+  J.out(box,'at', at === null ? '바닥나지 않음' : at+' GB');
+});
+
+/* 10-3 리틀 */
+J.sim('sim3', (v, box) => {
+  const qd = Math.pow(2, v.qd);
+  J.$('[data-o="qd"]', box).textContent = qd;
+  const svc = v.s*1e-6, lim = 2e6;
+  const f = q => { const iops = Math.min(q/svc, v.n/svc, lim); return {iops, lat: q/iops}; };
+  const a = [], b = [];
+  for(let e=0; e<=10; e+=0.05){ const q = Math.pow(2,e), r = f(q); a.push([q, r.iops/1000]); b.push([q, r.lat*1e6]); }
+  const r = J.plot(document.getElementById('cv3'), {x:[1,1024], y:[0, Math.min(lim, v.n/svc)/1000*1.15], logx:true, xlab:'큐 깊이 (로그)', ylab:'IOPS (천)', xf:t=>t, series:[{pts:a, color:'--jade', w:3}], vlines:[{x:qd, color:'--red', dash:[2,3]}], pad:{r:60}});
+  const maxLat = Math.max(...b.map(p=>p[1])), Y2 = y => r.h - r.P.b - y/maxLat*(r.h - r.P.t - r.P.b);
+  const ctx = r.ctx; ctx.strokeStyle = J.c('--plum'); ctx.lineWidth = 2.5; ctx.beginPath(); b.forEach((p,i) => { const x = r.X(p[0]); i ? ctx.lineTo(x, Y2(p[1])) : ctx.moveTo(x, Y2(p[1])); }); ctx.stroke(); ctx.lineWidth = 1;
+  ctx.fillStyle = J.c('--plum'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='left'; ctx.textBaseline='middle'; J.niceTicks(0, maxLat, 4).forEach(y => ctx.fillText(y+' µs', r.w - r.P.r + 4, Y2(y)));
+  const cur = f(qd);
+  J.out(box,'qd', qd); J.out(box,'iops', Math.round(cur.iops).toLocaleString('ko-KR'));
+  J.out(box,'lat', J.fmt(cur.lat*1e6,0)+' µs', cur.lat*1e6 > v.s*2 ? 'warn' : 'good');
+  J.out(box,'lim', J.fmt(cur.iops/lim*100,0)+' %');
+});
+
+/* 10-4 지연 분해 */
+(function(){
+  const box = document.getElementById('sim4');
+  const S = [
+    [['호스트·NVMe',6,'--ink3'],['FTL 조회',3,'--gold'],['tR 감지',50,'--plum'],['채널 전송',8,'--indigo'],['LDPC 하드',4,'--jade']],
+    [['호스트·NVMe',6,'--ink3'],['FTL 조회',3,'--gold'],['tR 감지',50,'--plum'],['채널 전송',8,'--indigo'],['LDPC 하드 실패',4,'--red'],['리드 리트라이 ×2',100,'--plum'],['소프트 감지 ×3',150,'--plum'],['채널 전송 ×3',24,'--indigo'],['LDPC 소프트',20,'--jade']],
+    [['호스트·NVMe',6,'--ink3'],['FTL 조회',3,'--gold'],['tR 감지 (QLC)',120,'--plum'],['채널 전송',8,'--indigo'],['LDPC 하드',6,'--jade']],
+    [['호스트·NVMe',6,'--ink3'],['FTL 조회',3,'--gold'],['프로그램 서스펜드 대기',150,'--red'],['tR 감지',50,'--plum'],['채널 전송',8,'--indigo'],['LDPC 하드',4,'--jade']],
+    [['호스트·NVMe',6,'--ink3'],['FTL 조회',3,'--gold'],['GC 블록 소거 대기',3000,'--red'],['tR 감지',50,'--plum'],['채널 전송',8,'--indigo'],['LDPC 하드',4,'--jade']]
+  ];
+  function draw(k){
+    const parts = S[k], tot = parts.reduce((a,p)=>a+p[1],0);
+    const {ctx, w, h} = J.fit(document.getElementById('cv4'));
+    ctx.clearRect(0,0,w,h);
+    const L = 10, W = w - 20, maxT = Math.max(tot, 400), X = t => L + Math.log10(1 + t)/Math.log10(1 + maxT)*W;
+    // 선형 막대
+    let x = 0; const sc = W/tot;
+    parts.forEach((p,i) => { ctx.fillStyle = J.c(p[2]); ctx.globalAlpha = .85; ctx.fillRect(L + x*sc, 30, p[1]*sc, 50); ctx.globalAlpha = 1;
+      if(p[1]*sc > 50){ ctx.fillStyle = '#fff'; ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(p[0], L + (x + p[1]/2)*sc, 48); ctx.font = '11px "JetBrains Mono"'; ctx.fillText(p[1]+' µs', L + (x + p[1]/2)*sc, 66); }
+      x += p[1]; });
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.fillText('구성 (전체 = 막대 길이)', L, 20);
+    // 항목 표
+    parts.forEach((p,i) => { const y = 108 + i*16; ctx.fillStyle = J.c(p[2]); ctx.fillRect(L, y-9, 10, 10); ctx.fillStyle = J.c('--ink'); ctx.font = '12px "Noto Sans KR"'; ctx.fillText(p[0]+' — '+p[1]+' µs', L + 16, y); });
+    const big = parts.reduce((a,p) => p[1] > a[1] ? p : a);
+    J.out(box,'t', tot >= 1000 ? J.fmt(tot/1000,2)+' ms' : tot+' µs', tot > 1000 ? 'bad' : tot > 200 ? 'warn' : 'good');
+    J.out(box,'big', big[0]+' ('+J.fmt(big[1]/tot*100,0)+' %)');
+  }
+  J.$$('#latBtns button').forEach(b => b.onclick = () => { J.$$('#latBtns button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); draw(+b.dataset.s); });
+  J.live(() => draw(+J.$('#latBtns .on').dataset.s));
+})();
+</script>
+</body>
+</html>

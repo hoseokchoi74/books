@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MLC·TLC·QLC · NAND 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%237b3a5d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E藏%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="mlc">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 05 <span class="hanja">第五章 · 多</span></div>
+  <h1>MLC·TLC·QLC: 한 셀에 여러 비트</h1>
+  <p class="lead">셀을 "전자 있음/없음" 두 상태로만 쓸 이유는 없다. 전자를 조금, 더 많이, 아주 많이 넣어 문턱 전압을 여러 단계로 나누면 셀 하나에 여러 비트를 담을 수 있다. 공짜 용량처럼 보이지만, 같은 전압 폭을 더 잘게 쪼개야 하므로 대가가 따른다. 이 장은 그 거래의 수학이다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>셀당 비트 \(n\)과 상태 수 \(2^n\), 상태 간 간격의 관계를 설명할 수 있다.</li>
+  <li>문턱 전압 분포의 겹침으로 원시 비트 오류율(RBER)을 계산한다.</li>
+  <li>그레이 코드가 왜 쓰이는지, 페이지마다 읽기 횟수가 왜 다른지 안다.</li>
+  <li>분포가 이동했을 때 읽기 기준 전압을 다시 찾는(read retry) 원리를 실험한다.</li>
+  <li>SLC·MLC·TLC·QLC·PLC의 용량·속도·수명 트레이드오프를 비교한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>문턱 전압을 계단으로 나누기</h2>
+<p>사용할 수 있는 문턱 전압 범위(대략 −3 V에서 +5 V, 이 폭을 <span class="term">V<sub>th</sub> 창</span>이라 하자)는 셀 구조와 신뢰성이 정한다. 그 창 안에 \(2^n\)개의 상태를 늘어놓으면, 상태 사이 간격은 창의 폭을 \(2^n - 1\)로 나눈 것이 된다. 각 상태는 제조 편차, 프로그램 잡음, 이웃 간섭 때문에 폭 \(\sigma\)의 분포를 갖는다. 이웃 분포가 겹치는 꼬리 부분이 곧 오류다.</p>
+<div class="eq">$$\Delta = \frac{W}{2^n - 1},\qquad \text{RBER} \approx \frac{2(2^n-1)}{2^n}\cdot\frac{1}{n}\cdot Q\!\left(\frac{\Delta}{2\sigma}\right)$$
+<div class="note">\(Q(x)\): 표준정규분포의 꼬리 확률. 그레이 코드로 이웃 상태 오류가 한 비트만 틀리게 만든다는 가정이다.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-1</span><span class="ttl">셀당 비트를 늘리면</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="bitBtns"><button class="sbtn" data-n="1">SLC</button><button class="sbtn" data-n="2">MLC</button><button class="sbtn on" data-n="3">TLC</button><button class="sbtn" data-n="4">QLC</button><button class="sbtn" data-n="5">PLC</button></div>
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">분포 폭 σ <output data-o="sg"></output></span><input type="range" data-k="sg" min="0.03" max="0.4" step="0.005" value="0.12" data-d="3" data-u="V"></label>
+      <label class="ctrl"><span class="lab">V_th 창 폭 W <output data-o="w"></output></span><input type="range" data-k="w" min="3" max="10" step="0.1" value="6.5" data-d="1" data-u="V"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">상태 수</span><span class="v" data-r="L"></span></div>
+      <div class="ro"><span class="k">상태 간격 Δ</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">여유 Δ/2σ</span><span class="v" data-r="m"></span></div>
+      <div class="ro"><span class="k">원시 비트 오류율 RBER</span><span class="v" data-r="ber"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 색 봉우리가 각 상태의 문턱 전압 분포(소거 상태 E는 넓은 회색), 세로 점선이 읽기 기준 전압이다. 봉우리 위 숫자는 그레이 코드. SLC에서 QLC로 갈수록 간격이 1/15로 좁아져, 같은 σ에서도 RBER이 수십만 배 커진다. 그래서 QLC는 ISPP를 더 촘촘히(느리게) 하고 강한 ECC(8장)를 쓴다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>그레이 코드와 페이지 읽기</h2>
+<p>TLC 셀의 8개 상태에 3비트를 붙이는 방법은 여러 가지다. NAND는 이웃한 상태끼리 한 비트만 다르도록 <span class="term">그레이 코드</span>를 쓴다. 셀이 이웃 상태로 잘못 읽혀도 한 비트만 틀리게 하려는 것이다. 또 세 비트는 서로 다른 논리 페이지(LSB·CSB·MSB)에 속한다. 페이지 하나를 읽으려면 그 페이지의 비트가 바뀌는 경계에서만 읽기 기준 전압을 걸어 보면 된다. 아래 코드에서는 페이지마다 2·3·2번 읽는다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-2</span><span class="ttl">TLC 코딩과 페이지별 읽기</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="pageBtns"><span class="hint">페이지:</span><button class="sbtn on" data-p="0">LSB</button><button class="sbtn" data-p="1">CSB</button><button class="sbtn" data-p="2">MSB</button>
+      <span class="hint" style="margin-left:10px">코드:</span><select id="codeSel"><option value="gray">그레이 (2-3-2)</option><option value="bin">이진수 순서</option></select></div>
+    <div class="canvas-box"><svg id="graySvg" viewBox="0 0 720 260" style="display:block;width:100%"></svg></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">이 페이지의 읽기 횟수</span><span class="v" data-r="nr"></span></div>
+      <div class="ro"><span class="k">읽기 시간 tR (감지 1회 ≈ 15 µs)</span><span class="v" data-r="tr"></span></div>
+      <div class="ro"><span class="k">이웃 상태 오판 시 평균 틀린 비트</span><span class="v" data-r="avg"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 볼 것.</b> 코드를 "이진수 순서"로 바꿔 보자. 상태 3(011)과 4(100) 사이 경계에서 오판이 나면 세 비트가 한꺼번에 틀린다. 또 LSB 페이지는 경계 일곱 곳 모두에서 읽어야 해 읽기가 느려진다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>분포가 움직이면: 읽기 기준 전압 다시 찾기</h2>
+<p>셀의 분포는 가만히 있지 않는다. 시간이 지나면 전자가 빠져 분포가 왼쪽으로 이동하고(리텐션), 읽을수록 오른쪽으로 번진다(읽기 교란), P/E 사이클이 쌓이면 넓어진다(7장). 출고 때 정한 기준 전압으로 읽으면 오류가 폭증한다. 그래서 컨트롤러는 ECC가 실패하면 기준 전압을 조금씩 옮겨 다시 읽는 <span class="term">리드 리트라이(read retry)</span>를 하고, 두 분포 사이의 골짜기(valley)를 추적한다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-3</span><span class="ttl">골짜기 찾기 — 리드 리트라이</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">경과 시간 (리텐션) <output data-o="age"></output></span><input type="range" data-k="age" min="0" max="100" step="1" value="40" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">읽기 기준 전압 <output data-o="vr"></output></span><input type="range" data-k="vr" min="0" max="3" step="0.01" value="1.5" data-d="2" data-u="V"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="valley">자동: 골짜기 찾기 (5회 리트라이)</button></div>
+    <div class="canvas-box"><canvas id="cv3" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">오류 셀 (10만 셀 중)</span><span class="v" data-r="err"></span></div>
+      <div class="ro"><span class="k">출고 기준 1.5 V일 때</span><span class="v" data-r="def"></span></div>
+      <div class="ro"><span class="k">최적 기준 전압</span><span class="v" data-r="opt"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 높은 상태(오른쪽)는 전자가 많아 더 빨리 새므로 더 많이 왼쪽으로 움직이고 더 넓어진다. 빨간 영역이 잘못 읽힌 셀이다. 경과 시간을 올린 뒤 기준 전압을 직접 움직여 오류가 가장 적은 곳을 찾아 보자.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>셀 방식 비교</h2>
+<div class="tbwrap"><table class="tb">
+<tr><th></th><th>SLC</th><th>MLC</th><th>TLC</th><th>QLC</th><th>PLC (연구)</th></tr>
+<tr><td>셀당 비트 / 상태</td><td class="num">1 / 2</td><td class="num">2 / 4</td><td class="num">3 / 8</td><td class="num">4 / 16</td><td class="num">5 / 32</td></tr>
+<tr><td>같은 셀에서 용량</td><td class="num">1×</td><td class="num">2×</td><td class="num">3×</td><td class="num">4×</td><td class="num">5×</td></tr>
+<tr><td>P/E 수명 (대략)</td><td class="num">50k–100k</td><td class="num">3k–10k</td><td class="num">1k–3k</td><td class="num">0.5k–1.5k</td><td class="num">수백</td></tr>
+<tr><td>tPROG (대략)</td><td class="num">~0.15 ms</td><td class="num">~0.5 ms</td><td class="num">~0.6 ms</td><td class="num">~2 ms</td><td class="num">더 김</td></tr>
+<tr><td>주 용도</td><td>캐시, 산업용</td><td>(과거 주력)</td><td>스마트폰·PC·서버 주력</td><td>대용량 읽기 중심 서버, AI 데이터</td><td>아카이브</td></tr>
+</table></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">V_th 창 6 V를 QLC(16 상태)로 나누면 상태 간격은?</p><ol><li>0.375 V</li><li>1.5 V</li><li>0.4 V</li><li>6 V</li></ol>
+<p class="explain">6 / (16 − 1) = 0.4 V.</p></div>
+<div class="quiz" data-a="0"><p class="q">그레이 코드를 쓰는 이유는?</p><ol><li>이웃 상태로 오판되어도 한 비트만 틀리게 하기 위해</li><li>프로그램을 빠르게 하기 위해</li><li>소거를 없애기 위해</li><li>전압을 낮추기 위해</li></ol>
+<p class="explain">오류 대부분은 이웃 상태로의 오판이다.</p></div>
+<div class="quiz" data-a="3"><p class="q">리텐션으로 분포가 이동했을 때 컨트롤러가 하는 일은?</p><ol><li>블록을 버린다</li><li>V_pgm을 올린다</li><li>셀당 비트를 늘린다</li><li>읽기 기준 전압을 옮겨 다시 읽는다(리드 리트라이)</li></ol>
+<p class="explain">골짜기를 추적해 오류를 ECC가 감당할 수준으로 낮춘다.</p></div>
+<div class="quiz" data-a="1"><p class="q">TLC 2-3-2 코딩에서 CSB 페이지 읽기에 필요한 감지 횟수는?</p><ol><li>2</li><li>3</li><li>7</li><li>1</li></ol>
+<p class="explain">CSB 비트가 바뀌는 경계가 세 곳이다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+function Qf(x){ const t = 1/(1+0.2316419*Math.abs(x)), d = 0.3989423*Math.exp(-x*x/2); const p = d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274)))); return x > 0 ? p : 1-p; }
+function gray(i){ return i ^ (i >> 1); }
+
+/* 5-1 */
+(function(){
+  let n = 3;
+  const s = J.sim('sim1', (v, box) => {
+    const L = Math.pow(2, n), lo = -2.5, d = v.w/(L-1);
+    const cols = ['--ink3','--jade','--indigo','--gold','--plum','--red'];
+    const pts = []; const series = [];
+    for(let k=0;k<L;k++){
+      const mu = lo + k*d, sg = k === 0 ? v.sg*2.2 : v.sg, pp = [];
+      for(let x=-5; x<=6; x+=0.02) pp.push([x, Math.exp(-(x-mu)*(x-mu)/(2*sg*sg))/(k===0?2.2:1)]);
+      series.push({pts:pp, color:cols[k%6], w:2, fill:.25});
+    }
+    const vl = []; for(let k=0;k<L-1;k++) vl.push({x: lo + (k+.5)*d + (k===0 ? v.sg*0.6 : 0), color:'--ink3', dash:[3,3]});
+    const r = J.plot(document.getElementById('cv1'), {x:[-5,6], y:[0,1.25], xlab:'문턱 전압 V_th (V)', ylab:'셀 비율 (상대)', yf:()=>'', series, vlines:vl, pad:{l:30}});
+    if(n <= 4){ const ctx = r.ctx; ctx.font = (n<=3 ? 12 : 9.5)+'px "JetBrains Mono"'; ctx.textAlign='center'; ctx.fillStyle = J.c('--ink');
+      for(let k=0;k<L;k++){ const code = (L-1) ^ gray(k); ctx.fillText(code.toString(2).padStart(n,'0'), r.X(lo + k*d), r.Y(1.12) + (k%2 && n===4 ? 12 : 0)); } }
+    const m = d/(2*v.sg), ber = 2*(L-1)/L/n*Qf(m);
+    J.out(box,'L', L+' 상태'); J.out(box,'d', J.fmt(d*1000,0)+' mV'); J.out(box,'m', J.fmt(m,2)+' σ', m > 4 ? 'good' : m > 2.5 ? 'warn' : 'bad');
+    J.out(box,'ber', ber < 1e-15 ? '< 10⁻¹⁵' : ber.toExponential(2), ber < 1e-4 ? 'good' : ber < 1e-2 ? 'warn' : 'bad');
+  });
+  J.$$('#bitBtns button').forEach(b => b.onclick = () => { J.$$('#bitBtns button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); n = +b.dataset.n; s.run(); });
+})();
+
+/* 5-2 */
+(function(){
+  const box = document.getElementById('sim2'), svg = document.getElementById('graySvg');
+  let page = 0;
+  const GRAY = [7,6,4,0,2,3,1,5]; // E..P7 → (MSB CSB LSB)
+  function draw(){
+    const code = document.getElementById('codeSel').value;
+    const C = code === 'gray' ? GRAY : [7,6,5,4,3,2,1,0];
+    svg.innerHTML = '';
+    const x0 = 40, dx = 82;
+    for(let k=0;k<8;k++){
+      const x = x0 + k*dx;
+      J.svg('path', {d:`M${x-34} 150 Q${x} ${k===0?80:60} ${x+34} 150 Z`, fill: k===0 ? 'var(--ink3)' : 'var(--plum)', opacity: .25 + k*0.08}, svg);
+      J.svg('text', {x, y:172, 'text-anchor':'middle', class:'t-s', text: k===0 ? 'E' : 'P'+k}, svg);
+      const bits = C[k].toString(2).padStart(3,'0');
+      for(let b=0;b<3;b++){ const hl = b === 2 - page;
+        J.svg('rect', {x:x-30 + b*20, y:186, width:18, height:22, rx:3, fill: hl ? 'var(--red)' : 'var(--card)', stroke:'var(--line)'}, svg);
+        J.svg('text', {x:x-21 + b*20, y:202, 'text-anchor':'middle', class:'t-m mono', text:bits[b], style:`fill:${hl ? '#fff' : 'var(--ink)'}`}, svg); }
+    }
+    J.svg('text', {x:10, y:230, class:'t-s', text:'각 칸: MSB · CSB · LSB'}, svg);
+    let reads = 0, flips = 0;
+    for(let k=0;k<7;k++){
+      const changed = ((C[k] ^ C[k+1]) >> page) & 1, x = x0 + k*dx + dx/2;
+      flips += popc(C[k] ^ C[k+1]);
+      J.svg('line', {x1:x, y1:30, x2:x, y2:160, stroke: changed ? 'var(--red)' : 'var(--line)', 'stroke-width': changed ? 3 : 1, 'stroke-dasharray': changed ? '' : '3 3'}, svg);
+      J.svg('text', {x, y:24, 'text-anchor':'middle', class:'t-s mono', text:'R'+(k+1), style:`fill:${changed ? 'var(--red)' : 'var(--ink3)'}`}, svg);
+      if(changed) reads++;
+    }
+    J.out(box,'nr', reads+' 번', reads <= 3 ? 'good' : 'bad');
+    J.out(box,'tr', '~'+(reads*15+10)+' µs');
+    J.out(box,'avg', J.fmt(flips/7,2)+' 비트', flips/7 <= 1 ? 'good' : 'bad');
+  }
+  function popc(x){ let c = 0; while(x){ c += x & 1; x >>= 1; } return c; }
+  J.$$('#pageBtns [data-p]').forEach(b => b.onclick = () => { J.$$('#pageBtns [data-p]').forEach(x=>x.classList.remove('on')); b.classList.add('on'); page = +b.dataset.p; draw(); });
+  document.getElementById('codeSel').onchange = draw;
+  J.live(draw);
+})();
+
+/* 5-3 */
+(function(){
+  const box = document.getElementById('sim3'); let optV = 1.5;
+  const model = age => { const a = age/100; return {m1: 0.5 - 0.15*a, s1: 0.22 + 0.04*a, m2: 2.6 - 0.95*a, s2: 0.22 + 0.12*a}; };
+  const errs = (p, vr) => 1e5*0.5*(Qf((vr - p.m1)/p.s1) + (1 - Qf((vr - p.m2)/p.s2)));
+  const s = J.sim('sim3', (v, b) => {
+    const p = model(v.age);
+    const g = (x, m, sg) => Math.exp(-(x-m)*(x-m)/(2*sg*sg))*0.22/sg;
+    const a = [], c = [], ea = [], ec = [];
+    for(let x=-0.5; x<=3.6; x+=0.01){ a.push([x, g(x,p.m1,p.s1)]); c.push([x, g(x,p.m2,p.s2)]); if(x > v.vr) ea.push([x, g(x,p.m1,p.s1)]); else ec.push([x, g(x,p.m2,p.s2)]); }
+    let opt = 0, best = 1e9; for(let x=0; x<=3; x+=0.005){ const e = errs(p, x); if(e < best){ best = e; opt = x; } }
+    J.plot(document.getElementById('cv3'), {x:[-0.5,3.6], y:[0,1.1], xlab:'V_th (V)', ylab:'', yf:()=>'', series:[{pts:a, color:'--jade', w:2.5, fill:.15},{pts:c, color:'--plum', w:2.5, fill:.15},{pts:ea, color:'--red', w:0.01, fill:.6},{pts:ec, color:'--red', w:0.01, fill:.6}],
+      vlines:[{x:v.vr, color:'--red', label:'기준 '+J.fmt(v.vr,2)+' V'},{x:1.5, color:'--ink3', label:'출고 기준', dash:[2,3], align:'right'},{x:opt, color:'--jade', dash:[2,2]}], pad:{l:16}});
+    const e = errs(p, v.vr);
+    J.out(b,'err', J.fmt(e,0)+' 개', e < 10 ? 'good' : e < 300 ? 'warn' : 'bad');
+    J.out(b,'def', J.fmt(errs(p, 1.5),0)+' 개');
+    J.out(b,'opt', J.fmt(opt,2)+' V');
+    optV = opt;
+  });
+  document.getElementById('valley').onclick = () => {
+    const vr = J.$('[data-k="vr"]', box); const target = optV; let k = 0;
+    const tick = () => { k++; vr.value = (+vr.value + (target - +vr.value)*0.55).toFixed(2); vr.dispatchEvent(new Event('input')); if(k < 5) setTimeout(tick, 250); };
+    tick();
+  };
+})();
+</script>
+</body>
+</html>

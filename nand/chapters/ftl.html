@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FTL과 가비지 컬렉션 · NAND 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%237b3a5d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E藏%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="ftl">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 09 <span class="hanja">第九章 · 譯</span></div>
+  <h1>FTL과 가비지 컬렉션</h1>
+  <p class="lead">운영체제는 저장 장치를 "번호 붙은 칸들의 배열"로 보고 아무 칸이나 덮어쓴다. 그런데 NAND는 쓴 페이지를 덮어쓸 수 없고, 지우려면 수십 MB 블록을 통째로 지워야 하며, 같은 블록을 수천 번 지우면 닳아 버린다. 이 둘 사이를 통역하는 펌웨어가 FTL(Flash Translation Layer)이다. 이 장에서는 직접 작은 SSD를 굴려 보며 쓰기 증폭이 왜 생기는지 확인한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>제자리 갱신 불가(erase-before-write) 제약과 그로 인한 "다른 곳에 쓰기(out-of-place update)"를 설명할 수 있다.</li>
+  <li>논리 주소(LBA)–물리 페이지 매핑 테이블과 유효/무효 페이지 개념을 안다.</li>
+  <li>가비지 컬렉션(GC)의 동작과 희생 블록 선택 정책을 실험한다.</li>
+  <li>쓰기 증폭(WAF)과 오버프로비저닝(OP)의 관계를 정량적으로 이해한다.</li>
+  <li>웨어 레벨링과 TRIM의 역할을 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>덮어쓸 수 없는 메모리</h2>
+<p>호스트가 LBA 5번을 고쳐 쓰면, FTL은 기존 페이지를 지우지 않는다. 대신 비어 있는 다른 페이지에 새 데이터를 쓰고, <span class="term">매핑 테이블</span>의 LBA 5 항목을 새 위치로 바꾼 뒤 옛 페이지에 "무효(invalid)" 표시만 한다. 빈 페이지가 모자라면 무효 페이지가 많은 블록을 골라 아직 유효한 페이지만 다른 곳으로 옮기고(복사) 그 블록을 지운다. 이것이 <span class="term">가비지 컬렉션</span>이다. 호스트는 한 번 썼지만 NAND는 옮겨 쓰기까지 여러 번 쓰게 된다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-1</span><span class="ttl">손으로 굴리는 미니 SSD (블록 4개 × 페이지 4개)</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="lbaBtns"><span class="hint">쓰기:</span></div>
+    <div class="btnrow"><button class="sbtn" id="mRand">무작위 쓰기 ×5</button><button class="sbtn pri" id="mGC">가비지 컬렉션</button><button class="sbtn warn" id="mReset">초기화</button><span class="hint">논리 용량 8페이지 · 물리 16페이지</span></div>
+    <div class="canvas-box"><svg id="miniSvg" viewBox="0 0 720 300" style="display:block;width:100%"></svg></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">호스트 쓰기</span><span class="v" data-r="hw"></span></div>
+      <div class="ro"><span class="k">NAND 쓰기 (GC 복사 포함)</span><span class="v" data-r="nw"></span></div>
+      <div class="ro"><span class="k">쓰기 증폭 WAF</span><span class="v" data-r="waf"></span></div>
+      <div class="ro"><span class="k">마지막 동작</span><span class="v" data-r="msg" style="font-size:13.5px;font-family:var(--sans)"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>사용법.</b> LBA 버튼을 눌러 쓰자. 초록 = 유효, 빨간 줄무늬 = 무효, 빈칸 = 지워진 페이지. 오른쪽 표는 매핑 테이블이다. 빈 페이지가 바닥나면 GC를 눌러 보자(또는 쓰기가 자동으로 GC를 부른다). 유효 페이지가 적은 블록을 고를수록 복사가 적다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>쓰기 증폭과 오버프로비저닝</h2>
+<p><span class="term">쓰기 증폭 계수(WAF)</span>는 NAND에 실제로 쓴 양을 호스트가 쓴 양으로 나눈 값이다. WAF가 2면 SSD는 수명을 두 배 빨리 쓰고, 쓰기 성능도 절반이 된다. WAF를 줄이는 가장 확실한 방법은 사용자에게 보이지 않는 여분 공간, <span class="term">오버프로비저닝(OP)</span>을 두는 것이다. 여분이 많을수록 GC가 블록을 고를 때 무효 페이지가 많이 쌓인 블록을 찾기 쉽다.</p>
+<div class="eq">$$\text{WAF} = \frac{\text{NAND 쓰기}}{\text{호스트 쓰기}},\qquad \text{균일 무작위 + 탐욕 GC 근사: } \text{WAF} \approx \frac{1 + \text{OP}}{2\,\text{OP}}$$
+<div class="note">OP = (물리 용량 − 논리 용량) / 논리 용량. 소비자용 SSD는 7 % 남짓(1 TB = 1,000 GB 대 1,024 GiB 차이 등), 데이터센터용 쓰기 집중 SSD는 28 % 이상을 둔다.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-2</span><span class="ttl">가비지 컬렉션 시뮬레이터 (블록 64개 × 페이지 64개)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">오버프로비저닝 OP <output data-o="op"></output></span><input type="range" data-k="op" min="5" max="60" step="1" value="12" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">작업 부하</span><select data-k="wl"><option value="rand">균일 무작위</option><option value="hot">핫/콜드 (80 % 쓰기 → 20 % 주소)</option><option value="seq">순차</option></select></label>
+      <label class="ctrl"><span class="lab">희생 블록 선택</span><select data-k="pol"><option value="greedy">탐욕 (유효 페이지 최소)</option><option value="fifo">FIFO (가장 오래된 블록)</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="gcRun">▶ 쓰기 흘리기</button><button class="sbtn" id="gcFast">⏩ 20만 페이지 빨리 감기</button><button class="sbtn warn" id="gcReset">초기화</button></div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv2a" data-h="300"></canvas></div><div class="canvas-box"><canvas id="cv2b" data-h="300"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">호스트 쓰기 (페이지)</span><span class="v" data-r="hw"></span></div>
+      <div class="ro"><span class="k">측정 WAF (최근)</span><span class="v" data-r="waf"></span></div>
+      <div class="ro"><span class="k">이론 근사 (균일 무작위)</span><span class="v" data-r="th"></span></div>
+      <div class="ro"><span class="k">GC 희생 블록 평균 유효율</span><span class="v" data-r="vr"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽 격자가 블록 64개(진한 초록일수록 유효 페이지가 많음, 빨간 테두리 = 지금 쓰는 블록, 점선 = 빈 블록). 오른쪽은 WAF 추이와 OP에 따른 이론 곡선(점선)이다. OP를 5 %로 줄이면 WAF가 5를 넘고, 순차 쓰기에서는 블록이 통째로 무효가 되어 WAF가 1에 가깝다. 희생 블록 정책을 FIFO로 바꿔 차이도 비교해 보자. 실제 SSD는 여기에 더해 뜨거운 데이터와 차가운 데이터를 다른 블록에 모으는 분리 기법을 쓴다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>웨어 레벨링</h2>
+<p>핫/콜드 부하에서 차가운 데이터가 든 블록은 거의 지워지지 않고, 뜨거운 블록만 계속 지워진다. 블록 하나라도 수명이 다하면 문제가 되므로, FTL은 지우기 횟수를 고르게 맞춘다. 빈 블록을 고를 때 덜 닳은 블록을 우선하는 <span class="term">동적 웨어 레벨링</span>과, 오래 안 움직인 차가운 데이터를 일부러 많이 닳은 블록으로 옮겨 덜 닳은 블록을 순환에 끌어들이는 <span class="term">정적 웨어 레벨링</span>이 있다. 정적 레벨링은 추가 복사를 만드니 WAF와 균등함 사이의 거래다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-3</span><span class="ttl">지우기 횟수 지도 (핫/콜드 부하, 쓰기 30만 페이지)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">정적 웨어 레벨링</span><select data-k="wl"><option value="0">끔</option><option value="1">켬</option></select></label>
+      <label class="ctrl"><span class="lab">차가운 데이터 비율 <output data-o="cold"></output></span><input type="range" data-k="cold" min="20" max="90" step="5" value="70" data-d="0" data-u="%"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="250"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">최대 / 평균 지우기</span><span class="v" data-r="mx"></span></div>
+      <div class="ro"><span class="k">불균등도 (최대 ÷ 평균)</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">WAF</span><span class="v" data-r="waf"></span></div>
+      <div class="ro"><span class="k">SSD 수명 (최대 블록 기준, 상대)</span><span class="v" data-r="life"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 칸 하나가 블록, 색이 지우기 횟수(진할수록 많이 닳음)다. 레벨링이 꺼져 있으면 차가운 데이터 블록(옅은 칸)은 거의 새것인 채 남고 일부 블록만 닳는다. 켜면 색이 고르게 퍼져 수명은 늘지만, WAF도 함께 오른다. 옮겨진 차가운 데이터가 뜨거운 블록에 섞여 GC 때마다 다시 복사되기 때문이다. 그래서 실제 FTL은 옮긴 차가운 데이터를 따로 모아 두는 블록(콜드 스트림)을 둔다.</p>
+</div>
+
+<div class="note-box"><div class="h" data-h="補">TRIM: "그 칸은 이제 안 써요"</div>
+파일을 지워도 운영체제는 보통 파일 시스템의 표만 고친다. SSD는 그 LBA가 쓸모없어졌다는 것을 모르고, GC 때마다 이미 지워진 파일의 페이지를 성실히 옮겨 쓴다. <b>TRIM</b>(NVMe에서는 Deallocate) 명령은 호스트가 "이 LBA들은 더 이상 유효하지 않다"고 알려 주는 방법이다. 해당 페이지는 즉시 무효가 되어 GC 복사가 줄고, 사실상 OP가 늘어난 효과를 낸다.
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">호스트가 같은 LBA를 다시 쓰면 FTL은?</p><ol><li>그 페이지를 지우고 같은 자리에 쓴다</li><li>빈 페이지에 새로 쓰고 매핑을 바꾼 뒤 옛 페이지를 무효로 표시한다</li><li>블록 전체를 즉시 지운다</li><li>쓰기를 거부한다</li></ol>
+<p class="explain">out-of-place update.</p></div>
+<div class="quiz" data-a="2"><p class="q">OP = 7 %일 때 균일 무작위 부하의 근사 WAF는?</p><ol><li>약 1.1</li><li>약 2</li><li>약 7.6</li><li>약 0.5</li></ol>
+<p class="explain">(1 + 0.07)/(2 × 0.07) ≈ 7.6.</p></div>
+<div class="quiz" data-a="0"><p class="q">순차 쓰기에서 WAF가 1에 가까운 이유는?</p><ol><li>블록 하나의 페이지들이 함께 무효가 되어 GC 때 복사할 유효 페이지가 거의 없어서</li><li>순차 쓰기는 NAND에 쓰지 않아서</li><li>ECC가 꺼져서</li><li>OP가 0이 되어서</li></ol>
+<p class="explain">한꺼번에 쓴 데이터가 한꺼번에 무효가 된다.</p></div>
+<div class="quiz" data-a="3"><p class="q">정적 웨어 레벨링의 대가는?</p><ol><li>용량 감소</li><li>읽기 지연 증가</li><li>ECC 약화</li><li>차가운 데이터를 옮기는 추가 쓰기 (WAF 약간 증가)</li></ol>
+<p class="explain">균등한 마모를 얻는 대신 복사가 늘어난다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* ── 공통 FTL 시뮬레이터 ── */
+function FTL(B, P, logical, opt={}){
+  this.B = B; this.P = P; this.L = logical;
+  this.map = new Int32Array(logical).fill(-1);
+  this.owner = new Int32Array(B*P).fill(-1); // 물리 페이지 → LBA (유효면)
+  this.state = new Uint8Array(B*P); // 0 빈, 1 유효, 2 무효
+  this.valid = new Int32Array(B); this.erase = new Int32Array(B); this.age = new Float64Array(B);
+  this.free = []; for(let b=1;b<B;b++) this.free.push(b);
+  this.active = 0; this.wp = 0; this.hw = 0; this.nw = 0; this.t = 0; this.gcValid = []; this.pol = opt.pol || 'greedy'; this.swl = opt.swl || false; this.reserve = opt.reserve || 1;
+}
+FTL.prototype.place = function(l){
+  if(this.wp >= this.P){ this.age[this.active] = this.t++; this.active = this.pickFree(); this.wp = 0; }
+  const p = this.active*this.P + this.wp++;
+  this.state[p] = 1; this.owner[p] = l; this.map[l] = p; this.valid[this.active]++; this.nw++;
+};
+FTL.prototype.pickFree = function(){ // 동적 레벨링: 가장 덜 닳은 빈 블록
+  let bi = 0; for(let i=1;i<this.free.length;i++) if(this.erase[this.free[i]] < this.erase[this.free[bi]]) bi = i;
+  return this.free.splice(bi,1)[0];
+};
+FTL.prototype.invalidate = function(l){ const p = this.map[l]; if(p >= 0){ this.state[p] = 2; this.owner[p] = -1; this.valid[Math.floor(p/this.P)]--; this.map[l] = -1; } };
+FTL.prototype.write = function(l){ this.invalidate(l); this.hw++; this.ensure(); this.place(l); };
+FTL.prototype.ensure = function(){ let g = 0; while(this.free.length <= this.reserve && g++ < this.B) this.gc(); };
+FTL.prototype.victim = function(){
+  let v = -1;
+  for(let b=0;b<this.B;b++){
+    if(b === this.active || this.free.includes(b)) continue;
+    if(v < 0) { v = b; continue; }
+    if(this.pol === 'greedy' ? this.valid[b] < this.valid[v] : this.age[b] < this.age[v]) v = b;
+  }
+  return v;
+};
+FTL.prototype.relocate = function(v){
+  const pages = [];
+  for(let i=0;i<this.P;i++){ const p = v*this.P + i; if(this.state[p] === 1) pages.push(this.owner[p]); }
+  for(const l of pages){ this.invalidate(l); this.place(l); }
+  for(let i=0;i<this.P;i++){ this.state[v*this.P+i] = 0; this.owner[v*this.P+i] = -1; }
+  this.valid[v] = 0; this.erase[v]++; this.free.push(v);
+  return pages.length;
+};
+FTL.prototype.gc = function(){
+  const v = this.victim(); if(v < 0) return;
+  this.gcValid.push(this.valid[v]/this.P); if(this.gcValid.length > 200) this.gcValid.shift();
+  this.relocate(v);
+  if(this.swl){ // 정적 레벨링: 가끔 가장 덜 닳은 (차가운) 블록을 옮겨 순환에 투입
+    let mn = -1, mx = 0;
+    for(let b=0;b<this.B;b++){ if(this.erase[b] > mx) mx = this.erase[b]; if(b !== this.active && !this.free.includes(b) && (mn < 0 || this.erase[b] < this.erase[mn])) mn = b; }
+    if(mn >= 0 && mx - this.erase[mn] > Math.max(60, 0.35*mx) && this.free.length > 0) this.relocate(mn);
+  }
+};
+
+/* 9-1 미니 SSD */
+(function(){
+  const box = document.getElementById('sim1'), svg = document.getElementById('miniSvg');
+  let f, msg;
+  function reset(){ f = new FTL(4, 4, 8, {reserve:0}); msg = '처음 상태 — 모든 페이지가 비어 있다'; draw(); }
+  function write(l){
+    f.invalidate(l); f.hw++;
+    let pre = '';
+    if(f.wp >= f.P && f.free.length <= 1){ const v = f.victim(); if(v >= 0){ const m = f.valid[v]; f.relocate(v); pre = `자동 GC(블록 ${v}, 유효 ${m}개 복사) → `; } }
+    f.place(l); msg = pre + `LBA ${l} → 블록 ${f.active} 페이지 ${f.wp-1}`; draw();
+  }
+  function doGC(auto){
+    const v = f.victim(); if(v < 0){ msg = 'GC할 블록이 없다'; draw(); return; }
+    if(f.free.length === 0 && f.wp >= f.P){
+      // 빈 블록이 없으면 희생 블록의 유효 페이지를 임시로 담을 곳이 없으므로, 가장 무효가 많은 블록부터
+    }
+    const moved = f.valid[v];
+    if(moved > 0 && f.free.length === 0 && f.P - f.wp < moved){ msg = '옮길 자리가 없다 — OP가 너무 작다!'; draw(); return; }
+    f.relocate(v);
+    msg = `${auto ? '자동 ' : ''}GC: 블록 ${v}의 유효 ${moved}페이지를 옮기고 지움`;
+    draw();
+  }
+  function draw(){
+    svg.innerHTML = '';
+    for(let b=0;b<4;b++){
+      const x = 20 + b*120;
+      J.svg('text', {x:x+50, y:20, 'text-anchor':'middle', class:'t-s', text:`블록 ${b} · 지움 ${f.erase[b]}회`}, svg);
+      J.svg('rect', {x:x-4, y:28, width:108, height:212, rx:5, fill:'none', stroke: b === f.active ? 'var(--red)' : f.free.includes(b) ? 'var(--line)' : 'var(--ink3)', 'stroke-width': b === f.active ? 2.5 : 1.2, 'stroke-dasharray': f.free.includes(b) ? '5 3' : ''}, svg);
+      for(let p=0;p<4;p++){
+        const i = b*4+p, st = f.state[i], y = 36 + p*50;
+        J.svg('rect', {x, y, width:100, height:42, rx:3, fill: st === 1 ? 'var(--jade)' : st === 2 ? 'var(--red-soft)' : 'var(--card)', stroke:'var(--line)'}, svg);
+        if(st === 2) for(let k=0;k<5;k++) J.svg('line', {x1:x+k*22, y1:y+42, x2:x+k*22+20, y2:y, stroke:'var(--red)', opacity:.5}, svg);
+        J.svg('text', {x:x+50, y:y+26, 'text-anchor':'middle', class:'t-m mono', text: st === 1 ? 'LBA '+f.owner[i] : st === 2 ? '무효' : '빈칸', style:`fill:${st === 1 ? '#fff' : 'var(--ink2)'}`}, svg);
+      }
+    }
+    J.svg('text', {x:520, y:20, class:'t-s', text:'매핑 테이블 (LBA → 블록:페이지)'}, svg);
+    for(let l=0;l<8;l++){ const p = f.map[l], y = 36 + l*26;
+      J.svg('rect', {x:520, y, width:180, height:22, rx:3, fill:'var(--paper2)', stroke:'var(--line)'}, svg);
+      J.svg('text', {x:530, y:y+16, class:'t-s mono', text:`LBA ${l} → ${p < 0 ? '—' : Math.floor(p/4)+':'+(p%4)}`}, svg); }
+    J.out(box,'hw', f.hw); J.out(box,'nw', f.nw);
+    J.out(box,'waf', f.hw ? J.fmt(f.nw/f.hw,2) : '—', f.hw && f.nw/f.hw > 1.5 ? 'warn' : 'good');
+    J.out(box,'msg', msg);
+  }
+  const bb = document.getElementById('lbaBtns');
+  for(let l=0;l<8;l++){ const b = document.createElement('button'); b.className = 'sbtn'; b.textContent = 'LBA '+l; b.onclick = () => write(l); bb.appendChild(b); }
+  document.getElementById('mRand').onclick = () => { for(let i=0;i<5;i++) write(Math.floor(Math.random()*8)); };
+  document.getElementById('mGC').onclick = () => doGC(false);
+  document.getElementById('mReset').onclick = reset;
+  reset();
+})();
+
+/* 9-2 GC 시뮬레이터 */
+(function(){
+  const box = document.getElementById('sim2');
+  const B = 64, P = 64; let f, run = false, hist = [], last = {hw:0, nw:0}, seq = 0, R = J.rng(1);
+  const rd = () => ({op:+J.$('[data-k="op"]',box).value/100, wl:J.$('[data-k="wl"]',box).value, pol:J.$('[data-k="pol"]',box).value});
+  function reset(){
+    const p = rd(); const logical = Math.floor(B*P/(1+p.op));
+    f = new FTL(B, P, logical, {pol:p.pol}); R = J.rng(1); seq = 0;
+    for(let l=0;l<logical;l++) f.write(l); // 채우기
+    f.hw = 0; f.nw = 0; f.gcValid = []; hist = []; last = {hw:0, nw:0}; draw();
+  }
+  function nextLba(){ const p = rd(), L = f.L;
+    if(p.wl === 'seq') return (seq++) % L;
+    if(p.wl === 'hot') return R() < 0.8 ? Math.floor(R()*L*0.2) : Math.floor(L*0.2 + R()*L*0.8);
+    return Math.floor(R()*L); }
+  function pump(n){ for(let i=0;i<n;i++) f.write(nextLba()); const dh = f.hw - last.hw, dn = f.nw - last.nw; if(dh >= 2000){ hist.push([f.hw, dn/dh]); last = {hw:f.hw, nw:f.nw}; if(hist.length > 400) hist.shift(); } }
+  function draw(){
+    const p = rd();
+    const {ctx, w, h} = J.fit(document.getElementById('cv2a'));
+    ctx.clearRect(0,0,w,h);
+    const cs = Math.min((w-20)/8, (h-20)/8), ox = (w - cs*8)/2, oy = 10;
+    for(let b=0;b<B;b++){ const x = ox + (b%8)*cs, y = oy + Math.floor(b/8)*cs, fr = f.free.includes(b);
+      ctx.fillStyle = J.c('--jade'); ctx.globalAlpha = fr ? 0 : 0.08 + 0.92*f.valid[b]/P; ctx.fillRect(x+2, y+2, cs-4, cs-4); ctx.globalAlpha = 1;
+      ctx.strokeStyle = J.c(b === f.active ? '--red' : '--line'); ctx.lineWidth = b === f.active ? 3 : 1; ctx.setLineDash(fr ? [4,3] : []); ctx.strokeRect(x+2.5, y+2.5, cs-5, cs-5); ctx.setLineDash([]); ctx.lineWidth = 1;
+      if(cs > 30){ ctx.fillStyle = J.c(f.valid[b]/P > .5 ? '--card' : '--ink2'); ctx.font = '10px "JetBrains Mono"'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(fr ? '' : f.valid[b], x+cs/2, y+cs/2); } }
+    const th = []; for(let o=0.05; o<=0.6; o+=0.01) th.push([o*100, (1+o)/(2*o)]);
+    const cur = hist.length ? hist[hist.length-1][1] : 1;
+    J.plot(document.getElementById('cv2b'), {x:[0,60], y:[0,12], xlab:'OP (%) · 점 = 현재 측정', ylab:'WAF', series:[{pts:th, color:'--ink3', w:2, dash:[5,4]}],
+      points:[{x:p.op*100, y:Math.min(12,cur), color:'--red', r:7, label:'측정 '+J.fmt(cur,2)}], pad:{l:36}});
+    J.out(box,'hw', f.hw.toLocaleString('ko-KR'));
+    J.out(box,'waf', hist.length ? J.fmt(cur,2) : '—', cur > 4 ? 'bad' : cur > 2 ? 'warn' : 'good');
+    J.out(box,'th', J.fmt((1+p.op)/(2*p.op),2));
+    const gv = f.gcValid.length ? f.gcValid.reduce((a,b)=>a+b,0)/f.gcValid.length : 0;
+    J.out(box,'vr', J.fmt(gv*100,0)+' %');
+  }
+  J.$$('input, select', box).forEach(i => i.addEventListener('input', () => { reset(); }));
+  J.sim('sim2', () => {});
+  document.getElementById('gcRun').onclick = e => { run = !run; e.target.textContent = run ? '❚❚ 멈춤' : '▶ 쓰기 흘리기'; };
+  document.getElementById('gcFast').onclick = () => { pump(200000); draw(); };
+  document.getElementById('gcReset').onclick = reset;
+  reset();
+  J.loop(document.getElementById('cv2a'), () => { if(run){ pump(1500); draw(); } });
+})();
+
+/* 9-3 웨어 레벨링 */
+J.sim('sim3', (v, box) => {
+  const B = 64, P = 32, op = 0.15, logical = Math.floor(B*P/(1+op));
+  const f = new FTL(B, P, logical, {pol:'greedy', swl: v.wl === '1'});
+  const R = J.rng(3);
+  for(let l=0;l<logical;l++) f.write(l);
+  f.hw = 0; f.nw = 0;
+  const hotN = Math.floor(logical*(1 - v.cold/100));
+  for(let i=0;i<300000;i++) f.write(Math.floor(R()*Math.max(1,hotN)));
+  const er = Array.from(f.erase), mx = Math.max(...er), avg = er.reduce((a,b)=>a+b,0)/B;
+  const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+  ctx.clearRect(0,0,w,h);
+  const cs = Math.min((w-120)/16, (h-20)/4), ox = 10, oy = 10;
+  er.forEach((e,b) => { const x = ox + (b%16)*cs, y = oy + Math.floor(b/16)*cs;
+    ctx.fillStyle = J.c('--red'); ctx.globalAlpha = 0.06 + 0.94*e/Math.max(1,mx); ctx.fillRect(x+2, y+2, cs-4, cs-4); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c(e/mx > .55 ? '--card' : '--ink2'); ctx.font = '10px "JetBrains Mono"'; ctx.textAlign='center'; ctx.textBaseline='middle'; if(cs > 26) ctx.fillText(e, x+cs/2, y+cs/2); });
+  // 범례
+  const lx = ox + 16*cs + 16; ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('지우기 횟수', lx, 20);
+  for(let i=0;i<5;i++){ ctx.fillStyle = J.c('--red'); ctx.globalAlpha = 0.06 + 0.94*i/4; ctx.fillRect(lx, 30 + i*22, 20, 18); ctx.globalAlpha = 1; ctx.fillStyle = J.c('--ink2'); ctx.fillText(Math.round(mx*i/4), lx + 26, 44 + i*22); }
+  J.out(box,'mx', mx+' / '+J.fmt(avg,0));
+  J.out(box,'r', J.fmt(mx/avg,2)+' 배', mx/avg > 2 ? 'bad' : mx/avg > 1.3 ? 'warn' : 'good');
+  J.out(box,'waf', J.fmt(f.nw/f.hw,2));
+  J.out(box,'life', J.fmt(avg/mx*100,0)+' %');
+});
+</script>
+</body>
+</html>

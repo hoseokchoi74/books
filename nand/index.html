@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NAND 書 · 집현전</title>
+<meta name="description" content="집현전 인터랙티브 교과서 — 전자 몇 개에서 페타바이트까지, 직접 만지며 배우는 NAND 플래시 교과서">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%237b3a5d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E藏%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/jade.css">
+<link rel="stylesheet" href="../assets/book.css">
+<script src="book.js"></script>
+<script src="../assets/book.js"></script>
+<script src="../assets/iso3d.js"></script>
+<style>
+  .hero{display:grid; grid-template-columns:1.05fr 1fr; gap:40px; align-items:center; padding:56px 0 40px}
+  .hero h1{font-size:clamp(34px,5.4vw,58px); margin:14px 0 18px; font-weight:900; line-height:1.18}
+  .hero h1 em{font-style:normal; color:var(--plum)}
+  .hero p.lead{font-size:17.5px; color:var(--ink2); max-width:560px}
+  .hero .cta{display:flex; gap:10px; flex-wrap:wrap; margin:24px 0 18px}
+  .hero .chips{display:flex; gap:8px; flex-wrap:wrap}
+  .hero .chips span{font-size:13px; border:1px solid var(--line); border-radius:3px; padding:2px 10px; background:var(--card); color:var(--ink2)}
+  .stage{position:relative; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:10px; box-shadow:inset 0 0 0 5px var(--card), inset 0 0 0 6px var(--line2), var(--shadow)}
+  .stage canvas{display:block; width:100%}
+  .stage .over{position:absolute; left:18px; top:14px; font-size:12px; color:var(--ink3)}
+  .stage .leg{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12.5px; color:var(--ink2); padding:4px 8px 2px}
+  .stage .leg i{display:inline-block; width:11px; height:11px; border-radius:2px; vertical-align:-1px; margin-right:5px}
+  .stage .bar{display:flex; gap:8px; align-items:center; padding:4px 8px; font-size:12.5px; color:var(--ink2); flex-wrap:wrap}
+  .titleslip{position:absolute; right:-12px; top:-18px; writing-mode:vertical-rl; background:var(--paper); border:1px solid var(--line); padding:12px 7px; font-family:var(--serif); font-weight:900; letter-spacing:.3em; font-size:17px; box-shadow:var(--shadow)}
+  .titleslip small{display:block; font-weight:400; font-size:11px; letter-spacing:.15em; color:var(--ink3); margin-top:6px}
+  @media (max-width:900px){ .hero{grid-template-columns:1fr; padding-top:32px} .titleslip{right:6px; top:-14px} }
+  section.block{padding:46px 0 10px}
+  section.block > h2{font-size:28px; margin:0 0 8px; font-weight:900}
+  section.block > p.sub{color:var(--ink2); margin:0 0 22px; max-width:760px}
+  .chain svg{width:100%; height:auto; display:block}
+  .chain a:hover rect.blk{stroke:var(--red); stroke-width:2.5}
+  .nums{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px}
+  .num{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px; position:relative; overflow:hidden}
+  .num b{font-family:var(--serif); font-size:30px; font-weight:900; display:block}
+  .num span{font-size:14px; color:var(--ink2)}
+  .num:after{content:attr(data-h); position:absolute; right:10px; bottom:-14px; font-family:var(--serif); font-size:64px; color:var(--ink); opacity:.05; font-weight:900}
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px}
+  .card{display:flex; flex-direction:column; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:3px; padding:18px 18px 16px 24px; color:var(--ink); position:relative; transition:transform .15s, box-shadow .15s}
+  .card:before{content:''; position:absolute; left:8px; top:10px; bottom:10px; width:1px; background:var(--line)}
+  .card:hover{transform:translateY(-3px); box-shadow:var(--shadow); text-decoration:none; border-color:var(--plum)}
+  .card .cn{font-family:var(--mono); font-size:11.5px; color:var(--plum); letter-spacing:.15em}
+  .card h3{margin:0; font-size:18.5px}
+  .card p{margin:0; font-size:14px; color:var(--ink2); line-height:1.65; flex:1}
+  .card .tags{display:flex; gap:5px; flex-wrap:wrap; margin-top:6px}
+  .paths{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px}
+  .path{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px}
+  .path h3{margin:0 0 4px; font-size:17px}
+  .path p{margin:0 0 10px; font-size:14px; color:var(--ink2)}
+  .path .seq{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .path .seq a{font-family:var(--mono); font-size:13px; border:1px solid var(--plum); color:var(--plum); border-radius:3px; padding:1px 8px}
+  .path .seq i{color:var(--ink3); font-style:normal; font-size:12px}
+  .howto{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px}
+  .how{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px; text-align:center}
+  .how .hj{font-family:var(--serif); font-size:32px; font-weight:900; color:var(--red)}
+  .how b{display:block; font-family:var(--serif); margin:2px 0 4px}
+  .how span{font-size:13.5px; color:var(--ink2)}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<div class="wrap">
+
+<section class="hero">
+  <div>
+    <div class="kicker">Interactive NAND Flash Textbook · 集賢殿 器部 第二</div>
+    <h1>전자 몇백 개에서<br><em>페타바이트</em>까지</h1>
+    <p class="lead">스마트폰의 사진, 데이터센터의 AI 학습 데이터는 모두 절연막 속에 갇힌 전자 몇백 개로 기억됩니다. 플로팅 게이트와 전하 트랩, 터널링, 수백 층으로 쌓은 3D 구조, 한 셀에 네 비트를 담는 QLC, 그리고 그 모든 불완전함을 감추는 SSD 컨트롤러까지 — 직접 슬라이더를 움직이고 3D 구조를 돌려 보며 배우는 NAND 플래시 교과서입니다.</p>
+    <div class="cta">
+      <a class="btn red" href="chapters/flash.html">1장부터 펼치기 →</a>
+      <a class="btn ghost" href="chapters/vnand.html">3D NAND 둘러보기</a>
+    </div>
+    <div class="chips"><span>13개 장</span><span>38개 실험</span><span>3D 구조 모델</span><span>공대 학부 수준</span></div>
+  </div>
+  <div class="stage">
+    <div class="titleslip">NAND 書<small>貯藏之理</small></div>
+    <div class="over">드래그해서 돌려 보세요 · 워드라인 층이 하나씩 프로그램됩니다</div>
+    <canvas id="hero3d" data-h="400" aria-label="3D NAND 스택 모형"></canvas>
+    <div class="leg">
+      <span><i style="background:var(--plum)"></i>전하가 갇힌 셀 (프로그램)</span>
+      <span><i style="background:var(--line)"></i>빈 셀 (소거)</span>
+      <span><i style="background:var(--gold)"></i>워드라인 층 · 계단 콘택</span>
+      <span><i style="background:var(--indigo)"></i>비트라인</span>
+      <span><i style="background:var(--red)"></i>프로그램 펄스 중인 층</span>
+    </div>
+    <div class="bar">
+      <button class="sbtn on" id="hProg">프로그램 진행 중</button>
+      <button class="sbtn" id="hErase">블록 소거</button>
+      <span id="hStat" class="mono"></span>
+    </div>
+  </div>
+</section>
+
+<section class="block chain">
+  <div class="kicker">What NAND does</div>
+  <h2>NAND는 무엇을 하는가</h2>
+  <p class="sub">한 문장으로: <b>절연막 속에 전자를 가두어 문턱 전압을 옮기고, 그 전압을 다시 읽어 숫자로 바꾼다.</b> 그리고 그 불완전한 셀 수천억 개를 컨트롤러가 믿을 만한 저장 장치로 포장한다. 블록을 누르면 해당 장으로 갑니다.</p>
+  <figure class="fig" style="margin:0">
+    <svg viewBox="0 0 980 230" role="img" aria-label="SSD 데이터 경로">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink3)"/></marker></defs>
+      <g id="chainG"></g>
+    </svg>
+    <figcaption><b>그림 0-1.</b> 호스트의 쓰기 요청이 셀의 전자가 되기까지. 아래 숫자는 각 단계의 대표적인 시간이다.</figcaption>
+  </figure>
+</section>
+
+<section class="block">
+  <div class="kicker">NAND in numbers</div>
+  <h2>숫자로 보는 요즘 NAND</h2>
+  <p class="sub">이 책을 덮을 즈음이면 아래 숫자가 왜 중요한지, 서로 어떻게 얽혀 있는지 설명할 수 있게 됩니다. (2025–26년 양산 제품 기준 대략값)</p>
+  <div class="nums">
+    <div class="num" data-h="層"><b>300 + 층</b><span>최신 3D NAND의 워드라인 적층 수. 400층대가 다음 목표다 → 6장</span></div>
+    <div class="num" data-h="電"><b>~100 개</b><span>QLC 셀에서 이웃한 두 상태를 가르는 전자 수의 차이 → 2·5장</span></div>
+    <div class="num" data-h="位"><b>4 비트</b><span>QLC 셀 하나가 구분하는 16개의 문턱 전압 상태 → 5장</span></div>
+    <div class="num" data-h="壽"><b>~1,000 회</b><span>QLC의 대략적인 프로그램/소거 수명. SLC는 수만 회 → 7장</span></div>
+    <div class="num" data-h="正"><b>10⁻² → 10⁻¹⁵</b><span>LDPC가 원시 오류율을 끌어내리는 폭 → 8장</span></div>
+    <div class="num" data-h="容"><b>2 Tb</b><span>다이 하나의 용량. 16단 패키지면 4 TB → 6·11장</span></div>
+  </div>
+</section>
+
+<section class="block" id="chapters">
+  <div class="kicker">Table of contents · 目次</div>
+  <h2>전체 장</h2>
+  <p class="sub">순서대로 읽어도 좋고 관심 있는 장부터 골라도 됩니다. 각 장은 <b>개념 → 그림 → 수식 → 실험 → 문제</b> 순서로 짜여 있습니다.</p>
+  <div class="cards" id="cards"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">Reading paths</div>
+  <h2>추천 학습 경로</h2>
+  <p class="sub">전공이나 관심사에 따라 이렇게 읽어 보세요.</p>
+  <div class="paths" id="paths"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">How to read</div>
+  <h2>이 책 읽는 법</h2>
+  <div class="howto">
+    <div class="how"><div class="hj">讀</div><b>읽기</b><span>개념과 직관을 먼저. 영어 용어는 괄호로 함께 씁니다.</span></div>
+    <div class="how"><div class="hj">觀</div><b>보기</b><span>SVG 도해와 3D 모델로 구조를 머릿속에 그립니다.</span></div>
+    <div class="how"><div class="hj">觸</div><b>만지기</b><span>실험의 슬라이더를 끝까지 밀어 보세요. 극단에서 배웁니다.</span></div>
+    <div class="how"><div class="hj">算</div><b>계산하기</b><span>예제 수치를 직접 따라가며 감을 잡습니다.</span></div>
+    <div class="how"><div class="hj">問</div><b>확인하기</b><span>장마다 문제, 마지막 장에서 종합 문제로 마무리합니다.</span></div>
+  </div>
+</section>
+
+</div>
+<footer class="site">NAND 書 — 집현전 인터랙티브 교과서 시리즈 · 수치는 교육용 근사 모델이며 특정 제품의 사양이 아닙니다.<br>콘텐츠 CC BY 4.0 · 코드 MIT</footer>
+
+<script>
+(function(){
+  const B = window.BOOK;
+  document.getElementById('cards').innerHTML = B.chapters.map(c => `
+    <a class="card" href="chapters/${c.slug}.html"><span class="cn">CHAPTER ${c.n}</span><h3>${c.title}</h3><p>${c.desc}</p>
+    <span class="tags">${c.tags.map(t => `<span class="tag ${t==='시뮬레이터'?'sim':t==='3D'?'d3':''}">${t}</span>`).join('')}</span></a>`).join('');
+  const P = [
+    ['입문 · 전체 그림','플래시가 처음이라면. 셀에서 SSD까지 큰 흐름을 잡는다.',['01','02','04','05','09']],
+    ['소자 · 공정','반도체 소자·공정 전공. 터널링, 전하 트랩, 3D 구조와 신뢰성.',['02','03','06','07','11']],
+    ['회로 · 신호처리','읽기 전압, 다중 레벨, 오류 정정과 소프트 읽기.',['04','05','07','08']],
+    ['SSD · 시스템','펌웨어·스토리지 엔지니어. FTL, GC, 병렬성, 성능 설계.',['05','08','09','10','12']],
+    ['데이터센터 · AI','왜 QLC와 대용량 SSD가 AI 시대의 핵심이 되는가.',['01','05','10','11','12']],
+    ['신뢰성 · 품질','비트가 틀리는 모든 이유와 그것을 감추는 방법.',['03','07','08','09']]
+  ];
+  const slug = n => B.chapters.find(c => c.n === n).slug;
+  document.getElementById('paths').innerHTML = P.map(p => `<div class="path"><h3>${p[0]}</h3><p>${p[1]}</p><div class="seq">${p[2].map(n => `<a href="chapters/${slug(n)}.html">${n}</a>`).join('<i>→</i>')}</div></div>`).join('');
+})();
+
+(function(){
+  const g = document.getElementById('chainG');
+  const blocks = [
+    ['호스트 (OS)','NVMe 쓰기 명령','ssd','10','~10 µs'],
+    ['SSD 컨트롤러','FTL 주소 변환','ftl','09','~1 µs'],
+    ['ECC 부호화','LDPC 패리티','ecc','08','~1 µs'],
+    ['NAND 인터페이스','채널 · 웨이','ssd','10','~10 µs'],
+    ['페이지 버퍼','ISPP 프로그램','program','03','tPROG ~0.5 ms'],
+    ['셀 (전하 트랩)','전자 수백 개','cell','02','수년 보존']
+  ];
+  const W = 140, gap = 28, x0 = 12;
+  blocks.forEach((b,i) => {
+    const x = x0 + i*(W+gap);
+    const a = J.svg('a', {href:'chapters/'+b[2]+'.html'}, g);
+    J.svg('rect', {class:'blk', x, y:60, width:W, height:96, rx:4, fill:'var(--card)', stroke:i===5?'var(--plum)':'var(--ink3)', 'stroke-width':1.5}, a);
+    J.svg('rect', {x, y:60, width:W, height:22, fill:i===5?'var(--plum-soft)':'var(--paper2)'}, a);
+    J.svg('text', {x:x+8, y:76, class:'t-s mono', text:'Ch.'+b[3]}, a);
+    J.svg('text', {x:x+W/2, y:110, 'text-anchor':'middle', class:'t-l', text:b[0]}, a);
+    J.svg('text', {x:x+W/2, y:134, 'text-anchor':'middle', class:'t-s', text:b[1]}, a);
+    J.svg('text', {x:x+W/2, y:190, 'text-anchor':'middle', class:'t-s mono', text:b[4], style:'fill:var(--red)'}, g);
+    if(i < blocks.length-1) J.svg('line', {x1:x+W+3, y1:108, x2:x+W+gap-3, y2:108, stroke:'var(--ink3)', 'stroke-width':1.5, 'marker-end':'url(#ar)'}, g);
+  });
+  J.svg('text', {x:12, y:40, class:'t-m', text:'쓰기: 논리 주소(LBA) + 데이터 →', style:'fill:var(--ink2)'}, g);
+  J.svg('text', {x:968, y:40, 'text-anchor':'end', class:'t-m', text:'→ 물리 페이지의 전하', style:'fill:var(--plum)'}, g);
+  J.svg('text', {x:490, y:222, 'text-anchor':'middle', class:'t-s', text:'읽기는 반대 방향: 셀 감지(tR ~30–60 µs) → 오류 정정 → 주소 역변환 → 호스트. DRAM보다 천 배 느리지만, 디스크보다 백 배 빠르다.'}, g);
+})();
+
+/* 히어로 3D: 수직 NAND 스택 */
+(function(){
+  const cv = document.getElementById('hero3d');
+  const cam = {yaw:-0.7, pitch:0.42, scale:30};
+  const L = 8, NX = 4, NZ = 3;
+  let prog = true, cur = 0, t = 0, erased = false;
+  const state = Array.from({length:L}, () => Array.from({length:NX*NZ}, () => 0));
+  const R = J.rng(3);
+  const target = Array.from({length:L}, () => Array.from({length:NX*NZ}, () => R() < .6 ? 1 : 0));
+  function draw(){
+    const {ctx, w, h} = J.fit(cv);
+    cam.scale = Math.min(w, h*1.3)/15;
+    cam.oy = h*0.08;
+    const S = new J3.Scene();
+    const lh = 0.62, P = 1.25;
+    S.box(-6.5, -0.6, -2.8, 12, 0.6, 5.6, '--paper2', {layer:0});
+    // 워드라인 층 (계단 콘택: 왼쪽으로 갈수록 아래층이 길게)
+    for(let k=0;k<L;k++){
+      const y = k*lh, ext = (L-1-k)*0.55;
+      S.box(-3.0 - ext - 0.6, y, -2.4, 3.0 + ext + 0.6 + 2.6, lh*0.45, 4.8, k === cur && prog ? '--red' : '--gold', {layer:1+k, alpha: .38});
+      S.box(-3.0 - ext - 0.6, y + lh*0.45, -2.4, 0.5, 0.25 + (L-1-k)*0, 0.5, '--ink3', {layer:1+k});
+    }
+    // 채널 홀 셀
+    for(let ix=0; ix<NX; ix++) for(let iz=0; iz<NZ; iz++){
+      const x = -1.9 + ix*P, z = -1.25 + iz*P, id = ix*NZ+iz;
+      for(let k=0;k<L;k++){
+        const v = state[k][id];
+        S.prism(x, k*lh, z, 0.36, lh*0.45, v > 0.5 ? '--plum' : '--line', {layer:20+k, n:10, c:[x, k*lh, z]});
+      }
+    }
+    // 비트라인 (x 방향... z 방향으로 지나감)
+    for(let ix=0; ix<NX; ix++){ const x = -1.9 + ix*P; S.box(x-0.12, L*lh + 0.15, -2.6, 0.24, 0.18, 5.2, '--indigo', {layer:40}); }
+    S.render(ctx, cam, w, h);
+    ctx.font = '12px "Noto Sans KR"'; ctx.fillStyle = J.c('--ink2'); ctx.textAlign = 'left';
+    const pc = J3.project([-3.6 - (L-1)*0.55, 0, 2.4], cam, w, h); ctx.fillText('계단 콘택', pc[0]-10, pc[1]+18);
+    const pb = J3.project([2.3, L*lh+0.3, -2.6], cam, w, h); ctx.fillText('비트라인', pb[0]+6, pb[1]-4);
+  }
+  J3.drag(cv, cam, draw);
+  J.live(draw);
+  const stat = document.getElementById('hStat');
+  J.loop(cv, dt => {
+    if(!cam.user) cam.yaw += dt*0.08;
+    t += dt;
+    if(prog && t > 0.7){ t = 0; state[cur] = target[cur].slice(); cur = (cur+1) % L; if(cur === 0){ prog = false; document.getElementById('hProg').classList.remove('on'); document.getElementById('hProg').textContent = '다시 프로그램'; } }
+    const n = state.flat().filter(v => v).length;
+    stat.textContent = `프로그램된 셀 ${n} / ${L*NX*NZ} · 페이지(층) ${prog ? cur : L} / ${L}`;
+    draw();
+  });
+  document.getElementById('hProg').onclick = e => { prog = true; t = 0; e.target.classList.add('on'); e.target.textContent = '프로그램 진행 중'; };
+  document.getElementById('hErase').onclick = () => { state.forEach(r => r.fill(0)); cur = 0; prog = false; const b = document.getElementById('hProg'); b.classList.remove('on'); b.textContent = '프로그램 시작'; };
+})();
+</script>
+</body>
+</html>

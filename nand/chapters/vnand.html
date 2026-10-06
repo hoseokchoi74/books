@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D NAND · NAND 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%237b3a5d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E藏%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../../assets/iso3d.js"></script>
+</head>
+<body data-ch="vnand">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 06 <span class="hanja">第六章 · 層</span></div>
+  <h1>3D NAND</h1>
+  <p class="lead">2D NAND는 10 nm대에서 멈췄다. 셀 사이에 남은 전자가 수십 개뿐이고, 이웃 셀 간섭이 감당할 수 없을 만큼 커졌기 때문이다. 해법은 놀랍도록 대담했다. 눕혀 있던 스트링을 세우고, 워드라인을 수백 층 쌓은 뒤, 그 전체를 한 번에 뚫는다. 이 장은 오늘날 모든 NAND의 형태인 3D(수직) NAND의 구조와 공정, 그리고 한계다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>3D NAND의 구조(워드라인 적층, 채널 홀, 원통형 CTF 셀, 계단 콘택, 슬릿)를 3D로 설명할 수 있다.</li>
+  <li>채널 홀 단면의 동심원 층 구조를 그릴 수 있다.</li>
+  <li>층수·홀 피치·셀당 비트로 비트 밀도를 계산한다.</li>
+  <li>고종횡비 홀의 테이퍼와 다중 데크(string stacking)의 필요성을 이해한다.</li>
+  <li>계단 콘택, CMOS 언더 어레이(CUA)·웨이퍼 본딩 같은 면적 기술을 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>스트링을 세우다</h2>
+<p>3D NAND에서는 워드라인이 평면 위의 선이 아니라 <strong>층(판)</strong>이다. 금속(텅스텐 또는 몰리브덴) 워드라인 층과 산화막 절연층을 번갈아 수백 층 쌓은 뒤, 그 더미를 위에서 아래까지 수 µm 깊이로 뚫는 <span class="term">채널 홀(channel hole)</span>을 수십억 개 만든다. 홀 벽에 블로킹 막–질화막(전하 트랩)–터널 산화막–폴리실리콘 채널을 차례로 입히면, 홀 하나가 수직 스트링 하나가 되고 홀과 워드라인 층이 만나는 곳마다 원통형 셀이 생긴다. 층 사이를 오가는 연결은 가장자리를 <span class="term">계단</span> 모양으로 깎아 각 층에 콘택을 내린다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-1</span><span class="ttl">3D NAND 블록 모형</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">보이는 워드라인 층 <output data-o="L"></output></span><input type="range" data-k="L" min="4" max="16" step="1" value="10" data-d="0" data-u="층"></label>
+      <label class="ctrl"><span class="lab">분해 (층 간격) <output data-o="gap"></output></span><input type="range" data-k="gap" min="0" max="100" step="1" value="0" data-d="0" data-u="%"></label>
+    </div>
+    <div class="btnrow" id="layerBtns">
+      <span class="hint">보기:</span>
+      <label class="hint"><input type="checkbox" data-l="wl" checked> 워드라인 층</label>
+      <label class="hint"><input type="checkbox" data-l="hole" checked> 채널 홀 (셀)</label>
+      <label class="hint"><input type="checkbox" data-l="bl" checked> 비트라인</label>
+      <label class="hint"><input type="checkbox" data-l="slit" checked> 슬릿 (공통 소스)</label>
+      <label class="hint"><input type="checkbox" data-l="cua"> CMOS 언더 어레이</label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="440"></canvas></div>
+    <div class="legend"><span><i style="background:var(--gold)"></i>워드라인 층 (+계단)</span><span><i style="background:var(--plum)"></i>채널 홀 셀</span><span><i style="background:var(--indigo)"></i>비트라인</span><span><i style="background:var(--ink3)"></i>슬릿·콘택</span><span><i style="background:var(--jade)"></i>주변 회로 (CUA)</span></div>
+  </div>
+  <p class="cap"><b>사용법.</b> 드래그로 돌려 보자. 왼쪽 계단에서 각 층으로 콘택(회색 기둥)이 내려간다. "워드라인 층"을 끄면 홀마다 셀이 층층이 쌓인 수직 스트링이 드러난다. 슬릿은 워드라인 층을 블록(또는 핑거)으로 자르고 공통 소스를 연결하는 깊은 홈이다. CUA를 켜면 주변 회로가 어레이 아래로 숨어 다이 면적을 줄이는 모습을 볼 수 있다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>채널 홀 한 개를 잘라 보면</h2>
+<figure class="fig">
+<svg viewBox="0 0 760 300" id="ring" role="img" aria-label="채널 홀 단면"></svg>
+<figcaption><b>그림 6-1.</b> 채널 홀 단면(왼쪽: 위에서 본 동심원, 오른쪽: 세로 단면). 바깥에서 안쪽으로 워드라인 금속 – 블로킹 산화막 – 질화막 트랩층 – 터널 산화막 – 폴리실리콘 채널 – 코어 산화막. 셀은 워드라인 층 하나 두께(수십 nm)만큼의 원통 고리다. 2D와 달리 게이트가 채널을 사방에서 감싸(GAA) 제어력이 좋다.</figcaption>
+</figure>
+
+<h2 id="s3"><span class="n">03</span>층수와 밀도</h2>
+<p>3D NAND의 밀도는 층수에 거의 비례한다. 평면 방향의 셀 피치(홀 간격 ~100–150 nm)는 2D 시절(~20 nm)보다 오히려 크다. 미세화 대신 적층으로 밀도를 올리는 것이다. 그래서 2D 시절의 극한 리소그래피 대신, 수백 층의 증착과 단 한 번의 초고종횡비 식각이 핵심 공정이 되었다.</p>
+<div class="eq">$$\text{비트 밀도} \approx \frac{N_{layer}\times n_{bit}\times \eta}{A_{hole}},\qquad A_{hole}\approx \frac{\sqrt3}{2}p^2\ (\text{육각 배열})$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-2</span><span class="ttl">층을 쌓으면 다이가 작아진다</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">워드라인 층수 <output data-o="L"></output></span><input type="range" data-k="L" min="24" max="1000" step="2" value="238" data-d="0" data-u="층"></label>
+      <label class="ctrl"><span class="lab">홀 피치 p <output data-o="p"></output></span><input type="range" data-k="p" min="80" max="200" step="1" value="145" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">셀당 비트 <output data-o="b"></output></span><input type="range" data-k="b" min="1" max="5" step="1" value="3" data-d="0"></label>
+      <label class="ctrl"><span class="lab">셀 어레이 효율 η <output data-o="eta"></output></span><input type="range" data-k="eta" min="20" max="80" step="1" value="45" data-d="0" data-u="%"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">비트 밀도</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">1 Tb 다이 면적</span><span class="v" data-r="die"></span></div>
+      <div class="ro"><span class="k">스택 높이 (층당 ~45 nm)</span><span class="v" data-r="h"></span></div>
+      <div class="ro"><span class="k">한 번에 뚫을 때 종횡비 (지름 ~100 nm)</span><span class="v" data-r="ar"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 점은 업계의 대표 세대(대략 연도·층수), 빨간 점은 슬라이더 설정이다. 층수를 1,000층으로 올리면 스택 높이가 40 µm를 넘고, 그 깊이를 한 번에 뚫을 수 없다는 것을 종횡비가 알려 준다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>테이퍼와 다중 데크</h2>
+<p>수 µm 깊이의 홀을 식각하면 아래로 갈수록 좁아진다(테이퍼). 홀 지름이 다르면 셀마다 터널 산화막에 걸리는 전계가 달라(곡률 효과) 프로그램 속도와 문턱 전압 특성이 층마다 달라진다. 지름이 작은 아래층 셀은 빨리 프로그램되고, 위층은 느리다. 그래서 층이 일정 수를 넘으면 스택을 두세 번에 나눠 쌓고 뚫은 뒤 이어 붙인다(<span class="term">더블/트리플 데크</span>, string stacking). 컨트롤러는 층별로 프로그램 전압을 보정한다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-3</span><span class="ttl">채널 홀 테이퍼와 데크 수</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">총 층수 <output data-o="L"></output></span><input type="range" data-k="L" min="48" max="500" step="2" value="300" data-d="0" data-u="층"></label>
+      <label class="ctrl"><span class="lab">데크 수 <output data-o="dk"></output></span><input type="range" data-k="dk" min="1" max="4" step="1" value="2" data-d="0"></label>
+      <label class="ctrl"><span class="lab">윗지름 <output data-o="dt"></output></span><input type="range" data-k="dt" min="70" max="140" step="1" value="110" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">테이퍼 (µm당 지름 감소) <output data-o="tp"></output></span><input type="range" data-k="tp" min="1" max="15" step="0.5" value="6" data-d="1" data-u="nm/µm"></label>
+    </div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv3a" data-h="320"></canvas></div><div class="canvas-box"><canvas id="cv3b" data-h="320"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">가장 좁은 지름</span><span class="v" data-r="min"></span></div>
+      <div class="ro"><span class="k">지름 편차 (최대/최소)</span><span class="v" data-r="var"></span></div>
+      <div class="ro"><span class="k">층별 프로그램 속도 편차</span><span class="v" data-r="sp"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽은 홀의 세로 단면 모양(가로 과장), 오른쪽은 층 번호에 따른 지름과 상대 프로그램 속도다. 데크를 1개로 두면 맨 아래 지름이 50 nm 아래로 좁아지거나 홀이 막힌다(빨강). 데크를 나누면 각 데크가 다시 넓은 지름에서 시작한다. 대신 데크 사이 접합 공정이 추가되어 비용이 든다.</p>
+</div>
+
+<h2 id="s5"><span class="n">05</span>면적을 짜내는 기술들</h2>
+<div class="tbwrap"><table class="tb">
+<tr><th>기술</th><th>아이디어</th><th>효과</th></tr>
+<tr><td><b>계단 콘택(staircase)</b></td><td>각 워드라인 층에 콘택을 내리려 가장자리를 계단으로 깎음</td><td>층이 늘수록 계단이 길어져 면적을 먹음 → 계단을 여러 방향으로 나누는 기법 등장</td></tr>
+<tr><td><b>CMOS 언더 어레이 (CUA/COP/PUC)</b></td><td>페이지 버퍼 등 주변 회로를 셀 어레이 아래에 먼저 만들고 그 위에 적층</td><td>다이 면적 20–30 % 절감</td></tr>
+<tr><td><b>웨이퍼 본딩 (CBA, Xtacking 등)</b></td><td>셀 어레이 웨이퍼와 CMOS 웨이퍼를 따로 만든 뒤 하이브리드 본딩으로 붙임</td><td>CMOS는 고온 셀 공정을 피해 빠른 트랜지스터 사용, 병렬 공정</td></tr>
+<tr><td><b>몰리브덴 워드라인</b></td><td>텅스텐 대신 저항이 낮은 Mo, 더 얇은 층</td><td>층 두께 감소 → 스택 높이·종횡비 완화</td></tr>
+</table></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">3D NAND에서 밀도를 높이는 주된 방법은?</p><ol><li>평면 셀 피치를 2D보다 더 줄인다</li><li>워드라인 층을 더 많이 쌓는다</li><li>셀 커패시터를 키운다</li><li>비트라인을 없앤다</li></ol>
+<p class="explain">평면 피치는 오히려 2D보다 크다. 층수가 밀도를 정한다.</p></div>
+<div class="quiz" data-a="3"><p class="q">채널 홀 안쪽에서 바깥으로의 순서로 옳은 것은?</p><ol><li>워드라인 → 채널 → 질화막</li><li>터널 산화막 → 코어 → 채널</li><li>질화막 → 코어 → 블로킹</li><li>코어 산화막 → 채널 → 터널 산화막 → 질화막 → 블로킹 → 워드라인</li></ol>
+<p class="explain">홀 벽에 블로킹부터 차례로 증착하므로, 안쪽이 채널과 코어다.</p></div>
+<div class="quiz" data-a="0"><p class="q">다중 데크(string stacking)를 쓰는 이유는?</p><ol><li>한 번에 뚫을 수 있는 홀 깊이(종횡비)와 테이퍼의 한계 때문에</li><li>셀당 비트를 늘리기 위해</li><li>ECC를 줄이기 위해</li><li>소거를 빠르게 하기 위해</li></ol>
+<p class="explain">수백 층을 한 번에 균일하게 식각하기 어려워 나눠 뚫고 잇는다.</p></div>
+<div class="quiz" data-a="2"><p class="q">CMOS 언더 어레이의 이점은?</p><ol><li>층수 증가</li><li>리텐션 개선</li><li>주변 회로를 어레이 아래에 두어 다이 면적 절감</li><li>소거 전압 감소</li></ol>
+<p class="explain">주변 회로가 차지하던 평면 면적을 어레이 아래로 숨긴다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 6-1 3D 모형 */
+(function(){
+  const cv = document.getElementById('cv1');
+  const cam = {yaw:-0.75, pitch:0.45, scale:26};
+  const show = {wl:true, hole:true, bl:true, slit:true, cua:false};
+  let V = {L:10, gap:0};
+  function draw(){
+    const {ctx, w, h} = J.fit(cv);
+    const L = V.L, lh = 0.5, gap = V.gap/100*0.6, P = 1.15;
+    cam.scale = Math.min(w, h*1.3)/ (16 + L*0.25);
+    cam.oy = h*0.12;
+    const S = new J3.Scene();
+    let base = 0;
+    if(show.cua){ S.box(-7.5, -1.2, -3.4, 13, 0.9, 6.8, '--jade', {layer:0}); for(let i=0;i<6;i++) S.box(-6.8 + i*2, -0.3, -3, 1.4, 0.25, 0.9, '--jade-soft', {layer:1}); base = 0; }
+    else S.box(-7.5, -0.6, -3.4, 13, 0.6, 6.8, '--paper2', {layer:0});
+    const top = L*(lh+gap);
+    // 워드라인 층 + 계단
+    for(let k=0;k<L;k++){
+      const y = base + k*(lh+gap), ext = (L-1-k)*0.42;
+      if(show.wl){
+        S.box(-3.4 - ext, y, -3.0, 3.4 + ext + 5.0, lh*0.55, 2.7, '--gold', {layer:2+k, alpha:.42});
+        S.box(-3.4 - ext, y, 0.3, 3.4 + ext + 5.0, lh*0.55, 2.7, '--gold', {layer:2+k, alpha:.42});
+      }
+      S.box(-3.4 - ext + 0.08, y + lh*0.55, -1.0, 0.24, top - y + 0.1, 0.24, '--ink3', {layer:60});
+    }
+    // 슬릿
+    if(show.slit) S.box(-3.4 - (L-1)*0.42, 0, -0.12, 3.4 + (L-1)*0.42 + 5.0, top, 0.24, '--ink3', {layer:1, alpha:.3});
+    // 채널 홀
+    if(show.hole) for(let ix=0; ix<4; ix++) for(let iz=0; iz<4; iz++){
+      const x = -2.6 + ix*P + (iz%2)*P/2, z = (iz < 2 ? -2.55 : 0.75) + (iz%2)*1.2;
+      for(let k=0;k<L;k++){ const y = base + k*(lh+gap); S.prism(x, y, z, 0.32, lh*0.55, (k+ix+iz)%3 ? '--plum' : '--plum-soft', {layer:30+k, n:10, c:[x,y,z]}); if(gap > 0.05) S.prism(x, y + lh*0.55, z, 0.14, gap + lh*0.45, '--ink3', {layer:30+k, n:6, c:[x,y,z]}); }
+    }
+    if(show.bl) for(let ix=0; ix<8; ix++){ const x = -2.6 + ix*P/2; S.box(x-0.07, top + 0.2, -3.2, 0.14, 0.12, 6.4, '--indigo', {layer:70}); }
+    S.render(ctx, cam, w, h);
+    ctx.font = '12px "Noto Sans KR"'; ctx.fillStyle = J.c('--ink2'); ctx.textAlign='left';
+    const ps = J3.project([-3.4 - (L-1)*0.42, 0, 2.9], cam, w, h); ctx.fillText('계단 콘택 영역', ps[0]-20, ps[1]+20);
+    const pb = J3.project([2.0, top + 0.3, 3.2], cam, w, h); ctx.fillText('비트라인', pb[0]+6, pb[1]);
+  }
+  J3.drag(cv, cam, draw);
+  J.$$('#layerBtns input').forEach(c => c.onchange = () => { show[c.dataset.l] = c.checked; draw(); });
+  J.sim('sim1', v => { V = v; draw(); });
+  J.loop(cv, dt => { if(!cam.user){ cam.yaw += dt*0.09; draw(); } });
+})();
+
+/* 그림 6-1 */
+(function(){
+  const s = document.getElementById('ring');
+  const L = [['워드라인 (W/Mo)', 120, '--gold'],['블로킹 산화막', 92, '--ink3'],['질화막 (트랩)', 80, '--jade'],['터널 산화막', 68, '--ink3'],['폴리 채널', 60, '--indigo'],['코어 산화막', 42, '--paper2']];
+  L.forEach((l,i) => J.svg('circle', {cx:160, cy:150, r:l[1], fill:`var(${l[2]})`, opacity: i===1||i===3 ? .45 : .85, stroke:'var(--card)'}, s));
+  J.svg('text', {x:160, y:154, 'text-anchor':'middle', class:'t-s', text:'코어'}, s);
+  // 세로 단면
+  const x0 = 330;
+  for(let k=0;k<7;k++){ J.svg('rect', {x:x0, y:20+k*38, width:410, height:22, fill:'var(--gold)', opacity:.75}, s); J.svg('rect', {x:x0, y:42+k*38, width:410, height:16, fill:'var(--paper2)'}, s); }
+  const cx = 535, ws = [[70,'--ink3',.45],[58,'--jade',.85],[46,'--ink3',.45],[38,'--indigo',.85],[22,'--paper2',1]];
+  ws.forEach(([hw,c,o]) => J.svg('rect', {x:cx-hw, y:14, width:hw*2, height:272, fill:`var(${c})`, opacity:o}, s));
+  J.svg('rect', {x:cx-76, y:58, width:152, height:22, fill:'none', stroke:'var(--red)', 'stroke-width':2.5}, s);
+  J.svg('text', {x:cx+84, y:74, class:'t-s', text:'← 셀 하나', style:'fill:var(--red)'}, s);
+  L.forEach((l,i) => { J.svg('rect', {x:20 + (i%3)*100, y:i<3 ? 6 : 290, width:10, height:10, fill:`var(${l[2]})`}, s); });
+  J.svg('text', {x:330, y:298, class:'t-s', text:'금색 = 워드라인 층, 베이지 = 층간 산화막'}, s);
+  L.forEach((l,i) => J.svg('text', {x:34 + (i%3)*100, y:(i<3 ? 6 : 290)+9, class:'t-s', text:l[0], style:'font-size:9.5px'}, s));
+})();
+
+/* 6-2 밀도 */
+J.sim('sim2', (v, box) => {
+  const ah = Math.sqrt(3)/2*Math.pow(v.p*1e-3, 2); // µm²
+  const dens = v.L*v.b*(v.eta/100)/ah*1e6/1e9; // Gb/mm²
+  const gens = [[2013,24],[2014,32],[2015,48],[2016,64],[2018,96],[2019,128],[2020,176],[2022,238],[2024,300],[2025,400]];
+  const pts = gens.map(g => ({x:g[1], y:g[1]*3*0.45/ah*1e6/1e9, color:'--plum', r:4}));
+  const line = []; for(let L=24; L<=1000; L+=8) line.push([L, L*v.b*(v.eta/100)/ah*1e3]);
+  J.plot(document.getElementById('cv2'), {x:[0,1000], y:[0, Math.max(40, dens*1.2)], xlab:'층수', ylab:'Gb/mm²', series:[{pts:line, color:'--plum', w:2}],
+    points: pts.concat([{x:v.L, y:dens, color:'--red', r:7, label:J.fmt(dens,1)+' Gb/mm²'}])});
+  J.out(box,'d', J.fmt(dens,1)+' Gb/mm²');
+  J.out(box,'die', J.fmt(1024/dens,1)+' mm²');
+  const hgt = v.L*0.045;
+  J.out(box,'h', J.fmt(hgt,1)+' µm');
+  const ar = hgt*1000/100;
+  J.out(box,'ar', J.fmt(ar,0)+' : 1', ar > 100 ? 'bad' : ar > 60 ? 'warn' : 'good');
+});
+
+/* 6-3 테이퍼 */
+J.sim('sim3', (v, box) => {
+  const per = Math.ceil(v.L/v.dk), lt = 0.045; // µm/층
+  const dia = []; let minD = 999, maxD = 0, clog = false;
+  for(let k=0;k<v.L;k++){ const inDeck = k % per; const d = v.dt - v.tp*inDeck*lt; dia.push(d); if(d < minD) minD = d; if(d > maxD) maxD = d; if(d < 45) clog = true; }
+  // 왼쪽: 홀 모양 (위가 0층 아님: 위 = 마지막 층으로 그리기)
+  const {ctx, w, h} = J.fit(document.getElementById('cv3a'));
+  ctx.clearRect(0,0,w,h);
+  const cx = w/2, Y = k => 14 + k/(v.L-1)*(h-28), S = (w*0.38)/140;
+  ctx.fillStyle = J.c('--gold'); ctx.globalAlpha = .25; ctx.fillRect(cx - 140*S - 10, 10, 2*(140*S+10), h-20); ctx.globalAlpha = 1;
+  ctx.beginPath();
+  for(let k=0;k<v.L;k++){ const d = Math.max(0, dia[k]); k ? ctx.lineTo(cx - d*S, Y(k)) : ctx.moveTo(cx - d*S, Y(k)); }
+  for(let k=v.L-1;k>=0;k--){ ctx.lineTo(cx + Math.max(0,dia[k])*S, Y(k)); }
+  ctx.closePath(); ctx.fillStyle = J.c(clog ? '--red' : '--plum'); ctx.globalAlpha = .75; ctx.fill(); ctx.globalAlpha = 1;
+  for(let dk=1; dk<v.dk; dk++){ const y = Y(dk*per); ctx.strokeStyle = J.c('--ink'); ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(cx-160*S, y); ctx.lineTo(cx+160*S, y); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = J.c('--ink2'); ctx.font='11px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('데크 접합', cx + 150*S - 40, y - 4); }
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('맨 위', 6, 18); ctx.fillText('맨 아래', 6, h-8);
+  const dp = dia.map((d,k) => [k, d]), sp = dia.map((d,k) => [k, Math.pow(v.dt/Math.max(d,20), 1.5)*50]);
+  J.plot(document.getElementById('cv3b'), {x:[0, v.L], y:[0, 160], xlab:'층 (위 → 아래)', ylab:'지름 nm / 속도(상대)', series:[{pts:dp, color:'--plum', w:2.5},{pts:sp, color:'--red', w:2, dash:[5,3]}], hlines:[{y:45, color:'--red', label:'막힘 위험', dash:[2,3]}]});
+  J.out(box,'min', J.fmt(minD,0)+' nm', minD < 45 ? 'bad' : minD < 65 ? 'warn' : 'good');
+  J.out(box,'var', J.fmt(maxD/Math.max(minD,1),2)+' 배');
+  J.out(box,'sp', J.fmt((Math.pow(maxD/Math.max(minD,20),1.5)-1)*100,0)+' %', maxD/minD > 1.5 ? 'bad' : 'warn');
+});
+</script>
+</body>
+</html>

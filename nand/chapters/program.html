@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>프로그램과 소거 · NAND 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%237b3a5d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E藏%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="program">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 03 <span class="hanja">第三章 · 寫</span></div>
+  <h1>프로그램과 소거</h1>
+  <p class="lead">절연막 속에 전자를 넣고 빼려면 벽을 뚫어야 한다. NAND는 20 V에 가까운 전압으로 절연막을 기울여 전자를 터널링시킨다. 그런데 셀마다 빠르기가 다르다. 그래서 한 번에 세게 밀지 않고, 조금씩 계단을 올리며 확인하는 ISPP를 쓴다. 이 장은 쓰기와 지우기의 물리와 알고리즘이다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>파울러–노드하임 터널링 전류식을 쓰고, 전계에 대한 극단적인 민감도를 설명할 수 있다.</li>
+  <li>ISPP(Incremental Step Pulse Programming)와 검증(verify)이 문턱 전압 분포를 좁히는 원리를 안다.</li>
+  <li>계단 크기 ΔV<sub>pp</sub>가 분포 폭과 프로그램 시간 사이의 트레이드오프를 만든다는 것을 실험한다.</li>
+  <li>블록 소거의 동작과 과소거(over-erase) 문제를 이해한다.</li>
+  <li>tPROG, tBERS 같은 시간 사양이 어디서 오는지 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>파울러–노드하임 터널링</h2>
+<p>2장의 밴드 그림에서 봤듯, 터널 산화막에 강한 전계가 걸리면 장벽이 삼각형으로 기울고 전자가 그 얇은 꼭대기를 터널링한다. 1928년 파울러와 노드하임이 금속 표면의 전계 방출을 설명하려고 유도한 식이 이 전류를 놀랍도록 잘 맞춘다.</p>
+<div class="eq">$$J_{FN} = A\,E_{ox}^2\,\exp\!\left(-\frac{B}{E_{ox}}\right),\qquad A \approx 1.25\times10^{-6}\ \text{A/V}^2,\quad B \approx 2.4\times10^{8}\ \text{V/cm}$$
+<div class="note">Si–SiO₂ 계면의 대략값. 지수 안에 \(1/E\)가 있어, 전계가 10 % 바뀌면 전류는 수십 배 바뀐다. 그래서 프로그램 전압은 아주 정밀하게 조절해야 한다.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-1</span><span class="ttl">FN 터널링 전류와 프로그램 속도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">터널 산화막에 걸린 전압 <output data-o="v"></output></span><input type="range" data-k="v" min="3" max="12" step="0.1" value="8" data-d="1" data-u="V"></label>
+      <label class="ctrl"><span class="lab">산화막 두께 <output data-o="t"></output></span><input type="range" data-k="t" min="5" max="10" step="0.1" value="7" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">주입할 전자 수 <output data-o="n"></output></span><input type="range" data-k="n" min="100" max="3000" step="50" value="500" data-d="0" data-u="개"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">전계 E_ox</span><span class="v" data-r="e"></span></div>
+      <div class="ro"><span class="k">전류 밀도 J</span><span class="v" data-r="j"></span></div>
+      <div class="ro"><span class="k">셀 전류 (40×40 nm²)</span><span class="v" data-r="i"></span></div>
+      <div class="ro"><span class="k">전자 N개 주입 시간</span><span class="v" data-r="tt"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 볼 것.</b> 전계를 10 MV/cm에서 9 MV/cm로 조금만 낮춰 보자. 주입 시간이 몇 배로 늘어난다. 반대로 보존 상태(저장 전자가 만드는 자기 전계, 약 1–2 MV/cm)에서는 전류가 10⁻⁴⁰ A/cm² 이하 — 우주의 나이를 기다려도 전자 하나 새지 않는다(실제 누설은 결함을 통한 다른 경로로 생긴다, 7장).</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>ISPP: 계단을 오르며 확인하기</h2>
+<p>같은 페이지의 셀 수만 개는 제조 편차 때문에 프로그램되는 속도가 제각각이다. 큰 전압 한 방이면 빠른 셀은 목표를 훌쩍 넘고, 느린 셀은 못 미친다. 그래서 NAND는 <span class="term">ISPP</span>를 쓴다. 비교적 낮은 전압부터 시작해 펄스마다 ΔV<sub>pp</sub>(0.2–0.5 V)씩 올리고, 펄스 뒤마다 <span class="term">검증(verify)</span> 읽기를 해서 목표 V<sub>vfy</sub>를 넘은 셀은 다음 펄스부터 <span class="term">금지(inhibit)</span>시킨다(4장의 셀프 부스팅). 터널링 전류의 강한 비선형성 덕분에, 일단 "가동"된 셀은 펄스마다 문턱이 거의 정확히 ΔV<sub>pp</sub>씩 오른다. 그래서 최종 분포의 폭은 대략 ΔV<sub>pp</sub>가 된다.</p>
+<div class="eq">$$\text{분포 폭} \approx \Delta V_{pp} + \sigma_{noise},\qquad t_{PROG} \approx N_{pulse}\,(t_{pulse} + t_{verify}),\quad N_{pulse} \approx \frac{\Delta V_{th,\,필요} + \text{셀 편차}}{\Delta V_{pp}}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-2</span><span class="ttl">ISPP 시뮬레이터 — 셀 300개를 한 페이지에</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">계단 크기 ΔV_pp <output data-o="dv"></output></span><input type="range" data-k="dv" min="0.1" max="1.2" step="0.05" value="0.4" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">시작 전압 V_start <output data-o="vs"></output></span><input type="range" data-k="vs" min="12" max="18" step="0.25" value="14" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">검증 전압 V_vfy <output data-o="vf"></output></span><input type="range" data-k="vf" min="0.5" max="4" step="0.1" value="2" data-d="1" data-u="V"></label>
+      <label class="ctrl"><span class="lab">검증 사용</span><select data-k="vfy"><option value="1">켬 (ISPP)</option><option value="0">끔 (펄스만)</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="ispp1">펄스 1회</button><button class="sbtn pri" id="isppAuto">▶ 끝까지</button><button class="sbtn warn" id="isppReset">초기화 (소거 상태)</button></div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv2a" data-h="280"></canvas></div><div class="canvas-box"><canvas id="cv2b" data-h="280"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">펄스 수</span><span class="v" data-r="np"></span></div>
+      <div class="ro"><span class="k">통과한 셀</span><span class="v" data-r="pass"></span></div>
+      <div class="ro"><span class="k">프로그램 분포 폭 (최대−최소)</span><span class="v" data-r="w"></span></div>
+      <div class="ro"><span class="k">tPROG 추정 (펄스 15 µs + 검증 10 µs)</span><span class="v" data-r="tp"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽은 셀 300개의 문턱 전압 분포(회색 = 소거 상태 출발점, 보라 = 현재), 빨간 선이 검증 전압이다. 오른쪽은 지금까지 가한 펄스 계단. ΔV_pp를 0.2로 줄이면 분포가 좁아지지만 펄스 수가 늘어 tPROG가 길어진다. 검증을 끄면 빠른 셀이 한참 넘어가 분포가 넓게 퍼진다 — 다중 레벨(5장)에선 치명적이다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>블록 소거</h2>
+<p>지울 때는 반대로 전자를 저장층에서 채널로 끌어낸다. NAND는 블록의 모든 워드라인을 0 V로 두고 p-웰(3D에서는 채널, GIDL로 정공 공급)에 약 20 V를 걸어 블록 전체를 한꺼번에 소거한다. 웰을 공유하는 셀 전체에 동시에 전압이 걸리므로 소거 단위는 블록이 될 수밖에 없다. 소거 후에도 <span class="term">소거 검증</span>으로 모든 셀이 기준 아래로 내려갔는지 확인하고, 모자라면 전압을 올려 다시 소거한다. 느린 셀 하나 때문에 펄스를 더 주면, 빠른 셀은 너무 깊이 내려가는 <span class="term">과소거(over-erase)</span>가 된다. 그래서 일부 제품은 소거 직후 깊은 셀을 살짝 다시 올리는 소프트 프로그램을 한다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-3</span><span class="ttl">블록 소거와 과소거</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">소거 펄스당 이동 <output data-o="st"></output></span><input type="range" data-k="st" min="0.5" max="3" step="0.1" value="1.5" data-d="1" data-u="V"></label>
+      <label class="ctrl"><span class="lab">소거 검증 전압 <output data-o="ev"></output></span><input type="range" data-k="ev" min="-3" max="0" step="0.1" value="-1" data-d="1" data-u="V"></label>
+      <label class="ctrl"><span class="lab">소프트 프로그램</span><select data-k="sp"><option value="0">끔</option><option value="1">켬</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="er1">소거 펄스 1회</button><button class="sbtn pri" id="erAuto">▶ 검증될 때까지</button><button class="sbtn warn" id="erReset">프로그램된 블록으로 되돌리기</button></div>
+    <div class="canvas-box"><canvas id="cv3" data-h="260"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">소거 펄스</span><span class="v" data-r="np"></span></div>
+      <div class="ro"><span class="k">검증 미통과 셀</span><span class="v" data-r="left"></span></div>
+      <div class="ro"><span class="k">과소거 셀 (−4 V 이하)</span><span class="v" data-r="deep"></span></div>
+      <div class="ro"><span class="k">tBERS 추정 (펄스 1 ms)</span><span class="v" data-r="t"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 블록의 셀 2,000개(여러 상태로 프로그램된)가 소거 펄스마다 왼쪽으로 이동한다. 셀마다 소거 속도가 달라 분포가 퍼진다. 펄스를 크게 하면 빨리 끝나지만 과소거가 늘어난다. 과소거 셀은 다음 프로그램 때 더 많은 펄스가 필요하고 마모(7장)도 빨라진다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>시간 사양 정리</h2>
+<div class="tbwrap"><table class="tb">
+<tr><th>동작</th><th>단위</th><th>SLC</th><th>TLC</th><th>QLC</th><th>무엇이 결정하나</th></tr>
+<tr><td>읽기 tR</td><td>페이지</td><td class="num">~20 µs</td><td class="num">~40–60 µs</td><td class="num">~80–150 µs</td><td>비트라인 충전·감지 횟수(상태 수)</td></tr>
+<tr><td>프로그램 tPROG</td><td>페이지(들)</td><td class="num">~0.1–0.2 ms</td><td class="num">~0.4–0.8 ms</td><td class="num">~1.5–3 ms</td><td>ISPP 펄스 수 × (펄스 + 검증)</td></tr>
+<tr><td>소거 tBERS</td><td>블록</td><td colspan="3" class="num">~3–10 ms</td><td>소거 펄스 수, 블록 크기</td></tr>
+</table></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">ISPP에서 최종 문턱 전압 분포의 폭을 주로 결정하는 것은?</p><ol><li>시작 전압</li><li>계단 크기 ΔV_pp</li><li>블록 크기</li><li>소거 전압</li></ol>
+<p class="explain">가동된 셀은 펄스마다 ΔV_pp씩 오르므로, 검증선을 넘는 순간의 초과량이 최대 ΔV_pp다.</p></div>
+<div class="quiz" data-a="3"><p class="q">NAND가 블록 단위로만 지울 수 있는 이유는?</p><ol><li>소프트웨어 제약 때문에</li><li>ECC 때문에</li><li>페이지가 너무 작아서</li><li>소거 전압을 블록이 공유하는 웰(채널)에 걸기 때문에</li></ol>
+<p class="explain">웰을 공유하는 셀 전체에 고전압이 동시에 걸린다.</p></div>
+<div class="quiz" data-a="0"><p class="q">FN 전류에서 전계가 조금만 줄어도 전류가 크게 줄어드는 이유는?</p><ol><li>지수 항 exp(−B/E)에 1/E가 들어 있어서</li><li>E²에 비례해서</li><li>온도 때문에</li><li>산화막 두께가 변해서</li></ol>
+<p class="explain">지수의 강한 비선형성이 "보존"과 "프로그램"을 같은 구조로 동시에 가능하게 한다.</p></div>
+<div class="quiz" data-a="2"><p class="q">검증(verify)을 하지 않으면?</p><ol><li>프로그램이 빨라지고 분포도 좁아진다</li><li>소거가 필요 없어진다</li><li>빠른 셀이 목표를 크게 넘어 분포가 넓어진다</li><li>읽기가 불가능해진다</li></ol>
+<p class="explain">검증 후 금지가 있어야 각 셀이 목표 근처에서 멈춘다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 3-1 FN */
+J.sim('sim1', (v, box) => {
+  const A = 1.25e-6, B = 2.4e8;
+  const J_ = E => A*E*E*Math.exp(-B/E); // E in V/cm → A/cm²
+  const E = v.v/(v.t*1e-7);
+  const pts = []; for(let e=4; e<=16; e+=0.05){ pts.push([e, Math.max(1e-20, J_(e*1e6))]); }
+  const j = J_(E), I = j*(40e-7*40e-7), tt = v.n*1.602e-19/I;
+  J.plot(document.getElementById('cv1'), {x:[4,16], y:[1e-20, 10], logy:true, xlab:'산화막 전계 (MV/cm)', ylab:'J (A/cm², 로그)', yf:t=>'1e'+Math.round(Math.log10(t)),
+    series:[{pts, color:'--plum', w:3}], points:[{x:E/1e6, y:Math.max(1e-20,j), color:'--red', r:6, label:J.fmt(E/1e6,1)+' MV/cm'}],
+    bands:[{x0:9, x1:12, color:'--jade', alpha:.1}], vlines:[{x:9, color:'--jade', label:'프로그램/소거 영역', dash:[2,3]}], pad:{l:56}});
+  J.out(box,'e', J.fmt(E/1e6,2)+' MV/cm');
+  J.out(box,'j', j.toExponential(2)+' A/cm²');
+  J.out(box,'i', J.si(I,'A',2));
+  J.out(box,'tt', tt > 3.15e7 ? J.fmt(tt/3.15e7,1)+' 년' : tt > 1 ? J.fmt(tt,2)+' s' : tt > 1e-3 ? J.fmt(tt*1e3,2)+' ms' : J.fmt(tt*1e6,2)+' µs', tt < 1e-4 ? 'good' : tt < 1e-2 ? 'warn' : 'bad');
+});
+
+/* 3-2 ISPP */
+(function(){
+  const box = document.getElementById('sim2');
+  const N = 300; let cells, k, pulses, auto = false, acc = 0;
+  const R0 = J.rng(17);
+  const K = Array.from({length:N}, () => 14.6 + J.gauss(R0)*0.55); // 셀별 가동 오프셋
+  const V0 = Array.from({length:N}, () => -2.2 + J.gauss(R0)*0.45);
+  const rd = () => ({dv:+J.$('[data-k="dv"]',box).value, vs:+J.$('[data-k="vs"]',box).value, vf:+J.$('[data-k="vf"]',box).value, vfy:J.$('[data-k="vfy"]',box).value});
+  function reset(){ cells = V0.map(v => ({vt:v, done:false})); k = 0; pulses = []; auto = false; draw(); }
+  function pulse(){
+    const p = rd(); const vp = p.vs + k*p.dv; const R = J.rng(100+k);
+    if(cells.every(c => c.done) || k >= 40) { auto = false; return; }
+    cells.forEach((c,i) => { if(c.done) return; const tgt = vp - K[i]; if(tgt > c.vt) c.vt = tgt + J.gauss(R)*0.05; if(p.vfy === '1' && c.vt >= p.vf) c.done = true; });
+    if(p.vfy === '0' && cells.filter(c => c.vt >= p.vf).length === N) cells.forEach(c => c.done = true);
+    pulses.push(vp); k++;
+    draw();
+  }
+  function draw(){
+    const p = rd();
+    // 히스토그램
+    const bins = 80, lo = -4, hi = 7, bw = (hi-lo)/bins;
+    const h0 = new Array(bins).fill(0), h1 = new Array(bins).fill(0);
+    V0.forEach(v => { const b = Math.floor((v-lo)/bw); if(b>=0&&b<bins) h0[b]++; });
+    cells.forEach(c => { const b = Math.floor((c.vt-lo)/bw); if(b>=0&&b<bins) h1[b]++; });
+    const toPts = h => h.map((n,i) => [lo + (i+.5)*bw, n]);
+    J.plot(document.getElementById('cv2a'), {x:[lo,hi], y:[0, 70], xlab:'V_th (V)', ylab:'셀 수', series:[{pts:toPts(h0), color:'--ink3', w:1.5, fill:.15, step:true},{pts:toPts(h1), color:'--plum', w:2.5, fill:.35, step:true}],
+      vlines:[{x:p.vf, color:'--red', label:'V_vfy'}], pad:{l:40}});
+    const st = pulses.map((v,i) => [i, v]);
+    J.plot(document.getElementById('cv2b'), {x:[0, Math.max(12, pulses.length+1)], y:[p.vs-1, Math.max(p.vs+5, (pulses[pulses.length-1]||p.vs)+1)], xlab:'펄스 번호', ylab:'V_pgm (V)',
+      series:[{pts: st.length ? st.concat([[st.length, st[st.length-1][1]]]) : [], color:'--gold', w:3, step:true}], pad:{l:44}});
+    const progd = cells.filter(c => c.vt >= p.vf - 0.3);
+    const w = progd.length ? Math.max(...progd.map(c=>c.vt)) - Math.min(...progd.map(c=>c.vt)) : 0;
+    J.out(box,'np', k); J.out(box,'pass', cells.filter(c => c.vt >= p.vf).length+' / '+N);
+    J.out(box,'w', J.fmt(w,2)+' V', w < 0.6 ? 'good' : w < 1.2 ? 'warn' : 'bad');
+    J.out(box,'tp', J.fmt(k*25,0)+' µs');
+  }
+  J.$$('input, select', box).forEach(i => i.addEventListener('input', reset));
+  J.sim('sim2', () => {});
+  document.getElementById('ispp1').onclick = pulse;
+  document.getElementById('isppAuto').onclick = () => { auto = true; };
+  document.getElementById('isppReset').onclick = reset;
+  reset();
+  J.loop(document.getElementById('cv2a'), dt => { if(auto){ acc += dt; if(acc > 0.15){ acc = 0; pulse(); } } });
+})();
+
+/* 3-3 소거 */
+(function(){
+  const box = document.getElementById('sim3');
+  const N = 2000, R0 = J.rng(9);
+  const init = Array.from({length:N}, () => [ -1.5, 0.8, 2.2, 3.6 ][Math.floor(R0()*4)] + J.gauss(R0)*0.25);
+  const sp = Array.from({length:N}, () => Math.exp(J.gauss(R0)*0.22));
+  let vt, np, auto = false, acc = 0;
+  const rd = () => ({st:+J.$('[data-k="st"]',box).value, ev:+J.$('[data-k="ev"]',box).value, sp:J.$('[data-k="sp"]',box).value});
+  function reset(){ vt = init.map(x => x + 0); vt = vt.map(x => x < -1 ? x + 4 : x); np = 0; auto = false; draw(); }
+  function pulse(){
+    const p = rd();
+    if(vt.every(x => x <= p.ev)){ auto = false; if(p.sp === '1') vt = vt.map(x => x < -3.2 ? -3.2 + (x+3.2)*0.15 : x); draw(); return; }
+    // 자기 제한: 문턱이 낮아질수록 소거 전계가 약해져 이동량이 준다
+    vt = vt.map((x,i) => x - p.st*sp[i]*Math.max(0.03, Math.pow(Math.max(0, x + 5)/7, 2))); np++; draw();
+  }
+  function draw(){
+    const p = rd(), bins = 90, lo = -9, hi = 5, bw = (hi-lo)/bins, hh = new Array(bins).fill(0), h0 = new Array(bins).fill(0);
+    vt.forEach(x => { const b = Math.floor((x-lo)/bw); if(b>=0&&b<bins) hh[b]++; });
+    init.map(x => x < -1 ? x+4 : x).forEach(x => { const b = Math.floor((x-lo)/bw); if(b>=0&&b<bins) h0[b]++; });
+    J.plot(document.getElementById('cv3'), {x:[lo,hi], y:[0, 160], xlab:'V_th (V)', ylab:'셀 수', series:[{pts:h0.map((n,i)=>[lo+(i+.5)*bw,n]), color:'--ink3', w:1.2, step:true, fill:.1},{pts:hh.map((n,i)=>[lo+(i+.5)*bw,n]), color:'--indigo', w:2.5, step:true, fill:.3}],
+      bands:[{x0:lo, x1:-4, color:'--red', alpha:.08}], vlines:[{x:p.ev, color:'--jade', label:'소거 검증'}], pad:{l:42}});
+    const left = vt.filter(x => x > p.ev).length, deep = vt.filter(x => x < -4).length;
+    J.out(box,'np', np); J.out(box,'left', left, left ? 'warn' : 'good'); J.out(box,'deep', deep, deep > 100 ? 'bad' : deep ? 'warn' : 'good'); J.out(box,'t', np+' ms');
+  }
+  J.$$('input, select', box).forEach(i => i.addEventListener('input', draw));
+  J.sim('sim3', () => {});
+  document.getElementById('er1').onclick = pulse;
+  document.getElementById('erAuto').onclick = () => { auto = true; };
+  document.getElementById('erReset').onclick = reset;
+  reset();
+  J.loop(document.getElementById('cv3'), dt => { if(auto){ acc += dt; if(acc > 0.25){ acc = 0; pulse(); } } });
+})();
+</script>
+</body>
+</html>
