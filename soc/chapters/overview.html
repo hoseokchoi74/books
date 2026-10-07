@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>칩 하나에 담은 시스템 · SoC 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0832a'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E統%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="overview">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 01 <span class="hanja">第一章 · 統</span></div>
+  <h1>칩 하나에 담은 시스템</h1>
+  <p class="lead">1990년대 PC의 메인보드에는 CPU, 그래픽 칩, 사운드 칩, 네트워크 칩, 메모리 컨트롤러가 각자 따로 꽂혀 있었다. 오늘날 스마트폰에서는 그 모두가, 그리고 카메라 처리기·AI 가속기·모뎀까지 손톱만 한 칩 하나에 들어 있다. 이것이 시스템 온 칩(SoC)이다. 이 장에서는 SoC 평면도를 들여다보고, 왜 모든 것을 한 칩에 모으게 되었는지 살펴본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>스마트폰 SoC를 이루는 주요 블록(IP)과 각각의 역할을 말할 수 있다.</li>
+  <li>트랜지스터 수의 증가(무어의 법칙)가 SoC를 가능하게 한 과정을 안다.</li>
+  <li>같은 일을 범용 CPU 대신 전용 블록이 하면 에너지가 얼마나 주는지 감을 잡는다.</li>
+  <li>SoC 설계에서 IP 재사용·통합·검증이 왜 핵심인지 이해한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>평면도 들여다보기</h2>
+<p>SoC는 여러 회사와 팀이 만든 <span class="term">IP 블록</span>(Intellectual Property — 설계 자산)을 조립한 것이다. CPU 코어는 Arm 같은 회사에서 라이선스를 받고, GPU·NPU·ISP는 직접 설계하거나 사 오며, 메모리 PHY·USB·PCIe 같은 인터페이스는 검증된 IP를 쓴다. 이 블록들을 하나의 <span class="term">인터커넥트</span>로 잇고, 하나의 전력·클록·보안 체계로 묶는 것이 SoC 설계의 본질이다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-1</span><span class="ttl">스마트폰 SoC 평면도 — 블록을 눌러 보세요</span></div>
+  <div class="sim-b">
+    <div class="fig-row" style="align-items:stretch"><div class="canvas-box"><svg id="fp" viewBox="0 0 400 320" style="display:block;width:100%"></svg></div><div class="canvas-box" style="padding:12px" id="fpCard"></div></div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가상의 플래그십 SoC(약 110 mm²) 평면도다. 블록 크기는 대략적인 면적 비율을 따랐다. 실제 칩마다 배치는 크게 다르지만, CPU·GPU·NPU·캐시·메모리 인터페이스가 큰 몫을 차지한다는 점은 비슷하다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>무어의 법칙이 만든 통합</h2>
+<p>1965년 고든 무어는 칩 하나의 트랜지스터 수가 해마다(1975년에 2년으로 수정) 두 배가 된다고 관찰했다. 트랜지스터가 넘쳐 나자 설계자들은 "남는 트랜지스터로 무엇을 할까?"를 고민했고, 그 답이 칩 밖에 있던 기능들을 하나씩 안으로 끌어들이는 <strong>통합</strong>이었다. 칩 밖으로 신호를 보내는 일은 칩 안보다 수십 배의 에너지와 지연이 들기 때문이다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-2</span><span class="ttl">트랜지스터 수의 50년</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">비교할 배가 주기 <output data-o="t"></output></span><input type="range" data-k="t" min="1.5" max="4" step="0.1" value="2.2" data-d="1" data-u="년"></label>
+      <label class="ctrl"><span class="lab">연도 <output data-o="y"></output></span><input type="range" data-k="y" min="1971" max="2026" step="1" value="2013" data-raw></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">그 해의 대표 칩</span><span class="v" data-r="c" style="font-size:14px;font-family:var(--sans)"></span></div>
+      <div class="ro"><span class="k">트랜지스터 수</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">추세선 예측</span><span class="v" data-r="p"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 점은 대표적인 마이크로프로세서와 모바일 SoC의 트랜지스터 수(대략값, 로그), 점선은 슬라이더로 정한 배가 주기의 추세선이다. 2010년대 이후 모바일 SoC가 데스크톱 CPU와 같은 규모가 되었다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>전용 블록이 이기는 이유</h2>
+<p>범용 CPU는 무엇이든 할 수 있지만, 명령어를 가져오고 해석하고 스케줄링하는 데 에너지 대부분을 쓴다. 실제 연산은 전체 에너지의 몇 %에 불과하다. 같은 일을 하도록 회로를 고정한 <span class="term">가속기</span>는 그 부대 비용을 걷어내 10–1000배 효율적이다. 대신 그 일만 할 수 있다. 그래서 SoC는 자주 하는 일마다 전용 블록을 두고, 나머지를 CPU가 맡는다 — <span class="term">이종 컴퓨팅</span>(3장).</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-3</span><span class="ttl">어떤 일이 어디서 일어나는가</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="taskBtns"><button class="sbtn on" data-t="video">4K 영상 촬영</button><button class="sbtn" data-t="game">3D 게임</button><button class="sbtn" data-t="ai">사진 속 물체 인식</button><button class="sbtn" data-t="web">웹 서핑</button><button class="sbtn" data-t="call">영상 통화</button></div>
+    <div class="fig-row" style="align-items:stretch"><div class="canvas-box"><svg id="taskSvg" viewBox="0 0 400 260" style="display:block;width:100%"></svg></div><div class="canvas-box"><canvas id="cv3" data-h="260"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">SoC 전용 블록 사용</span><span class="v" data-r="soc"></span></div>
+      <div class="ro"><span class="k">CPU만으로 처리하면</span><span class="v" data-r="cpu"></span></div>
+      <div class="ro"><span class="k">배터리 4,500 mAh로 버티는 시간 (SoC)</span><span class="v" data-r="bat"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽은 그 작업에서 켜지는 블록, 오른쪽은 SoC 전력을 전용 블록을 쓸 때와 CPU만 쓸 때 비교한 것이다(교육용 대략값). 영상 인코딩이나 신경망을 CPU로만 하면 휴대 기기의 전력 한계(약 5 W)를 훌쩍 넘는다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">SoC에서 기능을 칩 안으로 통합하는 주된 이유는?</p><ol><li>칩이 커지면 싸져서</li><li>설계가 쉬워서</li><li>칩 밖으로 신호를 보내는 에너지·지연이 칩 안보다 훨씬 커서</li><li>클록이 빨라져서</li></ol>
+<p class="explain">칩 간 연결은 큰 드라이버와 긴 배선이 필요하다.</p></div>
+<div class="quiz" data-a="0"><p class="q">가속기가 CPU보다 효율적인 이유는?</p><ol><li>명령어 처리 같은 부대 비용 없이 특정 연산에 회로를 고정했기 때문에</li><li>클록이 더 높아서</li><li>트랜지스터가 더 작아서</li><li>메모리를 쓰지 않아서</li></ol>
+<p class="explain">대신 그 일만 할 수 있다.</p></div>
+<div class="quiz" data-a="1"><p class="q">IP 블록이란?</p><ol><li>인터넷 주소</li><li>재사용 가능한 설계 자산(CPU 코어, 인터페이스 등)</li><li>패키지 핀</li><li>클록 신호</li></ol>
+<p class="explain">SoC는 수십~수백 개의 IP를 조립하고 검증해 만든다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 1-1 평면도 */
+(function(){
+  const svg = document.getElementById('fp'), card = document.getElementById('fpCard');
+  const B = [
+    ['CPU 성능 코어',10,10,120,80,'--red','~12 %','명령을 빠르게 처리하는 큰 코어 2–4개. 비순차 실행·큰 캐시. 앱 반응성을 책임진다.','1–4 W','cpu'],
+    ['CPU 효율 코어',135,10,70,80,'--gold','~4 %','작고 전력 효율이 좋은 코어 4–6개. 백그라운드 작업 담당.','0.1–1 W','cpu'],
+    ['L3 / 시스템 캐시',210,10,70,80,'--ink3','~8 %','모든 블록이 공유하는 마지막 단계 캐시. DRAM 접근을 줄인다.','0.2 W','memsys'],
+    ['GPU',285,10,105,150,'--plum','~20 %','수천 개의 작은 연산기로 그래픽과 병렬 계산. 게임 때 가장 많은 전력을 쓴다.','1–5 W','accel'],
+    ['NPU',10,95,95,80,'--jade','~8 %','행렬 곱 전용 가속기. AI 추론을 CPU보다 수십 배 효율적으로.','0.5–3 W','accel'],
+    ['ISP',110,95,80,70,'--indigo','~5 %','카메라 센서의 RAW 데이터를 사진으로. 초당 수십억 픽셀 처리.','0.5–2 W','memsys'],
+    ['비디오 코덱',195,95,85,70,'--indigo','~3 %','H.265·AV1 인코딩/디코딩 전용 회로.','0.2–1 W','accel'],
+    ['모뎀',110,170,170,70,'--ink3','~10 %','5G 신호 처리. 일부 SoC는 별도 칩으로 둔다.','0.3–2 W','overview'],
+    ['디스플레이·오디오',285,165,105,75,'--gold','~4 %','화면 합성·출력, 오디오 DSP.','0.1–0.5 W','memsys'],
+    ['NoC · 기타',10,180,95,60,'--line','~6 %','블록을 잇는 인터커넥트, 전력 관리, 보안 블록, 저속 입출력.','0.2 W','noc'],
+    ['LPDDR PHY · I/O',10,245,380,65,'--paper2','~15 %','칩 가장자리의 메모리·고속 인터페이스 회로. 미세화 이득이 적어 면적이 크다.','0.5–1.5 W','memsys']
+  ];
+  let sel = 0;
+  function draw(){
+    svg.innerHTML = '';
+    J.svg('rect', {x:4, y:4, width:392, height:312, rx:6, fill:'var(--paper2)', stroke:'var(--ink3)'}, svg);
+    B.forEach((b,i) => { const g = J.svg('g', {style:'cursor:pointer'}, svg);
+      J.svg('rect', {x:b[1], y:b[2], width:b[3], height:b[4], rx:3, fill:`var(${b[5]})`, opacity: i === sel ? .95 : .6, stroke: i === sel ? 'var(--red)' : 'var(--card)', 'stroke-width': i === sel ? 3 : 1}, g);
+      J.svg('text', {x:b[1] + b[3]/2, y:b[2] + b[4]/2 + 4, 'text-anchor':'middle', class:'t-s', text:b[0], style:'font-weight:700;fill:var(--ink)'}, g);
+      g.addEventListener('click', () => { sel = i; draw(); }); });
+    const b = B[sel];
+    card.innerHTML = `<div style="font-family:var(--serif);font-weight:900;font-size:21px;color:var(${b[5] === '--line' || b[5] === '--paper2' ? '--ink' : b[5]})">${b[0]}</div>
+      <p style="margin:6px 0 10px;font-size:14.5px">${b[7]}</p>
+      <table class="tb" style="margin:0;font-size:13.5px"><tr><td>면적 비중</td><td class="num">${b[6]}</td></tr><tr><td>대표 전력</td><td class="num">${b[8]}</td></tr></table>
+      <p style="margin:10px 0 0"><a href="${b[9]}.html">관련 장으로 →</a></p>`;
+  }
+  draw();
+})();
+
+/* 1-2 트랜지스터 */
+J.sim('sim2', (v, box) => {
+  const D = [[1971,2.3e3,'인텔 4004'],[1978,2.9e4,'인텔 8086'],[1985,2.75e5,'인텔 386'],[1993,3.1e6,'펜티엄'],[1999,9.5e6,'펜티엄 III'],[2006,2.9e8,'코어 2 듀오'],[2010,1.2e9,'데스크톱 쿼드코어'],[2013,1e9,'64비트 모바일 SoC'],[2017,4.3e9,'NPU 탑재 모바일 SoC'],[2020,1.18e10,'5 nm 모바일 SoC'],[2023,1.9e10,'3 nm 모바일 SoC'],[2026,2.5e10,'2 nm급 모바일 SoC (추정)']];
+  const tr = []; for(let y=1971; y<=2026; y++) tr.push([y, 2.3e3*Math.pow(2, (y-1971)/v.t)]);
+  let cur = D[0]; D.forEach(d => { if(d[0] <= v.y) cur = d; });
+  J.plot(document.getElementById('cv2'), {x:[1971,2026], y:[1e3, 1e12], logy:true, xlab:'연도', ylab:'트랜지스터 수 (로그)', xf:t=>t, yf:t=>'10^'+Math.round(Math.log10(t)),
+    series:[{pts:tr, color:'--ink3', w:1.5, dash:[5,4]}], points:D.map(d => ({x:d[0], y:d[1], color: d === cur ? '--red' : d[2].includes('모바일') ? '--gold' : '--indigo', r: d === cur ? 7 : 4.5})), vlines:[{x:v.y, color:'--red', dash:[2,3]}], pad:{l:52}});
+  const fmtN = n => n >= 1e8 ? J.fmt(n/1e8,1)+' 억 개' : n >= 1e4 ? J.fmt(n/1e4,0)+' 만 개' : Math.round(n)+' 개';
+  J.out(box,'c', cur[0]+' · '+cur[2]); J.out(box,'n', fmtN(cur[1])); J.out(box,'p', fmtN(2.3e3*Math.pow(2, (v.y-1971)/v.t)));
+});
+
+/* 1-3 작업 매핑 */
+(function(){
+  const box = document.getElementById('sim3');
+  const IP = {cpuB:['CPU 빅',20,20],cpuL:['CPU 리틀',150,20],gpu:['GPU',280,20],npu:['NPU',20,90],isp:['ISP',150,90],vid:['코덱',280,90],modem:['모뎀',20,160],disp:['디스플레이',150,160],dsp:['오디오 DSP',280,160]};
+  const T = {video:{on:['isp','vid','cpuL','disp'], soc:2.6, cpu:28}, game:{on:['gpu','cpuB','cpuL','disp','dsp'], soc:6.5, cpu:40}, ai:{on:['npu','cpuL','isp'], soc:1.5, cpu:18}, web:{on:['cpuB','cpuL','modem','disp'], soc:1.8, cpu:2.2}, call:{on:['vid','isp','modem','dsp','disp','cpuL'], soc:3.0, cpu:22}};
+  let t = 'video';
+  function draw(){
+    const svg = document.getElementById('taskSvg'); svg.innerHTML = '';
+    Object.entries(IP).forEach(([k,v]) => { const on = T[t].on.includes(k);
+      J.svg('rect', {x:v[1], y:v[2], width:110, height:56, rx:6, fill: on ? 'var(--gold)' : 'var(--paper2)', opacity: on ? .9 : 1, stroke: on ? 'var(--red)' : 'var(--line)', 'stroke-width': on ? 2.5 : 1}, svg);
+      J.svg('text', {x:v[1]+55, y:v[2]+33, 'text-anchor':'middle', class:'t-m', text:v[0], style:`font-weight:700;fill:${on ? '#fff' : 'var(--ink3)'}`}, svg); });
+    J.svg('text', {x:200, y:248, 'text-anchor':'middle', class:'t-s', text:'금색 = 이 작업에서 일하는 블록'}, svg);
+    const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+    ctx.clearRect(0,0,w,h);
+    const mx = 45, Y = p => h - 40 - p/mx*(h-70);
+    [['SoC 전용 블록', T[t].soc, '--jade'],['CPU만', T[t].cpu, '--red']].forEach((it,i) => { const x = 50 + i*(w-80)/2, bw = (w-80)/2 - 30;
+      ctx.fillStyle = J.c(it[2]); ctx.globalAlpha = .85; ctx.fillRect(x, Y(it[1]), bw, Y(0) - Y(it[1])); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c('--ink'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign='center'; ctx.fillText(it[0], x + bw/2, h - 16); ctx.font = '12px "JetBrains Mono"'; ctx.fillText(it[1]+' W', x + bw/2, Y(it[1]) - 6); });
+    ctx.strokeStyle = J.c('--red'); ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(30, Y(5)); ctx.lineTo(w-10, Y(5)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = J.c('--red'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign='right'; ctx.fillText('휴대 기기 지속 전력 ~5 W', w-12, Y(5) - 4);
+    J.out(box,'soc', T[t].soc+' W'); J.out(box,'cpu', T[t].cpu+' W', T[t].cpu > 5 ? 'bad' : 'warn');
+    J.out(box,'bat', J.fmt(4.5*3.85/(T[t].soc + 1.2),1)+' 시간');
+  }
+  J.$$('#taskBtns button').forEach(b => b.onclick = () => { J.$$('#taskBtns button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); t = b.dataset.t; draw(); });
+  J.live(draw);
+})();
+</script>
+</body>
+</html>

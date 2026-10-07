@@ -96,8 +96,8 @@
   <div>
     <div class="kicker">The Interactive Library · 集賢殿 叢書</div>
     <h1>책을 펼치면,<br><em>원리</em>가 움직입니다.</h1>
-    <p>집현전(Jade Hall)은 직접 만지며 배우는 인터랙티브 교과서 시리즈입니다. 옛 서책처럼 실로 엮은 한 권 한 권 안에, 슬라이더를 움직이고 3D 구조를 돌려 보는 실험이 가득합니다. 지금은 <b>DRAM</b>, <b>NAND 플래시</b>, 그리고 메모리 전반을 아우르는 <b>메모리 書</b>를 펼칠 수 있습니다.</p>
-    <div class="cta"><a class="btn red" href="dram/index.html">DRAM 書 펼치기 →</a><a class="btn red" href="nand/index.html" style="background:var(--plum);border-color:var(--plum)">NAND 書 펼치기 →</a><a class="btn red" href="memory/index.html" style="background:var(--jade);border-color:var(--jade)">메모리 書 펼치기 →</a><a class="btn ghost" href="#shelf">서가 둘러보기</a></div>
+    <p>집현전(Jade Hall)은 직접 만지며 배우는 인터랙티브 교과서 시리즈입니다. 옛 서책처럼 실로 엮은 한 권 한 권 안에, 슬라이더를 움직이고 3D 구조를 돌려 보는 실험이 가득합니다. 지금은 <b>DRAM</b>, <b>NAND 플래시</b>, 메모리 전반을 아우르는 <b>메모리 書</b>, 그리고 칩 전체를 다루는 <b>SoC 書</b>를 펼칠 수 있습니다.</p>
+    <div class="cta"><a class="btn red" href="dram/index.html">DRAM 書 펼치기 →</a><a class="btn red" href="nand/index.html" style="background:var(--plum);border-color:var(--plum)">NAND 書 펼치기 →</a><a class="btn red" href="memory/index.html" style="background:var(--jade);border-color:var(--jade)">메모리 書 펼치기 →</a><a class="btn red" href="soc/index.html" style="background:var(--gold);border-color:var(--gold)">SoC 書 펼치기 →</a><a class="btn ghost" href="#shelf">서가 둘러보기</a></div>
   </div>
 </section>
 
@@ -140,10 +140,11 @@ const SHELVES = [
     {t:'DRAM 書', s:'記憶', kr:'디램: 전하 한 줌에서 데이터센터까지', code:'器 · 壹', c:'#2b4a7c', href:'dram/index.html'},
     {t:'NAND 書', s:'貯藏', kr:'낸드: 전자 몇백 개에서 페타바이트까지', code:'器 · 貳', c:'#7b3a5d', href:'nand/index.html'},
     {t:'메모리 書', s:'憶', kr:'메모리: 래치에서 자석과 결정까지', code:'器 · 參', c:'#24665a', href:'memory/index.html'},
-    {t:'工程 書', s:'製造', kr:'반도체 제조 공정', code:'器 · 肆', c:'#6b4426'},
-    {t:'包裝 書', s:'封止', kr:'패키징과 적층', code:'器 · 伍', c:'#3c6f8a'},
-    {t:'感光 書', s:'映像', kr:'이미지 센서', code:'器 · 陸', c:'#8a2f28'},
-    {t:'顯示 書', s:'畫面', kr:'디스플레이', code:'器 · 柒', c:'#3c3a6b'}
+    {t:'SoC 書', s:'統合', kr:'시스템 온 칩: 수백억 트랜지스터를 하나로', code:'器 · 肆', c:'#8a6420', href:'soc/index.html'},
+    {t:'工程 書', s:'製造', kr:'반도체 제조 공정', code:'器 · 伍', c:'#6b4426'},
+    {t:'包裝 書', s:'封止', kr:'패키징과 적층', code:'器 · 陸', c:'#3c6f8a'},
+    {t:'感光 書', s:'映像', kr:'이미지 센서', code:'器 · 柒', c:'#8a2f28'},
+    {t:'顯示 書', s:'畫面', kr:'디스플레이', code:'器 · 捌', c:'#3c3a6b'}
   ]},
   {hj:'算', name:'산부(算部) · 컴퓨팅과 AI', note:'계산하는 기계와 배우는 기계', books:[
     {t:'演算 書', s:'CPU', kr:'컴퓨터는 어떻게 계산하나', code:'算 · 壹', c:'#24564d'},
@@ -192,7 +193,10 @@ const SHELVES = [
     ['NAND 書 · 9장','SSD는 왜 실제보다 더 많이 쓸까?','가비지 컬렉션을 돌려 쓰기 증폭을 직접 재 보기','nand/chapters/ftl.html#s2','ftl'],
     ['메모리 書 · 2장','래치는 얼마나 튼튼할까?','나비 곡선에 정사각형을 넣어 SRAM의 잡음 여유 재기','memory/chapters/sram.html#s1','butterfly'],
     ['메모리 書 · 7장','자석으로 어떻게 비트를 기억할까?','MTJ를 돌려 보고 자기장을 쓸어 R–H 이력 그리기','memory/chapters/mram.html#s1','mtj'],
-    ['메모리 書 · 11장','메모리가 직접 계산할 수 있을까?','크로스바 셀을 눌러 옴의 법칙으로 행렬 곱하기','memory/chapters/cim.html#s2','xbar']
+    ['메모리 書 · 11장','메모리가 직접 계산할 수 있을까?','크로스바 셀을 눌러 옴의 법칙으로 행렬 곱하기','memory/chapters/cim.html#s2','xbar'],
+    ['SoC 書 · 3장','NPU는 행렬을 어떻게 곱할까?','3×3 시스톨릭 어레이로 데이터가 흐르는 모습 보기','soc/chapters/accel.html#s3','systolic'],
+    ['SoC 書 · 4장','칩 안에도 교통 체증이 있을까?','4×4 메시 NoC에 패킷을 흘려 포화를 일으키기','soc/chapters/noc.html#s2','noc'],
+    ['SoC 書 · 8장','게임하면 왜 폰이 느려질까?','20분 게임 동안 온도와 스로틀링 따라가기','soc/chapters/thermal.html#s1','thermal']
   ];
   const art = {
     cell:`<rect x="40" y="20" width="16" height="90" fill="var(--indigo)"/><line x1="20" y1="35" x2="280" y2="35" stroke="var(--gold)" stroke-width="5"/><rect x="150" y="50" width="60" height="60" fill="var(--card)" stroke="var(--jade)" stroke-width="2"/><rect x="151" y="70" width="58" height="39" fill="var(--jade)"/><path d="M56 70 H120 V80 H150" stroke="var(--ink3)" stroke-width="2" fill="none"/>`,
@@ -206,6 +210,9 @@ const SHELVES = [
     butterfly:`<path d="M30 15 C 120 15, 140 100, 270 105" fill="none" stroke="var(--jade)" stroke-width="3"/><path d="M30 105 C 160 100, 180 15, 270 15" fill="none" stroke="var(--plum)" stroke-width="3"/><rect x="48" y="58" width="40" height="40" fill="none" stroke="var(--red)" stroke-width="2"/><rect x="212" y="22" width="40" height="40" fill="none" stroke="var(--red)" stroke-width="2"/>`,
     mtj:`<rect x="110" y="16" width="80" height="18" fill="var(--ink3)"/><rect x="110" y="34" width="80" height="22" fill="var(--red)" opacity=".8"/><rect x="110" y="56" width="80" height="8" fill="var(--gold)"/><rect x="110" y="64" width="80" height="22" fill="var(--indigo)" opacity=".8"/><rect x="110" y="86" width="80" height="18" fill="var(--ink3)"/><text x="150" y="51" text-anchor="middle" font-size="14" fill="#fff">←</text><text x="150" y="81" text-anchor="middle" font-size="14" fill="#fff">→</text><path d="M210 90 H230 V30 H260 M240 90 H270" fill="none" stroke="var(--jade)" stroke-width="2"/>`,
     xbar:Array.from({length:4},(_,i)=>`<line x1="40" y1="${22+i*24}" x2="260" y2="${22+i*24}" stroke="var(--gold)" stroke-width="3"/><line x1="${80+i*50}" y1="10" x2="${80+i*50}" y2="110" stroke="var(--indigo)" stroke-width="3"/>`).join('')+Array.from({length:16},(_,k)=>`<rect x="${72+(k%4)*50}" y="${14+Math.floor(k/4)*24}" width="16" height="16" rx="3" fill="var(--jade)" opacity="${(.2+((k*7)%4)/4).toFixed(2)}"/>`).join(''),
+    systolic:Array.from({length:9},(_,k)=>`<rect x="${110+(k%3)*40}" y="${14+Math.floor(k/3)*32}" width="34" height="28" rx="4" fill="var(--jade)" opacity="${(.35+((k*5)%4)/6).toFixed(2)}"/>`).join('')+`<text x="80" y="34" font-size="13" fill="var(--indigo)">3 1 →</text><text x="80" y="66" font-size="13" fill="var(--indigo)">2 4 →</text><text x="150" y="116" font-size="13" fill="var(--jade)">↓ Σ</text>`,
+    noc:Array.from({length:16},(_,k)=>{const x=60+(k%4)*55,y=14+Math.floor(k/4)*28;return `<rect x="${x-8}" y="${y-8}" width="16" height="16" rx="2" fill="${k===15?'var(--indigo)':'var(--gold)'}"/>`+((k%4)<3?`<line x1="${x+8}" y1="${y}" x2="${x+47}" y2="${y}" stroke="${k%5?'var(--jade)':'var(--red)'}" stroke-width="${k%5?2:4}"/>`:'')}).join(''),
+    thermal:`<polyline points="20,100 60,80 100,55 140,35 170,28 280,28" fill="none" stroke="var(--red)" stroke-width="3"/><polyline points="20,105 100,90 170,62 280,60" fill="none" stroke="var(--gold)" stroke-width="3"/><polyline points="20,20 160,20 180,45 280,48" fill="none" stroke="var(--jade)" stroke-width="3" stroke-dasharray="5 3"/>`,
     hbm:`<rect x="30" y="80" width="250" height="14" fill="var(--paper)" stroke="var(--line)"/><rect x="45" y="50" width="90" height="30" fill="var(--plum)"/>`+Array.from({length:8},(_,i)=>`<rect x="170" y="${74-i*8}" width="90" height="6" fill="${i?'var(--jade)':'var(--indigo)'}" opacity="${i%2?.65:.95}"/>`).join('')+`<line x1="215" y1="18" x2="215" y2="80" stroke="var(--gold)" stroke-width="3"/>`
   };
   document.getElementById('expList').innerHTML = E.map(e => `<a class="exp" href="${e[3]}"><svg viewBox="0 0 300 120" aria-hidden="true">${art[e[4]]}</svg><div class="bd"><div class="bk">${e[0]}</div><h3>${e[1]}</h3><p>${e[2]}</p><span class="go">실험 열기 →</span></div></a>`).join('');

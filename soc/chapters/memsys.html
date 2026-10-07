@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>메모리 서브시스템과 QoS · SoC 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0832a'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E統%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="memsys">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 06 <span class="hanja">第六章 · 分</span></div>
+  <h1>메모리 서브시스템과 QoS</h1>
+  <p class="lead">SoC의 모든 블록은 결국 하나의 DRAM을 나눠 쓴다. 게임 중인 GPU는 대역폭을 있는 대로 먹고, 그 와중에도 화면은 1/120초마다 한 번도 빠짐없이 새로 그려져야 하며, 카메라는 센서가 쏟아내는 픽셀을 놓치면 안 된다. 이 장은 한정된 메모리 대역폭을 나눠 쓰는 예산과, 급한 요청을 먼저 처리하는 QoS(서비스 품질) 장치를 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>디스플레이·카메라·GPU 등 각 블록의 메모리 대역폭 요구를 계산할 수 있다.</li>
+  <li>메모리 사용률이 높아질 때 지연이 급증하는 대기열 효과를 이해한다.</li>
+  <li>실시간 블록(디스플레이)이 QoS 우선순위로 마감 시간을 지키는 원리를 안다.</li>
+  <li>시스템 레벨 캐시(SLC)가 DRAM 트래픽과 에너지를 줄이는 효과를 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>대역폭 예산</h2>
+<p>LPDDR5X 64비트 채널은 최고 약 68 GB/s를 낸다. 그러나 리프레시·행 충돌·읽기쓰기 전환 때문에 실제로 쓸 수 있는 것은 60–75 % 정도다. 디스플레이 하나만 해도 \(\text{폭}\times\text{높이}\times\text{바이트/픽셀}\times\text{레이어 수}\times\text{주사율}\)만큼 끊임없이 읽어야 한다.</p>
+<div class="eq">$$BW_{display} = W\times H\times B_{px}\times N_{layer}\times f_{refresh}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-1</span><span class="ttl">메모리 대역폭 예산 짜기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">화면 주사율 <output data-o="hz"></output></span><input type="range" data-k="hz" min="60" max="144" step="1" value="120" data-d="0" data-u="Hz"></label>
+      <label class="ctrl"><span class="lab">화면 합성 레이어 <output data-o="ly"></output></span><input type="range" data-k="ly" min="1" max="6" step="1" value="3" data-d="0"></label>
+      <label class="ctrl"><span class="lab">카메라 <output data-o="cam"></output></span><input type="range" data-k="cam" min="0" max="3" step="1" value="1" data-d="0"></label>
+      <label class="ctrl"><span class="lab">GPU 게임 부하 <output data-o="gpu"></output></span><input type="range" data-k="gpu" min="0" max="100" step="5" value="60" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">NPU <output data-o="npu"></output></span><input type="range" data-k="npu" min="0" max="100" step="5" value="20" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">메모리 속도 <output data-o="mt"></output></span><input type="range" data-k="mt" min="4266" max="10667" step="100" value="8533" data-d="0" data-u="MT/s"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="250"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">요구 합계</span><span class="v" data-r="need"></span></div>
+      <div class="ro"><span class="k">실효 대역폭 (70 %)</span><span class="v" data-r="have"></span></div>
+      <div class="ro"><span class="k">사용률</span><span class="v" data-r="u"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>가정.</b> 화면 1440×3120, 픽셀당 4바이트. 카메라는 0 = 끔, 1 = 4K30 촬영, 2 = 4K60 + HDR 다중 노출, 3 = 8K30. GPU 100 % = 25 GB/s, NPU 100 % = 15 GB/s, CPU·기타 4 GB/s. 사용률이 80 %를 넘으면 다음 실험처럼 지연이 폭증한다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>붐비면 느려진다, 그리고 QoS</h2>
+<p>메모리 컨트롤러는 요청 대기열이다. 대기열 이론의 가장 단순한 모델(M/M/1)에서 평균 지연은 \(t_0/(1-\rho)\)로, 사용률 ρ가 1에 다가가면 무한대로 커진다. 대부분의 블록에게 이는 "조금 느려짐"이지만, 디스플레이에게는 재앙이다. 디스플레이 엔진은 작은 버퍼(수 µs~수십 µs 분량)만 가지고 화면을 쭉 내보내므로, 메모리 응답이 버퍼를 다 쓰기 전에 오지 않으면 화면이 깨진다(<span class="term">언더런</span>). 그래서 디스플레이·카메라 요청에 높은 우선순위를 주는 <span class="term">QoS</span>가 필수다.</p>
+<div class="eq">$$\bar t \approx \frac{t_0}{1-\rho},\qquad \bar t_{high} \approx \frac{t_0}{1-\rho_{high}}\ \ (\text{우선순위: 자기보다 높은 부하만 경쟁})$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-2</span><span class="ttl">디스플레이 언더런을 막아라</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">전체 메모리 사용률 ρ <output data-o="r"></output></span><input type="range" data-k="r" min="10" max="99" step="1" value="85" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">디스플레이 몫 <output data-o="d"></output></span><input type="range" data-k="d" min="5" max="30" step="1" value="12" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">디스플레이 버퍼 여유 <output data-o="buf"></output></span><input type="range" data-k="buf" min="0.3" max="5" step="0.1" value="1.2" data-d="1" data-u="µs"></label>
+      <label class="ctrl"><span class="lab">QoS</span><select data-k="q"><option value="0">끔 (모두 같은 순서)</option><option value="1">켬 (디스플레이 최우선)</option></select></label>
+    </div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv2a" data-h="270"></canvas></div><div class="canvas-box"><canvas id="cv2b" data-h="270"></canvas></div></div>
+    <div class="legend"><span><i style="background:var(--plum)"></i>QoS 없음 (전체 부하와 경쟁)</span><span><i style="background:var(--jade)"></i>QoS 최우선 (자기 부하만)</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">디스플레이 평균 지연</span><span class="v" data-r="dl"></span></div>
+      <div class="ro"><span class="k">버퍼보다 늦을 확률</span><span class="v" data-r="p"></span></div>
+      <div class="ro"><span class="k">1초에 깨지는 프레임 (120 Hz)</span><span class="v" data-r="f"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 사용률에 따른 평균 지연(기본 지연 100 ns). 빨간 선이 디스플레이 버퍼 여유다. 오른쪽: 120개의 화면 줄 묶음을 내보내며 데이터가 제때 도착했는지(초록) 늦었는지(빨강) 보여 준다. 사용률 85 %에서 QoS가 꺼져 있으면 화면이 깨지고, 켜면 GPU가 조금 기다리는 대신 화면은 멀쩡하다. (지연 분포는 지수 분포로 근사)</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>시스템 레벨 캐시</h2>
+<p>최근 SoC는 모든 블록이 공유하는 수~수십 MB의 <span class="term">시스템 레벨 캐시(SLC)</span>를 메모리 컨트롤러 앞에 둔다. GPU가 방금 그린 화면을 디스플레이가 바로 읽거나, NPU의 중간 결과를 다음 층이 읽는 경우처럼 블록 사이에 데이터를 넘길 때 DRAM까지 다녀오지 않아도 된다. DRAM 접근은 비트당 에너지가 칩 안 SRAM보다 수십 배 크므로, SLC는 성능뿐 아니라 배터리를 지킨다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-3</span><span class="ttl">SLC 크기와 DRAM 트래픽·에너지</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">SLC 크기 <output data-o="s"></output></span><input type="range" data-k="s" min="0" max="64" step="1" value="12" data-d="0" data-u="MB"></label>
+      <label class="ctrl"><span class="lab">블록들의 메모리 요청량 <output data-o="bw"></output></span><input type="range" data-k="bw" min="5" max="60" step="1" value="35" data-d="0" data-u="GB/s"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="260"></canvas></div>
+    <div class="legend"><span><i style="background:var(--jade)"></i>SLC 적중률</span><span><i style="background:var(--red)"></i>메모리 접근 전력 (SLC 없음 = 100 %)</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">SLC 적중률</span><span class="v" data-r="h"></span></div>
+      <div class="ro"><span class="k">DRAM 트래픽</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">메모리 접근 전력</span><span class="v" data-r="p"></span></div>
+      <div class="ro"><span class="k">SLC 없을 때 대비</span><span class="v" data-r="sv"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모델.</b> 적중률 = 1 − (1 + S/4 MB)^(−0.6)(작업 집합의 쏠림 근사), 에너지: DRAM 접근 약 15 pJ/bit(인터페이스 포함), SLC 약 1 pJ/bit. 수십 MB SLC가 칩 면적을 꽤 차지하는 데도 쓰이는 이유가 이 절감이다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">1440×3120 화면, 4 B/픽셀, 레이어 2, 120 Hz의 디스플레이 대역폭은?</p><ol><li>약 0.5 GB/s</li><li>약 4.3 GB/s</li><li>약 43 GB/s</li><li>약 0.04 GB/s</li></ol>
+<p class="explain">1440 × 3120 × 4 × 2 × 120 ≈ 4.3×10⁹ B/s.</p></div>
+<div class="quiz" data-a="3"><p class="q">사용률 90 %에서 M/M/1 평균 지연은 기본 지연의 몇 배?</p><ol><li>1.1배</li><li>2배</li><li>5배</li><li>10배</li></ol>
+<p class="explain">1/(1 − 0.9) = 10.</p></div>
+<div class="quiz" data-a="0"><p class="q">디스플레이에 높은 QoS 우선순위를 주는 이유는?</p><ol><li>정해진 시간 안에 데이터가 오지 않으면 화면이 깨지는 실시간 블록이라서</li><li>대역폭을 가장 많이 써서</li><li>전력이 커서</li><li>캐시가 없어서</li></ol>
+<p class="explain">GPU는 늦어도 프레임이 조금 느려질 뿐이지만, 디스플레이 언더런은 즉시 눈에 보인다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 6-1 */
+J.sim('sim1', (v, box) => {
+  const disp = 1440*3120*4*v.ly*v.hz/1e9;
+  const cam = [0, 6, 14, 22][v.cam];
+  const items = [['디스플레이', disp, '--gold'],['카메라 ISP', cam, '--indigo'],['GPU', 25*v.gpu/100, '--plum'],['NPU', 15*v.npu/100, '--jade'],['CPU·기타', 4, '--red']];
+  const need = items.reduce((a,i)=>a+i[1],0), peak = v.mt*64/8/1000, have = peak*0.7;
+  J.$('[data-o="cam"]', box).textContent = ['끔','4K30','4K60 HDR','8K30'][v.cam];
+  const {ctx, w, h} = J.fit(document.getElementById('cv1'));
+  ctx.clearRect(0,0,w,h);
+  const mx = Math.max(need, peak)*1.08, X = g => 20 + g/mx*(w-40);
+  let x0 = 0; items.forEach(it => { ctx.fillStyle = J.c(it[2]); ctx.globalAlpha = .85; ctx.fillRect(X(x0), 60, X(x0 + it[1]) - X(x0), 60); ctx.globalAlpha = 1;
+    if(X(x0 + it[1]) - X(x0) > 50){ ctx.fillStyle = '#fff'; ctx.font = '600 11.5px "Noto Sans KR"'; ctx.textAlign='center'; ctx.fillText(it[0], (X(x0) + X(x0 + it[1]))/2, 86); ctx.font = '11px "JetBrains Mono"'; ctx.fillText(J.fmt(it[1],1)+' GB/s', (X(x0) + X(x0 + it[1]))/2, 103); }
+    x0 += it[1]; });
+  [[have,'--jade','실효 '+J.fmt(have,0)],[peak,'--red','최대 '+J.fmt(peak,0)]].forEach(([g,c,l]) => { ctx.strokeStyle = J.c(c); ctx.lineWidth = 2.5; ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(X(g), 40); ctx.lineTo(X(g), 140); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1; ctx.fillStyle = J.c(c); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='center'; ctx.fillText(l+' GB/s', X(g), 34); });
+  ctx.fillStyle = J.c('--ink2'); ctx.textAlign='left'; ctx.font = '12px "Noto Sans KR"'; ctx.fillText('LPDDR5X 64비트', 20, 170);
+  J.out(box,'need', J.fmt(need,1)+' GB/s'); J.out(box,'have', J.fmt(have,1)+' GB/s');
+  const u = need/have; J.out(box,'u', J.fmt(u*100,0)+' %', u > 1 ? 'bad' : u > .8 ? 'warn' : 'good');
+});
+
+/* 6-2 */
+J.sim('sim2', (v, box) => {
+  const t0 = 0.1, rho = v.r/100, rd = v.d/100*rho; // µs
+  const lat = v.q === '1' ? t0/(1 - Math.min(0.99, rd)) : t0/(1 - Math.min(0.99, rho));
+  const pLate = Math.exp(-v.buf/lat);
+  const a = [], b = []; for(let r=0.05; r<=0.99; r+=0.01){ a.push([r*100, t0/(1-r)]); b.push([r*100, t0/(1 - Math.min(.99, v.d/100*r))]); }
+  J.plot(document.getElementById('cv2a'), {x:[0,100], y:[0, 5], xlab:'메모리 사용률 (%)', ylab:'평균 지연 (µs)', series:[{pts:a, color:'--plum', w:2.5},{pts:b, color:'--jade', w:2.5, dash:[5,4]}],
+    hlines:[{y:v.buf, color:'--red', label:'버퍼 여유'}], points:[{x:v.r, y:Math.min(5, lat), color:'--ink', r:6}]});
+  const {ctx, w, h} = J.fit(document.getElementById('cv2b'));
+  ctx.clearRect(0,0,w,h);
+  const R = J.rng(3), cols = 12, cw = (w - 20)/cols, rh = (h - 40)/10; let miss = 0;
+  for(let k=0;k<120;k++){ const late = -Math.log(1 - R())*lat > v.buf; if(late) miss++; ctx.fillStyle = J.c(late ? '--red' : '--jade'); ctx.globalAlpha = late ? .9 : .5; ctx.fillRect(10 + (k%cols)*cw + 1, 10 + Math.floor(k/cols)*rh + 1, cw - 2, rh - 2); }
+  ctx.globalAlpha = 1; ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('화면 줄 묶음 120개 (빨강 = 데이터 늦음)', 10, h - 10);
+  const frames = 120*(1 - Math.pow(1 - pLate, 40));
+  J.out(box,'dl', J.fmt(lat*1000,0)+' ns', lat < v.buf/4 ? 'good' : lat < v.buf ? 'warn' : 'bad');
+  J.out(box,'p', pLate < 1e-6 ? '< 10⁻⁶' : pLate.toExponential(1), pLate < 1e-6 ? 'good' : 'bad');
+  J.out(box,'f', J.fmt(frames, 1)+' 프레임', frames < 0.01 ? 'good' : 'bad');
+});
+
+/* 6-3 SLC */
+J.sim('sim3', (v, box) => {
+  const hit = s => 1 - Math.pow(1 + s/4, -0.6);
+  const pw = s => { const hh = hit(s); return (v.bw*8e9)*((1-hh)*15e-12 + hh*1e-12 + (s > 0 ? 0.5e-12 : 0)); };
+  const pts = [], pp = []; for(let s=0; s<=64; s+=1){ pts.push([s, hit(s)*100]); pp.push([s, pw(s)/pw(0)*100]); }
+  J.plot(document.getElementById('cv3'), {x:[0,64], y:[0,100], xlab:'SLC 크기 (MB)', ylab:'%', series:[{pts, color:'--jade', w:3},{pts:pp, color:'--red', w:3, dash:[5,4]}], points:[{x:v.s, y:hit(v.s)*100, color:'--jade', r:6},{x:v.s, y:pw(v.s)/pw(0)*100, color:'--red', r:6}]});
+  J.out(box,'h', J.fmt(hit(v.s)*100,0)+' %'); J.out(box,'d', J.fmt(v.bw*(1 - hit(v.s)),1)+' GB/s');
+  J.out(box,'p', J.fmt(pw(v.s),2)+' W'); J.out(box,'sv', '−'+J.fmt((1 - pw(v.s)/pw(0))*100,0)+' %', 'good');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>클록, 타이밍, 클록 도메인 · SoC 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0832a'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E統%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="clock">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 09 <span class="hanja">第九章 · 時</span></div>
+  <h1>클록, 타이밍, 클록 도메인</h1>
+  <p class="lead">디지털 회로는 클록이라는 박자에 맞춰 춤을 춘다. 박자마다 플립플롭이 값을 받아 두고, 그 사이에 조합 논리가 다음 값을 계산한다. 계산이 다음 박자 전에 끝나지 않으면(셋업 위반), 혹은 너무 빨리 바뀌면(홀드 위반) 틀린 값이 잡힌다. SoC에는 이런 박자가 수십 개 따로 돈다. 이 장은 타이밍의 규칙과, 서로 다른 박자 사이로 신호를 넘기는 위험한 다리 — 클록 도메인 교차 — 를 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>셋업·홀드 조건과 타이밍 여유(slack)를 계산할 수 있다.</li>
+  <li>클록 스큐가 셋업과 홀드에 반대 방향으로 작용함을 이해한다.</li>
+  <li>클록 트리 균형과 편차가 스큐를 만드는 원리를 안다.</li>
+  <li>메타스테빌리티와 동기화기의 MTBF를 계산한다.</li>
+  <li>PLL로 기준 클록에서 원하는 주파수를 만드는 원리를 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>셋업과 홀드</h2>
+<p>플립플롭 A가 클록 모서리에 값을 내보내면(지연 \(t_{cq}\)), 조합 논리를 거쳐(\(t_{logic}\)) 플립플롭 B에 도착한다. B는 다음 클록 모서리보다 <span class="term">셋업 시간</span> \(t_{su}\) 전에 값이 안정되어 있어야 하고, 모서리 이후 <span class="term">홀드 시간</span> \(t_h\) 동안 값이 바뀌면 안 된다. B의 클록이 A보다 \(t_{skew}\) 늦게 도착하면 셋업에는 유리하고 홀드에는 불리하다.</p>
+<div class="eq">$$\text{셋업 여유} = T_{clk} + t_{skew} - (t_{cq} + t_{logic} + t_{su}) \ge 0,\qquad \text{홀드 여유} = t_{cq} + t_{logic,min} - (t_h + t_{skew}) \ge 0$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-1</span><span class="ttl">타이밍 다이어그램과 여유</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">클록 주파수 <output data-o="f"></output></span><input type="range" data-k="f" min="0.5" max="4" step="0.05" value="2" data-d="2" data-u="GHz"></label>
+      <label class="ctrl"><span class="lab">조합 논리 최대 지연 <output data-o="tl"></output></span><input type="range" data-k="tl" min="50" max="600" step="5" value="330" data-d="0" data-u="ps"></label>
+      <label class="ctrl"><span class="lab">조합 논리 최소 지연 <output data-o="tm"></output></span><input type="range" data-k="tm" min="0" max="200" step="5" value="40" data-d="0" data-u="ps"></label>
+      <label class="ctrl"><span class="lab">클록 스큐 (B가 늦음 +) <output data-o="sk"></output></span><input type="range" data-k="sk" min="-100" max="100" step="5" value="0" data-d="0" data-u="ps"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">셋업 여유</span><span class="v" data-r="su"></span></div>
+      <div class="ro"><span class="k">홀드 여유</span><span class="v" data-r="h"></span></div>
+      <div class="ro"><span class="k">이 경로의 최대 주파수</span><span class="v" data-r="fm"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 위 두 줄은 A·B의 클록, 아래는 B 입력 데이터다. 회색 띠 = 데이터가 바뀌고 있을 수 있는 구간(최소~최대 지연), 빨간 띠 = B가 데이터를 안정적으로 요구하는 셋업·홀드 창. 두 띠가 겹치면 위반. 가정: t_cq = 50 ps, t_su = 30 ps, t_h = 20 ps. 홀드 위반은 클록을 늦춰도 고쳐지지 않는다 — 그래서 더 위험하다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>클록 트리와 스큐</h2>
+<p>클록 신호는 칩 한가운데 PLL에서 출발해 수십만~수백만 개의 플립플롭에 동시에 도착해야 한다. 버퍼를 대칭으로 갈라 붙인 <span class="term">H-트리</span>는 모든 경로의 길이를 같게 만든다. 그래도 공정 편차로 버퍼 지연이 조금씩 달라 도착 시간이 어긋난다(<span class="term">스큐</span>). 클록 트리는 칩 동적 전력의 30 % 가까이를 쓰기도 해, 쓰지 않는 블록의 클록을 끊는 클록 게이팅이 중요하다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-2</span><span class="ttl">H-트리 vs 아무렇게나 뻗은 트리</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">트리 종류</span><select data-k="t"><option value="h">H-트리 (균형)</option><option value="u">불균형 트리</option></select></label>
+      <label class="ctrl"><span class="lab">버퍼 지연 편차 σ <output data-o="s"></output></span><input type="range" data-k="s" min="0" max="15" step="0.5" value="5" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">난수 씨앗 <output data-o="seed"></output></span><input type="range" data-k="seed" min="1" max="30" step="1" value="4" data-d="0"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="330"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">최대 스큐</span><span class="v" data-r="sk"></span></div>
+      <div class="ro"><span class="k">평균 도착 지연</span><span class="v" data-r="avg"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가운데 금색 점이 클록 원점, 끝의 원 16개가 플립플롭 묶음이다. 원의 색은 클록 도착 시간(파랑 = 이름, 빨강 = 늦음). 버퍼 한 단 = 20 ps, 배선 길이에 비례하는 지연을 더했다. 불균형 트리는 편차가 0이어도 스큐가 크다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>메타스테빌리티와 동기화기</h2>
+<p>서로 무관한 두 클록 사이로 신호를 넘기면, 신호가 언젠가는 받는 쪽 플립플롭의 셋업·홀드 창 안에서 바뀐다. 그러면 플립플롭은 0도 1도 아닌 중간 전압에서 한동안 머뭇거린다(<span class="term">메타스테빌리티</span>). 머뭇거림은 시간이 지나면 지수적으로 풀리므로, 플립플롭 두세 개를 줄지어 두고 한 클록씩 기다리게 하는 <span class="term">동기화기</span>로 위험을 원하는 만큼 줄인다.</p>
+<div class="eq">$$\text{MTBF} = \frac{e^{\,t_r/\tau}}{T_0\, f_{clk}\, f_{data}},\qquad t_r \approx (N_{stage}-1)\,T_{clk} - t_{su}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-3</span><span class="ttl">동기화기 단수와 MTBF</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">동기화 플립플롭 수 <output data-o="n"></output></span><input type="range" data-k="n" min="1" max="4" step="1" value="2" data-d="0"></label>
+      <label class="ctrl"><span class="lab">받는 쪽 클록 <output data-o="f"></output></span><input type="range" data-k="f" min="0.1" max="4" step="0.05" value="2" data-d="2" data-u="GHz"></label>
+      <label class="ctrl"><span class="lab">신호 변화율 <output data-o="d"></output></span><input type="range" data-k="d" min="1" max="1000" step="1" value="100" data-d="0" data-u="MHz"></label>
+      <label class="ctrl"><span class="lab">해소 시정수 τ <output data-o="tau"></output></span><input type="range" data-k="tau" min="5" max="40" step="1" value="12" data-d="0" data-u="ps"></label>
+    </div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv3a" data-h="250"></canvas></div><div class="canvas-box"><canvas id="cv3b" data-h="250"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">해소에 쓸 수 있는 시간</span><span class="v" data-r="tr"></span></div>
+      <div class="ro"><span class="k">MTBF</span><span class="v" data-r="m"></span></div>
+      <div class="ro"><span class="k">판정 (칩 10억 개 × 이런 교차 100곳)</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 셋업 창 근처에서 데이터가 바뀌어 메타스테이블이 된 출력 수십 개가 시간에 따라 0 또는 1로 갈라지는 모습(τ마다 차이가 e배). 오른쪽: 단수에 따른 MTBF(로그). 기본값에서 1단이면 수십 초, 2단이면 수백 년, 3단이면 우주의 나이를 넘는다. 고속 클록에서는 한 클록이 짧아 단수를 늘려야 한다. (T₀ = 20 ps 가정)</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>PLL: 원하는 주파수 만들기</h2>
+<p>SoC에는 보통 수정 발진기 하나(예: 38.4 MHz)만 있다. 수 GHz의 CPU 클록, 정확히 맞춰야 하는 화면·오디오·USB 클록은 모두 <span class="term">PLL</span>(위상 고정 루프)이 만든다. PLL은 전압 제어 발진기(VCO)의 출력을 N으로 나눠 기준 클록과 위상을 비교하고, 차이가 0이 되도록 VCO를 조절한다. 결과적으로 \(f_{out} = f_{ref}\times N / M\). N이 정수면 만들 수 있는 주파수가 띄엄띄엄하므로, 분수 N(fractional-N) PLL로 세밀하게 맞춘다.</p>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-4</span><span class="ttl">주파수 합성기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">목표 주파수 <output data-o="t"></output></span><input type="range" data-k="t" min="100" max="3500" step="1" value="2187" data-d="0" data-u="MHz"></label>
+      <label class="ctrl"><span class="lab">기준 클록 <output data-o="r"></output></span><input type="range" data-k="r" min="19.2" max="76.8" step="19.2" value="38.4" data-d="1" data-u="MHz"></label>
+      <label class="ctrl"><span class="lab">방식</span><select data-k="fr"><option value="0">정수 N</option><option value="1">분수 N (24비트)</option></select></label>
+    </div>
+    <div class="canvas-box"><svg id="pll" viewBox="0 0 720 210" style="display:block;width:100%"></svg></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">선택한 N / M</span><span class="v" data-r="nm"></span></div>
+      <div class="ro"><span class="k">실제 출력</span><span class="v" data-r="out"></span></div>
+      <div class="ro"><span class="k">오차</span><span class="v" data-r="err"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 위상 비교기(PFD) → 루프 필터(LPF) → VCO → 출력 분주기(÷M)로 이어지고, VCO 출력을 ÷N으로 나눠 되먹인다. VCO는 2–5 GHz에서만 동작한다고 가정했다. 정수 N에서는 기준 클록 간격으로만 맞출 수 있어 오차가 수백 ppm까지 생기고, 분수 N은 ppb 수준까지 맞춘다(대신 분수 잡음을 처리해야 한다).</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">T_clk = 500 ps, t_cq = 50, t_logic = 380, t_su = 30 ps, 스큐 0일 때 셋업 여유는?</p><ol><li>−40 ps</li><li>40 ps</li><li>120 ps</li><li>0 ps</li></ol>
+<p class="explain">500 − (50 + 380 + 30) = 40 ps.</p></div>
+<div class="quiz" data-a="3"><p class="q">홀드 위반을 클록 주파수를 낮춰 고칠 수 없는 이유는?</p><ol><li>셋업과 같은 식이라서</li><li>전압 문제라서</li><li>스큐가 0이라서</li><li>홀드 조건에 클록 주기가 들어가지 않아서</li></ol>
+<p class="explain">같은 모서리에서 출발·도착하는 경로의 최소 지연 문제다. 지연 버퍼를 넣어 고친다.</p></div>
+<div class="quiz" data-a="0"><p class="q">동기화기 단을 하나 늘리면 MTBF는?</p><ol><li>e^(T_clk/τ)배 늘어난다</li><li>두 배</li><li>그대로</li><li>절반</li></ol>
+<p class="explain">해소 시간이 한 클록 늘어 지수 항이 커진다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 9-1 */
+J.sim('sim1', (v, box) => {
+  const T = 1000/v.f, tcq = 50, tsu = 30, th = 20;
+  const su = T + v.sk - (tcq + v.tl + tsu), ho = tcq + v.tm - (th + v.sk);
+  const {ctx, w, h} = J.fit(document.getElementById('cv1'));
+  ctx.clearRect(0,0,w,h);
+  const span = T*2.2, X = t => 80 + (t + T*0.1)/span*(w - 100);
+  const clk = (y, sk, lab) => { ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(lab, 72, y + 15);
+    ctx.strokeStyle = J.c('--ink'); ctx.lineWidth = 2; ctx.beginPath(); let first = true;
+    for(let k=-1;k<3;k++){ const t0 = k*T + sk, t1 = t0 + T/2; [[t0,30],[t0,0],[t1,0],[t1,30]].forEach(([t,yy]) => { const x = X(t); if(x < 80 || x > w - 20) return; first ? ctx.moveTo(x, y + yy) : ctx.lineTo(x, y + yy); first = false; }); }
+    ctx.stroke(); ctx.lineWidth = 1; };
+  clk(20, 0, 'CLK A'); clk(80, v.sk, 'CLK B');
+  const yd = 160;
+  ctx.fillStyle = J.c('--ink2'); ctx.textAlign='right'; ctx.fillText('B 입력 D', 72, yd + 15);
+  // 데이터 변화 구간 (첫 모서리에서 출발)
+  ctx.fillStyle = J.c('--ink3'); ctx.globalAlpha = .35; ctx.fillRect(X(tcq + v.tm), yd, X(tcq + v.tl) - X(tcq + v.tm), 30); ctx.globalAlpha = 1;
+  ctx.strokeStyle = J.c('--jade'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(-T*0.1), yd + 15); ctx.lineTo(X(tcq + v.tm), yd + 15); ctx.moveTo(X(tcq + v.tl), yd + 15); ctx.lineTo(X(T*2), yd + 15); ctx.stroke(); ctx.lineWidth = 1;
+  // B의 셋업/홀드 창: 두 번째 모서리 (T + sk) 및 첫 모서리(sk)의 홀드
+  const win = (c, col) => { ctx.fillStyle = J.c(col); ctx.globalAlpha = .3; ctx.fillRect(X(c - tsu), yd - 6, X(c + th) - X(c - tsu), 42); ctx.globalAlpha = 1; };
+  win(T + v.sk, su < 0 ? '--red' : '--gold'); win(v.sk, ho < 0 ? '--red' : '--gold');
+  ctx.strokeStyle = J.c('--red'); ctx.setLineDash([3,3]); [v.sk, T + v.sk].forEach(t => { ctx.beginPath(); ctx.moveTo(X(t), 80); ctx.lineTo(X(t), yd + 40); ctx.stroke(); }); ctx.setLineDash([]);
+  ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  [0, T, 2*T].forEach(t => ctx.fillText(J.fmt(t,0)+' ps', X(t), h - 8));
+  J.out(box,'su', J.fmt(su,0)+' ps', su >= 0 ? 'good' : 'bad');
+  J.out(box,'h', J.fmt(ho,0)+' ps', ho >= 0 ? 'good' : 'bad');
+  J.out(box,'fm', J.fmt(1000/(tcq + v.tl + tsu - v.sk),2)+' GHz');
+});
+
+/* 9-2 클록 트리 */
+J.sim('sim2', (v, box) => {
+  const R = J.rng(v.seed*13+5), sg = v.s/100, bd = 20;
+  const leaves = [];
+  const {ctx, w, h} = J.fit(document.getElementById('cv2'));
+  ctx.clearRect(0,0,w,h);
+  const S = Math.min(w, h*1.4) - 40, cx = w/2, cy = h/2;
+  const line = (x1,y1,x2,y2) => { ctx.strokeStyle = J.c('--gold'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.lineWidth = 1; };
+  if(v.t === 'h'){
+    const rec = (x, y, len, dir, depth, t) => {
+      const d = t + bd*(1 + sg*J.gauss(R)) + len*0.05;
+      if(depth === 0){ leaves.push({x, y, t: d}); return; }
+      if(dir === 'h'){ line(x - len, y, x + len, y); rec(x - len, y, len*(depth%2 ? 1 : 0.7), 'v', depth-1, d); rec(x + len, y, len*(depth%2 ? 1 : 0.7), 'v', depth-1, d); }
+      else { line(x, y - len, x, y + len); rec(x, y - len, len*0.7, 'h', depth-1, d); rec(x, y + len, len*0.7, 'h', depth-1, d); }
+    };
+    rec(cx, cy, S*0.28, 'h', 4, 0);
+  } else {
+    const pts = Array.from({length:16}, (_,i) => ({x: cx + (R() - .5)*S*0.95, y: cy + (R() - .5)*S*0.62}));
+    pts.sort((a,b) => Math.hypot(a.x-cx,a.y-cy) - Math.hypot(b.x-cx,b.y-cy));
+    const nodes = [{x:cx, y:cy, t:0, depth:0}];
+    pts.forEach(p => { let par = nodes.reduce((a,b) => Math.hypot(b.x-p.x,b.y-p.y) < Math.hypot(a.x-p.x,a.y-p.y) ? b : a);
+      line(par.x, par.y, p.x, p.y); const t = par.t + bd*(1 + sg*J.gauss(R)) + Math.hypot(par.x-p.x, par.y-p.y)*0.25; nodes.push({x:p.x, y:p.y, t}); leaves.push({x:p.x, y:p.y, t}); });
+  }
+  const ts = leaves.map(l => l.t), mn = Math.min(...ts), mx = Math.max(...ts);
+  leaves.forEach(l => { const c = mx > mn ? (l.t - mn)/(mx - mn) : 0.5; ctx.fillStyle = `hsl(${220 - c*220} 70% 50%)`; ctx.beginPath(); ctx.arc(l.x, l.y, 9, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = '9px "JetBrains Mono"'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(Math.round(l.t), l.x, l.y); });
+  ctx.fillStyle = J.c('--gold'); ctx.beginPath(); ctx.arc(cx, cy, 7, 0, 7); ctx.fill(); ctx.textBaseline='alphabetic';
+  J.out(box,'sk', J.fmt(mx - mn,1)+' ps', mx - mn < 10 ? 'good' : mx - mn < 30 ? 'warn' : 'bad');
+  J.out(box,'avg', J.fmt(ts.reduce((a,b)=>a+b,0)/ts.length,0)+' ps');
+});
+
+/* 9-3 MTBF */
+(function(){
+  let phase = 0;
+  const s = J.sim('sim3', (v, box) => {
+    const T = 1000/v.f, tsu = 30, T0 = 20e-12, tr = Math.max(0, (v.n - 1)*T - tsu + (v.n === 1 ? T*0.5 : 0));
+    const mtbf = n => { const t = Math.max(0, (n - 1)*T - tsu + (n === 1 ? T*0.5 : 0))*1e-12; return Math.exp(t/(v.tau*1e-12))/(T0*v.f*1e9*v.d*1e6); };
+    const m = mtbf(v.n);
+    const {ctx, w, h} = J.fit(document.getElementById('cv3a'));
+    ctx.clearRect(0,0,w,h);
+    const R = J.rng(3), span = 10*v.tau, X = t => 30 + t/span*(w - 40), Y = vv => h/2 - vv*(h/2 - 20);
+    for(let k=0;k<40;k++){ const v0 = (R() - .5)*0.02*Math.exp(J.gauss(R)*1.2); ctx.strokeStyle = J.c(v0 > 0 ? '--jade' : '--indigo'); ctx.globalAlpha = .55; ctx.beginPath();
+      for(let t=0; t<=span; t+=span/200){ const vv = J.clamp(v0*Math.exp(t/v.tau), -1, 1); t ? ctx.lineTo(X(t), Y(vv)) : ctx.moveTo(X(t), Y(vv)); } ctx.stroke(); }
+    ctx.globalAlpha = 1; ctx.strokeStyle = J.c('--red'); ctx.setLineDash([4,3]); const xr = X(Math.min(span, tr)); ctx.beginPath(); ctx.moveTo(xr, 10); ctx.lineTo(xr, h - 20); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('출력 1', 32, 16); ctx.fillText('출력 0', 32, h - 24); ctx.fillStyle = J.c('--red'); ctx.fillText('다음 단이 값을 잡는 시점', Math.min(xr + 4, w - 140), 30);
+    ctx.fillStyle = J.c('--ink3'); ctx.textAlign='center'; ctx.fillText('시간 (τ 단위, 0–10τ)', w/2, h - 4);
+    const pts = []; for(let n=1;n<=4;n++) pts.push([n, Math.max(1e-6, Math.min(1e60, mtbf(n)))]);
+    J.plot(document.getElementById('cv3b'), {x:[1,4], y:[1e-6, 1e60], logy:true, xlab:'동기화 단수', ylab:'MTBF (s, 로그)', xf:t=>t, yf:t=>'1e'+Math.round(Math.log10(t)), series:[{pts, color:'--gold', w:3}], points:[{x:v.n, y:Math.max(1e-6, Math.min(1e60, m)), color:'--red', r:7}], hlines:[{y:3.15e17, color:'--ink3', label:'우주 나이', dash:[2,3]}], pad:{l:52}});
+    const f = s => s > 3.15e17 ? '우주 나이 이상' : s > 3.15e7 ? J.fmt(s/3.15e7,1)+' 년' : s > 3600 ? J.fmt(s/3600,1)+' 시간' : s > 1 ? J.fmt(s,1)+' s' : J.fmt(s*1e3,2)+' ms';
+    J.out(box,'tr', J.fmt(tr,0)+' ps'); J.out(box,'m', f(m), m > 3.15e9 ? 'good' : 'bad');
+    const fleet = m/(1e9*100);
+    J.out(box,'ok', fleet > 3.15e8 ? '안전 (전체에서 10년에 한 번 미만)' : '위험 — 단을 늘려야', fleet > 3.15e8 ? 'good' : 'bad');
+  });
+})();
+
+/* 9-4 PLL */
+J.sim('sim4', (v, box) => {
+  let best = null;
+  for(let M=1; M<=16; M++){ const fv = v.t*M; if(fv < 2000 || fv > 5000) continue;
+    const Nexact = fv/v.r, N = v.fr === '1' ? Math.round(Nexact*Math.pow(2,24))/Math.pow(2,24) : Math.round(Nexact);
+    const out = v.r*N/M, err = Math.abs(out - v.t)/v.t*1e6; if(!best || err < best.err) best = {M, N, out, err, fv: v.r*N}; }
+  const s = document.getElementById('pll'); s.innerHTML = '';
+  const bx = (x, y, w2, t, col) => { J.svg('rect', {x, y, width:w2, height:44, rx:6, fill:'var(--card)', stroke:`var(${col})`, 'stroke-width':2}, s); J.svg('text', {x:x+w2/2, y:y+27, 'text-anchor':'middle', class:'t-m', text:t, style:'font-weight:700'}, s); };
+  const ar = (x1,y1,x2,y2) => J.svg('line', {x1,y1,x2,y2, stroke:'var(--ink3)', 'stroke-width':2}, s);
+  J.svg('text', {x:10, y:56, class:'t-s', text:'기준 '+v.r+' MHz'}, s); ar(10, 62, 70, 62);
+  bx(70, 40, 80, 'PFD', '--red'); ar(150, 62, 190, 62); bx(190, 40, 90, 'LPF', '--indigo'); ar(280, 62, 320, 62);
+  bx(320, 40, 120, best ? 'VCO '+J.fmt(best.fv,0) : 'VCO', '--gold'); ar(440, 62, 500, 62);
+  bx(500, 40, 90, best ? '÷ '+best.M : '÷M', '--jade'); ar(590, 62, 640, 62); J.svg('text', {x:600, y:52, class:'t-s', text: best ? J.fmt(best.out,3)+' MHz' : '불가'}, s);
+  ar(380, 84, 380, 150); bx(320, 140, 120, best ? '÷ '+(v.fr === '1' ? best.N.toFixed(4) : best.N) : '÷N', '--plum'); ar(320, 162, 110, 162); ar(110, 162, 110, 84);
+  J.svg('text', {x:10, y:200, class:'t-s', text:'VCO 범위 2–5 GHz · 되먹임 경로 (÷N) 가 기준 클록과 위상이 같아지도록 VCO를 조절'}, s);
+  J.out(box,'nm', best ? (v.fr === '1' ? best.N.toFixed(5) : best.N)+' / '+best.M : '—');
+  J.out(box,'out', best ? J.fmt(best.out,4)+' MHz' : '—');
+  J.out(box,'err', best ? (best.err < 0.01 ? '< 0.01 ppm' : J.fmt(best.err,1)+' ppm') : '—', best && best.err < 50 ? 'good' : 'warn');
+});
+</script>
+</body>
+</html>

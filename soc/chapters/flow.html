@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>설계 흐름과 다이 원가 · SoC 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0832a'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E統%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="flow">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 10 <span class="hanja">第十章 · 造</span></div>
+  <h1>설계 흐름과 다이 원가</h1>
+  <p class="lead">SoC는 손으로 그리지 않는다. 엔지니어는 하드웨어 기술 언어로 동작을 쓰고, 소프트웨어 도구가 그것을 수십억 개의 트랜지스터 배치와 배선으로 바꾼다. 이 장은 RTL에서 GDS까지의 설계 흐름을 한 단계씩 보고, 타이밍을 맞추는 정적 타이밍 분석을 직접 해 보며, 다이가 커질수록 원가가 왜 그보다 빠르게 오르는지 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>RTL → 합성 → 배치 → 클록 트리 → 배선 → 사인오프의 흐름을 설명할 수 있다.</li>
+  <li>정적 타이밍 분석(STA)으로 임계 경로를 찾고 고치는 과정을 실습한다.</li>
+  <li>웨이퍼당 다이 수와 수율로 좋은 다이 하나의 원가를 계산한다.</li>
+  <li>다이 면적이 원가에 비선형으로 작용하는 이유를 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>RTL에서 GDS까지</h2>
+<p>설계자는 Verilog·SystemVerilog 같은 언어로 레지스터 사이의 데이터 흐름(<span class="term">RTL</span>)을 쓴다. <span class="term">논리 합성</span> 도구가 이것을 표준 셀 라이브러리의 게이트 연결(넷리스트)로 바꾸고, <span class="term">배치</span>가 수억 개의 셀을 칩 위에 놓고, <span class="term">클록 트리 합성(CTS)</span>이 클록 망을 깔고, <span class="term">배선</span>이 십수 층의 금속으로 셀을 잇는다. 마지막으로 타이밍·전력·설계 규칙·회로 일치 검사(<span class="term">사인오프</span>)를 통과하면 마스크 제작용 GDS 파일이 된다. 이 모든 과정에 검증이 겹겹이 들어가 설계 인력의 절반 이상이 검증에 쓰인다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-1</span><span class="ttl">설계 흐름 한 단계씩</span></div>
+  <div class="sim-b">
+    <div class="ctrls"><label class="ctrl"><span class="lab">단계 <output data-o="s"></output></span><input type="range" data-k="s" min="0" max="5" step="1" value="0" data-d="0" data-u="/ 5"></label></div>
+    <div class="btnrow"><button class="sbtn" id="fPrev">◀ 이전</button><button class="sbtn pri" id="fNext">다음 ▶</button></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="320"></canvas></div>
+    <p id="flowTxt" style="margin:10px 2px 0;font-size:14.5px"></p>
+  </div>
+  <p class="cap"><b>그림 설명.</b> 작은 블록 하나(곱셈–누산기)가 RTL 코드에서 배선된 레이아웃이 되기까지. 실제 SoC는 이 과정을 수백 개 블록에 대해 병렬로, 수개월에 걸쳐 반복한다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>정적 타이밍 분석</h2>
+<p>수십억 개의 경로를 시뮬레이션으로 모두 확인할 수는 없다. <span class="term">STA</span>는 입력값과 상관없이 각 게이트의 지연만으로 모든 경로의 도착 시간을 계산한다. 그래프의 앞에서부터 "가장 늦게 도착하는 입력 + 자기 지연"을 전파하면, 출력에서 가장 늦은 경로가 <span class="term">임계 경로</span>다. 클록 주기보다 길면 그 경로의 게이트를 키우거나(빠르지만 크고 전력이 늘어남), 논리를 다시 짜거나, 파이프라인 단을 추가한다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-2</span><span class="ttl">타이밍 맞추기 퍼즐</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">목표 클록 주기 <output data-o="T"></output></span><input type="range" data-k="T" min="150" max="500" step="10" value="300" data-d="0" data-u="ps"></label>
+    </div>
+    <div class="btnrow"><span class="hint">게이트를 누르면 크기가 커진다(지연 ↓, 면적 ↑). 다시 누르면 원래대로.</span><button class="sbtn warn" id="staReset">초기화</button></div>
+    <div class="canvas-box"><svg id="sta" viewBox="0 0 720 320" style="display:block;width:100%"></svg></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">임계 경로 지연</span><span class="v" data-r="cp"></span></div>
+      <div class="ro"><span class="k">여유 (WNS)</span><span class="v" data-r="slack"></span></div>
+      <div class="ro"><span class="k">추가 면적</span><span class="v" data-r="a"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 네모는 게이트(안의 숫자 = 지연 ps), 위의 작은 숫자는 그 출력의 도착 시간이다. 빨간 선이 임계 경로. 임계 경로의 게이트를 키우면 다른 경로가 새 임계 경로가 된다 — 실제 타이밍 최적화가 끝없는 두더지 잡기인 이유다. 면적을 가장 적게 늘려 목표를 맞춰 보자.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>큰 다이는 비싸다</h2>
+<p>웨이퍼 한 장의 값은 정해져 있다(첨단 공정 300 mm 웨이퍼 수만 달러). 다이가 크면 웨이퍼 하나에서 나오는 다이 수가 줄고, 다이 하나가 결함에 맞을 확률도 커진다. 두 효과가 곱해져, 좋은 다이 하나의 원가는 면적보다 훨씬 빠르게 오른다. 이것이 11장 칩렛의 출발점이다.</p>
+<div class="eq">$$\text{DPW} \approx \frac{\pi r^2}{A} - \frac{2\pi r}{\sqrt{2A}},\qquad Y = \left(\frac{1-e^{-AD_0}}{AD_0}\right)^2,\qquad C_{die} = \frac{C_{wafer}}{\text{DPW}\cdot Y}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-3</span><span class="ttl">다이 면적과 원가</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">다이 면적 <output data-o="a"></output></span><input type="range" data-k="a" min="20" max="800" step="5" value="110" data-d="0" data-u="mm²"></label>
+      <label class="ctrl"><span class="lab">웨이퍼 가격 <output data-o="w"></output></span><input type="range" data-k="w" min="3000" max="30000" step="500" value="18000" data-d="0" data-u="$"></label>
+      <label class="ctrl"><span class="lab">결함 밀도 D₀ <output data-o="d"></output></span><input type="range" data-k="d" min="0.02" max="0.5" step="0.01" value="0.1" data-d="2" data-u="/cm²"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">웨이퍼당 다이</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">수율</span><span class="v" data-r="y"></span></div>
+      <div class="ro"><span class="k">좋은 다이 원가</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">mm²당 원가</span><span class="v" data-r="cm"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 초록 = 다이 원가, 점선 = 면적에 정비례했을 때. 면적 두 배가 원가 두 배를 훌쩍 넘는다. 신공정 초기(D₀ 높음)일수록 큰 다이가 불리하다 — 그래서 새 공정은 작은 모바일 SoC로 먼저 시작한다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">논리 합성 단계의 출력은?</p><ol><li>GDS 마스크 파일</li><li>RTL 코드</li><li>표준 셀로 된 게이트 넷리스트</li><li>클록 트리</li></ol>
+<p class="explain">합성은 RTL을 셀 라이브러리의 게이트 연결로 바꾼다.</p></div>
+<div class="quiz" data-a="0"><p class="q">STA가 시뮬레이션보다 강력한 이유는?</p><ol><li>입력 패턴 없이 모든 경로를 빠짐없이 검사하기 때문에</li><li>더 정확한 파형을 주기 때문에</li><li>기능 버그를 찾기 때문에</li><li>전력을 계산하기 때문에</li></ol>
+<p class="explain">대신 기능의 옳고 그름은 다른 검증이 맡는다.</p></div>
+<div class="quiz" data-a="1"><p class="q">다이 면적을 두 배로 하면 좋은 다이 원가는?</p><ol><li>정확히 두 배</li><li>두 배보다 크게 늘어난다</li><li>그대로</li><li>절반</li></ol>
+<p class="explain">웨이퍼당 다이 수 감소 × 수율 감소가 겹친다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 10-1 흐름 */
+(function(){
+  const T = [['① RTL 작성', '동작을 하드웨어 기술 언어로 쓴다: 클록마다 acc ← acc + a×b. 아직 게이트도 위치도 없다.'],
+    ['② 논리 합성', '표준 셀(NAND, NOR, 플립플롭, 가산기 …)의 연결로 바뀐다. 타이밍·면적 목표에 맞춰 셀 종류와 크기를 고른다.'],
+    ['③ 배치', '수천 개 셀을 칩 위 행(row)에 놓는다. 서로 연결된 셀을 가깝게 두어 배선 길이와 지연을 줄인다.'],
+    ['④ 클록 트리 합성', '모든 플립플롭에 클록이 같은 시간에 도착하도록 버퍼 트리(금색)를 깐다.'],
+    ['⑤ 배선', '여러 층의 금속으로 셀 사이를 잇는다. 혼잡한 곳은 우회해 지연이 늘 수 있다.'],
+    ['⑥ 사인오프 → GDS', '타이밍(STA), 전력, 설계 규칙(DRC), 회로 일치(LVS) 검사를 통과하면 마스크 파일(GDS)로 내보낸다.']];
+  const box = document.getElementById('sim1'), inp = J.$('[data-k="s"]', box);
+  const R0 = J.rng(5), cells = Array.from({length:70}, (_,i) => ({x: R0(), y: R0(), ff: i % 9 === 0, c: Math.floor(R0()*5)})), nets = Array.from({length:60}, () => [Math.floor(R0()*70), Math.floor(R0()*70)]);
+  J.sim('sim1', v => {
+    const s = v.s; document.getElementById('flowTxt').innerHTML = `<b style="font-family:var(--serif)">${T[s][0]}</b> — ${T[s][1]}`;
+    const {ctx, w, h} = J.fit(document.getElementById('cv1'));
+    ctx.clearRect(0,0,w,h);
+    if(s === 0){
+      const code = ['module mac (input clk, input [7:0] a, b,', '            output reg [19:0] acc);', '  always @(posedge clk)', '    acc <= acc + a * b;', 'endmodule'];
+      ctx.fillStyle = J.c('--card'); ctx.fillRect(20, 20, w - 40, h - 40); ctx.font = '15px "JetBrains Mono"'; ctx.textAlign='left';
+      code.forEach((l,i) => { ctx.fillStyle = J.c(i === 3 ? '--red' : '--ink'); ctx.fillText(l, 40, 60 + i*30); }); return;
+    }
+    if(s === 1){
+      const G = ['AND','XOR','FA','FA','HA','FA','DFF','DFF','MUX','FA','XOR','AND'];
+      G.forEach((g,i) => { const x = 40 + (i%6)*((w-80)/6), y = 50 + Math.floor(i/6)*130; ctx.fillStyle = J.c(g === 'DFF' ? '--indigo' : '--gold'); ctx.globalAlpha = .85; ctx.fillRect(x, y, 70, 46); ctx.globalAlpha = 1; ctx.fillStyle = '#fff'; ctx.font = '600 13px "JetBrains Mono"'; ctx.textAlign='center'; ctx.fillText(g, x + 35, y + 28);
+        if(i%6 < 5){ ctx.strokeStyle = J.c('--ink3'); ctx.beginPath(); ctx.moveTo(x + 70, y + 23); ctx.lineTo(x + (w-80)/6, y + 23 + ((i*7)%3 - 1)*15); ctx.stroke(); } }); return;
+    }
+    const X = c => 30 + c.x*(w - 60), Y = c => 30 + Math.round(c.y*8)/8*(h - 60);
+    ctx.strokeStyle = J.c('--line2'); for(let r=0;r<=8;r++){ ctx.beginPath(); ctx.moveTo(30, 30 + r/8*(h-60)); ctx.lineTo(w - 30, 30 + r/8*(h-60)); ctx.stroke(); }
+    if(s >= 5){ nets.forEach(([a,b],k) => { const A = cells[a], B = cells[b]; ctx.strokeStyle = J.c(k%2 ? '--indigo' : '--plum'); ctx.globalAlpha = .55; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(A), Y(A)); ctx.lineTo(X(B), Y(A)); ctx.lineTo(X(B), Y(B)); ctx.stroke(); ctx.globalAlpha = 1; ctx.lineWidth = 1; }); }
+    else if(s >= 2){ nets.slice(0, 25).forEach(([a,b]) => { const A = cells[a], B = cells[b]; ctx.strokeStyle = J.c('--ink3'); ctx.globalAlpha = .25; ctx.beginPath(); ctx.moveTo(X(A), Y(A)); ctx.lineTo(X(B), Y(B)); ctx.stroke(); ctx.globalAlpha = 1; }); }
+    if(s >= 3){ const ffs = cells.filter(c => c.ff), cx = w/2, cy = h/2; ffs.forEach(f => { ctx.strokeStyle = J.c('--gold'); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(X(f), cy); ctx.lineTo(X(f), Y(f)); ctx.stroke(); ctx.lineWidth = 1; }); ctx.fillStyle = J.c('--gold'); ctx.beginPath(); ctx.arc(cx, cy, 7, 0, 7); ctx.fill(); }
+    cells.forEach(c => { ctx.fillStyle = J.c(c.ff ? '--indigo' : '--jade'); ctx.globalAlpha = .85; ctx.fillRect(X(c) - 7, Y(c) - 5, 14, 10); ctx.globalAlpha = 1; });
+    if(s === 5){ ctx.strokeStyle = J.c('--jade'); ctx.lineWidth = 3; ctx.strokeRect(14, 14, w - 28, h - 28); ctx.lineWidth = 1; ctx.fillStyle = J.c('--jade'); ctx.font = '600 13px "Noto Sans KR"'; ctx.textAlign='right'; ctx.fillText('✓ STA · DRC · LVS 통과 → GDS', w - 24, h - 20); }
+  });
+  document.getElementById('fPrev').onclick = () => { inp.value = Math.max(0, +inp.value - 1); inp.dispatchEvent(new Event('input')); };
+  document.getElementById('fNext').onclick = () => { inp.value = Math.min(5, +inp.value + 1); inp.dispatchEvent(new Event('input')); };
+})();
+
+/* 10-2 STA */
+(function(){
+  const box = document.getElementById('sim2');
+  const G = [ // id, x, y, delay, inputs
+    ['g1', 120, 60, 60, ['in0']], ['g2', 120, 160, 45, ['in1']], ['g3', 120, 260, 30, ['in2']],
+    ['g4', 260, 90, 70, ['g1','g2']], ['g5', 260, 220, 50, ['g2','g3']],
+    ['g6', 400, 60, 55, ['g4']], ['g7', 400, 160, 65, ['g4','g5']], ['g8', 400, 260, 40, ['g5']],
+    ['g9', 540, 110, 60, ['g6','g7']], ['g10', 540, 230, 45, ['g7','g8']]];
+  const up = {};
+  const s = J.sim('sim2', v => {
+    const svg = document.getElementById('sta'); svg.innerHTML = '';
+    const at = {in0:0, in1:10, in2:5}, from = {}, pos = {in0:[30,60], in1:[30,160], in2:[30,260]};
+    G.forEach(g => { pos[g[0]] = [g[1], g[2]]; const d = g[3]*(up[g[0]] ? 0.6 : 1); let best = -1, src = null; g[4].forEach(i => { if(at[i] > best){ best = at[i]; src = i; } }); at[g[0]] = best + d; from[g[0]] = src; });
+    const outs = ['g9','g10'], end = outs.reduce((a,b) => at[b] > at[a] ? b : a);
+    const crit = new Set(); let n = end; while(n){ crit.add(n); n = from[n]; }
+    G.forEach(g => g[4].forEach(i => { const a = pos[i], b = pos[g[0]], c = crit.has(g[0]) && crit.has(i);
+      J.svg('line', {x1:a[0] + 30, y1:a[1], x2:b[0] - 30, y2:b[1], stroke: c ? 'var(--red)' : 'var(--line)', 'stroke-width': c ? 3 : 1.5}, svg); }));
+    ['in0','in1','in2'].forEach(i => { J.svg('circle', {cx:pos[i][0], cy:pos[i][1], r:10, fill:'var(--indigo)'}, svg); J.svg('text', {x:pos[i][0], y:pos[i][1] - 16, 'text-anchor':'middle', class:'t-s mono', text:at[i]}, svg); });
+    G.forEach(g => { const gg = J.svg('g', {style:'cursor:pointer'}, svg), d = Math.round(g[3]*(up[g[0]] ? 0.6 : 1));
+      J.svg('rect', {x:g[1] - 30, y:g[2] - 20, width: up[g[0]] ? 66 : 60, height:40, rx:6, fill: crit.has(g[0]) ? 'var(--red-soft)' : 'var(--card)', stroke: crit.has(g[0]) ? 'var(--red)' : 'var(--ink3)', 'stroke-width': up[g[0]] ? 3 : 1.5}, gg);
+      J.svg('text', {x:g[1], y:g[2] + 5, 'text-anchor':'middle', class:'t-m mono', text:d+(up[g[0]] ? '↑' : ''), style:'font-weight:700'}, gg);
+      J.svg('text', {x:g[1], y:g[2] - 26, 'text-anchor':'middle', class:'t-s mono', text:Math.round(at[g[0]]), style:`fill:${crit.has(g[0]) ? 'var(--red)' : 'var(--ink3)'}`}, gg);
+      gg.addEventListener('click', () => { up[g[0]] = !up[g[0]]; s.run(); }); });
+    outs.forEach(o => { J.svg('rect', {x:650, y:pos[o][1] - 16, width:40, height:32, rx:4, fill:'var(--indigo)'}, svg); J.svg('text', {x:670, y:pos[o][1] + 5, 'text-anchor':'middle', class:'t-s', text:'FF', style:'fill:#fff;font-weight:700'}, svg); J.svg('line', {x1:pos[o][0] + 30, y1:pos[o][1], x2:650, y2:pos[o][1], stroke: crit.has(o) ? 'var(--red)' : 'var(--line)', 'stroke-width':2}, svg); });
+    const cp = at[end] + 50 + 30; // + t_cq + t_su
+    J.svg('text', {x:360, y:312, 'text-anchor':'middle', class:'t-s', text:'경로 지연 = 도착 시간 + t_cq 50 + t_su 30 ps'}, svg);
+    const area = Object.values(up).filter(Boolean).length*3;
+    J.out(box,'cp', Math.round(cp)+' ps'); J.out(box,'slack', Math.round(v.T - cp)+' ps', v.T - cp >= 0 ? 'good' : 'bad');
+    J.out(box,'a', '+'+area+' %');
+  });
+  document.getElementById('staReset').onclick = () => { Object.keys(up).forEach(k => up[k] = false); s.run(); };
+})();
+
+/* 10-3 원가 */
+J.sim('sim3', (v, box) => {
+  const r = 150;
+  const dpw = A => Math.max(0, Math.PI*r*r/A - 2*Math.PI*r/Math.sqrt(2*A));
+  const Y = A => { const x = A/100*v.d; return Math.pow((1 - Math.exp(-x))/x, 2); };
+  const cost = A => v.w/(dpw(A)*Y(A));
+  const pts = [], lin = []; for(let A=20; A<=800; A+=5){ pts.push([A, cost(A)]); lin.push([A, cost(100)*A/100]); }
+  J.plot(document.getElementById('cv3'), {x:[20,800], y:[1, 3000], logy:true, xlab:'다이 면적 (mm²)', ylab:'좋은 다이 원가 ($, 로그)', yf:t=>'$'+t, series:[{pts:lin, color:'--ink3', w:1.5, dash:[5,4]},{pts, color:'--jade', w:3}], points:[{x:v.a, y:cost(v.a), color:'--red', r:7, label:'$'+J.fmt(cost(v.a),0)}], pad:{l:56}});
+  J.out(box,'n', Math.floor(dpw(v.a))); J.out(box,'y', J.fmt(Y(v.a)*100,1)+' %', Y(v.a) > .8 ? 'good' : Y(v.a) > .5 ? 'warn' : 'bad');
+  J.out(box,'c', '$'+J.fmt(cost(v.a),1)); J.out(box,'cm', '$'+J.fmt(cost(v.a)/v.a,3));
+});
+</script>
+</body>
+</html>

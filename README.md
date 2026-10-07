@@ -8,6 +8,7 @@
 | **DRAM 書** (`dram/`) | 1T1C 셀, 리프레시, 센스 앰프, 어레이, 타이밍, DDR5, 컨트롤러, 미세화, 공정·수율·리페어, 로우해머·ECC, HBM — 14개 장, 45개 실험 |
 | **NAND 書** (`nand/`) | 플로팅 게이트·전하 트랩, FN 터널링·ISPP, 스트링·셀프 부스팅, MLC~QLC, 3D NAND, 신뢰성, BCH·LDPC, FTL·GC, SSD 시스템, ZNS·AI 스토리지 — 13개 장, 38개 실험 |
 | **메모리 書** (`memory/`) | 에너지 장벽, SRAM 나비 곡선·V_min, 캐시, 가상 메모리, DRAM·NAND 요약, MRAM, PCM, ReRAM·FeRAM, 메모리 계층·CXL, 인메모리 컴퓨팅 — 13개 장, 34개 실험 |
+| **SoC 書** (`soc/`) | 평면도와 통합, 파이프라인·분기 예측, 가속기·시스톨릭 어레이, NoC, MESI 일관성, 메모리 QoS, DVFS·파워 게이팅, 열·스로틀링, 타이밍·메타스테빌리티·PLL, 설계 흐름·STA·다이 원가, 칩렛·2.5D/3D — 13개 장, 39개 실험 |
 
 ## 구조
 ```
@@ -21,6 +22,7 @@ dram/index.html     책 머리 (로드맵)
 dram/chapters/*.html 각 장
 nand/               NAND 書 (같은 구조)
 memory/             메모리 書 (같은 구조)
+soc/                SoC 書 (같은 구조)
 ```
 빌드 과정 없이 정적 파일만으로 동작합니다. 로컬에서는 `npx http-server .` 로 열어 보세요.
 

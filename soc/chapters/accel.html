@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이종 컴퓨팅과 가속기 · SoC 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0832a'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E統%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="accel">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 03 <span class="hanja">第三章 · 專</span></div>
+  <h1>이종 컴퓨팅과 가속기</h1>
+  <p class="lead">한 사람이 모든 일을 잘할 수는 없다. SoC도 그렇다. 순서가 복잡한 일은 CPU가, 같은 계산을 수천 번 반복하는 그래픽은 GPU가, 행렬 곱 덩어리인 신경망은 NPU가 맡는다. 이 장은 가속기가 얼마나 빨라질 수 있는지의 한계(암달의 법칙), 그리고 GPU와 NPU가 각자의 방식으로 병렬성을 뽑아내는 원리를 실험한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>암달의 법칙으로 가속기의 전체 속도 향상을 계산하고, 오프로드 오버헤드의 영향을 안다.</li>
+  <li>GPU의 SIMT 실행과 분기 발산(divergence)이 활용률을 떨어뜨리는 원리를 이해한다.</li>
+  <li>시스톨릭 어레이가 행렬 곱을 데이터 흐름으로 처리하는 과정을 따라간다.</li>
+  <li>처리 장치별 와트당 연산(TOPS/W)을 비교한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>암달의 법칙</h2>
+<p>작업의 비율 \(f\)만 가속기로 \(S\)배 빠르게 할 수 있다면, 나머지 \(1-f\)는 그대로 남는다. 아무리 \(S\)를 키워도 전체 속도 향상은 \(1/(1-f)\)를 넘지 못한다. 게다가 데이터를 가속기로 넘기고 결과를 받는 데 시간 \(o\)가 든다.</p>
+<div class="eq">$$\text{Speedup} = \frac{1}{(1-f) + f/S + o}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-1</span><span class="ttl">가속기를 빠르게 해도 소용없는 이유</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">가속 가능한 비율 f <output data-o="f"></output></span><input type="range" data-k="f" min="10" max="99.9" step="0.1" value="90" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">가속기 속도 S <output data-o="s"></output></span><input type="range" data-k="s" min="1" max="1000" step="1" value="50" data-d="0" data-u="배"></label>
+      <label class="ctrl"><span class="lab">오프로드 오버헤드 o <output data-o="o"></output></span><input type="range" data-k="o" min="0" max="20" step="0.5" value="2" data-d="1" data-u="%"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">전체 속도 향상</span><span class="v" data-r="sp"></span></div>
+      <div class="ro"><span class="k">상한 1/(1−f)</span><span class="v" data-r="lim"></span></div>
+      <div class="ro"><span class="k">남은 시간 중 CPU 몫</span><span class="v" data-r="cpu"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로축은 가속기 속도(로그), 곡선은 f별 전체 속도 향상이다. f = 90 %이면 가속기를 1000배 빠르게 해도 10배를 넘지 못한다. 오버헤드를 넣으면 작은 작업은 오히려 느려질 수 있다 — 그래서 NPU에는 큰 덩어리의 일을 한꺼번에 넘긴다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>GPU: 같은 명령, 수천 개의 데이터</h2>
+<p>GPU는 32개(제품에 따라 64개) 스레드를 한 묶음(<span class="term">워프</span>)으로 묶어 같은 명령을 동시에 실행한다(<span class="term">SIMT</span>). 픽셀·정점처럼 모든 데이터에 같은 계산을 하는 일에는 완벽하다. 그런데 스레드마다 if 조건 결과가 다르면, 워프는 두 갈래를 차례로 실행하며 각 갈래에서 해당하지 않는 스레드를 쉬게 한다(<span class="term">분기 발산</span>). 연산기의 절반이 놀 수 있다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-2</span><span class="ttl">워프의 분기 발산</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">조건이 참인 스레드 비율 <output data-o="p"></output></span><input type="range" data-k="p" min="0" max="100" step="1" value="40" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">참 갈래 길이 <output data-o="a"></output></span><input type="range" data-k="a" min="1" max="10" step="1" value="6" data-d="0" data-u="명령"></label>
+      <label class="ctrl"><span class="lab">거짓 갈래 길이 <output data-o="b"></output></span><input type="range" data-k="b" min="1" max="10" step="1" value="4" data-d="0" data-u="명령"></label>
+      <label class="ctrl"><span class="lab">데이터 배치</span><select data-k="sort"><option value="rand">무작위</option><option value="sorted">조건별로 정렬</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">발산한 워프 비율</span><span class="v" data-r="dv"></span></div>
+      <div class="ro"><span class="k">연산기 활용률</span><span class="v" data-r="u"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 워프 8개(각 32스레드)의 실행 타임라인이다. 칸 하나 = 스레드 하나 × 명령 하나, 색칸 = 실제 일한 스레드, 빈칸 = 마스크로 쉰 스레드. 데이터를 조건별로 정렬하면 워프 안의 스레드가 같은 길로 가 발산이 사라진다 — GPU 프로그래밍의 대표적인 최적화다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>NPU: 시스톨릭 어레이</h2>
+<p>신경망 연산의 90 % 이상은 행렬 곱이다. NPU의 핵심인 <span class="term">시스톨릭 어레이</span>는 곱셈–누산기(MAC) 격자에 가중치를 미리 올려 두고(weight-stationary), 입력을 왼쪽에서 오른쪽으로, 부분합을 위에서 아래로 한 칸씩 흘려 보낸다. 심장이 피를 뿜듯(systole) 매 클록 데이터가 이웃으로 넘어가며, 한 번 읽은 데이터를 여러 번 재사용해 메모리 접근을 최소화한다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-3</span><span class="ttl">3×3 시스톨릭 어레이로 행렬 곱하기</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><button class="sbtn" id="saStep">한 클록</button><button class="sbtn pri" id="saPlay">▶ 재생</button><button class="sbtn warn" id="saReset">처음부터</button><button class="sbtn" id="saNew">새 행렬</button></div>
+    <div class="canvas-box"><canvas id="cv3" data-h="340"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">클록</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">완성된 출력</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">MAC 활용률 (지금까지)</span><span class="v" data-r="u"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가운데 3×3 격자가 MAC 처리 소자(PE), 안의 금색 숫자가 미리 올린 가중치 W다. 왼쪽에서 입력 행렬 X의 원소가 비스듬히 엇갈려 들어오고(파랑), 각 PE는 들어온 입력 × 가중치를 위에서 내려온 부분합에 더해 아래로 넘긴다(초록). 아래로 빠져나온 값이 결과 Y = X·W의 원소다. 오른쪽 표에서 정답과 비교해 보자.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>와트당 연산</h2>
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-4</span><span class="ttl">사진 한 장 분류에 드는 에너지</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">모델 연산량 <output data-o="g"></output></span><input type="range" data-k="g" min="0.5" max="100" step="0.5" value="8" data-d="1" data-u="GOP"></label>
+      <label class="ctrl"><span class="lab">초당 처리할 장 수 <output data-o="fps"></output></span><input type="range" data-k="fps" min="1" max="120" step="1" value="30" data-d="0" data-u="장"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="250"></canvas></div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 막대는 처리 장치별 전력(로그)이다. 효율 가정: CPU 0.05, GPU 1, DSP 2, NPU 10 TOPS/W (INT8 실효값, 대략). 빨간 선은 휴대 기기가 AI 작업에 쓸 수 있는 1 W 남짓의 예산. 같은 실시간 카메라 AI를 CPU로 하면 수십 W가 필요하다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">f = 80 %인 작업의 최대 속도 향상은?</p><ol><li>80배</li><li>5배</li><li>8배</li><li>무한대</li></ol>
+<p class="explain">1/(1 − 0.8) = 5.</p></div>
+<div class="quiz" data-a="2"><p class="q">GPU 분기 발산을 줄이는 방법은?</p><ol><li>클록을 높인다</li><li>워프를 키운다</li><li>같은 갈래로 갈 데이터끼리 모아 같은 워프에 배치한다</li><li>CPU로 보낸다</li></ol>
+<p class="explain">워프 안 스레드가 같은 길을 가면 마스크로 쉬는 스레드가 없다.</p></div>
+<div class="quiz" data-a="0"><p class="q">시스톨릭 어레이가 효율적인 주된 이유는?</p><ol><li>데이터를 이웃 PE로 넘기며 재사용해 메모리 접근을 줄이기 때문에</li><li>클록이 높아서</li><li>분기 예측이 정확해서</li><li>캐시가 커서</li></ol>
+<p class="explain">한 번 읽은 입력·가중치가 여러 MAC에 쓰인다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 3-1 암달 */
+J.sim('sim1', (v, box) => {
+  const sp = (f, S, o) => 1/((1-f) + f/S + o);
+  const cols = ['--ink3','--indigo','--gold','--jade'];
+  const series = [0.5, 0.9, 0.99].map((f,i) => ({pts: Array.from({length:121}, (_,k) => { const S = Math.pow(10, k*0.025); return [S, sp(f, S, v.o/100)]; }), color:cols[i], w:1.5, dash:[4,3]}));
+  series.push({pts: Array.from({length:121}, (_,k) => { const S = Math.pow(10, k*0.025); return [S, sp(v.f/100, S, v.o/100)]; }), color:'--red', w:3});
+  const cur = sp(v.f/100, v.s, v.o/100);
+  J.plot(document.getElementById('cv1'), {x:[1,1000], y:[0.5, 110], logx:true, logy:true, xlab:'가속기 속도 S (로그)', ylab:'전체 속도 향상 (로그)', xf:t=>t, yf:t=>t, series, points:[{x:v.s, y:cur, color:'--red', r:6}], hlines:[{y:1/(1-v.f/100), color:'--red', label:'상한', dash:[2,3]}]});
+  J.out(box,'sp', J.fmt(cur,2)+' 배', cur > 1 ? 'good' : 'bad');
+  J.out(box,'lim', J.fmt(1/(1-v.f/100),1)+' 배');
+  const rem = (1 - v.f/100) + v.f/100/v.s + v.o/100;
+  J.out(box,'cpu', J.fmt((1 - v.f/100)/rem*100,0)+' %');
+});
+
+/* 3-2 SIMT */
+J.sim('sim2', (v, box) => {
+  const R = J.rng(5), W = 8, T = 32;
+  let cond = Array.from({length:W*T}, () => R() < v.p/100);
+  if(v.sort === 'sorted') cond.sort((a,b) => b - a);
+  const {ctx, w, h} = J.fit(document.getElementById('cv2'));
+  ctx.clearRect(0,0,w,h);
+  const maxLen = v.a + v.b, cw = (w - 60)/(maxLen), rh = (h - 20)/W;
+  let busy = 0, slots = 0, div = 0;
+  for(let wi=0; wi<W; wi++){
+    const m = cond.slice(wi*T, wi*T+T), nT = m.filter(x=>x).length, both = nT > 0 && nT < T;
+    if(both) div++;
+    const steps = (nT > 0 ? v.a : 0) + (nT < T ? v.b : 0);
+    let x = 50;
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText('W'+wi, 44, 10 + wi*rh + rh/2);
+    const seg = (len, mask, col) => { for(let s=0;s<len;s++){ for(let t=0;t<T;t++){ const on = mask[t]; ctx.fillStyle = J.c(on ? col : '--paper2'); ctx.globalAlpha = on ? .85 : 1; ctx.fillRect(x + s*cw + 1, 10 + wi*rh + t*(rh-6)/T, cw - 2, (rh-6)/T); } } ctx.globalAlpha = 1; x += len*cw; busy += mask.filter(q=>q).length*len; slots += T*len; };
+    if(nT > 0) seg(v.a, m, '--jade');
+    if(nT < T) seg(v.b, m.map(q => !q), '--gold');
+  }
+  ctx.textBaseline = 'alphabetic';
+  J.out(box,'dv', div+' / '+W, div ? 'warn' : 'good');
+  J.out(box,'u', J.fmt(busy/slots*100,0)+' %', busy/slots > .9 ? 'good' : busy/slots > .6 ? 'warn' : 'bad');
+});
+
+/* 3-3 시스톨릭 */
+(function(){
+  const box = document.getElementById('sim3'), cv = document.getElementById('cv3');
+  const N = 3; let X, Wm, t, play = false, acc = 0, macs = 0, seed = 1;
+  function init(){ const R = J.rng(seed); X = Array.from({length:N}, () => Array.from({length:N}, () => 1 + Math.floor(R()*4))); Wm = Array.from({length:N}, () => Array.from({length:N}, () => 1 + Math.floor(R()*3))); t = 0; macs = 0; draw(); }
+  // 입력 X[i][k]는 PE(k, j) 행 k로… 여기서는 PE[r][c]가 W[r][c]를 갖고, X의 행 i가 왼쪽에서 행 r=k로 들어옴
+  // 시각 t에 PE(k, c)에 도착하는 입력: X[i][k], i = t - k - c, 부분합은 위(k-1)에서 내려와 아래(k+1)로
+  function state(tt){
+    const pe = []; let done = [];
+    for(let k=0;k<N;k++) for(let c=0;c<N;c++){ const i = tt - k - c; pe.push({k, c, i, x: (i>=0 && i<N) ? X[i][k] : null}); }
+    // 출력 Y[i][c]는 시각 i + c + N - 1에 PE(N-1, c)를 떠남
+    for(let i=0;i<N;i++) for(let c=0;c<N;c++) if(tt > i + c + N - 1) done.push([i,c]);
+    return {pe, done};
+  }
+  const Y = (i, c, upto) => { let s = 0; for(let k=0;k<=upto;k++) s += X[i][k]*Wm[k][c]; return s; };
+  function draw(){
+    const {ctx, w, h} = J.fit(cv);
+    ctx.clearRect(0,0,w,h);
+    const S = state(t), cs = Math.min(76, (h-60)/N), ox = Math.max(150, w*0.32), oy = 40;
+    ctx.font = '12px "Noto Sans KR"'; ctx.fillStyle = J.c('--ink2'); ctx.textAlign='left'; ctx.fillText('입력 X →', 10, oy - 14); ctx.fillText('↓ 부분합', ox, oy - 14);
+    S.pe.forEach(p => { const x = ox + p.c*cs, y = oy + p.k*cs, active = p.x !== null;
+      ctx.fillStyle = J.c(active ? '--jade-soft' : '--card'); ctx.fillRect(x+3, y+3, cs-6, cs-6); ctx.strokeStyle = J.c(active ? '--jade' : '--line'); ctx.lineWidth = active ? 2.5 : 1; ctx.strokeRect(x+3.5, y+3.5, cs-7, cs-7); ctx.lineWidth = 1;
+      ctx.fillStyle = J.c('--gold'); ctx.font = '600 12px "JetBrains Mono"'; ctx.textAlign='left'; ctx.fillText('W'+Wm[p.k][p.c], x+8, y+18);
+      if(active){ ctx.fillStyle = J.c('--indigo'); ctx.font = '600 13px "JetBrains Mono"'; ctx.textAlign='center'; ctx.fillText('x='+p.x, x + cs/2, y + cs/2 + 2);
+        ctx.fillStyle = J.c('--jade'); ctx.font = '11px "JetBrains Mono"'; ctx.fillText('Σ='+Y(p.i, p.c, p.k), x + cs/2, y + cs - 10); } });
+    // 대기 중 입력
+    for(let k=0;k<N;k++){ const q = []; for(let i=0;i<N;i++){ const arrive = i + k; if(arrive > t) q.push(X[i][k]); } ctx.fillStyle = J.c('--indigo'); ctx.font = '12px "JetBrains Mono"'; ctx.textAlign='right'; ctx.fillText(q.join(' ') + ' →', ox - 8, oy + k*cs + cs/2 + 4); }
+    // 결과 표
+    const tx = ox + N*cs + 30; if(tx + 150 < w){
+      ctx.fillStyle = J.c('--ink2'); ctx.textAlign='left'; ctx.font = '12px "Noto Sans KR"'; ctx.fillText('Y = X·W (완성된 값)', tx, oy - 14);
+      for(let i=0;i<N;i++) for(let c=0;c<N;c++){ const dn = S.done.some(d => d[0]===i && d[1]===c); ctx.fillStyle = J.c(dn ? '--jade' : '--paper2'); ctx.fillRect(tx + c*46, oy + i*36, 42, 32); ctx.fillStyle = dn ? '#fff' : J.c('--ink3'); ctx.font = '600 13px "JetBrains Mono"'; ctx.textAlign='center'; ctx.fillText(dn ? Y(i,c,N-1) : '?', tx + c*46 + 21, oy + i*36 + 21); }
+      ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='left'; ctx.fillText('X = '+JSON.stringify(X), tx, oy + 3*36 + 20); ctx.fillText('W = '+JSON.stringify(Wm), tx, oy + 3*36 + 38);
+    }
+    const active = S.pe.filter(p => p.x !== null).length;
+    J.out(box,'t', t); J.out(box,'d', S.done.length+' / 9', S.done.length === 9 ? 'good' : '');
+    J.out(box,'u', t ? J.fmt(macs/(t*9)*100,0)+' %' : '—');
+  }
+  function step(){ const S = state(t); macs += S.pe.filter(p => p.x !== null).length; t++; if(t > 3*N + 1) play = false; draw(); }
+  document.getElementById('saStep').onclick = step;
+  document.getElementById('saPlay').onclick = e => { play = !play; e.target.textContent = play ? '❚❚ 멈춤' : '▶ 재생'; };
+  document.getElementById('saReset').onclick = () => { t = 0; macs = 0; draw(); };
+  document.getElementById('saNew').onclick = () => { seed++; init(); };
+  init(); J.live(draw);
+  J.loop(cv, dt => { if(play){ acc += dt; if(acc > 0.8){ acc = 0; step(); } } });
+})();
+
+/* 3-4 TOPS/W */
+J.sim('sim4', (v, box) => {
+  const ops = v.g*1e9*v.fps; // ops/s
+  const D = [['CPU', 0.05, '--red'],['GPU', 1, '--plum'],['DSP', 2, '--indigo'],['NPU', 10, '--jade']];
+  const {ctx, w, h} = J.fit(document.getElementById('cv4'));
+  ctx.clearRect(0,0,w,h);
+  const P = {l:60, r:90}, bh = (h-30)/D.length, X = p => P.l + (Math.log10(p) + 2)/(Math.log10(1e4) + 2 - 2)*(w-P.l-P.r)*0.5;
+  const Xl = p => P.l + (Math.log10(Math.max(p, 0.01)) + 2)/5*(w - P.l - P.r);
+  D.forEach((d,i) => { const p = ops/(d[1]*1e12), y = 10 + i*bh;
+    ctx.fillStyle = J.c(d[2]); ctx.globalAlpha = .85; ctx.fillRect(P.l, y+6, Xl(p) - P.l, bh-12); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(d[0], P.l-8, y+bh/2);
+    ctx.textAlign='left'; ctx.font = '12px "JetBrains Mono"'; ctx.fillText(J.fmt(p, 2)+' W', Xl(p) + 6, y+bh/2); });
+  ctx.strokeStyle = J.c('--red'); ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(Xl(1), 4); ctx.lineTo(Xl(1), h - 16); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = J.c('--red'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.fillText('1 W 예산', Xl(1), h - 4);
+});
+</script>
+</body>
+</html>

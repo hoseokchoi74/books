@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SoC 설계 놀이터 · SoC 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0832a'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E統%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+  .pg-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:760px){.pg-grid{grid-template-columns:1fr}}
+  .spec{background:var(--paper); border:1px solid var(--line2); border-radius:5px; padding:12px 14px; font-size:14px}
+  .spec table{width:100%; border-collapse:collapse}
+  .spec td{padding:3px 4px; border-bottom:1px dashed var(--line2)}
+  .spec td:last-child{text-align:right; font-family:var(--mono); font-weight:600}
+  .grp{font-size:12px; color:var(--ink3); letter-spacing:.1em; margin:4px 0 2px}
+</style>
+</head>
+<body data-ch="playground">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 12 <span class="hanja">第十二章 · 設</span></div>
+  <h1>SoC 설계 놀이터</h1>
+  <p class="lead">이제 직접 SoC를 기획해 보자. 공정을 고르고, 코어와 GPU·NPU를 몇 개 넣을지 정하고, 캐시와 메모리를 붙인다. 넣을수록 성능은 오르지만 다이가 커져 원가가 오르고, 최고 전력이 열 예산을 넘으면 지속 성능은 그만큼 오르지 않는다. 1–11장의 모델을 하나로 엮은 설계실이다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>블록 구성이 다이 면적·원가·전력·성능에 미치는 영향을 한 번에 체험한다.</li>
+  <li>열 예산 안에서 "최고 성능"과 "지속 성능"이 갈리는 지점을 찾는다.</li>
+  <li>플래그십·중급·저가 SoC가 왜 다르게 구성되는지 이해한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>설계실</h2>
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-1</span><span class="ttl">나만의 SoC 기획하기</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="presets"><span class="hint">프리셋:</span><button class="sbtn on" data-p="flag">플래그십 폰</button><button class="sbtn" data-p="mid">중급 폰</button><button class="sbtn" data-p="low">보급형 폰</button><button class="sbtn" data-p="pc">AI 노트북</button></div>
+    <div class="pg-grid">
+      <div>
+        <div class="grp">공정 · 열</div>
+        <div class="ctrls" style="grid-template-columns:1fr">
+          <label class="ctrl"><span class="lab">공정</span><select data-k="node"><option value="7">7 nm급</option><option value="5">5 nm급</option><option value="3" selected>3 nm급</option><option value="2">2 nm급</option></select></label>
+          <label class="ctrl"><span class="lab">지속 전력 예산 (열) <output data-o="tdp"></output></span><input type="range" data-k="tdp" min="2" max="40" step="0.5" value="5" data-d="1" data-u="W"></label>
+        </div>
+        <div class="grp">연산</div>
+        <div class="ctrls" style="grid-template-columns:1fr">
+          <label class="ctrl"><span class="lab">성능 코어 <output data-o="big"></output></span><input type="range" data-k="big" min="0" max="12" step="1" value="2" data-d="0" data-u="개"></label>
+          <label class="ctrl"><span class="lab">효율 코어 <output data-o="lit"></output></span><input type="range" data-k="lit" min="0" max="8" step="1" value="6" data-d="0" data-u="개"></label>
+          <label class="ctrl"><span class="lab">GPU 코어 <output data-o="gpu"></output></span><input type="range" data-k="gpu" min="1" max="40" step="1" value="6" data-d="0" data-u="개"></label>
+          <label class="ctrl"><span class="lab">NPU <output data-o="npu"></output></span><input type="range" data-k="npu" min="0" max="100" step="5" value="40" data-d="0" data-u="TOPS"></label>
+        </div>
+        <div class="grp">메모리</div>
+        <div class="ctrls" style="grid-template-columns:1fr">
+          <label class="ctrl"><span class="lab">시스템 캐시 <output data-o="slc"></output></span><input type="range" data-k="slc" min="0" max="48" step="2" value="16" data-d="0" data-u="MB"></label>
+          <label class="ctrl"><span class="lab">LPDDR 채널 폭 <output data-o="bus"></output></span><input type="range" data-k="bus" min="32" max="256" step="32" value="64" data-d="0" data-u="비트"></label>
+        </div>
+      </div>
+      <div>
+        <div class="canvas-box"><canvas id="fp" data-h="210"></canvas></div>
+        <div class="canvas-box" style="margin-top:10px"><canvas id="radar" data-h="250"></canvas></div>
+        <div class="spec" id="spec" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+  <p class="cap"><b>모델 요약.</b> 블록 면적(3 nm 기준): 성능 코어 3 mm², 효율 코어 0.6, GPU 코어 1.2, NPU 1 TOPS당 0.25, SLC 1 MB당 0.5, 메모리 PHY 32비트당 6, 기타(ISP·모뎀·I/O) 35 mm². 공정별 로직 밀도·전력·웨이퍼 가격·결함 밀도가 다르다(10장 원가 모델). 지속 성능 = 최고 성능 × min(1, 예산/최고 전력)^0.4 (DVFS로 전력을 줄일 때 성능은 덜 준다, 7장). 메모리 대역폭이 부족하면 GPU·NPU 성능이 깎인다(6장).</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>도전 과제</h2>
+<div class="note-box"><div class="h" data-h="題">설계 미션</div>
+<ol style="margin:4px 0 0; padding-left:20px">
+<li><b>보급형</b>: 다이 원가 $15 이하로 CPU 점수 4 이상.</li>
+<li><b>플래그십</b>: 5 W 예산에서 GPU 지속 성능 5 이상, 다이 100 mm² 이하.</li>
+<li><b>AI 노트북</b>: NPU 지속 80 TOPS 이상, 메모리 대역폭 부족 없이.</li>
+<li><b>균형</b>: 레이더의 여섯 축이 모두 절반 이상.</li>
+</ol></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>생각해 볼 문제</h2>
+<div class="quiz" data-a="2"><p class="q">GPU 코어를 두 배로 늘렸는데 지속 성능이 거의 그대로였다. 가장 그럴듯한 이유는?</p><ol><li>캐시가 너무 커서</li><li>공정이 너무 새로워서</li><li>열 예산과 메모리 대역폭이 병목이라서</li><li>NPU가 없어서</li></ol>
+<p class="explain">최고 전력이 예산을 넘으면 주파수를 낮춰야 하고, 대역폭이 모자라면 연산기가 기다린다.</p></div>
+<div class="quiz" data-a="0"><p class="q">보급형 SoC가 성능 코어를 적게 넣는 주된 이유는?</p><ol><li>성능 코어가 면적을 많이 차지해 다이 원가를 크게 올리기 때문에</li><li>성능 코어가 느려서</li><li>소프트웨어가 지원하지 않아서</li><li>열이 너무 적게 나서</li></ol>
+<p class="explain">면적은 원가에 비선형으로 작용한다(10장).</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+(function(){
+  const box = document.getElementById('sim1');
+  const N = {7:{a:3.0, s:2.0, p:1.8, w:9000, d:0.07, f:0.8}, 5:{a:1.7, s:1.35, p:1.3, w:15000, d:0.08, f:0.9}, 3:{a:1, s:1, p:1, w:20000, d:0.1, f:1}, 2:{a:0.82, s:0.92, p:0.85, w:28000, d:0.15, f:1.08}};
+  const PRE = {flag:{node:'3', tdp:5, big:2, lit:6, gpu:6, npu:40, slc:16, bus:64}, mid:{node:'5', tdp:4, big:2, lit:6, gpu:4, npu:15, slc:6, bus:64}, low:{node:'7', tdp:3, big:2, lit:6, gpu:2, npu:5, slc:2, bus:32}, pc:{node:'3', tdp:28, big:10, lit:4, gpu:16, npu:60, slc:24, bus:128}};
+  const dieCost = (A, D0, W) => { const r = 150, dpw = Math.max(0.01, Math.PI*r*r/A - 2*Math.PI*r/Math.sqrt(2*A)); const x = A/100*D0, Y = Math.pow((1 - Math.exp(-x))/x, 2); return {c: W/(dpw*Y), y: Y}; };
+  let cur = null;
+  function model(v){
+    const n = N[v.node];
+    const blocks = [['성능 코어', v.big*3*n.a, '--red'],['효율 코어', v.lit*0.6*n.a, '--gold'],['GPU', v.gpu*1.2*n.a, '--plum'],['NPU', v.npu*0.25*n.a, '--jade'],['SLC', v.slc*0.5*n.s, '--ink3'],['메모리 PHY', v.bus/32*6, '--indigo'],['기타', 35, '--line']];
+    const area = blocks.reduce((a,b)=>a+b[1],0);
+    const dc = dieCost(area, n.d, n.w);
+    const pPeak = (v.big*2.5 + v.lit*0.35 + v.gpu*0.7 + v.npu*0.06 + 1.2)*n.p;
+    const scale = Math.pow(Math.min(1, v.tdp/pPeak), 0.4);
+    const bw = v.bus/8*8.533; // GB/s
+    const bwNeed = v.gpu*3 + v.npu*0.25 + v.big*2 + 6;
+    const bwF = Math.min(1, bw/bwNeed);
+    const cpu = (v.big*1 + v.lit*0.3)*n.f*scale*2, single = (v.big ? 1 : 0.35)*n.f;
+    const gpu = v.gpu*n.f*scale*bwF, ai = v.npu*scale*bwF;
+    const batt = 15/(Math.min(pPeak, v.tdp)*0.25 + 0.5);
+    return {blocks, area, cost:dc.c, yld:dc.y, pPeak, scale, bw, bwNeed, bwF, cpu, single, gpu, ai, batt};
+  }
+  const AX = ['CPU','GPU','AI','지속 비율','원가','배터리'];
+  function radar(s){
+    const {ctx, w, h} = J.fit(document.getElementById('radar'));
+    ctx.clearRect(0,0,w,h);
+    const cx = w/2, cy = h/2 + 4, R = Math.min(w, h)/2 - 34, n = AX.length, pt = (i, r) => [cx + Math.sin(i/n*Math.PI*2)*R*r, cy - Math.cos(i/n*Math.PI*2)*R*r];
+    ctx.strokeStyle = J.c('--line2'); [0.5,1].forEach(r => { ctx.beginPath(); for(let i=0;i<=n;i++){ const p = pt(i%n, r); i ? ctx.lineTo(...p) : ctx.moveTo(...p); } ctx.stroke(); });
+    for(let i=0;i<n;i++){ const p = pt(i, 1.17); ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(AX[i], p[0], p[1]); }
+    ctx.strokeStyle = J.c('--gold'); ctx.lineWidth = 2.5; ctx.beginPath(); s.forEach((r,i) => { const p = pt(i, Math.max(.03, r)); i ? ctx.lineTo(...p) : ctx.moveTo(...p); }); ctx.closePath(); ctx.stroke(); ctx.globalAlpha = .2; ctx.fillStyle = J.c('--gold'); ctx.fill(); ctx.globalAlpha = 1; ctx.lineWidth = 1;
+  }
+  const s = J.sim('sim1', v => {
+    const m = model(v);
+    // 평면도
+    const {ctx, w, h} = J.fit(document.getElementById('fp'));
+    ctx.clearRect(0,0,w,h);
+    const side = Math.sqrt(m.area), sc = Math.min((w - 20)/side, (h - 30)/side)*0.95, W0 = side*sc;
+    let x = 10, y = 20, rowH = 0;
+    ctx.strokeStyle = J.c('--ink3'); ctx.strokeRect(10, 20, W0, W0);
+    const cellsTotal = W0*W0; let filled = 0;
+    // 블록을 세로 띠로 나눠 그리기
+    m.blocks.forEach(b => { const frac = b[1]/m.area, bw = W0*frac; ctx.fillStyle = J.c(b[2]); ctx.globalAlpha = .8; ctx.fillRect(x, 20, bw, W0); ctx.globalAlpha = 1; if(bw > 26){ ctx.save(); ctx.translate(x + bw/2, 20 + W0/2); ctx.rotate(-Math.PI/2); ctx.fillStyle = '#fff'; ctx.font = '600 11px "Noto Sans KR"'; ctx.textAlign='center'; ctx.fillText(b[0], 0, 4); ctx.restore(); } x += bw; });
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText(`다이 ${J.fmt(m.area,0)} mm² (가로 비율 = 면적 비율)`, 10, 14);
+    const sc6 = [Math.min(1, m.cpu/14), Math.min(1, m.gpu/12), Math.min(1, m.ai/80), m.scale, Math.min(1, 15/m.cost), Math.min(1, m.batt/12)];
+    radar(sc6); cur = sc6;
+    const row = (k, val, bad) => `<tr><td>${k}</td><td style="color:${bad ? 'var(--red)' : 'inherit'}">${val}</td></tr>`;
+    document.getElementById('spec').innerHTML = `<table>
+      ${row('다이 면적 / 수율', J.fmt(m.area,0)+' mm² / '+J.fmt(m.yld*100,0)+' %', m.area > 150)}
+      ${row('다이 원가', '$'+J.fmt(m.cost,1), m.cost > 60)}
+      ${row('최고 전력 → 지속 비율', J.fmt(m.pPeak,1)+' W → '+J.fmt(m.scale*100,0)+' %', m.scale < .6)}
+      ${row('CPU 점수 (멀티 / 단일)', J.fmt(m.cpu,1)+' / '+J.fmt(m.single,2), false)}
+      ${row('GPU 지속 성능', J.fmt(m.gpu,1), false)}
+      ${row('NPU 지속', J.fmt(m.ai,0)+' TOPS', false)}
+      ${row('메모리 대역폭 (필요)', J.fmt(m.bw,0)+' GB/s ('+J.fmt(m.bwNeed,0)+')', m.bwF < 1)}
+      ${row('배터리 지표 (상대)', J.fmt(m.batt,1)+' 시간', m.batt < 5)}
+    </table>`;
+  });
+  J.$$('#presets button').forEach(b => b.onclick = () => { J.$$('#presets button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const p = PRE[b.dataset.p]; for(const k in p) J.$(`[data-k="${k}"]`, box).value = p[k]; s.run(); });
+})();
+</script>
+</body>
+</html>

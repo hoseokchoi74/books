@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>인터커넥트와 NoC · SoC 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0832a'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E統%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="noc">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 04 <span class="hanja">第四章 · 路</span></div>
+  <h1>인터커넥트와 NoC</h1>
+  <p class="lead">블록이 수십 개가 되면, 그들을 어떻게 잇느냐가 성능을 좌우한다. 한 줄의 공용 버스는 모두가 줄을 서야 하고, 모두를 모두와 직접 잇는 크로스바는 배선이 폭발한다. 그래서 큰 SoC는 칩 위에 작은 인터넷을 깐다. 라우터와 링크로 된 망 위로 데이터가 패킷이 되어 달린다 — 네트워크 온 칩(NoC)이다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>버스·링·크로스바·메시 토폴로지의 지연·대역폭·면적 트레이드오프를 비교할 수 있다.</li>
+  <li>XY 라우팅과 패킷 교환의 원리를 안다.</li>
+  <li>부하가 늘 때 지연이 급증하는 포화 현상을 시뮬레이션으로 확인한다.</li>
+  <li>중재(arbitration) 정책이 공정성과 기아(starvation)에 미치는 영향을 이해한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>잇는 방법 네 가지</h2>
+<figure class="fig">
+<svg viewBox="0 0 780 220" id="topo" role="img" aria-label="토폴로지 비교"></svg>
+<figcaption><b>그림 4-1.</b> 노드 8–9개를 잇는 네 가지 방법. 버스는 하나의 선을 모두가 나눠 쓰고, 링은 이웃끼리만 잇고, 크로스바는 모든 쌍을 스위치로 잇고, 메시는 격자 라우터로 잇는다.</figcaption>
+</figure>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-1</span><span class="ttl">노드 수가 늘면</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">노드 수 <output data-o="n"></output></span><input type="range" data-k="n" min="4" max="256" step="4" value="16" data-d="0"></label>
+      <label class="ctrl"><span class="lab">비교 지표</span><select data-k="m"><option value="hop">평균 거리 (홉)</option><option value="bw">동시 전송 가능 대역폭</option><option value="area">배선·스위치 비용</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="280"></canvas></div>
+    <div class="legend"><span><i style="background:var(--red)"></i>버스</span><span><i style="background:var(--gold)"></i>링</span><span><i style="background:var(--indigo)"></i>크로스바</span><span><i style="background:var(--jade)"></i>2D 메시</span></div>
+    <div class="readouts" id="ro1"></div>
+  </div>
+  <p class="cap"><b>모델.</b> 평균 홉: 버스·크로스바 1, 링 N/4, 메시 ≈ 2√N/3. 대역폭(동시 전송 수): 버스 1, 링 2, 크로스바 N, 메시 ≈ √N(이분 대역폭). 비용: 버스 N, 링 N, 크로스바 N², 메시 ≈ 2N. 크로스바는 대역폭이 최고지만 비용이 N²로 폭발하고, 메시는 그 사이의 균형점이다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>칩 위의 인터넷</h2>
+<p>메시 NoC에서 각 블록은 가까운 <span class="term">라우터</span>에 붙고, 라우터는 동서남북 이웃과 링크로 이어진다. 데이터는 머리–몸–꼬리 <span class="term">플릿(flit)</span>으로 쪼갠 패킷이 되어 홉마다 다음 라우터로 넘어간다. 가장 단순한 <span class="term">XY 라우팅</span>은 먼저 가로(X)로 목적지 열까지 간 뒤 세로(Y)로 간다. 경로가 고정되어 교착 상태(deadlock)가 생기지 않는다. 부하가 낮을 때 지연은 홉 수에 비례하지만, 링크가 붐비기 시작하면 대기열이 길어지며 지연이 폭발한다.</p>
+<div class="eq">$$T \approx H\cdot(t_r + t_l) + \frac{L}{b} + T_{queue}(\lambda),\qquad T_{queue}\to\infty \text{ as } \lambda\to\lambda_{sat}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-2</span><span class="ttl">4×4 메시 NoC 트래픽</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">주입률 (노드당 사이클당 패킷, 4플릿) <output data-o="l"></output></span><input type="range" data-k="l" min="0.005" max="0.3" step="0.005" value="0.06" data-d="2"></label>
+      <label class="ctrl"><span class="lab">트래픽 패턴</span><select data-k="pat"><option value="uni">균일 무작위</option><option value="hot">핫스팟 (30 %가 메모리 컨트롤러로)</option><option value="tr">전치 (i,j → j,i)</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="nocPlay">▶ 흘리기</button><button class="sbtn warn" id="nocReset">초기화</button></div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv2a" data-h="300"></canvas></div><div class="canvas-box"><canvas id="cv2b" data-h="300"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">평균 지연 (최근)</span><span class="v" data-r="lat"></span></div>
+      <div class="ro"><span class="k">처리량 (전달/주입)</span><span class="v" data-r="tp"></span></div>
+      <div class="ro"><span class="k">가장 붐비는 링크 사용률</span><span class="v" data-r="hot"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 라우터 16개(네모, 숫자는 대기 중인 패킷 수)와 링크(진할수록 붐빔), 움직이는 점이 패킷이다. 오른쪽: 주입률에 따른 평균 지연 곡선(미리 계산)과 현재 측정값. 주입률을 높여 가면 어느 순간 지연이 수직으로 솟는다 — 포화. 핫스팟 패턴은 메모리 컨트롤러(오른쪽 아래) 주변 링크가 먼저 막혀 훨씬 낮은 부하에서 포화한다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>중재: 누가 먼저 쓰나</h2>
+<p>여러 블록이 같은 링크나 메모리 포트를 동시에 원하면 <span class="term">중재기</span>가 하나를 고른다. <span class="term">고정 우선순위</span>는 단순하고 중요한 블록(디스플레이)을 확실히 지켜 주지만, 낮은 순위 블록은 영원히 기다릴 수 있다(기아). <span class="term">라운드 로빈</span>은 공정하지만 급한 요청도 차례를 기다린다. 실제 SoC는 둘을 섞고, 오래 기다린 요청의 순위를 올리는(aging) 장치를 둔다(6장 QoS).</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-3</span><span class="ttl">고정 우선순위 vs 라운드 로빈</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">중재 정책</span><select data-k="pol"><option value="fixed">고정 우선순위 (A > B > C > D)</option><option value="rr">라운드 로빈</option><option value="age">고정 + 에이징</option></select></label>
+      <label class="ctrl"><span class="lab">요청 확률 (각 마스터) <output data-o="p"></output></span><input type="range" data-k="p" min="10" max="100" step="5" value="45" data-d="0" data-u="%"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="250"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">D의 최대 대기</span><span class="v" data-r="wd"></span></div>
+      <div class="ro"><span class="k">A의 평균 대기</span><span class="v" data-r="wa"></span></div>
+      <div class="ro"><span class="k">공정성 (최소/최대 처리량)</span><span class="v" data-r="f"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 마스터 4개가 매 사이클 확률적으로 하나의 포트를 요청할 때 1,000사이클 동안의 처리량(막대)과 최대 대기 시간(점)이다. 요청 확률을 높이면 고정 우선순위에서 D가 굶는다. 에이징은 A의 우선을 대부분 지키면서 D의 최악 대기를 묶어 둔다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">크로스바가 큰 SoC에서 잘 쓰이지 않는 이유는?</p><ol><li>대역폭이 낮아서</li><li>지연이 길어서</li><li>노드 수의 제곱으로 배선·스위치 비용이 늘어서</li><li>교착 상태가 생겨서</li></ol>
+<p class="explain">N개 노드를 모두 잇는 비용 ∝ N².</p></div>
+<div class="quiz" data-a="0"><p class="q">XY 라우팅의 장점은?</p><ol><li>단순하고 교착 상태가 생기지 않는다</li><li>항상 최소 혼잡 경로를 고른다</li><li>링크를 쓰지 않는다</li><li>패킷이 필요 없다</li></ol>
+<p class="explain">경로가 결정적이고 방향 전환 순서가 고정되어 순환 대기가 없다.</p></div>
+<div class="quiz" data-a="3"><p class="q">고정 우선순위 중재의 위험은?</p><ol><li>지연 증가</li><li>면적 증가</li><li>교착 상태</li><li>낮은 순위 마스터의 기아</li></ol>
+<p class="explain">높은 순위가 계속 요청하면 낮은 순위는 차례가 오지 않는다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 4-1 */
+(function(){
+  const s = document.getElementById('topo');
+  const node = (x, y) => J.svg('circle', {cx:x, cy:y, r:9, fill:'var(--gold)', stroke:'var(--card)', 'stroke-width':2}, s);
+  const ln = (x1,y1,x2,y2,c='--ink3',w=2) => J.svg('line', {x1,y1,x2,y2, stroke:`var(${c})`, 'stroke-width':w}, s);
+  const lab = (x, t) => J.svg('text', {x, y:208, 'text-anchor':'middle', class:'t-m', text:t, style:'font-weight:700'}, s);
+  // 버스
+  ln(20, 100, 175, 100, '--red', 5); for(let i=0;i<8;i++){ const x = 28 + i*20; ln(x, 100, x, i%2 ? 130 : 70); node(x, i%2 ? 130 : 70); } lab(97, '버스');
+  // 링
+  for(let i=0;i<8;i++){ const a = i/8*Math.PI*2, b = (i+1)/8*Math.PI*2; ln(290 + 55*Math.cos(a), 100 + 55*Math.sin(a), 290 + 55*Math.cos(b), 100 + 55*Math.sin(b), '--gold', 3); }
+  for(let i=0;i<8;i++){ const a = i/8*Math.PI*2; node(290 + 55*Math.cos(a), 100 + 55*Math.sin(a)); } lab(290, '링');
+  // 크로스바
+  for(let i=0;i<5;i++){ ln(420, 50 + i*25, 540, 50 + i*25, '--indigo', 1.5); ln(430 + i*25, 40, 430 + i*25, 160, '--indigo', 1.5); }
+  for(let i=0;i<5;i++) for(let j=0;j<5;j++) J.svg('circle', {cx:430 + j*25, cy:50 + i*25, r:3, fill:'var(--indigo)'}, s);
+  for(let i=0;i<5;i++){ node(410, 50 + i*25); } lab(480, '크로스바');
+  // 메시
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++){ const x = 640 + j*50, y = 50 + i*50; if(j<2) ln(x, y, x+50, y, '--jade', 3); if(i<2) ln(x, y, x, y+50, '--jade', 3); }
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++){ J.svg('rect', {x:640 + j*50 - 9, y:50 + i*50 - 9, width:18, height:18, rx:3, fill:'var(--gold)'}, s); } lab(690, '2D 메시');
+})();
+
+/* 4-1 */
+J.sim('sim1', (v, box) => {
+  const f = {hop:[n=>1, n=>n/4, n=>1, n=>2*Math.sqrt(n)/3], bw:[n=>1, n=>2, n=>n, n=>Math.sqrt(n)], area:[n=>n, n=>n, n=>n*n, n=>2*n]}[v.m];
+  const cols = ['--red','--gold','--indigo','--jade'];
+  const series = f.map((fn,i) => ({pts: Array.from({length:64}, (_,k) => { const n = 4 + k*4; return [n, fn(n)]; }), color:cols[i], w:2.5}));
+  const ymax = Math.max(...series.flatMap(s => s.pts.map(p => p[1])));
+  J.plot(document.getElementById('cv1'), {x:[4,256], y:[0.5, ymax*1.2], logy:true, xlab:'노드 수', ylab:{hop:'평균 홉 (로그)', bw:'동시 전송 (로그)', area:'비용 (로그)'}[v.m], yf:t=>t, series, vlines:[{x:v.n, color:'--ink', dash:[2,3]}], pad:{l:52}});
+  const names = ['버스','링','크로스바','메시'];
+  document.getElementById('ro1').innerHTML = f.map((fn,i) => `<div class="ro"><span class="k">${names[i]}</span><span class="v">${J.fmt(fn(v.n),1)}</span></div>`).join('');
+});
+
+/* 4-2 메시 NoC */
+(function(){
+  const box = document.getElementById('sim2');
+  const K = 4, MC = 15;
+  function makeSim(lam, pat, seed){
+    const R = J.rng(seed);
+    const S = {t:0, q: Array.from({length:K*K}, () => []), done:[], links:{}, busy:{}, inj:0, del:0, moving:[]}; const FL = 4; // 패킷 = 플릿 4개 → 링크를 4사이클 점유
+    S.dest = src => { if(pat === 'hot' && R() < 0.3) return MC; if(pat === 'tr'){ const x = src%K, y = Math.floor(src/K); const d = x*K + y; return d === src ? (src+1)%(K*K) : d; } let d; do { d = Math.floor(R()*K*K); } while(d === src); return d; };
+    S.step = () => {
+      for(let n=0;n<K*K;n++) if(R() < lam){ S.q[n].push({src:n, dst:S.dest(n), born:S.t}); S.inj++; }
+      const used = {}; S.moving = [];
+      const order = Array.from({length:K*K}, (_,i) => i).sort(() => R() - .5);
+      const nq = S.q.map(x => x.slice());
+      order.forEach(n => {
+        const queue = S.q[n]; const sent = new Set(); let ej = 0;
+        for(let k=0;k<Math.min(queue.length, 4);k++){ const p = queue[k];
+          if(p.dst === n){ if(ej) continue; ej = 1; S.done.push(S.t - p.born + 1); S.del++; nq[n].splice(nq[n].indexOf(p),1); continue; } // 사이클당 1개만 받아들임
+          const x = n%K, y = Math.floor(n/K), dx = p.dst%K, dy = Math.floor(p.dst/K);
+          const nx = x !== dx ? x + Math.sign(dx - x) : x, ny = x !== dx ? y : y + Math.sign(dy - y), m = ny*K + nx, key = n+'>'+m;
+          if(used[key] || sent.has(key) || (S.busy[key]||0) > S.t) continue;
+          used[key] = 1; sent.add(key); S.busy[key] = S.t + FL; S.links[key] = (S.links[key]||0) + FL;
+          nq[n].splice(nq[n].indexOf(p),1); nq[m].push(p); S.moving.push([n,m]);
+        } });
+      S.q = nq; S.t++;
+      if(S.done.length > 3000) S.done = S.done.slice(-2000);
+    };
+    return S;
+  }
+  // 곡선 미리 계산
+  const curves = {};
+  function curve(pat){ if(curves[pat]) return curves[pat]; const pts = [];
+    for(let l=0.01; l<=0.3; l+=0.01){ const S = makeSim(l, pat, 7); for(let i=0;i<600;i++) S.step(); const d = S.done.slice(-500); const lat = d.length ? d.reduce((a,b)=>a+b,0)/d.length : 0; const backlog = S.q.reduce((a,q)=>a+q.length,0); pts.push([l, Math.min(120, lat + backlog/(K*K*l*1.0 + 1e-9)*0.5)]); }
+    return curves[pat] = pts; }
+  let S, play = false, acc = 0;
+  const rd = () => ({l:+J.$('[data-k="l"]',box).value, pat:J.$('[data-k="pat"]',box).value});
+  function reset(){ const v = rd(); S = makeSim(v.l, v.pat, 3); draw(); }
+  function draw(){
+    const v = rd();
+    const {ctx, w, h} = J.fit(document.getElementById('cv2a'));
+    ctx.clearRect(0,0,w,h);
+    const sp = Math.min((w-60)/(K-1), (h-60)/(K-1)), ox = (w - sp*(K-1))/2, oy = (h - sp*(K-1))/2;
+    const P = n => [ox + (n%K)*sp, oy + Math.floor(n/K)*sp];
+    const maxL = Math.max(1, ...Object.values(S.links));
+    for(let n=0;n<K*K;n++){ [[1,0],[0,1]].forEach(([dx,dy]) => { const x = n%K + dx, y = Math.floor(n/K) + dy; if(x < K && y < K){ const m = y*K + x; const u = ((S.links[n+'>'+m]||0) + (S.links[m+'>'+n]||0))/(2*Math.max(1,S.t)); const a = P(n), b = P(m);
+      ctx.strokeStyle = J.c(u > .7 ? '--red' : u > .4 ? '--gold' : '--jade'); ctx.lineWidth = 3 + u*8; ctx.globalAlpha = .35 + u*.6; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.globalAlpha = 1; ctx.lineWidth = 1; } }); }
+    S.moving.forEach(([a,b]) => { const pa = P(a), pb = P(b); ctx.fillStyle = J.c('--indigo'); ctx.beginPath(); ctx.arc((pa[0]+pb[0])/2, (pa[1]+pb[1])/2, 4, 0, 7); ctx.fill(); });
+    for(let n=0;n<K*K;n++){ const p = P(n), ql = S.q[n].length; ctx.fillStyle = J.c(n === MC ? '--indigo' : ql > 8 ? '--red' : '--gold'); ctx.fillRect(p[0]-15, p[1]-15, 30, 30);
+      ctx.fillStyle = '#fff'; ctx.font = '600 11px "JetBrains Mono"'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(ql, p[0], p[1]); }
+    ctx.textBaseline='alphabetic'; ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign='right'; ctx.fillText('파랑 = 메모리 컨트롤러', w - 8, h - 6);
+    const d = S.done.slice(-300), lat = d.length ? d.reduce((a,b)=>a+b,0)/d.length : 0;
+    J.plot(document.getElementById('cv2b'), {x:[0,0.3], y:[0,120], xlab:'주입률 (패킷/노드/사이클, 패킷=4플릿)', ylab:'평균 지연 (사이클)', series:[{pts:curve(v.pat), color:'--ink3', w:2.5}], points: S.t > 50 ? [{x:v.l, y:Math.min(120, lat), color:'--red', r:7}] : [], vlines:[{x:v.l, color:'--red', dash:[2,3]}]});
+    const hot = Math.max(0, ...Object.values(S.links))/Math.max(1, S.t);
+    J.out(box,'lat', S.t > 50 ? J.fmt(lat,1)+' 사이클' : '—', lat > 30 ? 'bad' : lat > 10 ? 'warn' : 'good');
+    J.out(box,'tp', S.inj ? J.fmt(S.del/S.inj*100,0)+' %' : '—', S.inj && S.del/S.inj < .85 ? 'bad' : 'good');
+    J.out(box,'hot', J.fmt(hot*100,0)+' %', hot > .8 ? 'bad' : hot > .5 ? 'warn' : 'good');
+  }
+  J.$$('input, select', box).forEach(i => i.addEventListener('input', reset));
+  J.sim('sim2', () => {});
+  document.getElementById('nocPlay').onclick = e => { play = !play; e.target.textContent = play ? '❚❚ 멈춤' : '▶ 흘리기'; };
+  document.getElementById('nocReset').onclick = reset;
+  reset();
+  J.loop(document.getElementById('cv2a'), dt => { if(play){ acc += dt; if(acc > 0.08){ acc = 0; for(let i=0;i<3;i++) S.step(); draw(); } } });
+})();
+
+/* 4-3 중재 */
+J.sim('sim3', (v, box) => {
+  const R = J.rng(11), N = 4, served = [0,0,0,0], wait = [0,0,0,0], maxW = [0,0,0,0], sumW = [0,0,0,0], cntW = [0,0,0,0];
+  let rr = 0; const pending = [false,false,false,false];
+  for(let t=0;t<1000;t++){
+    for(let i=0;i<N;i++){ if(!pending[i] && R() < v.p/100){ pending[i] = true; wait[i] = 0; } }
+    let g = -1;
+    if(v.pol === 'fixed'){ for(let i=0;i<N;i++) if(pending[i]){ g = i; break; } }
+    else if(v.pol === 'rr'){ for(let k=0;k<N;k++){ const i = (rr + k)%N; if(pending[i]){ g = i; rr = (i+1)%N; break; } } }
+    else { let best = -1, bs = -1; for(let i=0;i<N;i++) if(pending[i]){ const sc = (N - i)*2 + wait[i]*0.6; if(sc > bs){ bs = sc; best = i; } } g = best; }
+    if(g >= 0){ served[g]++; sumW[g] += wait[g]; cntW[g]++; pending[g] = false; }
+    for(let i=0;i<N;i++) if(pending[i]){ wait[i]++; maxW[i] = Math.max(maxW[i], wait[i]); }
+  }
+  const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+  ctx.clearRect(0,0,w,h);
+  const bw = (w - 80)/N, mx = Math.max(...served, 1);
+  ['A','B','C','D'].forEach((n,i) => { const x = 50 + i*bw, hh = served[i]/mx*(h - 70);
+    ctx.fillStyle = J.c(['--red','--gold','--indigo','--jade'][i]); ctx.globalAlpha = .85; ctx.fillRect(x + 10, h - 36 - hh, bw - 20, hh); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign='center'; ctx.fillText('마스터 '+n, x + bw/2, h - 16);
+    ctx.font = '11px "JetBrains Mono"'; ctx.fillText(served[i]+'회 · 최대 대기 '+maxW[i], x + bw/2, h - 42 - hh); });
+  J.out(box,'wd', maxW[3]+' 사이클', maxW[3] > 100 ? 'bad' : maxW[3] > 20 ? 'warn' : 'good');
+  J.out(box,'wa', J.fmt(sumW[0]/Math.max(1,cntW[0]),2)+' 사이클');
+  J.out(box,'f', J.fmt(Math.min(...served)/Math.max(...served),2), Math.min(...served)/Math.max(...served) > .8 ? 'good' : 'bad');
+});
+</script>
+</body>
+</html>

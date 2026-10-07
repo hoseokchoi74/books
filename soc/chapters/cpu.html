@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPU 코어 · SoC 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0832a'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E統%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="cpu">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 02 <span class="hanja">第二章 · 核</span></div>
+  <h1>CPU 코어</h1>
+  <p class="lead">CPU는 명령어를 하나씩 처리하는 것처럼 보이지만, 실제로는 공장의 조립 라인처럼 여러 명령어를 겹쳐서 처리한다. 앞 명령의 결과를 기다려야 할 때, 갈림길에서 어느 쪽으로 갈지 모를 때 라인이 멈춘다. 이 장은 그 멈춤을 줄이는 기법들 — 포워딩, 분기 예측, 비순차 실행 — 과, 크고 빠른 코어와 작고 알뜰한 코어를 섞는 빅·리틀 구조를 실험한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>5단 파이프라인(IF·ID·EX·MEM·WB)과 데이터·제어 해저드를 설명할 수 있다.</li>
+  <li>포워딩과 스톨이 CPI에 주는 영향을 계산한다.</li>
+  <li>1비트·2비트 분기 예측기의 정확도를 비교한다.</li>
+  <li>발행 폭·재정렬 버퍼 크기와 IPC·전력의 관계를 이해한다.</li>
+  <li>빅·리틀 구조가 같은 일을 더 적은 에너지로 하는 원리를 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>조립 라인</h2>
+<p>명령어 하나는 가져오기(IF), 해독(ID), 실행(EX), 메모리 접근(MEM), 결과 쓰기(WB)의 다섯 단계를 거친다. 다섯 명령을 한 단계씩 엇갈려 동시에 처리하면 이상적으로는 매 클록 하나씩 명령이 끝난다(CPI = 1). 그런데 다음 명령이 바로 앞 명령의 결과를 써야 하면(<span class="term">데이터 해저드</span>), 또는 분기 결과를 알기 전에 다음 명령을 가져와야 하면(<span class="term">제어 해저드</span>) 라인에 거품(bubble)이 생긴다. 결과를 레지스터에 쓰기 전에 실행 단계에서 바로 넘겨주는 <span class="term">포워딩</span>이 대부분의 거품을 없앤다.</p>
+<div class="eq">$$\text{CPI} = 1 + \frac{\text{스톨 사이클}}{\text{명령 수}},\qquad \text{실행 시간} = N_{inst}\times \text{CPI}\times t_{clk}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-1</span><span class="ttl">5단 파이프라인과 해저드</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">프로그램</span><select data-k="prog"><option value="a">산술 연쇄 (RAW 의존)</option><option value="b">로드 직후 사용 (load-use)</option><option value="c">반복문 (분기)</option></select></label>
+      <label class="ctrl"><span class="lab">포워딩</span><select data-k="fwd"><option value="1">켬</option><option value="0">끔</option></select></label>
+      <label class="ctrl"><span class="lab">분기 예측</span><select data-k="bp"><option value="nt">항상 안 감 (틀리면 2클록 버림)</option><option value="perfect">완벽한 예측</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">총 사이클</span><span class="v" data-r="cyc"></span></div>
+      <div class="ro"><span class="k">스톨·버림 사이클</span><span class="v" data-r="st"></span></div>
+      <div class="ro"><span class="k">CPI</span><span class="v" data-r="cpi"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 행은 명령, 열은 클록이다. 색칸은 각 단계, 빨간 "—"는 해독 단계에서 기다리는 스톨, 분기 줄 오른쪽의 빨간 글씨는 잘못 가져와 버린 사이클이다. 화살표는 데이터 의존. 포워딩을 끄면 의존 명령마다 두 클록씩 기다린다. 포워딩이 켜져 있어도 로드 직후 사용은 한 클록을 피할 수 없다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>분기 예측: 갈림길에서 미리 가기</h2>
+<p>프로그램 명령의 15–20 %는 분기다. 분기 결과를 기다리지 않고 "아마 이쪽"이라고 예측해 먼저 가져오고, 틀리면 버린다. 현대 코어는 파이프라인이 15단이 넘어 한 번 틀릴 때 15–20클록을 잃으므로 예측 정확도가 성능을 좌우한다. 가장 간단한 동적 예측기는 분기마다 2비트 포화 카운터를 두어, 두 번 연속 틀려야 예측을 바꾼다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-2</span><span class="ttl">반복문 분기 예측</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">반복 횟수 (안쪽 루프) <output data-o="n"></output></span><input type="range" data-k="n" min="2" max="20" step="1" value="4" data-d="0"></label>
+      <label class="ctrl"><span class="lab">오예측 비용 <output data-o="p"></output></span><input type="range" data-k="p" min="2" max="25" step="1" value="15" data-d="0" data-u="클록"></label>
+      <label class="ctrl"><span class="lab">분기 비율 <output data-o="f"></output></span><input type="range" data-k="f" min="5" max="30" step="1" value="18" data-d="0" data-u="%"></label>
+    </div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv2a" data-h="250"></canvas></div><div class="canvas-box"><svg id="fsm" viewBox="0 0 360 250" style="display:block;width:100%"></svg></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">항상 감</span><span class="v" data-r="a"></span></div>
+      <div class="ro"><span class="k">1비트</span><span class="v" data-r="b"></span></div>
+      <div class="ro good"><span class="k">2비트 포화 카운터</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">2비트일 때 CPI 증가분</span><span class="v" data-r="cpi"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 안쪽 루프의 분기 결과는 "감, 감, …, 감, 안 감"이 반복된다. 1비트 예측기는 루프를 빠져나올 때와 다시 들어갈 때 두 번 틀리지만, 2비트는 한 번만 틀린다. 오른쪽은 2비트 카운터의 상태도(강하게/약하게 감·안 감). 실제 코어는 과거 분기 이력까지 보는 TAGE 같은 예측기로 95–99 %를 맞힌다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>넓게, 비순차로</h2>
+<p>한 클록에 명령을 여러 개 발행하는 <span class="term">슈퍼스칼라</span>, 의존이 풀린 명령부터 먼저 실행하는 <span class="term">비순차 실행(OoO)</span>은 IPC(클록당 명령 수)를 크게 높인다. 비순차 실행은 수백 개의 명령을 <span class="term">재정렬 버퍼(ROB)</span>에 담아 두고 실행할 수 있는 것을 고른다. 하지만 폭과 버퍼를 키울수록 회로가 제곱 이상으로 커지고 전력이 는다. 성능이 √(면적)에 비례한다는 경험칙(폴락의 법칙)이 있다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-3</span><span class="ttl">코어를 넓히면</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">발행 폭 <output data-o="w"></output></span><input type="range" data-k="w" min="1" max="10" step="1" value="4" data-d="0"></label>
+      <label class="ctrl"><span class="lab">재정렬 버퍼 (ROB) <output data-o="rob"></output></span><input type="range" data-k="rob" min="8" max="640" step="8" value="256" data-d="0" data-u="항목"></label>
+      <label class="ctrl"><span class="lab">프로그램의 명령 병렬성 <output data-o="ilp"></output></span><input type="range" data-k="ilp" min="0.5" max="2" step="0.05" value="1" data-d="2"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">IPC</span><span class="v" data-r="ipc"></span></div>
+      <div class="ro"><span class="k">코어 면적 (상대)</span><span class="v" data-r="a"></span></div>
+      <div class="ro"><span class="k">전력 (상대, 같은 클록)</span><span class="v" data-r="p"></span></div>
+      <div class="ro"><span class="k">와트당 성능 (상대)</span><span class="v" data-r="e"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모델.</b> IPC = min(폭, k·√ROB)×(분기·캐시 미스로 인한 감소), 면적 ∝ 폭^1.6 + ROB/64, 전력 ∝ 면적. 넓힐수록 IPC는 서서히, 전력은 빠르게 오른다. 그래서 빠른 응답이 필요한 일은 큰 코어에, 나머지는 작은 코어에 맡긴다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>빅·리틀: 일에 맞는 코어</h2>
+<p>큰 코어(빅)는 최고 성능이 높지만 같은 성능을 낼 때 작은 코어(리틀)보다 전력이 크다. 반대로 리틀은 최고 성능이 낮다. 두 코어의 전력–성능 곡선은 교차한다. 운영체제의 스케줄러는 작업의 요구 성능을 보고 곡선이 더 낮은 쪽 코어로 보낸다. 오늘날 모바일 SoC는 이를 세 단계(최고 성능·성능·효율)로 나누기도 한다.</p>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-4</span><span class="ttl">빅 코어 vs 리틀 코어 전력–성능 곡선</span></div>
+  <div class="sim-b">
+    <div class="ctrls"><label class="ctrl"><span class="lab">작업이 요구하는 성능 <output data-o="q"></output></span><input type="range" data-k="q" min="5" max="100" step="1" value="30" data-d="0" data-u="%"></label></div>
+    <div class="canvas-box"><canvas id="cv4" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">리틀 코어 전력</span><span class="v" data-r="l"></span></div>
+      <div class="ro"><span class="k">빅 코어 전력</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">스케줄러 선택</span><span class="v" data-r="c"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로축은 성능(빅 코어 최고 = 100), 세로축은 전력(로그). 각 곡선은 DVFS(7장)로 전압·주파수를 바꿔 가며 얻은 점들이다. 요구 성능이 교차점보다 낮으면 리틀이, 높으면 빅이 효율적이다. 리틀은 오른쪽 끝(최고 성능) 너머로는 갈 수 없다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">포워딩이 있어도 남는 스톨은?</p><ol><li>산술 연쇄</li><li>로드 직후 그 값을 쓰는 경우 (load-use)</li><li>분기 없는 코드</li><li>저장 명령</li></ol>
+<p class="explain">로드 값은 MEM 단계 끝에야 나오므로 한 클록은 기다려야 한다.</p></div>
+<div class="quiz" data-a="2"><p class="q">2비트 예측기가 반복문에서 1비트보다 나은 이유는?</p><ol><li>저장 공간이 적어서</li><li>항상 맞혀서</li><li>한 번의 예외(루프 탈출)로 예측을 바꾸지 않아서</li><li>분기를 없애서</li></ol>
+<p class="explain">두 번 연속 틀려야 방향을 바꾼다.</p></div>
+<div class="quiz" data-a="0"><p class="q">요구 성능이 낮은 백그라운드 작업에 리틀 코어를 쓰는 이유는?</p><ol><li>같은 성능을 더 낮은 전력으로 내기 때문에</li><li>더 빨라서</li><li>캐시가 커서</li><li>클록이 높아서</li></ol>
+<p class="explain">전력–성능 곡선의 교차점 아래에서는 리틀이 효율적이다.</p></div>
+<div class="quiz" data-a="3"><p class="q">CPI 1.2, 클록 3 GHz에서 명령 60억 개의 실행 시간은?</p><ol><li>1.2 s</li><li>0.6 s</li><li>3.6 s</li><li>2.4 s</li></ol>
+<p class="explain">6×10⁹ × 1.2 / 3×10⁹ = 2.4 s.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 2-1 파이프라인 */
+J.sim('sim1', (v, box) => {
+  const P = {
+    a:[['add r1,r2,r3','alu',[]],['sub r4,r1,r5','alu',[0]],['and r6,r4,r1','alu',[1,0]],['or  r7,r2,r8','alu',[]],['add r9,r7,r6','alu',[3,2]],['xor r1,r9,r2','alu',[4]]],
+    b:[['lw  r1,0(r2)','ld',[]],['add r3,r1,r4','alu',[0]],['lw  r5,4(r2)','ld',[]],['sub r6,r5,r3','alu',[2,1]],['sw  r6,8(r2)','st',[3]],['add r2,r2,r7','alu',[]]],
+    c:[['lw  r1,0(r2)','ld',[]],['add r3,r3,r1','alu',[0]],['addi r2,r2,4','alu',[]],['bne r2,r9,loop','br',[2]],['lw  r1,0(r2)','ld',[]],['add r3,r3,r1','alu',[4]],['addi r2,r2,4','alu',[]],['bne r2,r9,loop','br',[6]]]
+  }[v.prog];
+  const fwd = v.fwd === '1';
+  const S = []; let stall = 0, flushes = [];
+  P.forEach((ins, i) => {
+    let IF = i === 0 ? 0 : Math.max(S[i-1].IF + 1, S[i-1].ID);
+    if(i > 0 && S[i-1].br) IF = Math.max(IF, S[i-1].brRedirect);
+    let ID = Math.max(IF + 1, i ? S[i-1].ID + 1 : 0);
+    const need = ins[2].map(j => { const p = S[j]; if(!fwd) return p.WB; return p.type === 'ld' ? p.MEM : p.EX; });
+    const idMin = Math.max(ID, ...need.map(t => fwd ? t : t)); // fwd: EX(i) ≥ src+1 → ID ≥ src
+    stall += idMin - ID; ID = idMin;
+    const EX = ID + 1, MEM = EX + 1, WB = MEM + 1;
+    const o = {IF, ID, EX, MEM, WB, type:ins[1], stallFrom: IF + 1, br: ins[1] === 'br', brRedirect: 0};
+    if(o.br){ const taken = i !== P.length - 1; if(taken && v.bp === 'nt'){ o.brRedirect = EX + 1; flushes.push({i, from: IF + 1, n:2}); } else o.brRedirect = 0; }
+    S.push(o);
+  });
+  const total = S[S.length-1].WB + 1, flushC = flushes.length*2;
+  const {ctx, w, h} = J.fit(document.getElementById('cv1'));
+  ctx.clearRect(0,0,w,h);
+  const L = 120, cw = Math.min(34, (w - L - 10)/(total + 1)), rh = Math.min(32, (h - 30)/P.length);
+  const cols = {IF:'--indigo', ID:'--gold', EX:'--red', MEM:'--plum', WB:'--jade'};
+  ctx.font = '10px "JetBrains Mono"'; ctx.textAlign='center'; ctx.fillStyle = J.c('--ink3');
+  for(let c=0;c<total;c++) ctx.fillText(c+1, L + c*cw + cw/2, 12);
+  P.forEach((ins, i) => { const s = S[i], y = 20 + i*rh;
+    ctx.fillStyle = J.c('--ink'); ctx.textAlign='right'; ctx.font = '11.5px "JetBrains Mono"'; ctx.textBaseline='middle'; ctx.fillText(ins[0], L - 8, y + rh/2);
+    ['IF','ID','EX','MEM','WB'].forEach(st => { const x = L + s[st]*cw; ctx.fillStyle = J.c(cols[st]); ctx.globalAlpha = .8; ctx.fillRect(x+1, y+2, cw-2, rh-4); ctx.globalAlpha = 1; ctx.fillStyle = '#fff'; ctx.textAlign='center'; ctx.font = '600 9.5px "JetBrains Mono"'; ctx.fillText(st, x + cw/2, y + rh/2); });
+    for(let c = s.IF + 1; c < s.ID; c++){ const x = L + c*cw; ctx.fillStyle = J.c('--red'); ctx.font = '700 14px sans-serif'; ctx.textAlign='center'; ctx.fillText('—', x + cw/2, y + rh/2); }
+    ins[2].forEach(j => { const sj = S[j], x1 = L + (sj.type === 'ld' ? sj.MEM : sj.EX)*cw + cw, y1 = 20 + j*rh + rh/2, x2 = L + s.EX*cw, y2 = y + rh/2; ctx.strokeStyle = J.c('--ink3'); ctx.setLineDash([3,2]); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]); });
+  });
+  flushes.forEach(f => { const s0 = S[f.i], y = 20 + f.i*rh + rh/2; ctx.fillStyle = J.c('--red'); ctx.font = '600 11px "Noto Sans KR"'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('← 분기 예측 실패: 뒤 명령 2개 버림', L + (s0.WB + 1)*cw + 4, y); });
+  ctx.textBaseline='alphabetic';
+  J.out(box,'cyc', total); J.out(box,'st', stall + flushC, stall + flushC ? 'warn' : 'good');
+  const cpi = (total - 4)/P.length;
+  J.out(box,'cpi', J.fmt(cpi,2), cpi < 1.15 ? 'good' : cpi < 1.6 ? 'warn' : 'bad');
+});
+
+/* 2-2 분기 예측 */
+J.sim('sim2', (v, box) => {
+  const seq = []; for(let r=0;r<30;r++){ for(let k=0;k<v.n-1;k++) seq.push(1); seq.push(0); }
+  const run = kind => { let s = kind === '2' ? 3 : 1, hit = 0; const hist = [];
+    seq.forEach(o => { const pred = kind === 'at' ? 1 : kind === '1' ? s : (s >= 2 ? 1 : 0); const ok = pred === o; if(ok) hit++; hist.push(ok);
+      if(kind === '1') s = o; else if(kind === '2') s = o ? Math.min(3, s+1) : Math.max(0, s-1); });
+    return {acc: hit/seq.length, hist}; };
+  const A = run('at'), B = run('1'), C = run('2');
+  const {ctx, w, h} = J.fit(document.getElementById('cv2a'));
+  ctx.clearRect(0,0,w,h);
+  const show = Math.min(seq.length, 40), cw = (w - 90)/show;
+  [['실제',seq.map(x=>x===1)],['항상 감',A.hist],['1비트',B.hist],['2비트',C.hist]].forEach((row,ri) => { const y = 20 + ri*52;
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(row[0], 80, y + 14);
+    for(let k=0;k<show;k++){ const okv = row[1][k]; ctx.fillStyle = J.c(ri === 0 ? (okv ? '--indigo' : '--gold') : (okv ? '--jade' : '--red')); ctx.globalAlpha = ri === 0 ? .8 : okv ? .45 : .95; ctx.fillRect(88 + k*cw, y, cw - 1.5, 28); ctx.globalAlpha = 1; } });
+  ctx.fillStyle = J.c('--ink3'); ctx.textAlign='left'; ctx.font = '11px "Noto Sans KR"'; ctx.fillText('실제: 파랑 = 감, 금색 = 안 감 · 예측: 초록 = 맞음, 빨강 = 틀림', 88, h - 10); ctx.textBaseline='alphabetic';
+  J.out(box,'a', J.fmt(A.acc*100,1)+' %'); J.out(box,'b', J.fmt(B.acc*100,1)+' %'); J.out(box,'c', J.fmt(C.acc*100,1)+' %');
+  J.out(box,'cpi', '+'+J.fmt((1 - C.acc)*v.f/100*v.p,3));
+  const s = document.getElementById('fsm'); s.innerHTML = '';
+  const st = [['강하게 감','11',60,'--jade'],['약하게 감','10',150,'--jade'],['약하게 안 감','01',240,'--red'],['강하게 안 감','00',330,'--red']];
+  st.forEach((q,i) => { J.svg('circle', {cx:q[2]-10, cy:110, r:36, fill:'var(--card)', stroke:`var(${q[3]})`, 'stroke-width':2.5}, s); J.svg('text', {x:q[2]-10, y:106, 'text-anchor':'middle', class:'t-m mono', text:q[1], style:'font-weight:700'}, s); J.svg('text', {x:q[2]-10, y:124, 'text-anchor':'middle', class:'t-s', text:q[0], style:'font-size:10px'}, s); });
+  for(let i=0;i<3;i++){ const x = st[i][2] + 26; J.svg('path', {d:`M${x} 92 Q ${x+27} 70 ${x+54} 92`, fill:'none', stroke:'var(--red)', 'stroke-width':1.5}, s); J.svg('text', {x:x+27, y:70, 'text-anchor':'middle', class:'t-s', text:'안 감', style:'fill:var(--red)'}, s);
+    J.svg('path', {d:`M${x+54} 128 Q ${x+27} 150 ${x} 128`, fill:'none', stroke:'var(--jade)', 'stroke-width':1.5}, s); J.svg('text', {x:x+27, y:162, 'text-anchor':'middle', class:'t-s', text:'감', style:'fill:var(--jade)'}, s); }
+  J.svg('text', {x:180, y:210, 'text-anchor':'middle', class:'t-s', text:'왼쪽 두 상태면 "감", 오른쪽 두 상태면 "안 감"으로 예측'}, s);
+});
+
+/* 2-3 폭 */
+J.sim('sim3', (v, box) => {
+  const ipcOf = (w, rob) => Math.min(w, 0.28*Math.sqrt(rob)*v.ilp)*0.85;
+  const area = (w, rob) => Math.pow(w, 1.6) + rob/64;
+  const pts = [], eff = [];
+  for(let w=1; w<=10; w++){ pts.push([w, ipcOf(w, v.rob)]); eff.push([w, ipcOf(w, v.rob)/area(w, v.rob)*4]); }
+  J.plot(document.getElementById('cv3'), {x:[1,10], y:[0,6], xlab:'발행 폭', ylab:'IPC / 와트당 성능(×4)', series:[{pts, color:'--red', w:3},{pts:eff, color:'--jade', w:2.5, dash:[5,4]}], points:[{x:v.w, y:ipcOf(v.w, v.rob), color:'--ink', r:6}]});
+  const ipc = ipcOf(v.w, v.rob), a = area(v.w, v.rob);
+  J.out(box,'ipc', J.fmt(ipc,2)); J.out(box,'a', J.fmt(a,1)); J.out(box,'p', J.fmt(a,1)); J.out(box,'e', J.fmt(ipc/a*4,2));
+});
+
+/* 2-4 빅·리틀 */
+J.sim('sim4', (v, box) => {
+  // 성능 q (빅 최대 100), 전력 = c·q^3 형태 (전압·주파수 동시 증가)
+  const little = q => 0.02 + 0.75*Math.pow(q/45, 2.8), big = q => 0.15 + 3.2*Math.pow(q/100, 2.4);
+  const L = [], B = []; for(let q=2; q<=100; q+=1){ if(q <= 45) L.push([q, little(q)]); B.push([q, big(q)]); }
+  let cross = 0; for(let q=5; q<=45; q+=0.5){ if(little(q) > big(q)){ cross = q; break; } }
+  J.plot(document.getElementById('cv4'), {x:[0,100], y:[0.01, 5], logy:true, xlab:'성능 (빅 코어 최고 = 100)', ylab:'전력 (W, 로그)', series:[{pts:L, color:'--gold', w:3},{pts:B, color:'--red', w:3}],
+    vlines:[{x:v.q, color:'--ink', dash:[2,3]}].concat(cross ? [{x:cross, color:'--jade', label:'교차 '+J.fmt(cross,0), dash:[4,3]}] : []), pad:{l:48}});
+  const l = v.q <= 45 ? little(v.q) : null, b = big(v.q);
+  J.out(box,'l', l === null ? '도달 불가' : J.fmt(l,2)+' W', l === null ? 'bad' : '');
+  J.out(box,'b', J.fmt(b,2)+' W');
+  J.out(box,'c', l !== null && l < b ? '리틀 코어' : '빅 코어', l !== null && l < b ? 'good' : 'warn');
+});
+</script>
+</body>
+</html>

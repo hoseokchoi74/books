@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SoC 書 · 집현전</title>
+<meta name="description" content="집현전 인터랙티브 교과서 — 트랜지스터 수백억 개를 하나의 시스템으로, 직접 만지며 배우는 SoC 교과서">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0832a'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E統%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/jade.css">
+<link rel="stylesheet" href="../assets/book.css">
+<script src="book.js"></script>
+<script src="../assets/book.js"></script>
+<script src="../assets/iso3d.js"></script>
+<style>
+  .hero{display:grid; grid-template-columns:1.05fr 1fr; gap:40px; align-items:center; padding:56px 0 40px}
+  .hero h1{font-size:clamp(34px,5.4vw,58px); margin:14px 0 18px; font-weight:900; line-height:1.18}
+  .hero h1 em{font-style:normal; color:var(--gold)}
+  .hero p.lead{font-size:17.5px; color:var(--ink2); max-width:560px}
+  .hero .cta{display:flex; gap:10px; flex-wrap:wrap; margin:24px 0 18px}
+  .hero .chips{display:flex; gap:8px; flex-wrap:wrap}
+  .hero .chips span{font-size:13px; border:1px solid var(--line); border-radius:3px; padding:2px 10px; background:var(--card); color:var(--ink2)}
+  .stage{position:relative; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:10px; box-shadow:inset 0 0 0 5px var(--card), inset 0 0 0 6px var(--line2), var(--shadow)}
+  .stage canvas{display:block; width:100%}
+  .stage .over{position:absolute; left:18px; top:14px; font-size:12px; color:var(--ink3)}
+  .stage .leg{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12.5px; color:var(--ink2); padding:4px 8px 2px}
+  .stage .leg i{display:inline-block; width:11px; height:11px; border-radius:2px; vertical-align:-1px; margin-right:5px}
+  .stage .bar{display:flex; gap:8px; align-items:center; padding:4px 8px; font-size:12.5px; color:var(--ink2); flex-wrap:wrap}
+  .titleslip{position:absolute; right:-12px; top:-18px; writing-mode:vertical-rl; background:var(--paper); border:1px solid var(--line); padding:12px 7px; font-family:var(--serif); font-weight:900; letter-spacing:.3em; font-size:17px; box-shadow:var(--shadow)}
+  .titleslip small{display:block; font-weight:400; font-size:11px; letter-spacing:.15em; color:var(--ink3); margin-top:6px}
+  @media (max-width:900px){ .hero{grid-template-columns:1fr; padding-top:32px} .titleslip{right:6px; top:-14px} }
+  section.block{padding:46px 0 10px}
+  section.block > h2{font-size:28px; margin:0 0 8px; font-weight:900}
+  section.block > p.sub{color:var(--ink2); margin:0 0 22px; max-width:760px}
+  .chain svg{width:100%; height:auto; display:block}
+  .chain a:hover rect.blk{stroke:var(--red); stroke-width:2.5}
+  .nums{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px}
+  .num{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px; position:relative; overflow:hidden}
+  .num b{font-family:var(--serif); font-size:30px; font-weight:900; display:block}
+  .num span{font-size:14px; color:var(--ink2)}
+  .num:after{content:attr(data-h); position:absolute; right:10px; bottom:-14px; font-family:var(--serif); font-size:64px; color:var(--ink); opacity:.05; font-weight:900}
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px}
+  .card{display:flex; flex-direction:column; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:3px; padding:18px 18px 16px 24px; color:var(--ink); position:relative; transition:transform .15s, box-shadow .15s}
+  .card:before{content:''; position:absolute; left:8px; top:10px; bottom:10px; width:1px; background:var(--line)}
+  .card:hover{transform:translateY(-3px); box-shadow:var(--shadow); text-decoration:none; border-color:var(--gold)}
+  .card .cn{font-family:var(--mono); font-size:11.5px; color:var(--gold); letter-spacing:.15em}
+  .card h3{margin:0; font-size:18.5px}
+  .card p{margin:0; font-size:14px; color:var(--ink2); line-height:1.65; flex:1}
+  .card .tags{display:flex; gap:5px; flex-wrap:wrap; margin-top:6px}
+  .paths{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px}
+  .path{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px}
+  .path h3{margin:0 0 4px; font-size:17px}
+  .path p{margin:0 0 10px; font-size:14px; color:var(--ink2)}
+  .path .seq{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .path .seq a{font-family:var(--mono); font-size:13px; border:1px solid var(--gold); color:var(--gold); border-radius:3px; padding:1px 8px}
+  .path .seq i{color:var(--ink3); font-style:normal; font-size:12px}
+  .howto{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px}
+  .how{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px; text-align:center}
+  .how .hj{font-family:var(--serif); font-size:32px; font-weight:900; color:var(--red)}
+  .how b{display:block; font-family:var(--serif); margin:2px 0 4px}
+  .how span{font-size:13.5px; color:var(--ink2)}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<div class="wrap">
+
+<section class="hero">
+  <div>
+    <div class="kicker">Interactive SoC Textbook · 集賢殿 器部 第四</div>
+    <h1>트랜지스터 수백억 개를<br><em>하나의 시스템</em>으로</h1>
+    <p class="lead">손바닥만 한 스마트폰 안, 손톱만 한 칩 하나에 CPU·GPU·NPU·카메라 처리기·모뎀·메모리 컨트롤러가 함께 산다. 그들은 하나의 배선망으로 대화하고, 같은 메모리를 나눠 쓰고, 정해진 전력과 열 안에서 서로 양보한다. 파이프라인에서 NoC, 캐시 일관성, DVFS, 타이밍, 칩렛까지 — 직접 슬라이더를 움직이고 3D 평면도를 돌려 보며 배우는 시스템 온 칩 교과서입니다.</p>
+    <div class="cta">
+      <a class="btn red" href="chapters/overview.html">1장부터 펼치기 →</a>
+      <a class="btn ghost" href="chapters/playground.html">SoC 설계해 보기</a>
+    </div>
+    <div class="chips"><span>13개 장</span><span>39개 실험</span><span>3D 구조 모델</span><span>공대 학부 수준</span></div>
+  </div>
+  <div class="stage">
+    <div class="titleslip">SoC 書<small>統合之理</small></div>
+    <div class="over">드래그해서 돌려 보세요 · 블록 높이 = 그 순간의 소비 전력</div>
+    <canvas id="hero3d" data-h="400" aria-label="SoC 다이 평면도 3D 모형"></canvas>
+    <div class="bar" id="modeBtns">
+      <button class="sbtn on" data-m="game">게임</button>
+      <button class="sbtn" data-m="camera">4K 촬영</button>
+      <button class="sbtn" data-m="ai">AI 비서</button>
+      <button class="sbtn" data-m="idle">대기</button>
+      <span id="hStat" class="mono"></span>
+    </div>
+  </div>
+</section>
+
+<section class="block chain">
+  <div class="kicker">What an SoC does</div>
+  <h2>SoC는 무엇을 하는가</h2>
+  <p class="sub">한 문장으로: <b>서로 다른 일을 가장 잘하는 처리 장치들을 한 칩에 모으고, 하나의 메모리와 하나의 전력 예산을 나눠 쓰게 조율한다.</b> 블록을 누르면 해당 장으로 갑니다.</p>
+  <figure class="fig" style="margin:0">
+    <svg viewBox="0 0 980 270" role="img" aria-label="SoC 구성도"><g id="chainG"></g></svg>
+    <figcaption><b>그림 0-1.</b> 스마트폰 SoC의 기능 블록. 가운데 인터커넥트(NoC)를 통해 모든 블록이 메모리 컨트롤러와 이어지고, 전력·클록·열 관리가 전체를 감싼다.</figcaption>
+  </figure>
+</section>
+
+<section class="block">
+  <div class="kicker">SoC in numbers</div>
+  <h2>숫자로 보는 요즘 SoC</h2>
+  <p class="sub">이 책을 덮을 즈음이면 아래 숫자가 왜 그 값인지 설명할 수 있게 됩니다. (2025–26년 대략값)</p>
+  <div class="nums">
+    <div class="num" data-h="數"><b>~200억 개</b><span>플래그십 스마트폰 SoC의 트랜지스터 수 → 1장</span></div>
+    <div class="num" data-h="核"><b>8–10 코어</b><span>성능·효율 코어를 섞은 CPU 클러스터 → 2장</span></div>
+    <div class="num" data-h="算"><b>40+ TOPS</b><span>NPU의 INT8 연산 능력. CPU보다 와트당 수십 배 → 3장</span></div>
+    <div class="num" data-h="電"><b>~5 W</b><span>스마트폰이 오래 버틸 수 있는 지속 전력 → 7·8장</span></div>
+    <div class="num" data-h="熱"><b>~43 °C</b><span>손에 쥐는 기기 표면 온도의 대략적 한계 → 8장</span></div>
+    <div class="num" data-h="片"><b>~0.5 pJ/bit</b><span>칩렛 사이 고급 패키징 연결의 비트당 에너지 → 11장</span></div>
+  </div>
+</section>
+
+<section class="block" id="chapters">
+  <div class="kicker">Table of contents · 目次</div>
+  <h2>전체 장</h2>
+  <p class="sub">순서대로 읽어도 좋고 관심 있는 장부터 골라도 됩니다. 각 장은 <b>개념 → 그림 → 수식 → 실험 → 문제</b> 순서로 짜여 있습니다.</p>
+  <div class="cards" id="cards"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">Reading paths</div>
+  <h2>추천 학습 경로</h2>
+  <p class="sub">전공이나 관심사에 따라 이렇게 읽어 보세요.</p>
+  <div class="paths" id="paths"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">How to read</div>
+  <h2>이 책 읽는 법</h2>
+  <div class="howto">
+    <div class="how"><div class="hj">讀</div><b>읽기</b><span>개념과 직관을 먼저. 영어 용어는 괄호로 함께 씁니다.</span></div>
+    <div class="how"><div class="hj">觀</div><b>보기</b><span>SVG 도해와 3D 모델로 구조를 머릿속에 그립니다.</span></div>
+    <div class="how"><div class="hj">觸</div><b>만지기</b><span>실험의 슬라이더를 끝까지 밀어 보세요. 극단에서 배웁니다.</span></div>
+    <div class="how"><div class="hj">算</div><b>계산하기</b><span>예제 수치를 직접 따라가며 감을 잡습니다.</span></div>
+    <div class="how"><div class="hj">問</div><b>확인하기</b><span>장마다 문제, 마지막 장에서 종합 문제로 마무리합니다.</span></div>
+  </div>
+</section>
+
+</div>
+<footer class="site">SoC 書 — 집현전 인터랙티브 교과서 시리즈 · 수치는 교육용 근사 모델이며 특정 제품의 사양이 아닙니다.<br>콘텐츠 CC BY 4.0 · 코드 MIT</footer>
+
+<script>
+(function(){
+  const B = window.BOOK;
+  document.getElementById('cards').innerHTML = B.chapters.map(c => `
+    <a class="card" href="chapters/${c.slug}.html"><span class="cn">CHAPTER ${c.n}</span><h3>${c.title}</h3><p>${c.desc}</p>
+    <span class="tags">${c.tags.map(t => `<span class="tag ${t==='시뮬레이터'?'sim':t==='3D'?'d3':''}">${t}</span>`).join('')}</span></a>`).join('');
+  const P = [
+    ['입문 · 전체 그림','SoC가 처음이라면. 블록에서 시스템까지.',['01','02','03','04','07']],
+    ['컴퓨터 구조','코어·가속기·일관성·메모리.',['02','03','05','06','12']],
+    ['저전력 · 모바일','전력과 열이 모든 것을 정한다.',['01','07','08','06','12']],
+    ['디지털 설계 · 검증','타이밍, 클록 도메인, 설계 흐름.',['02','09','10','11']],
+    ['반도체 산업 · 전략','원가, 수율, 칩렛, 패키징.',['01','10','11','12']],
+    ['AI 하드웨어','NPU, 메모리 대역폭, 전력 효율.',['03','06','07','11','12']]
+  ];
+  const slug = n => B.chapters.find(c => c.n === n).slug;
+  document.getElementById('paths').innerHTML = P.map(p => `<div class="path"><h3>${p[0]}</h3><p>${p[1]}</p><div class="seq">${p[2].map(n => `<a href="chapters/${slug(n)}.html">${n}</a>`).join('<i>→</i>')}</div></div>`).join('');
+})();
+
+(function(){
+  const g = document.getElementById('chainG');
+  const blk = (x, y, w, h, t, s, ch, col) => { const a = J.svg('a', {href:'chapters/'+ch+'.html'}, g);
+    J.svg('rect', {class:'blk', x, y, width:w, height:h, rx:5, fill:'var(--card)', stroke:`var(${col})`, 'stroke-width':2}, a);
+    J.svg('rect', {x, y, width:6, height:h, fill:`var(${col})`}, a);
+    J.svg('text', {x:x+w/2+3, y:y+h/2-2, 'text-anchor':'middle', class:'t-m', text:t, style:'font-weight:700'}, a);
+    J.svg('text', {x:x+w/2+3, y:y+h/2+15, 'text-anchor':'middle', class:'t-s', text:s}, a); };
+  blk(20, 20, 150, 56, 'CPU 클러스터', 'Ch.02 · 빅·리틀', 'cpu', '--red');
+  blk(190, 20, 150, 56, 'GPU', 'Ch.03 · SIMT', 'accel', '--plum');
+  blk(360, 20, 150, 56, 'NPU', 'Ch.03 · 시스톨릭', 'accel', '--jade');
+  blk(530, 20, 150, 56, 'ISP · 비디오', 'Ch.06 · 실시간 스트림', 'memsys', '--indigo');
+  blk(700, 20, 130, 56, '모뎀 · 연결', 'Ch.01', 'overview', '--ink3');
+  blk(850, 20, 110, 56, '보안 · 부팅', 'Ch.01', 'overview', '--ink3');
+  blk(20, 108, 940, 44, '인터커넥트 (NoC) + 캐시 일관성', 'Ch.04 · Ch.05', 'noc', '--gold');
+  blk(260, 184, 220, 56, '메모리 컨트롤러', 'Ch.06 · QoS', 'memsys', '--indigo');
+  blk(500, 184, 220, 56, 'LPDDR5X (칩 밖)', '대역폭 ~70 GB/s', 'memsys', '--ink3');
+  blk(20, 184, 220, 56, '전력·클록·열 관리', 'Ch.07 · 08 · 09', 'power', '--red');
+  blk(740, 184, 220, 56, '설계·패키징', 'Ch.10 · 11', 'flow', '--jade');
+  [95,265,435,605,765,905].forEach(x => J.svg('line', {x1:x, y1:76, x2:x, y2:108, stroke:'var(--ink3)', 'stroke-width':2}, g));
+  [370].forEach(x => J.svg('line', {x1:x, y1:152, x2:x, y2:184, stroke:'var(--ink3)', 'stroke-width':2}, g));
+  J.svg('line', {x1:480, y1:212, x2:500, y2:212, stroke:'var(--ink3)', 'stroke-width':2}, g);
+})();
+
+/* 히어로 3D: 다이 평면도 */
+(function(){
+  const cv = document.getElementById('hero3d');
+  const cam = {yaw:-0.62, pitch:0.62, scale:30};
+  // [이름, x, z, w, d, 색, 키]
+  const B = [['CPU 빅', -4.6, -3.6, 2.6, 2.4, '--red', 'big'],['CPU 리틀', -1.8, -3.6, 1.8, 2.4, '--gold', 'little'],['L3/SLC', 0.2, -3.6, 1.8, 2.4, '--ink3', 'cache'],
+    ['GPU', 2.2, -3.6, 3.2, 3.6, '--plum', 'gpu'],['NPU', -4.6, -1.0, 2.4, 2.4, '--jade', 'npu'],['ISP', -2.0, -1.0, 2.0, 2.0, '--indigo', 'isp'],['비디오', 0.2, -1.0, 1.8, 2.0, '--indigo', 'vid'],
+    ['모뎀', 2.2, 0.2, 3.2, 2.2, '--ink3', 'modem'],['메모리 PHY', -4.6, 1.6, 6.6, 1.2, '--paper2', 'phy'],['디스플레이', 2.2, 2.6, 1.6, 1.0, '--gold', 'disp'],['보안', 3.9, 2.6, 1.5, 1.0, '--ink3', 'sec']];
+  const M = {game:{big:.9,little:.5,cache:.6,gpu:1,npu:.1,isp:.05,vid:.1,modem:.3,phy:.8,disp:.6,sec:.05},
+    camera:{big:.4,little:.5,cache:.4,gpu:.3,npu:.6,isp:1,vid:.9,modem:.1,phy:.9,disp:.6,sec:.05},
+    ai:{big:.3,little:.4,cache:.5,gpu:.2,npu:1,isp:.05,vid:.05,modem:.2,phy:.7,disp:.4,sec:.05},
+    idle:{big:.02,little:.1,cache:.05,gpu:.02,npu:.02,isp:.02,vid:.02,modem:.15,phy:.08,disp:.1,sec:.05}};
+  const W = {game:7.2, camera:5.1, ai:3.8, idle:0.3};
+  let mode = 'game'; const h = {}; B.forEach(b => h[b[6]] = 0.1);
+  function draw(){
+    const {ctx, w, h: H} = J.fit(cv);
+    cam.scale = Math.min(w, H*1.3)/14; cam.oy = H*0.12;
+    const S = new J3.Scene();
+    S.box(-5.0, -0.5, -4.0, 10.8, 0.5, 7.2, '--wood2', {layer:0});
+    B.forEach((b,i) => S.box(b[1], 0, b[2], b[3]-0.1, 0.12 + h[b[6]]*2.6, b[4]-0.1, b[5], {layer:1}));
+    S.render(ctx, cam, w, H);
+    ctx.font = '600 11.5px "Noto Sans KR"'; ctx.textAlign='center';
+    B.forEach(b => { const p = J3.project([b[1] + b[3]/2, 0.2 + h[b[6]]*2.6, b[2] + b[4]/2], cam, w, H); ctx.fillStyle = J.c('--ink'); ctx.fillText(b[0], p[0], p[1] - 4); });
+  }
+  J3.drag(cv, cam, draw); J.live(draw);
+  const stat = document.getElementById('hStat');
+  J.loop(cv, dt => {
+    if(!cam.user) cam.yaw += dt*0.07;
+    B.forEach(b => { const tgt = M[mode][b[6]]*(0.9 + 0.2*Math.sin(performance.now()/400 + b[1])); h[b[6]] += (tgt - h[b[6]])*Math.min(1, dt*3); });
+    stat.textContent = `SoC 전력 ≈ ${W[mode].toFixed(1)} W`;
+    draw();
+  });
+  J.$$('#modeBtns [data-m]').forEach(bt => bt.onclick = () => { J.$$('#modeBtns [data-m]').forEach(x=>x.classList.remove('on')); bt.classList.add('on'); mode = bt.dataset.m; });
+})();
+</script>
+</body>
+</html>

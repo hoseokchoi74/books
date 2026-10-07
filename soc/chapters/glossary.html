@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>용어집 & 종합 퀴즈 · SoC 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0832a'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E統%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+  .gsearch{width:100%; font-size:16px; padding:11px 14px; border:1.5px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink); font-family:var(--sans)}
+  .gsearch:focus{outline:none; border-color:var(--gold)}
+  .gfilter{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 16px}
+  .glist{display:grid; gap:8px}
+  .gi{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:10px 14px}
+  .gi b{font-family:var(--serif); font-size:16.5px}
+  .gi .en{margin-left:6px}
+  .gi p{margin:4px 0 0; font-size:14.5px; color:var(--ink2)}
+  .gi a.ch{float:right; font-family:var(--mono); font-size:12px; color:var(--red)}
+  .score{font-family:var(--serif); font-size:20px; font-weight:700}
+</style>
+</head>
+<body data-ch="glossary">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 13 <span class="hanja">第十三章 · 結</span></div>
+  <h1>용어집 & 종합 퀴즈</h1>
+  <p class="lead">책 전체의 핵심 용어를 한곳에 모았다. 검색하거나 분류로 걸러 보고, 마지막의 종합 문제로 실력을 점검해 보자.</p>
+</header>
+
+<h2 id="s1"><span class="n">01</span>용어집</h2>
+<input class="gsearch" id="gq" placeholder="용어 검색 (예: NoC, MESI, DVFS, 칩렛)" aria-label="용어 검색">
+<div class="gfilter" id="gf"></div>
+<p class="hint" id="gcount"></p>
+<div class="glist" id="gl"></div>
+
+<h2 id="s2"><span class="n">02</span>종합 퀴즈</h2>
+<p>15문제. 각 문제를 누르면 바로 채점되고 해설이 열린다.</p>
+<div class="readouts" style="margin-bottom:10px"><div class="ro"><span class="k">점수</span><span class="v score" id="score">0 / 15</span></div><div class="ro"><span class="k">푼 문제</span><span class="v" id="done">0</span></div></div>
+<div id="qz"></div>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const G = [
+ [
+  "SoC",
+  "System on Chip",
+  "CPU·GPU·NPU·메모리 컨트롤러·인터페이스 등을 한 칩에 통합한 것.",
+  "기초",
+  "overview"
+ ],
+ [
+  "IP 블록",
+  "intellectual property block",
+  "재사용 가능한 설계 자산(코어, 인터페이스 등).",
+  "기초",
+  "overview"
+ ],
+ [
+  "무어의 법칙",
+  "Moore's law",
+  "칩의 트랜지스터 수가 약 2년마다 두 배가 된다는 관찰.",
+  "기초",
+  "overview"
+ ],
+ [
+  "파이프라인",
+  "pipeline",
+  "명령 처리를 단계로 나눠 겹쳐 실행하는 구조.",
+  "CPU",
+  "cpu"
+ ],
+ [
+  "해저드",
+  "hazard",
+  "데이터 의존·분기 때문에 파이프라인이 멈춰야 하는 상황.",
+  "CPU",
+  "cpu"
+ ],
+ [
+  "포워딩",
+  "forwarding / bypassing",
+  "결과를 레지스터에 쓰기 전에 다음 명령에 바로 넘겨주는 회로.",
+  "CPU",
+  "cpu"
+ ],
+ [
+  "CPI / IPC",
+  "cycles per instruction / instructions per cycle",
+  "명령당 사이클 / 사이클당 명령.",
+  "CPU",
+  "cpu"
+ ],
+ [
+  "분기 예측",
+  "branch prediction",
+  "분기 결과를 미리 추측해 파이프라인을 계속 채우는 기법.",
+  "CPU",
+  "cpu"
+ ],
+ [
+  "비순차 실행",
+  "out-of-order execution",
+  "의존이 풀린 명령부터 실행하고 결과는 순서대로 확정.",
+  "CPU",
+  "cpu"
+ ],
+ [
+  "빅·리틀",
+  "heterogeneous CPU cores",
+  "성능 코어와 효율 코어를 섞은 CPU 구성.",
+  "CPU",
+  "cpu"
+ ],
+ [
+  "암달의 법칙",
+  "Amdahl's law",
+  "가속할 수 없는 부분이 전체 속도 향상의 상한을 정한다.",
+  "가속기",
+  "accel"
+ ],
+ [
+  "SIMT",
+  "single instruction, multiple threads",
+  "같은 명령을 여러 스레드가 동시에 실행하는 GPU 방식.",
+  "가속기",
+  "accel"
+ ],
+ [
+  "분기 발산",
+  "branch divergence",
+  "워프 안 스레드가 다른 갈래로 가 순차 실행되는 현상.",
+  "가속기",
+  "accel"
+ ],
+ [
+  "시스톨릭 어레이",
+  "systolic array",
+  "MAC 격자에 데이터를 흘려 행렬 곱을 하는 구조.",
+  "가속기",
+  "accel"
+ ],
+ [
+  "TOPS/W",
+  "tera-operations per second per watt",
+  "와트당 연산 성능.",
+  "가속기",
+  "accel"
+ ],
+ [
+  "NoC",
+  "network on chip",
+  "라우터와 링크로 된 칩 내부 네트워크.",
+  "통신",
+  "noc"
+ ],
+ [
+  "XY 라우팅",
+  "XY routing",
+  "X 방향 먼저, 그다음 Y 방향으로 가는 결정적 라우팅.",
+  "통신",
+  "noc"
+ ],
+ [
+  "플릿",
+  "flit",
+  "패킷을 나눈 전송 단위.",
+  "통신",
+  "noc"
+ ],
+ [
+  "중재",
+  "arbitration",
+  "동시 요청 중 하나를 고르는 규칙.",
+  "통신",
+  "noc"
+ ],
+ [
+  "캐시 일관성",
+  "cache coherence",
+  "같은 주소에 대해 모든 캐시가 같은 값을 보게 하는 성질.",
+  "일관성",
+  "coherence"
+ ],
+ [
+  "MESI",
+  "Modified/Exclusive/Shared/Invalid",
+  "대표적 일관성 프로토콜의 네 상태.",
+  "일관성",
+  "coherence"
+ ],
+ [
+  "거짓 공유",
+  "false sharing",
+  "다른 변수가 같은 캐시 라인에 있어 생기는 불필요한 무효화.",
+  "일관성",
+  "coherence"
+ ],
+ [
+  "디렉터리",
+  "directory-based coherence",
+  "줄마다 공유자를 기록해 필요한 코어에만 메시지를 보내는 방식.",
+  "일관성",
+  "coherence"
+ ],
+ [
+  "QoS",
+  "quality of service",
+  "실시간 블록의 지연·대역폭을 보장하는 우선순위 체계.",
+  "메모리",
+  "memsys"
+ ],
+ [
+  "언더런",
+  "underrun",
+  "디스플레이 버퍼가 비어 화면이 깨지는 현상.",
+  "메모리",
+  "memsys"
+ ],
+ [
+  "SLC",
+  "system level cache",
+  "모든 블록이 공유하는 마지막 단계 캐시.",
+  "메모리",
+  "memsys"
+ ],
+ [
+  "동적 전력",
+  "dynamic power",
+  "αCV²f. 스위칭으로 소모되는 전력.",
+  "전력",
+  "power"
+ ],
+ [
+  "누설 전력",
+  "leakage power",
+  "꺼진 트랜지스터로 새는 전류의 전력.",
+  "전력",
+  "power"
+ ],
+ [
+  "DVFS",
+  "dynamic voltage and frequency scaling",
+  "부하에 따라 전압·주파수를 바꾸는 기법.",
+  "전력",
+  "power"
+ ],
+ [
+  "파워 게이팅",
+  "power gating",
+  "쓰지 않는 블록의 전원을 끊어 누설을 없앰.",
+  "전력",
+  "power"
+ ],
+ [
+  "다크 실리콘",
+  "dark silicon",
+  "전력 예산 때문에 동시에 켤 수 없는 칩 영역.",
+  "전력",
+  "power"
+ ],
+ [
+  "스로틀링",
+  "thermal throttling",
+  "온도 한계를 지키려 성능을 낮추는 동작.",
+  "열",
+  "thermal"
+ ],
+ [
+  "열 저항",
+  "thermal resistance",
+  "°C/W. 전력당 온도 상승.",
+  "열",
+  "thermal"
+ ],
+ [
+  "핫스팟",
+  "hotspot",
+  "전력 밀도가 높아 국부적으로 뜨거운 곳.",
+  "열",
+  "thermal"
+ ],
+ [
+  "셋업·홀드",
+  "setup / hold time",
+  "클록 모서리 전후로 데이터가 안정해야 하는 시간.",
+  "클록",
+  "clock"
+ ],
+ [
+  "클록 스큐",
+  "clock skew",
+  "플립플롭마다 클록 도착 시간의 차이.",
+  "클록",
+  "clock"
+ ],
+ [
+  "메타스테빌리티",
+  "metastability",
+  "플립플롭이 0도 1도 아닌 상태에 머무는 현상.",
+  "클록",
+  "clock"
+ ],
+ [
+  "동기화기",
+  "synchronizer",
+  "클록 도메인 교차 시 메타스테빌리티를 걸러 내는 플립플롭 열.",
+  "클록",
+  "clock"
+ ],
+ [
+  "PLL",
+  "phase-locked loop",
+  "기준 클록에서 원하는 주파수를 만드는 회로.",
+  "클록",
+  "clock"
+ ],
+ [
+  "RTL",
+  "register-transfer level",
+  "레지스터 간 데이터 흐름으로 쓴 하드웨어 기술.",
+  "설계",
+  "flow"
+ ],
+ [
+  "논리 합성",
+  "logic synthesis",
+  "RTL을 게이트 넷리스트로 바꾸는 과정.",
+  "설계",
+  "flow"
+ ],
+ [
+  "STA",
+  "static timing analysis",
+  "모든 경로의 지연을 계산해 타이밍을 검증.",
+  "설계",
+  "flow"
+ ],
+ [
+  "임계 경로",
+  "critical path",
+  "가장 늦게 도착하는 경로.",
+  "설계",
+  "flow"
+ ],
+ [
+  "GDS",
+  "GDSII",
+  "마스크 제작용 레이아웃 파일 형식.",
+  "설계",
+  "flow"
+ ],
+ [
+  "칩렛",
+  "chiplet",
+  "패키지 안에서 다시 이어 쓰는 작은 다이.",
+  "패키징",
+  "chiplet"
+ ],
+ [
+  "UCIe",
+  "Universal Chiplet Interconnect Express",
+  "칩렛 간 연결 표준.",
+  "패키징",
+  "chiplet"
+ ],
+ [
+  "2.5D / 3D 패키징",
+  "interposer / stacking",
+  "인터포저 위 나란히 / 다이 위 적층.",
+  "패키징",
+  "chiplet"
+ ],
+ [
+  "하이브리드 본딩",
+  "hybrid bonding",
+  "범프 없이 구리 패드끼리 직접 접합.",
+  "패키징",
+  "chiplet"
+ ],
+ [
+  "레티클 한계",
+  "reticle limit",
+  "노광 한 번에 찍을 수 있는 최대 다이 크기(~830 mm²).",
+  "패키징",
+  "chiplet"
+ ]
+];
+(function(){
+  const cats = ['전체', ...new Set(G.map(g => g[3]))];
+  let cat = '전체';
+  const gf = document.getElementById('gf'), gl = document.getElementById('gl'), gq = document.getElementById('gq');
+  gf.innerHTML = cats.map(c => `<button class="sbtn ${c==='전체'?'on':''}" data-c="${c}">${c}</button>`).join('');
+  const chn = s => BOOK.chapters.find(c => c.slug === s).n;
+  function render(){
+    const q = gq.value.trim().toLowerCase();
+    const list = G.filter(g => (cat === '전체' || g[3] === cat) && (!q || (g[0]+g[1]+g[2]).toLowerCase().includes(q)));
+    gl.innerHTML = list.map(g => `<div class="gi"><a class="ch" href="${g[4]}.html">Ch.${chn(g[4])} →</a><b>${g[0]}</b><span class="en">${g[1]}</span><p>${g[2]}</p></div>`).join('') || '<p class="hint">찾는 용어가 없습니다.</p>';
+    document.getElementById('gcount').textContent = `${list.length}개 용어`;
+  }
+  gf.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; J.$$('button', gf).forEach(x => x.classList.remove('on')); b.classList.add('on'); cat = b.dataset.c; render(); });
+  gq.addEventListener('input', render);
+  render();
+  const Q = [["SoC에서 기능을 통합하는 주된 이유는?",["칩 밖 통신의 에너지·지연이 커서","설계가 쉬워서","클록이 빨라져서","패키지가 커서"],0,"1장."],["포워딩이 있어도 남는 스톨은?",["산술 연쇄","load-use","저장","분기 없음"],1,"2장."],["f = 90 %일 때 가속기로 얻는 최대 속도 향상은?",["9배","10배","90배","무한"],1,"3장."],["GPU 분기 발산을 줄이는 방법은?",["데이터를 조건별로 묶기","클록 증가","워프 확대","캐시 축소"],0,"3장."],["크로스바의 약점은?",["낮은 대역폭","N²로 느는 비용","긴 지연","교착 상태"],1,"4장."],["MESI에서 E 상태 줄에 쓰면?",["BusRdX","버스 없이 M","I가 됨","메모리에 씀"],1,"5장."],["거짓 공유를 없애려면?",["변수를 다른 캐시 라인에","스레드를 늘림","락","캐시 확대"],0,"5장."],["디스플레이에 QoS 우선순위를 주는 이유는?",["실시간 마감이 있어서","대역폭이 커서","전력이 커서","캐시가 없어서"],0,"6장."],["동적 전력 식은?",["αCV²f","IR","V/R","CV"],0,"7장."],["파워 게이팅 손익분기 시간은?",["E_ov / P_leak","P_leak / E_ov","E_ov × P_leak","1/f"],0,"7장."],["스마트폰 지속 성능을 정하는 것은?",["칩 최고 클록","기기 방열(표면 온도 한계)","메모리 용량","트랜지스터 수"],1,"8장."],["홀드 위반을 고치는 방법은?",["클록 낮추기","지연 버퍼 추가","전압 올리기","캐시 키우기"],1,"9장."],["동기화기 단을 늘리면 MTBF는?",["지수적으로 증가","그대로","감소","선형 증가"],0,"9장."],["다이 면적 두 배면 원가는?",["정확히 두 배","두 배 이상","그대로","절반"],1,"10장."],["비트당 에너지가 가장 낮은 연결은?",["보드 SerDes","유기 기판","실리콘 인터포저","하이브리드 본딩"],3,"11장."]];
+  let score = 0, done = 0;
+  document.getElementById('qz').innerHTML = Q.map((q,i) => `<div class="quiz" data-a="${q[2]}"><p class="q" data-n="${i+1}">${q[0]}</p><ol>${q[1].map(o => `<li>${o}</li>`).join('')}</ol><p class="explain">${q[3]}</p></div>`).join('');
+  J.$$('#qz .quiz').forEach(qe => J.$$('li', qe).forEach((li, k) => li.addEventListener('click', () => {
+    if(qe.dataset.scored) return; qe.dataset.scored = 1; done++;
+    if(k === +qe.dataset.a) score++;
+    document.getElementById('score').textContent = `${score} / ${Q.length}`;
+    document.getElementById('done').textContent = done + (done === Q.length ? (score >= 13 ? ' · 집현전 학사 合格!' : score >= 9 ? ' · 잘했어요' : ' · 다시 읽어 보기') : '');
+  })));
+})();
+</script>
+</body>
+</html>

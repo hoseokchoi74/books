@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>전력: DVFS와 파워 게이팅 · SoC 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b0832a'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E統%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="power">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 07 <span class="hanja">第七章 · 電</span></div>
+  <h1>전력: DVFS와 파워 게이팅</h1>
+  <p class="lead">모바일 SoC 설계의 첫 번째 제약은 성능이 아니라 전력이다. 배터리는 몇 Wh뿐이고, 손에 쥔 기기는 몇 W 이상 열을 내면 뜨거워진다. 이 장은 전력이 어디서 나오는지(스위칭과 누설), 전압과 주파수를 함께 낮추면 왜 에너지가 크게 주는지(DVFS), 그리고 쓰지 않는 블록의 전원을 아예 끄는 파워 게이팅의 손익을 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>동적 전력 \(\alpha C V^2 f\)와 누설 전력을 구분하고 계산할 수 있다.</li>
+  <li>전압과 최대 주파수의 관계, DVFS로 에너지를 줄이는 원리를 안다.</li>
+  <li>"빨리 끝내고 쉬기(race-to-idle)"와 "천천히 꾸준히" 중 무엇이 나은지 누설에 따라 판단한다.</li>
+  <li>파워 게이팅의 손익분기 시간을 계산한다.</li>
+  <li>다크 실리콘이 생기는 이유를 데나드 스케일링의 종말로 설명할 수 있다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>전력은 어디서 오는가</h2>
+<p>CMOS 회로는 출력이 0↔1로 바뀔 때마다 부하 커패시턴스를 충전·방전하며 에너지 \(CV^2\)를 쓴다. 클록마다 전체 커패시턴스 중 비율 α가 스위칭한다면 동적 전력은 \(\alpha C V^2 f\)다. 트랜지스터가 꺼져 있어도 흐르는 누설 전류가 만드는 정적 전력이 더해진다. 누설은 문턱 전압이 낮을수록, 온도가 높을수록 기하급수로 커진다.</p>
+<div class="eq">$$P = \underbrace{\alpha C V^2 f}_{\text{동적}} + \underbrace{V\,I_{leak}(V,T)}_{\text{누설}},\qquad f_{max} \propto \frac{(V - V_{th})^{1.3}}{V}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-1</span><span class="ttl">전압 하나로 바뀌는 것들</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">공급 전압 V <output data-o="v"></output></span><input type="range" data-k="v" min="0.45" max="1.1" step="0.01" value="0.8" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">활동률 α <output data-o="a"></output></span><input type="range" data-k="a" min="0.05" max="0.5" step="0.01" value="0.15" data-d="2"></label>
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="25" max="105" step="5" value="60" data-d="0" data-u="°C"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">최대 주파수</span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">동적 / 누설</span><span class="v" data-r="p"></span></div>
+      <div class="ro"><span class="k">총 전력</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">연산당 에너지 (상대)</span><span class="v" data-r="e"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모델.</b> 코어 하나: C = 4 nF(유효), V_th = 0.35 V, 0.8 V에서 최대 2.6 GHz, 누설은 V에 지수적, 10 °C마다 약 1.3배. 곡선은 V를 쓸 때의 동적 전력(주황)·누설(빨강)·연산당 에너지(초록, 오른쪽 축)다. 연산당 에너지가 최소가 되는 전압이 있다 — 그보다 낮추면 느려진 만큼 누설이 오래 쌓인다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>DVFS: 필요한 만큼만 빠르게</h2>
+<p>주파수를 낮추면 전압도 낮출 수 있고, 동적 전력은 V²에 비례하므로 같은 일을 하는 데 드는 에너지가 준다. 운영체제와 SoC의 전력 관리자는 작업량을 보고 몇 ms마다 전압·주파수 단계를 바꾼다(<span class="term">DVFS</span>). 하지만 누설이 크면 "천천히 오래" 하는 동안 누설이 쌓이므로, 차라리 빨리 끝내고 전원을 끄는(race-to-idle) 편이 나을 수 있다.</p>
+<div class="eq">$$E_{task} = P(f)\cdot\frac{W}{f} + P_{idle}\cdot\Big(T - \frac{W}{f}\Big)$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-2</span><span class="ttl">마감 안에 일을 끝내는 가장 알뜰한 속도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">작업량 <output data-o="w"></output></span><input type="range" data-k="w" min="1" max="30" step="1" value="10" data-d="0" data-u="백만 사이클"></label>
+      <label class="ctrl"><span class="lab">마감 (프레임 시간) <output data-o="T"></output></span><input type="range" data-k="T" min="8" max="33" step="1" value="16" data-d="0" data-u="ms"></label>
+      <label class="ctrl"><span class="lab">공정 누설 수준</span><select data-k="lk"><option value="1">보통</option><option value="15">높음 (고온·저 V_th)</option><option value="0.25">낮음</option></select></label>
+      <label class="ctrl"><span class="lab">남은 시간 동안</span><select data-k="idle"><option value="gate">파워 게이팅 (거의 0 W)</option><option value="clk">클록만 끔 (누설 유지)</option></select></label>
+    </div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv2a" data-h="270"></canvas></div><div class="canvas-box"><canvas id="cv2b" data-h="270"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">최적 주파수</span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">최대 속도로 했을 때 에너지</span><span class="v" data-r="emax"></span></div>
+      <div class="ro"><span class="k">최적 에너지</span><span class="v" data-r="eopt"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 주파수에 따른 작업 한 번의 에너지(마감을 못 지키는 낮은 주파수는 회색 영역). 오른쪽: 최적 주파수와 최대 주파수로 일한 뒤 쉬는 시간 그래프. 누설이 높고 쉴 때 전원을 끌 수 있으면 최적점이 오른쪽(race-to-idle)으로 간다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>파워 게이팅의 손익분기</h2>
+<p>블록을 쓰지 않을 때 전원 스위치(헤더 트랜지스터)로 공급 전압을 끊으면 누설이 거의 0이 된다. 대신 끄고 켤 때 내부 상태를 저장·복원하고 큰 커패시턴스를 다시 충전하는 에너지 \(E_{ov}\)가 들고, 깨어나는 데 시간도 걸린다. 쉬는 시간이 손익분기 시간보다 짧으면 끄는 것이 오히려 손해다.</p>
+<div class="eq">$$t_{BE} = \frac{E_{ov}}{P_{leak}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-3</span><span class="ttl">끌까, 말까</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">블록 누설 전력 <output data-o="pl"></output></span><input type="range" data-k="pl" min="1" max="200" step="1" value="40" data-d="0" data-u="mW"></label>
+      <label class="ctrl"><span class="lab">끄고 켜는 에너지 E_ov <output data-o="eo"></output></span><input type="range" data-k="eo" min="1" max="200" step="1" value="20" data-d="0" data-u="µJ"></label>
+      <label class="ctrl"><span class="lab">평균 휴식 시간 <output data-o="ti"></output></span><input type="range" data-k="ti" min="0.05" max="5" step="0.05" value="1" data-d="2" data-u="ms"></label>
+      <label class="ctrl"><span class="lab">정책</span><select data-k="pol"><option value="never">끄지 않음</option><option value="always">쉴 때마다 끔</option><option value="smart">손익분기보다 길 것 같을 때만 끔</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="230"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">손익분기 시간</span><span class="v" data-r="be"></span></div>
+      <div class="ro"><span class="k">휴식 중 에너지 (100회)</span><span class="v" data-r="e"></span></div>
+      <div class="ro"><span class="k">끄지 않을 때 대비</span><span class="v" data-r="r"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 블록의 활동 타임라인(초록 = 일, 회색 = 쉼, 보라 = 꺼짐, 빨강 = 끄고 켜는 비용). 휴식 시간은 평균값 주위로 무작위(지수 분포)다. "손익분기" 정책은 지난 휴식 시간들로 다음을 예측해 길 것 같을 때만 끈다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>다크 실리콘</h2>
+<p>1970–2000년대에는 트랜지스터를 줄이면 전압도 함께 줄어 면적당 전력이 일정했다(<span class="term">데나드 스케일링</span>). 2005년 무렵부터 누설 때문에 전압을 더 낮추지 못하게 되자, 세대마다 트랜지스터는 두 배가 되는데 트랜지스터당 전력은 그만큼 줄지 않았다. 같은 전력 예산 안에서는 칩의 일부만 동시에 켤 수 있다 — 나머지는 어둡게 둘 수밖에 없는 <span class="term">다크 실리콘</span>. 이것이 SoC가 "필요할 때만 켜는" 전용 가속기로 가득 찬 이유이기도 하다.</p>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-4</span><span class="ttl">세대가 지날수록 켤 수 있는 비율</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">세대 (2005년 = 0) <output data-o="g"></output></span><input type="range" data-k="g" min="0" max="8" step="1" value="5" data-d="0"></label>
+      <label class="ctrl"><span class="lab">세대당 트랜지스터 전력 감소 <output data-o="s"></output></span><input type="range" data-k="s" min="1" max="2" step="0.05" value="1.4" data-d="2" data-u="배"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="250"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">동시에 켤 수 있는 비율</span><span class="v" data-r="lit"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 격자 하나가 칩 면적, 칸이 블록이다. 트랜지스터는 세대마다 2배, 트랜지스터당 전력은 슬라이더 값만큼 준다. 데나드 시대(2배)에는 모두 켤 수 있지만, 1.4배라면 몇 세대 만에 대부분이 어두워진다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">전압을 1.0 V에서 0.8 V로, 주파수를 같은 비율로 낮추면 동적 전력은 대략?</p><ol><li>0.8배</li><li>0.64배</li><li>0.51배</li><li>그대로</li></ol>
+<p class="explain">V² × f → 0.64 × 0.8 ≈ 0.51.</p></div>
+<div class="quiz" data-a="0"><p class="q">누설 300 mW, E_ov = 60 µJ인 블록의 손익분기 시간은?</p><ol><li>0.2 ms</li><li>2 ms</li><li>20 µs</li><li>5 ms</li></ol>
+<p class="explain">60 µJ / 0.3 W = 200 µs.</p></div>
+<div class="quiz" data-a="3"><p class="q">다크 실리콘의 근본 원인은?</p><ol><li>트랜지스터가 너무 커서</li><li>클록이 너무 느려서</li><li>메모리가 부족해서</li><li>트랜지스터 수만큼 트랜지스터당 전력이 줄지 않아 전력 예산이 부족해서</li></ol>
+<p class="explain">데나드 스케일링의 종말.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const VT = 0.35;
+const fmax = V => 2.6*Math.pow(Math.max(0, V - VT), 1.3)/V/(Math.pow(0.45, 1.3)/0.8); // GHz
+const pleak = (V, T, k) => 0.08*k*Math.exp((V - 0.8)*1.8)*Math.pow(1.3, (T - 60)/10); // W
+
+/* 7-1 */
+J.sim('sim1', (v, box) => {
+  const C = 4e-9;
+  const dyn = V => v.a*C*V*V*fmax(V)*1e9, lk = V => pleak(V, v.T, 1);
+  const d = [], l = [], e = [];
+  for(let V=0.45; V<=1.1; V+=0.01){ d.push([V, dyn(V)]); l.push([V, lk(V)]); e.push([V, (dyn(V) + lk(V))/fmax(V)]); }
+  const r = J.plot(document.getElementById('cv1'), {x:[0.45,1.1], y:[0, 4], xlab:'공급 전압 (V)', ylab:'전력 (W)', series:[{pts:d, color:'--gold', w:2.5},{pts:l, color:'--red', w:2.5}], vlines:[{x:v.v, color:'--ink', dash:[2,3]}], pad:{r:56}});
+  const ctx = r.ctx, emax = Math.max(...e.map(p=>p[1])), Y2 = y => r.h - r.P.b - y/emax*(r.h - r.P.t - r.P.b);
+  ctx.strokeStyle = J.c('--jade'); ctx.lineWidth = 2.5; ctx.beginPath(); e.forEach((p,i) => { const x = r.X(p[0]); i ? ctx.lineTo(x, Y2(p[1])) : ctx.moveTo(x, Y2(p[1])); }); ctx.stroke(); ctx.lineWidth = 1;
+  let best = e.reduce((a,b) => b[1] < a[1] ? b : a);
+  ctx.fillStyle = J.c('--jade'); ctx.beginPath(); ctx.arc(r.X(best[0]), Y2(best[1]), 5, 0, 7); ctx.fill(); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('에너지 최소 '+best[0].toFixed(2)+' V', r.X(best[0]) + 6, Y2(best[1]) - 6);
+  const f = fmax(v.v), pd = dyn(v.v), pl = lk(v.v);
+  J.out(box,'f', J.fmt(f,2)+' GHz'); J.out(box,'p', J.fmt(pd,2)+' / '+J.fmt(pl,2)+' W'); J.out(box,'t', J.fmt(pd + pl,2)+' W', pd + pl > 3 ? 'bad' : '');
+  J.out(box,'e', J.fmt((pd + pl)/f/((dyn(0.8) + lk(0.8))/fmax(0.8)),2)+' (0.8 V = 1)');
+});
+
+/* 7-2 DVFS */
+J.sim('sim2', (v, box) => {
+  const W = v.w*1e6, T = v.T*1e-3, k = +v.lk;
+  const levels = []; for(let V=0.5; V<=1.1; V+=0.01) levels.push(V);
+  const E = V => { const f = fmax(V)*1e9, t = W/f; if(t > T) return null; const P = 0.15*4e-9*V*V*f + pleak(V, 60, k); const Pi = v.idle === 'gate' ? 0.002 : pleak(V, 60, k)*0.9; return {E: P*t + Pi*(T - t), t, P, Pi, f}; };
+  const pts = []; let best = null, bv = 1e9, mx = null;
+  levels.forEach(V => { const r = E(V); if(r){ pts.push([r.f/1e9, r.E*1e3]); if(r.E < bv){ bv = r.E; best = {V, ...r}; } } mx = r || mx; });
+  const fminNeed = W/T/1e9;
+  J.plot(document.getElementById('cv2a'), {x:[0, fmax(1.1)], y:[0, Math.max(...pts.map(p=>p[1]), 1)*1.1], xlab:'주파수 (GHz)', ylab:'작업 에너지 (mJ)', series:[{pts, color:'--jade', w:3}], bands:[{x0:0, x1:fminNeed, color:'--ink3', alpha:.15}],
+    points: best ? [{x:best.f/1e9, y:best.E*1e3, color:'--red', r:7, label:'최적'}] : []});
+  const {ctx, w, h} = J.fit(document.getElementById('cv2b'));
+  ctx.clearRect(0,0,w,h);
+  const draw = (y, r, lab) => { if(!r) return; const X = t => 20 + t/T*(w-40), pmax = 3.5, H = 70;
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText(lab+' · '+J.fmt(r.f/1e9,2)+' GHz', 20, y - 6);
+    ctx.fillStyle = J.c('--jade'); ctx.fillRect(X(0), y + H - r.P/pmax*H, X(r.t) - X(0), r.P/pmax*H);
+    ctx.fillStyle = J.c(v.idle === 'gate' ? '--plum' : '--red'); ctx.globalAlpha = .6; ctx.fillRect(X(r.t), y + H - Math.max(2, r.Pi/pmax*H), X(T) - X(r.t), Math.max(2, r.Pi/pmax*H)); ctx.globalAlpha = 1;
+    ctx.strokeStyle = J.c('--line'); ctx.strokeRect(X(0)+.5, y+.5, X(T) - X(0), H); };
+  draw(30, best, '최적'); draw(150, E(1.1), '최대 속도 (race-to-idle)');
+  ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('가로 = 마감까지 시간, 세로 = 전력', 20, h - 6);
+  const em = E(1.1);
+  J.out(box,'f', best ? J.fmt(best.f/1e9,2)+' GHz @ '+J.fmt(best.V,2)+' V' : '불가'); J.out(box,'emax', em ? J.fmt(em.E*1e3,2)+' mJ' : '—'); J.out(box,'eopt', best ? J.fmt(best.E*1e3,2)+' mJ' : '—', 'good');
+});
+
+/* 7-3 게이팅 */
+J.sim('sim3', (v, box) => {
+  const R = J.rng(5), N = 100, be = v.eo*1e-6/(v.pl*1e-3)*1e3; // ms
+  let E = 0, E0 = 0, prev = v.ti; const segs = [];
+  for(let i=0;i<N;i++){ const idle = -Math.log(1 - R())*v.ti; E0 += v.pl*1e-3*idle*1e-3;
+    let gate = v.pol === 'always' || (v.pol === 'smart' && prev > be*1.5);
+    if(gate) E += v.eo*1e-6 + 0.02*v.pl*1e-3*idle*1e-3; else E += v.pl*1e-3*idle*1e-3;
+    if(i < 12) segs.push({idle, gate}); prev = 0.5*prev + 0.5*idle; }
+  const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+  ctx.clearRect(0,0,w,h);
+  const tot = segs.reduce((a,s) => a + s.idle + 0.2, 0), X = t => 20 + t/tot*(w-40); let t = 0;
+  segs.forEach(s => { ctx.fillStyle = J.c('--jade'); ctx.fillRect(X(t), 60, X(t + 0.2) - X(t), 60); t += 0.2;
+    ctx.fillStyle = J.c(s.gate ? '--plum' : '--ink3'); ctx.globalAlpha = s.gate ? .55 : .3; ctx.fillRect(X(t), 60, X(t + s.idle) - X(t), 60); ctx.globalAlpha = 1;
+    if(s.gate){ ctx.fillStyle = J.c('--red'); ctx.fillRect(X(t), 52, 4, 76); }
+    t += s.idle; });
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('블록 활동 (처음 12번)', 20, 40);
+  J.out(box,'be', J.fmt(be,2)+' ms');
+  J.out(box,'e', J.fmt(E*1e3,2)+' mJ');
+  J.out(box,'r', (E <= E0 ? '−' : '+')+J.fmt(Math.abs(1 - E/E0)*100,0)+' %', E <= E0 ? 'good' : 'bad');
+});
+
+/* 7-4 다크 실리콘 */
+J.sim('sim4', (v, box) => {
+  const lit = Math.min(1, Math.pow(v.s/2, v.g));
+  const {ctx, w, h} = J.fit(document.getElementById('cv4'));
+  ctx.clearRect(0,0,w,h);
+  const n = Math.pow(2, Math.min(v.g, 8)), cols = Math.ceil(Math.sqrt(n*2)), rows = Math.ceil(n/cols), cs = Math.min((w*0.55 - 20)/cols, (h - 20)/rows);
+  const R = J.rng(9), on = Math.round(n*lit), idx = Array.from({length:n}, (_,i) => i).sort(() => R() - .5).slice(0, on);
+  for(let i=0;i<n;i++){ const x = 10 + (i%cols)*cs, y = 10 + Math.floor(i/cols)*cs; const isOn = idx.includes(i);
+    ctx.fillStyle = J.c(isOn ? '--gold' : '--ink'); ctx.globalAlpha = isOn ? .9 : .75; ctx.fillRect(x+1, y+1, cs-2, cs-2); }
+  ctx.globalAlpha = 1;
+  const pts = []; for(let g=0; g<=8; g++) pts.push([g, Math.min(1, Math.pow(v.s/2, g))*100]);
+  const ox = w*0.58; ctx.strokeStyle = J.c('--line2'); ctx.strokeRect(ox, 10, w - ox - 10, h - 40);
+  ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2.5; ctx.beginPath(); pts.forEach((p,i) => { const x = ox + p[0]/8*(w - ox - 10), y = 10 + (1 - p[1]/100)*(h - 40); i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); }); ctx.stroke(); ctx.lineWidth = 1;
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('켤 수 있는 비율 (세대 →)', ox + 4, h - 14);
+  J.out(box,'lit', J.fmt(lit*100,0)+' %', lit > .7 ? 'good' : lit > .3 ? 'warn' : 'bad');
+});
+</script>
+</body>
+</html>
