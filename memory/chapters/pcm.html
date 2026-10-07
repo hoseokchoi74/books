@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PCM: 녹이고 굳혀 기억하기 · 메모리 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c7a68'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="pcm">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 08 <span class="hanja">第八章 · 相</span></div>
+  <h1>PCM: 녹이고 굳혀 기억하기</h1>
+  <p class="lead">재기록 DVD의 반짝이는 층은 레이저로 녹였다가 순간적으로 식히면 유리(비정질)가 되고, 적당히 데우면 다시 결정이 된다. 상변화 메모리(PCM)는 같은 일을 전류로 한다. 결정은 전기가 잘 통하고 비정질은 잘 안 통한다. 저항 차이가 천 배, 그리고 그 상태는 전원 없이 수년을 간다. 이 장에서는 펄스 하나로 칼코게나이드를 녹이고 굳혀 본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>Ge₂Sb₂Te₅(GST) 같은 상변화 물질의 두 상과 저항 차이를 설명할 수 있다.</li>
+  <li>RESET(녹이고 급랭)과 SET(결정화 온도 유지) 펄스의 차이를 온도–시간 그래프로 이해한다.</li>
+  <li>결정화가 핵생성과 성장으로 진행된다는 것을 실험으로 본다.</li>
+  <li>비정질 저항의 드리프트가 다중 레벨 PCM을 어렵게 만드는 이유를 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>버섯 셀과 두 개의 상</h2>
+<figure class="fig">
+<svg viewBox="0 0 760 260" id="mush" role="img" aria-label="버섯형 PCM 셀"></svg>
+<figcaption><b>그림 8-1.</b> 버섯형(mushroom) PCM 셀. 좁은 하부 히터 위에서 전류가 집중되어 그 바로 위 반구 모양 영역만 녹는다. 왼쪽 SET 상태는 전부 결정(저저항), 오른쪽 RESET 상태는 히터를 덮는 비정질 돔이 전류 길을 막는다(고저항).</figcaption>
+</figure>
+
+<h2 id="s2"><span class="n">02</span>펄스로 상을 고른다</h2>
+<p><b>RESET</b>: 큰 전류를 수십 ns 흘려 융점(GST 약 600 °C) 이상으로 녹인 뒤, 1 ns 남짓으로 급히 끊는다. 원자들이 줄 설 틈 없이 굳어 비정질이 된다. <b>SET</b>: 그보다 작은 전류로 결정화 온도(약 150–400 °C) 구간에 수십~수백 ns 머무르게 해 원자들이 결정으로 재배열하게 한다. 큰 전류로 녹인 뒤 <em>천천히</em> 식혀도 SET이 된다. 읽기는 결정화 온도에 한참 못 미치는 작은 전압으로 저항만 잰다.</p>
+<div class="eq">$$\frac{dT}{dt} = \frac{T_\infty(t) - T}{\tau_{th}},\qquad T_\infty = T_0 + R_{th}\,I(t)^2 R_{cell}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-1</span><span class="ttl">펄스 설계기 — 녹일까, 구울까</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><span class="hint">프리셋:</span><button class="sbtn" data-p="reset">RESET 펄스</button><button class="sbtn" data-p="set">SET 펄스</button><button class="sbtn" data-p="slow">녹인 뒤 천천히 식히기</button><button class="sbtn" data-p="read">읽기</button></div>
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">전류 진폭 <output data-o="i"></output></span><input type="range" data-k="i" min="10" max="400" step="5" value="300" data-d="0" data-u="µA"></label>
+      <label class="ctrl"><span class="lab">펄스 폭 <output data-o="w"></output></span><input type="range" data-k="w" min="5" max="300" step="5" value="30" data-d="0" data-u="ns"></label>
+      <label class="ctrl"><span class="lab">하강 시간 <output data-o="f"></output></span><input type="range" data-k="f" min="1" max="300" step="1" value="2" data-d="0" data-u="ns"></label>
+      <label class="ctrl"><span class="lab">시작 상태</span><select data-k="x0" data-num><option value="1">결정 (SET)</option><option value="0">비정질 (RESET)</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">최고 온도</span><span class="v" data-r="tmax"></span></div>
+      <div class="ro"><span class="k">결정화 구간 체류</span><span class="v" data-r="tw"></span></div>
+      <div class="ro"><span class="k">최종 결정 비율</span><span class="v" data-r="x"></span></div>
+      <div class="ro"><span class="k">결과 상태 / 저항</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 빨간 곡선은 셀 온도, 초록 곡선은 결정 비율(오른쪽 축), 회색 막대는 전류 펄스다. 주황 띠가 결정화 구간, 빨간 선이 융점. RESET은 융점을 넘은 뒤 띠를 1–2 ns 만에 지나가야 한다. 하강 시간을 50 ns 이상으로 늘리면 같은 큰 펄스가 SET이 된다. 전류를 작게, 폭을 길게 하면 녹이지 않고 굽는 SET이다. (모델: 열 시정수 3 ns, 300 µA에서 약 830 °C, 결정화 시간 최적 온도에서 약 25 ns)</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>결정화: 씨앗이 생기고 자란다</h2>
+<p>비정질 덩어리 안에서 결정은 두 단계로 생긴다. 무작위 위치에 작은 결정 씨앗이 생기는 <span class="term">핵생성</span>, 그리고 그 씨앗의 경계가 주변 원자를 끌어들여 넓어지는 <span class="term">성장</span>. 핵생성은 비교적 낮은 온도에서, 성장은 융점 가까이에서 빠르다. GST는 핵생성이 우세하고, 일부 물질(AIST 등)은 성장이 우세하다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-2</span><span class="ttl">핵생성과 성장 (결정화 애니메이션)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="100" max="620" step="10" value="350" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">재료 성격</span><select data-k="m"><option value="nuc">핵생성 우세 (GST)</option><option value="grow">성장 우세 (AIST)</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="xPlay">▶ 굽기</button><button class="sbtn warn" id="xMelt">다시 녹여 비정질로 (RESET)</button></div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv2a" data-h="260"></canvas></div><div class="canvas-box"><canvas id="cv2b" data-h="260"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">결정 비율</span><span class="v" data-r="x"></span></div>
+      <div class="ro"><span class="k">결정립 수</span><span class="v" data-r="g"></span></div>
+      <div class="ro"><span class="k">경과 (모의 시간)</span><span class="v" data-r="t"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽 격자는 셀 단면(점선 반원 = 녹았던 돔), 색이 있는 칸이 결정, 색은 결정립(씨앗)마다 다르다. 오른쪽은 결정 비율의 시간 변화로, 전형적인 S자(JMAK) 곡선이 나온다. 600 °C를 넘기면 결정이 다시 녹는다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>저항 드리프트와 다중 레벨</h2>
+<p>PCM은 비정질 영역의 크기를 조절해 중간 저항을 만들 수 있어, 셀당 여러 비트를 담을 수 있다. 문제는 비정질이 굳은 뒤에도 원자 구조가 천천히 안정화(구조 이완)되며 저항이 계속 오른다는 것이다. 이 <span class="term">드리프트</span>는 시간의 거듭제곱 법칙을 따르고, 비정질이 많은(저항이 높은) 상태일수록 지수 ν가 크다.</p>
+<div class="eq">$$R(t) = R_0\left(\frac{t}{t_0}\right)^{\nu},\qquad \nu_{비정질} \approx 0.1,\quad \nu_{결정} \approx 0.005$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-3</span><span class="ttl">4레벨 PCM의 드리프트</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">비정질 드리프트 지수 ν <output data-o="nu"></output></span><input type="range" data-k="nu" min="0.01" max="0.15" step="0.005" value="0.1" data-d="3"></label>
+      <label class="ctrl"><span class="lab">상태 폭 σ (decade) <output data-o="s"></output></span><input type="range" data-k="s" min="0.03" max="0.2" step="0.005" value="0.08" data-d="3"></label>
+      <label class="ctrl"><span class="lab">읽기 기준</span><select data-k="ref"><option value="fixed">고정 기준</option><option value="track">시간 따라 이동 (드리프트 보상)</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">첫 오류 시점 (어느 레벨이 기준선을 넘음)</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">1년 후 레벨 겹침</span><span class="v" data-r="ov"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로축 시간(로그, 1 µs ~ 10년), 세로축 저항(로그). 네 띠가 프로그램 직후 ±2σ 폭의 네 상태이고 시간이 지나며 위로 올라간다. 점선은 읽기 기준선. 위쪽 상태일수록 빨리 올라가 기준선을 넘거나 위 상태와 겹친다. 기준선을 시간에 맞춰 옮기면(드리프트 보상) 수명이 크게 늘지만, 상태끼리의 간격 자체가 벌어지는 것은 막지 못한다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">RESET(비정질화)의 핵심 조건은?</p><ol><li>낮은 전류로 오래</li><li>융점 이상으로 녹인 뒤 매우 빠르게 식히기</li><li>결정화 온도에서 유지</li><li>전압 0</li></ol>
+<p class="explain">원자가 재배열할 시간이 없게 급랭해야 비정질로 굳는다.</p></div>
+<div class="quiz" data-a="0"><p class="q">녹인 뒤 천천히 식히면?</p><ol><li>결정화 구간을 오래 지나며 결정(SET)이 된다</li><li>비정질이 된다</li><li>아무 일도 없다</li><li>셀이 파괴된다</li></ol>
+<p class="explain">하강 시간이 결정화 시간보다 길면 SET.</p></div>
+<div class="quiz" data-a="2"><p class="q">드리프트가 다중 레벨 PCM에 특히 나쁜 이유는?</p><ol><li>결정 상태만 움직여서</li><li>모든 상태가 똑같이 움직여서</li><li>상태마다 드리프트 속도가 달라, 고정 기준선을 넘거나 간격이 변해서</li><li>읽기가 느려져서</li></ol>
+<p class="explain">비정질이 많은 상태일수록 ν가 크다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 8-1 */
+(function(){
+  const s = document.getElementById('mush');
+  [[90,'SET (결정)',false],[470,'RESET (비정질 돔)',true]].forEach(([x,lab,amo]) => {
+    J.svg('rect', {x, y:30, width:200, height:30, fill:'var(--ink3)', opacity:.7}, s); J.svg('text', {x:x+100, y:50, 'text-anchor':'middle', class:'t-s', text:'상부 전극', style:'fill:#fff'}, s);
+    J.svg('rect', {x, y:60, width:200, height:90, fill:'var(--jade)', opacity:.75}, s);
+    for(let r=0;r<5;r++) for(let c=0;c<12;c++) J.svg('circle', {cx:x+10+c*16, cy:70+r*16, r:3, fill:'var(--card)', opacity:.6}, s);
+    if(amo){ J.svg('path', {d:`M${x+50} 150 A 50 50 0 0 1 ${x+150} 150 Z`, fill:'var(--ink3)'}, s); const R = J.rng(3); for(let k=0;k<20;k++) J.svg('circle', {cx:x+100+(R()-.5)*80, cy:140-R()*35, r:2.5, fill:'var(--card)', opacity:.7}, s); J.svg('text', {x:x+100, y:136, 'text-anchor':'middle', class:'t-s', text:'비정질', style:'fill:#fff'}, s); }
+    J.svg('rect', {x:x+85, y:150, width:30, height:50, fill:'var(--red)', opacity:.8}, s); J.svg('text', {x:x+122, y:182, class:'t-s', text:'히터'}, s);
+    J.svg('rect', {x, y:200, width:200, height:24, fill:'var(--ink3)', opacity:.7}, s); J.svg('text', {x:x+100, y:217, 'text-anchor':'middle', class:'t-s', text:'하부 전극 (선택 소자로)', style:'fill:#fff'}, s);
+    J.svg('text', {x:x+100, y:248, 'text-anchor':'middle', class:'t-m', text:lab+(amo ? ' · ~1 MΩ' : ' · ~10 kΩ'), style:'font-weight:700'}, s);
+  });
+  J.svg('text', {x:380, y:110, 'text-anchor':'middle', class:'t-l', text:'⇄', style:'font-size:30px'}, s);
+  J.svg('text', {x:380, y:140, 'text-anchor':'middle', class:'t-s', text:'전류 펄스'}, s);
+})();
+
+/* 8-1 펄스 */
+(function(){
+  const box = document.getElementById('sim1');
+  const PRE = {reset:{i:300, w:30, f:2, x0:'1'}, set:{i:180, w:150, f:5, x0:'0'}, slow:{i:300, w:30, f:300, x0:'1'}, read:{i:20, w:50, f:2, x0:'0'}};
+  const s = J.sim('sim1', (v, b) => {
+    const T0 = 25, Tm = 600, Tx = 150, dt = 0.05, tau = 3, tEnd = 20 + v.w + v.f + 60;
+    const Iof = t => { if(t < 10) return 0; if(t < 11) return v.i*(t-10); if(t < 10 + v.w) return v.i; if(t < 10 + v.w + v.f) return v.i*(1 - (t - 10 - v.w)/v.f); return 0; };
+    let T = T0, X = v.x0, Tmax = T0, tin = 0, melted = false;
+    const Tp = [], Xp = [], Ip = [];
+    const tcr = TT => 25*Math.exp(Math.pow((TT - 420)/140, 2)); // ns, 420 °C에서 최소
+    for(let t=0; t<=tEnd; t+=dt){
+      const I = Iof(t), Tinf = T0 + 1100*Math.pow(I/350, 2);
+      T += (Tinf - T)*dt/tau; Tmax = Math.max(Tmax, T);
+      if(T >= Tm){ X = 0; melted = true; }
+      else if(T > Tx){ X += (1 - X)*dt/tcr(T); tin += dt; }
+      if(Math.round(t/dt) % 4 === 0){ Tp.push([t, T]); Xp.push([t, X]); Ip.push([t, I]); }
+    }
+    const r = J.plot(document.getElementById('cv1'), {x:[0, tEnd], y:[0, 1000], xlab:'시간 (ns)', ylab:'온도 (°C)', series:[{pts:Ip.map(p => [p[0], p[1]/400*300]), color:'--ink3', w:1, fill:.15},{pts:Tp, color:'--red', w:2.5}],
+      bands:[{y0:Tx, y1:Tm, color:'--gold', alpha:.12}], hlines:[{y:Tm, color:'--red', label:'융점 600 °C', dash:[4,3]},{y:Tx, color:'--gold', label:'결정화 시작', dash:[2,3]}], pad:{r:46, l:46}});
+    const ctx = r.ctx, Y2 = x => r.h - r.P.b - x*(r.h - r.P.t - r.P.b);
+    ctx.strokeStyle = J.c('--jade'); ctx.lineWidth = 2.5; ctx.beginPath(); Xp.forEach((p,i) => { const xx = r.X(p[0]); i ? ctx.lineTo(xx, Y2(p[1])) : ctx.moveTo(xx, Y2(p[1])); }); ctx.stroke(); ctx.lineWidth = 1;
+    ctx.fillStyle = J.c('--jade'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='left'; ctx.textBaseline='middle'; [0,0.5,1].forEach(x => ctx.fillText(Math.round(x*100)+'%', r.w - r.P.r + 4, Y2(x)));
+    const R = Math.pow(10, 6 - 2*X);
+    const st = X > 0.9 ? 'SET · 결정' : X < 0.1 ? 'RESET · 비정질' : '중간 상태';
+    J.out(b,'tmax', J.fmt(Tmax,0)+' °C', Tmax >= Tm ? 'bad' : Tmax > Tx ? 'warn' : 'good');
+    J.out(b,'tw', J.fmt(tin,1)+' ns');
+    J.out(b,'x', J.fmt(X*100,0)+' %');
+    J.out(b,'st', st+' · '+(R >= 1e6 ? J.fmt(R/1e6,1)+' MΩ' : J.fmt(R/1e3,0)+' kΩ'), X > 0.9 ? 'good' : X < 0.1 ? 'warn' : '');
+  });
+  J.$$('[data-p]', box).forEach(btn => btn.onclick = () => { const p = PRE[btn.dataset.p]; for(const k in p) J.$(`[data-k="${k}"]`, box).value = p[k]; s.run(); });
+})();
+
+/* 8-2 결정화 */
+(function(){
+  const box = document.getElementById('sim2');
+  const W = 60, H = 36; let grid, grains, t, play = false, hist = [], acc = 0;
+  const inDome = (x, y) => Math.hypot(x - W/2, (y - H)*1.4) < 30;
+  function melt(){ grid = new Int16Array(W*H); for(let y=0;y<H;y++) for(let x=0;x<W;x++) grid[y*W+x] = inDome(x,y) ? 0 : -1; grains = 0; t = 0; hist = []; draw(); }
+  function step(){
+    const T = +J.$('[data-k="T"]', box).value, m = J.$('[data-k="m"]', box).value;
+    if(T >= 600){ melt(); return; }
+    const kn = (m === 'nuc' ? 0.0015 : 0.0002)*Math.exp(-Math.pow((T - 300)/120, 2));
+    const kg = (m === 'nuc' ? 0.25 : 0.7)*Math.exp(-Math.pow((T - 480)/130, 2));
+    const nxt = grid.slice();
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const i = y*W+x; if(grid[i] !== 0) continue;
+      if(Math.random() < kn){ nxt[i] = ++grains; continue; }
+      const nb = [[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy]) => { const xx = x+dx, yy = y+dy; return (xx>=0&&xx<W&&yy>=0&&yy<H) ? grid[yy*W+xx] : 0; }).filter(g => g > 0 || g === -1);
+      const cand = nb.filter(g => g !== 0); if(cand.length && Math.random() < kg*cand.length/4){ const g = cand[Math.floor(Math.random()*cand.length)]; nxt[i] = g === -1 ? 9999 : g; } }
+    grid = nxt; t++;
+    const dome = grid.filter((g,i) => inDome(i%W, Math.floor(i/W))).length, cr = grid.filter((g,i) => g !== 0 && inDome(i%W, Math.floor(i/W))).length;
+    hist.push([t, cr/dome*100]);
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(document.getElementById('cv2a'));
+    ctx.clearRect(0,0,w,h);
+    const cs = Math.min(w/W, h/H);
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const g = grid[y*W+x];
+      ctx.fillStyle = g === 0 ? J.c('--ink3') : g === -1 || g === 9999 ? J.c('--jade') : `hsl(${(g*67)%360} 45% 55%)`; ctx.globalAlpha = g === 0 ? .55 : .85;
+      ctx.fillRect(x*cs, y*cs, cs-0.5, cs-0.5); }
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = J.c('--red'); ctx.setLineDash([4,3]); ctx.beginPath(); ctx.ellipse(W/2*cs, H*cs, 30*cs, 30/1.4*cs, 0, Math.PI, 2*Math.PI); ctx.stroke(); ctx.setLineDash([]);
+    J.plot(document.getElementById('cv2b'), {x:[0, Math.max(60, t)], y:[0,100], xlab:'모의 시간 (단계)', ylab:'돔 안 결정 비율 (%)', series:[{pts:hist, color:'--jade', w:2.5}]});
+    const last = hist.length ? hist[hist.length-1][1] : 0;
+    J.out(box,'x', J.fmt(last,0)+' %'); J.out(box,'g', grains); J.out(box,'t', t+' 단계');
+  }
+  melt();
+  J.sim('sim2', () => draw());
+  document.getElementById('xPlay').onclick = e => { play = !play; e.target.textContent = play ? '❚❚ 멈춤' : '▶ 굽기'; };
+  document.getElementById('xMelt').onclick = melt;
+  J.loop(document.getElementById('cv2a'), dt => { if(play){ acc += dt; if(acc > 0.06){ acc = 0; step(); draw(); } } });
+})();
+
+/* 8-3 드리프트 */
+J.sim('sim3', (v, box) => {
+  const L = [4, 4.7, 5.35, 6], nu = [0.005, v.nu*0.35, v.nu*0.65, v.nu], t0 = 1;
+  const refs0 = [4.35, 5.02, 5.68];
+  const lgt = []; for(let e=-6; e<=8.5; e+=0.1) lgt.push(e);
+  const cols = ['--jade','--indigo','--gold','--red'];
+  const level = (k, e) => L[k] + nu[k]*Math.max(0, e - Math.log10(t0)); // 프로그램 1초 후를 기준
+  const bands = [], series = [];
+  L.forEach((_,k) => { series.push({pts: lgt.map(e => [Math.pow(10,e), Math.pow(10, level(k,e) + 2*v.s)]), color:cols[k], w:1.5}); series.push({pts: lgt.map(e => [Math.pow(10,e), Math.pow(10, level(k,e) - 2*v.s)]), color:cols[k], w:1.5}); series.push({pts: lgt.map(e => [Math.pow(10,e), Math.pow(10, level(k,e))]), color:cols[k], w:3}); });
+  const refAt = (j, e) => v.ref === 'track' ? (level(j, e) + level(j+1, e))/2 : refs0[j];
+  for(let j=0;j<3;j++) series.push({pts: lgt.map(e => [Math.pow(10,e), Math.pow(10, refAt(j,e))]), color:'--ink3', w:1.5, dash:[5,4]});
+  let first = null;
+  for(const e of lgt){ for(let k=0;k<3;k++){ if(level(k,e) + 2*v.s > refAt(k,e) || level(k+1,e) - 2*v.s < refAt(k,e)){ first = e; break; } } if(first !== null) break; }
+  J.plot(document.getElementById('cv3'), {x:[1e-6, 3.15e8], y:[1e3, 1e9], logx:true, logy:true, xlab:'프로그램 후 경과 시간 (s, 로그)', ylab:'저항 (Ω, 로그)', xf:t=>t>=86400*365?'1년':t>=1?t+'s':(t*1e6)+'µs', yf:t=>'1e'+Math.round(Math.log10(t)), series,
+    vlines: first !== null ? [{x:Math.pow(10, first), color:'--red', label:'첫 오류'}] : [], pad:{l:52}});
+  const fs = e => { const s = Math.pow(10,e); return s >= 3.15e7 ? J.fmt(s/3.15e7,1)+' 년' : s >= 86400 ? J.fmt(s/86400,1)+' 일' : s >= 1 ? J.fmt(s,1)+' s' : J.fmt(s*1e6,1)+' µs'; };
+  J.out(box,'t', first === null ? '10년 이상 안전' : fs(first), first === null ? 'good' : first > 7.5 ? 'warn' : 'bad');
+  const ey = Math.log10(3.15e7); let ov = 0; for(let k=0;k<3;k++) ov = Math.max(ov, (level(k,ey) + 2*v.s) - (level(k+1,ey) - 2*v.s));
+  J.out(box,'ov', ov > 0 ? '겹침 '+J.fmt(ov,2)+' decade' : '분리됨', ov > 0 ? 'bad' : 'good');
+});
+</script>
+</body>
+</html>

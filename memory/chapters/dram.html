@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DRAM 한눈에 · 메모리 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c7a68'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="dram">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 05 <span class="hanja">第五章 · 容</span></div>
+  <h1>DRAM 한눈에</h1>
+  <p class="lead">SRAM이 트랜지스터 여섯 개로 비트 하나를 붙잡을 때, DRAM은 트랜지스터 하나와 아주 작은 커패시터 하나로 버틴다. 셀이 20배 작은 대신 전하가 새고, 읽으면 지워지고, 신호가 수십 mV뿐이다. 이 장은 그 세 가지 약점과 그것을 감추는 방법을 한 번에 훑는다. 깊이 있는 내용은 <a href="../../dram/index.html">DRAM 書</a>에 있다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>1T1C 셀의 쓰기·읽기와 전하 공유 신호를 설명할 수 있다.</li>
+  <li>누설과 리프레시, 온도의 관계를 안다.</li>
+  <li>로우 버퍼(페이지) 덕분에 같은 행을 연속으로 읽으면 빠른 이유를 이해한다.</li>
+  <li>DRAM 書의 어느 장에서 무엇을 더 배울지 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>세 가지 약점, 세 가지 처방</h2>
+<div class="tbwrap"><table class="tb">
+<tr><th>약점</th><th>원인</th><th>처방</th><th>DRAM 書</th></tr>
+<tr><td>전하가 샌다</td><td>접합·서브문턱 누설</td><td>32–64 ms마다 모든 행 리프레시</td><td><a href="../../dram/chapters/refresh.html">3장</a></td></tr>
+<tr><td>읽으면 지워진다</td><td>전하 공유로 셀 전압이 비트라인과 같아짐</td><td>센스 앰프가 증폭해 다시 써 줌(재저장)</td><td><a href="../../dram/chapters/senseamp.html">4장</a></td></tr>
+<tr><td>신호가 작다</td><td>C<sub>s</sub> ≪ C<sub>BL</sub></td><td>높은 커패시터, 짧은 비트라인, 래치 센스 앰프</td><td><a href="../../dram/chapters/cell.html">2장</a>·<a href="../../dram/chapters/scaling.html">9장</a></td></tr>
+</table></div>
+
+<div class="eq">$$\Delta V_{BL} = \Big(V_{cell}-\frac{V_{DD}}{2}\Big)\frac{C_s}{C_s+C_{BL}},\qquad t_{ret} \propto \frac{C_s\,\Delta V}{I_{leak}(T)}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-1</span><span class="ttl">셀 하나의 일생 — 쓰기, 새기, 리프레시, 읽기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">C_s <output data-o="cs"></output></span><input type="range" data-k="cs" min="4" max="30" step="0.5" value="10" data-d="1" data-u="fF"></label>
+      <label class="ctrl"><span class="lab">C_BL <output data-o="cb"></output></span><input type="range" data-k="cb" min="20" max="150" step="2" value="60" data-d="0" data-u="fF"></label>
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="25" max="105" step="5" value="45" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">리프레시 주기 <output data-o="tr"></output></span><input type="range" data-k="tr" min="8" max="512" step="8" value="64" data-d="0" data-u="ms"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">가득 찬 "1"의 읽기 신호</span><span class="v" data-r="dv"></span></div>
+      <div class="ro"><span class="k">리프레시 직전 최저 신호</span><span class="v" data-r="min"></span></div>
+      <div class="ro"><span class="k">판정 (센스 여유 25 mV)</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 약한 셀 하나의 저장 전압(셀 플레이트 V_DD/2 기준)이 시간에 따라 새어 내려가고, 리프레시 때마다 다시 채워지는 톱니 모양이다. 아래 점선은 그 순간 읽었을 때의 비트라인 신호다. 온도를 올리거나 리프레시 주기를 늘리면 톱니의 바닥이 감지 한계 아래로 떨어진다. (약한 셀: 45 °C에서 시정수 300 ms, 10 °C마다 절반)</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>로우 버퍼: 같은 행은 빠르다</h2>
+<p>DRAM은 행(row) 하나를 통째로 센스 앰프에 올린 뒤(ACT, 약 15 ns) 그 안에서 원하는 열을 꺼낸다(RD, 약 15 ns). 이미 열린 행을 다시 읽으면 RD만 필요하고, 다른 행이면 닫고(PRE) 열고 읽어야 한다. 그래서 같은 행 안의 연속 접근 — 순차 배열 순회 — 은 무작위 접근보다 훨씬 빠르다. 3장 캐시의 공간 지역성이 DRAM 안에서도 다시 한 번 효과를 낸다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-2</span><span class="ttl">순차 vs 무작위 — 로우 버퍼 적중</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">같은 행 재접근 확률 <output data-o="p"></output></span><input type="range" data-k="p" min="0" max="100" step="1" value="75" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">뱅크 수 <output data-o="b"></output></span><input type="range" data-k="b" min="1" max="32" step="1" value="16" data-d="0"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="220"></canvas></div>
+    <div class="readouts">
+      <div class="ro good"><span class="k">로우 버퍼 적중 지연</span><span class="v">~15 ns</span></div>
+      <div class="ro bad"><span class="k">충돌 지연 (PRE+ACT+RD)</span><span class="v">~45 ns</span></div>
+      <div class="ro"><span class="k">평균 지연</span><span class="v" data-r="avg"></span></div>
+      <div class="ro"><span class="k">뱅크 병렬성 고려 처리량 (상대)</span><span class="v" data-r="tp"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 접근 40개를 시간 막대로 그렸다. 초록은 로우 버퍼 적중, 빨강은 충돌. 뱅크가 많으면 다른 뱅크가 행을 여는 동안 겹쳐 일할 수 있어 처리량이 오른다. 자세한 타이밍은 <a href="../../dram/chapters/timing.html">DRAM 書 6장</a>에서 명령을 직접 보내 보자.</p>
+</div>
+
+<div class="note-box"><div class="h" data-h="續">DRAM 書로 더 깊이</div>
+1T1C 셀 조작기(2장) · 리텐션 분포와 리프레시 스케줄러(3장) · 센스 앰프 파형(4장) · 어레이·디코더(5장) · 타이밍도 빌더(6장) · DDR5 인터페이스와 아이 다이어그램(7장) · 메모리 컨트롤러(8장) · 3D 셀 구조(9장) · 리페어 퍼즐(10장) · 로우해머와 ECC(11장) · HBM(12장) — <a href="../../dram/index.html">DRAM 書 펼치기 →</a>
+</div>
+
+<h2 id="s3"><span class="n">03</span>같은 면적에 몇 비트?</h2>
+<p>SRAM·DRAM·NAND의 차이는 결국 셀 하나가 차지하는 면적이다. 같은 1 mm²의 실리콘에 담을 수 있는 비트를 비교하면 메모리 계층의 가격 구조가 한눈에 보인다.</p>
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-3</span><span class="ttl">1 mm²에 담기는 비트</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">공정 F <output data-o="f"></output></span><input type="range" data-k="f" min="10" max="60" step="1" value="14" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">NAND 층수 <output data-o="l"></output></span><input type="range" data-k="l" min="1" max="400" step="1" value="238" data-d="0"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="230"></canvas></div>
+  </div>
+  <p class="cap"><b>모델.</b> 셀 면적 SRAM 120F², DRAM 6F², NAND 4F²÷층수×3비트(TLC), 셀 효율 60 %로 단순화(3D NAND의 평면 피치는 실제로 F보다 크다). 막대는 로그 눈금이다. SRAM과 3D NAND의 차이는 1만 배를 넘는다.</p>
+</div>
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">DRAM 셀이 SRAM 셀보다 작은 대신 감수하는 것이 아닌 것은?</p><ol><li>리프레시</li><li>파괴적 읽기</li><li>쓰기 횟수 제한</li><li>작은 읽기 신호</li></ol>
+<p class="explain">DRAM은 사실상 무한히 쓸 수 있다. 쓰기 수명 제한은 플래시의 성질이다.</p></div>
+<div class="quiz" data-a="0"><p class="q">순차 접근이 DRAM에서 빠른 이유는?</p><ol><li>이미 열린 행(로우 버퍼)에서 연달아 꺼내기 때문에</li><li>리프레시가 멈춰서</li><li>전압이 올라가서</li><li>ECC를 건너뛰어서</li></ol>
+<p class="explain">로우 버퍼 적중은 CL만 기다리면 된다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+J.sim('sim1', (v, box) => {
+  const tau = 0.3*Math.pow(2, -(v.T - 45)/10); // s
+  const half = 0.55, tr = v.tr/1000, tEnd = Math.max(0.3, tr*4.2);
+  const pts = [], sig = [];
+  let minV = half;
+  for(let t=0; t<=tEnd; t+=tEnd/600){
+    const since = t % tr, vc = half*Math.exp(-since/tau);
+    pts.push([t*1000, vc*1000]); sig.push([t*1000, vc*v.cs/(v.cs+v.cb)*1000]);
+    if(t > 0.0001) minV = Math.min(minV, vc);
+  }
+  const dv = half*v.cs/(v.cs+v.cb)*1000, mn = minV*v.cs/(v.cs+v.cb)*1000;
+  J.plot(document.getElementById('cv1'), {x:[0, tEnd*1000], y:[0, 600], xlab:'시간 (ms)', ylab:'mV', series:[{pts, color:'--indigo', w:2.5},{pts:sig, color:'--jade', w:2, dash:[5,4]}],
+    hlines:[{y:25, color:'--red', label:'센스 한계 25 mV'}], pad:{l:46}});
+  J.out(box,'dv', J.fmt(dv,0)+' mV');
+  J.out(box,'min', J.fmt(mn,0)+' mV', mn > 25 ? 'good' : 'bad');
+  J.out(box,'ok', mn > 25 ? '데이터 안전' : '리프레시 전에 데이터 손실', mn > 25 ? 'good' : 'bad');
+});
+J.sim('sim2', (v, box) => {
+  const R = J.rng(2); let open = -1, row = 0, sum = 0;
+  const seq = [];
+  for(let i=0;i<40;i++){ if(R() >= v.p/100) row = Math.floor(R()*1000); const hit = open === row; open = row; seq.push(hit); sum += hit ? 15 : 45; }
+  const {ctx, w, h} = J.fit(document.getElementById('cv2'));
+  ctx.clearRect(0,0,w,h);
+  let x = 10; const sc = (w-20)/(45*40)*1.4;
+  seq.forEach(hit => { const len = (hit ? 15 : 45)*sc; ctx.fillStyle = J.c(hit ? '--jade' : '--red'); ctx.globalAlpha = .8; if(x + len < w - 10){ ctx.fillRect(x, 60, len - 1, 60); } x += len; ctx.globalAlpha = 1; });
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('한 뱅크에서 접근 40개의 시간 막대 (길이 = 지연)', 10, 40);
+  const avg = sum/40;
+  J.out(box,'avg', J.fmt(avg,1)+' ns', avg < 25 ? 'good' : avg < 35 ? 'warn' : 'bad');
+  J.out(box,"tp", "× "+J.fmt(Math.min(v.b*15/avg, 3),2));
+});
+J.sim('sim3', (v) => {
+  const F = v.f*1e-9, eff = 0.6;
+  const items = [['SRAM', eff/(120*F*F)*1e-6, '--gold'],['DRAM', eff/(6*F*F)*1e-6, '--indigo'],['NAND TLC '+v.l+'층', eff/(4*F*F)*v.l*3*1e-6, '--plum']];
+  const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+  ctx.clearRect(0,0,w,h);
+  const P = {l:130, r:110}, bh = (h-20)/3, X = b => P.l + Math.max(0, Math.log10(b/1e6))/Math.log10(1e7)*(w-P.l-P.r);
+  items.forEach((it,i) => { const y = 10 + i*bh; ctx.fillStyle = J.c(it[2]); ctx.globalAlpha = .85; ctx.fillRect(P.l, y+8, Math.max(2, X(it[1]) - P.l), bh-16); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(it[0], P.l-8, y+bh/2);
+    ctx.textAlign='left'; ctx.font = '12px "JetBrains Mono"'; const b = it[1]; ctx.fillText(b >= 1e9 ? J.fmt(b/1e9,1)+' Gb' : J.fmt(b/1e6,0)+' Mb', Math.max(P.l, X(it[1])) + 6, y+bh/2); ctx.textBaseline='alphabetic'; });
+});
+</script>
+</body>
+</html>

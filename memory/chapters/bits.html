@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>비트를 붙잡는 다섯 가지 방법 · 메모리 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c7a68'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="bits">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 01 <span class="hanja">第一章 · 憶</span></div>
+  <h1>비트를 붙잡는 다섯 가지 방법</h1>
+  <p class="lead">메모리 셀은 결국 "두 개의 골짜기를 가진 지형"이다. 공은 한쪽 골짜기에 머물러 있고(유지), 지형을 기울이면 다른 골짜기로 넘어가며(쓰기), 어느 골짜기에 있는지 살짝 건드려 알아낸다(읽기). 골짜기를 무엇으로 만드느냐 — 회로의 되먹임, 전하, 자화, 원자 배열 — 에 따라 SRAM, DRAM, 플래시, MRAM, PCM이 갈린다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>메모리의 네 동작(상태 만들기·쓰기·유지·읽기)을 에너지 지형(이중 우물)으로 설명할 수 있다.</li>
+  <li>장벽 높이와 유지 시간의 관계 \(\tau = \tau_0 e^{E_b/k_BT}\)를 쓰고 계산할 수 있다.</li>
+  <li>대표 메모리 기술들의 지연·밀도·내구성·휘발성을 한 지도 위에서 비교한다.</li>
+  <li>"이상적인 메모리"가 왜 존재하지 않는지, 기술 사이의 트레이드오프를 말할 수 있다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>모든 메모리는 이중 우물이다</h2>
+<p>1비트를 저장하려면 구별 가능한 상태 두 개가 필요하고, 그 사이에 <span class="term">에너지 장벽</span>이 있어야 한다. 장벽이 없으면 열적 요동(크기 \(k_BT \approx 26\) meV)에 상태가 저절로 바뀐다. 장벽 \(E_b\)가 있으면 상태가 저절로 넘어가는 평균 시간은 아레니우스·닐(Néel) 관계를 따른다.</p>
+<div class="eq">$$\tau = \tau_0\,\exp\!\left(\frac{E_b}{k_BT}\right),\qquad \tau_0 \approx 1\ \text{ns}$$
+<div class="note">10년(약 3×10⁸ s)을 버티려면 \(E_b/k_BT \approx 40\)이 필요하다. 셀 수십억 개가 모두 버텨야 하면 60 이상이 필요하다(7장).</div></div>
+<p>쓰기는 지형을 기울이거나 장벽을 잠시 낮추는 일이다. 장벽이 높을수록 오래 기억하지만, 그만큼 세게 기울여야 써진다 — <strong>유지와 쓰기 에너지의 맞바꿈</strong>은 모든 메모리의 운명이다. SRAM·DRAM은 장벽을 회로(전원)가 계속 만들어 주므로 전원을 끄면 지형이 평평해진다(휘발성). 플래시·MRAM·PCM은 재료 자체가 장벽을 가져 전원 없이도 유지된다(비휘발성).</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-1</span><span class="ttl">이중 우물 위의 공 — 유지·쓰기·잊기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">장벽 높이 E_b <output data-o="eb"></output></span><input type="range" data-k="eb" min="0" max="80" step="1" value="12" data-d="0" data-u="k_BT"></label>
+      <label class="ctrl"><span class="lab">기울기 (쓰기 신호) <output data-o="tilt"></output></span><input type="range" data-k="tilt" min="-1" max="1" step="0.02" value="0" data-d="2"></label>
+      <label class="ctrl"><span class="lab">전원 (장벽 유지)</span><select data-k="pw"><option value="1">켜짐</option><option value="0">꺼짐 (휘발성이면 장벽 사라짐)</option></select></label>
+      <label class="ctrl"><span class="lab">종류</span><select data-k="nv"><option value="0">휘발성 (회로가 장벽을 만듦)</option><option value="1">비휘발성 (재료가 장벽을 가짐)</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">현재 상태</span><span class="v" data-r="bit"></span></div>
+      <div class="ro"><span class="k">우연히 넘어간 횟수</span><span class="v" data-r="flips"></span></div>
+      <div class="ro"><span class="k">이론 유지 시간 τ</span><span class="v" data-r="tau"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 볼 것.</b> 장벽을 5 k_BT 이하로 낮추면 공이 열 요동으로 두 골짜기를 제멋대로 오간다(애니메이션은 시간을 크게 압축했다). 장벽을 높인 뒤 기울기를 ±1로 움직이면 공이 다른 골짜기로 "써진다". 휘발성으로 두고 전원을 끄면 장벽이 사라져 정보가 날아간다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>다섯 가지 물리</h2>
+<figure class="fig">
+<svg viewBox="0 0 780 250" id="phys" role="img" aria-label="다섯 가지 저장 물리"></svg>
+<figcaption><b>그림 1-1.</b> 비트를 붙잡는 다섯 가지 물리. ① 두 인버터가 서로를 붙잡는 되먹임(SRAM), ② 커패시터의 전하(DRAM), ③ 절연막에 갇힌 전자(플래시), ④ 나노 자석의 방향(MRAM), ⑤ 원자 배열 — 비정질/결정(PCM) 또는 산소 공공 필라멘트(ReRAM).</figcaption>
+</figure>
+
+<h2 id="s3"><span class="n">03</span>메모리 기술 지도</h2>
+<p>모든 장점을 가진 "만능 메모리(universal memory)"는 반세기 동안 연구자들의 꿈이었다. SRAM처럼 빠르고, NAND처럼 싸고, 무한히 쓸 수 있고, 전원 없이 유지되는 메모리. 아래 지도는 그 꿈이 왜 아직 꿈인지 보여 준다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-2</span><span class="ttl">메모리 기술 지도 — 점을 눌러 보세요</span></div>
+  <div class="sim-b">
+    <div class="ctrls"><label class="ctrl"><span class="lab">세로축</span><select id="yAxis"><option value="cost">비트 원가 ($/GB)</option><option value="end">내구성 (쓰기 횟수)</option><option value="e">쓰기 에너지 (pJ/bit)</option></select></label></div>
+    <div class="fig-row" style="align-items:stretch"><div class="canvas-box"><canvas id="cv2" data-h="340"></canvas></div><div class="canvas-box" style="padding:12px" id="techCard"></div></div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로축은 읽기 지연(로그). 원 크기는 칩 하나의 대표 용량, 채운 원은 비휘발성이다. 대략값이며 제품에 따라 한 자릿수씩 다를 수 있다.</p>
+</div>
+
+<div class="tbwrap"><table class="tb">
+<tr><th></th><th>SRAM</th><th>DRAM</th><th>NAND</th><th>MRAM</th><th>PCM</th><th>ReRAM</th><th>FeRAM</th></tr>
+<tr><td>저장 물리</td><td>되먹임</td><td>전하</td><td>갇힌 전하</td><td>자화</td><td>상(相)</td><td>필라멘트</td><td>분극</td></tr>
+<tr><td>비휘발성</td><td>✕</td><td>✕</td><td>○</td><td>○</td><td>○</td><td>○</td><td>○</td></tr>
+<tr><td>읽기 지연</td><td class="num">~1 ns</td><td class="num">~15 ns</td><td class="num">~50 µs</td><td class="num">~5–10 ns</td><td class="num">~50–100 ns</td><td class="num">~20–50 ns</td><td class="num">~50 ns</td></tr>
+<tr><td>내구성</td><td>무한</td><td>무한(10¹⁵+)</td><td>10³–10⁵</td><td>10¹²+</td><td>10⁶–10⁹</td><td>10⁴–10⁸</td><td>10¹²+</td></tr>
+<tr><td>셀 면적</td><td>~120 F²</td><td>6 F²</td><td>&lt;1 F² (3D)</td><td>~20–40 F²</td><td>4 F² (3D 크로스포인트)</td><td>4 F²</td><td>~20 F²</td></tr>
+<tr><td>주 용도</td><td>캐시</td><td>주기억</td><td>저장</td><td>임베디드 NVM, 캐시 후보</td><td>SCM(과거 3D XPoint)</td><td>임베디드, AI 가속</td><td>저전력 MCU</td></tr>
+</table></div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-3</span><span class="ttl">유지와 쓰기의 맞바꿈</span></div>
+  <div class="sim-b">
+    <div class="ctrls"><label class="ctrl"><span class="lab">장벽 E_b <output data-o="eb"></output></span><input type="range" data-k="eb" min="5" max="100" step="1" value="60" data-d="0" data-u="k_BT"></label></div>
+    <div class="canvas-box"><canvas id="cv3" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">유지 시간</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">장벽을 넘기는 최소 에너지</span><span class="v" data-r="e"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로축은 장벽 높이, 보라 곡선은 유지 시간(로그)이다. 점은 대표 기술의 대략적 위치. 장벽을 넘기는 최소 에너지는 장벽 높이에 비례해 직선으로 늘지만(실제 소자는 그보다 수천~수백만 배를 쓴다), 유지 시간은 지수로 늘어난다 — 장벽을 조금만 높여도 보존이 크게 좋아지는 이유다.</p>
+</div>
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">E_b = 40 k_BT, τ₀ = 1 ns일 때 유지 시간은 대략?</p><ol><li>1초</li><li>1일</li><li>수 년</li><li>우주의 나이</li></ol>
+<p class="explain">e⁴⁰ ≈ 2.4×10¹⁷ → 2.4×10⁸ s ≈ 7.5년.</p></div>
+<div class="quiz" data-a="0"><p class="q">DRAM과 SRAM이 휘발성인 이유는?</p><ol><li>상태를 지키는 장벽을 전원이 공급하는 회로·리프레시가 만들기 때문에</li><li>셀이 작아서</li><li>읽기가 파괴적이라서</li><li>쓰기 횟수 제한 때문에</li></ol>
+<p class="explain">재료 자체에 장벽이 있는 비휘발성 메모리와 달리, 전원이 사라지면 지형이 평평해진다.</p></div>
+<div class="quiz" data-a="3"><p class="q">장벽을 높여 유지 시간을 늘리면 대가로 무엇이 커지나?</p><ol><li>셀 면적이 줄어든다</li><li>읽기 속도가 빨라진다</li><li>전압이 0이 된다</li><li>쓰기에 필요한 에너지(기울이는 힘)</li></ol>
+<p class="explain">유지와 쓰기 에너지는 같은 장벽의 양면이다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 1-1 이중 우물 */
+(function(){
+  const box = document.getElementById('sim1'), cv = document.getElementById('cv1');
+  let x = -1, v = 0, flips = 0, side = -1;
+  const rd = () => ({eb:+J.$('[data-k="eb"]',box).value, tilt:+J.$('[data-k="tilt"]',box).value, pw:J.$('[data-k="pw"]',box).value, nv:J.$('[data-k="nv"]',box).value});
+  const effEb = p => (p.pw === '0' && p.nv === '0') ? 0 : p.eb;
+  // U(x) = Eb (x²−1)² − tilt·Eb_scale·x  (단위 k_BT)
+  const U = (p, xx) => effEb(p)*Math.pow(xx*xx - 1, 2) - p.tilt*Math.max(effEb(p), 6)*1.6*xx;
+  const dU = (p, xx) => effEb(p)*4*xx*(xx*xx - 1) - p.tilt*Math.max(effEb(p), 6)*1.6;
+  function step(dt){
+    const p = rd(), h = 0.004, n = Math.round(dt/0.016*40);
+    for(let i=0;i<n;i++){ x += -dU(p, x)*h + Math.sqrt(2*h)*J.gauss(); x = J.clamp(x, -1.9, 1.9); }
+    const s = x > 0.3 ? 1 : x < -0.3 ? -1 : side;
+    if(s !== side){ if(Math.abs(p.tilt) < 0.05) flips++; side = s; }
+  }
+  function draw(){
+    const p = rd();
+    const pts = []; for(let xx=-1.8; xx<=1.8; xx+=0.02) pts.push([xx, U(p, xx)]);
+    const ymin = Math.min(...pts.map(q=>q[1])) - 2, ymax = Math.max(Math.max(...pts.map(q=>q[1])), ymin + 12);
+    const r = J.plot(cv, {x:[-1.8,1.8], y:[ymin, Math.min(ymax, ymin + 120)], xlab:'상태 좌표 (예: 노드 전압, 전하, 자화 방향)', ylab:'에너지 (k_BT)', xf:()=>'', series:[{pts, color:'--ink', w:2.5, fill:.08}], pad:{l:48}});
+    const ctx = r.ctx, bx = r.X(x), by = r.Y(U(p, x));
+    ctx.fillStyle = J.c(x > 0 ? '--jade' : '--indigo'); ctx.beginPath(); ctx.arc(bx, by - 9, 9, 0, 7); ctx.fill();
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign='center';
+    ctx.fillText('"0"', r.X(-1), r.h - r.P.b - 8); ctx.fillText('"1"', r.X(1), r.h - r.P.b - 8);
+    const eb = effEb(p), tau = 1e-9*Math.exp(eb);
+    J.out(box,'bit', x > 0.3 ? '"1"' : x < -0.3 ? '"0"' : '전이 중', '');
+    J.out(box,'flips', flips, flips ? 'bad' : 'good');
+    const f = s => s < 1e-6 ? J.fmt(s*1e9,1)+' ns' : s < 1e-3 ? J.fmt(s*1e6,1)+' µs' : s < 1 ? J.fmt(s*1e3,1)+' ms' : s < 3600 ? J.fmt(s,1)+' s' : s < 3.15e7 ? J.fmt(s/86400,1)+' 일' : s < 3.15e10 ? J.fmt(s/3.15e7,1)+' 년' : '사실상 영원';
+    J.out(box,'tau', f(tau), tau > 3e8 ? 'good' : tau > 1 ? 'warn' : 'bad');
+  }
+  J.sim('sim1', () => { flips = 0; draw(); });
+  J.loop(cv, dt => { step(dt); draw(); });
+})();
+
+/* 그림 1-1 */
+(function(){
+  const s = document.getElementById('phys');
+  const W = 150, items = ['되먹임','전하','갇힌 전자','자화','원자 배열'], mem = ['SRAM','DRAM','플래시','MRAM','PCM · ReRAM'];
+  items.forEach((t,i) => {
+    const x = 10 + i*155, g = J.svg('g', {transform:`translate(${x},0)`}, s);
+    J.svg('rect', {x:0, y:10, width:W-6, height:200, rx:6, fill:'var(--card)', stroke:'var(--line)'}, g);
+    J.svg('text', {x:(W-6)/2, y:232, 'text-anchor':'middle', class:'t-m', text:t+' · '+mem[i], style:'font-weight:700'}, g);
+    const cx = (W-6)/2;
+    if(i === 0){ // 두 인버터
+      J.svg('path', {d:`M${cx-40} 60 l30 20 l-30 20 z`, fill:'var(--gold-soft)', stroke:'var(--gold)', 'stroke-width':2}, g);
+      J.svg('path', {d:`M${cx+40} 160 l-30 -20 l30 -20 z`, fill:'var(--gold-soft)', stroke:'var(--gold)', 'stroke-width':2}, g);
+      J.svg('path', {d:`M${cx-10} 80 H${cx+50} V140 H${cx+40} M${cx+10} 140 H${cx-50} V80 H${cx-40}`, fill:'none', stroke:'var(--ink)', 'stroke-width':2}, g);
+      J.svg('text', {x:cx, y:118, 'text-anchor':'middle', class:'t-s', text:'서로를 붙잡음'}, g);
+    } else if(i === 1){
+      J.svg('line', {x1:cx-40, y1:90, x2:cx+40, y2:90, stroke:'var(--indigo)', 'stroke-width':6}, g);
+      J.svg('line', {x1:cx-40, y1:130, x2:cx+40, y2:130, stroke:'var(--indigo)', 'stroke-width':6}, g);
+      for(let k=0;k<6;k++) J.svg('text', {x:cx-34+k*14, y:84, class:'t-s', text:'+', style:'fill:var(--red);font-weight:700'}, g);
+      for(let k=0;k<6;k++) J.svg('text', {x:cx-34+k*14, y:148, class:'t-s', text:'−', style:'fill:var(--indigo);font-weight:700'}, g);
+      J.svg('text', {x:cx, y:180, 'text-anchor':'middle', class:'t-s', text:'새므로 리프레시'}, g);
+    } else if(i === 2){
+      J.svg('rect', {x:cx-45, y:60, width:90, height:26, fill:'var(--gold)', opacity:.8}, g);
+      J.svg('rect', {x:cx-45, y:86, width:90, height:14, fill:'var(--ink3)', opacity:.4}, g);
+      J.svg('rect', {x:cx-45, y:100, width:90, height:24, fill:'var(--plum)', opacity:.8}, g);
+      J.svg('rect', {x:cx-45, y:124, width:90, height:10, fill:'var(--ink3)', opacity:.4}, g);
+      J.svg('rect', {x:cx-55, y:134, width:110, height:30, fill:'var(--paper2)'}, g);
+      for(let k=0;k<5;k++) J.svg('circle', {cx:cx-30+k*15, cy:112, r:4, fill:'#fff'}, g);
+      J.svg('text', {x:cx, y:185, 'text-anchor':'middle', class:'t-s', text:'절연막 속 감옥'}, g);
+    } else if(i === 3){
+      [[60,'--indigo','→'],[95,'--ink3',''],[110,'--red','←']].forEach(([y,c,a]) => { J.svg('rect', {x:cx-40, y, width:80, height: a ? 30 : 12, fill:`var(${c})`, opacity:.75}, g); if(a) J.svg('text', {x:cx, y:y+22, 'text-anchor':'middle', class:'t-l', text:a+a+a, style:'fill:#fff'}, g); });
+      J.svg('text', {x:cx+44, y:104, class:'t-s', text:'MgO'}, g);
+      J.svg('text', {x:cx, y:170, 'text-anchor':'middle', class:'t-s', text:'평행/반평행 = 저/고저항'}, g);
+    } else {
+      for(let r=0;r<6;r++) for(let c=0;c<6;c++){ const amorph = c >= 3; const R = J.rng(r*7+c+1); J.svg('circle', {cx:cx-40 + c*16 + (amorph ? (R()-.5)*8 : 0), cy:60 + r*16 + (amorph ? (R()-.5)*8 : 0), r:5, fill: amorph ? 'var(--ink3)' : 'var(--jade)'}, g); }
+      J.svg('text', {x:cx-24, y:170, 'text-anchor':'middle', class:'t-s', text:'결정'}, g); J.svg('text', {x:cx+24, y:170, 'text-anchor':'middle', class:'t-s', text:'비정질'}, g);
+    }
+  });
+})();
+
+/* 1-2 기술 지도 */
+(function(){
+  const T = [
+    {n:'SRAM', lat:1e-9, cost:3000, end:1e16, e:0.01, cap:0.25, nv:0, col:'--gold', d:'6T 래치. 가장 빠르고 무한히 쓸 수 있지만 셀이 커 비싸다. CPU 캐시.', ch:'sram'},
+    {n:'DRAM', lat:15e-9, cost:3, end:1e15, e:1, cap:32, nv:0, col:'--indigo', d:'1T1C. 주기억장치의 표준. 리프레시가 필요하다.', ch:'dram'},
+    {n:'HBM', lat:20e-9, cost:15, end:1e15, e:0.5, cap:288, nv:0, col:'--indigo', d:'DRAM 다이를 쌓아 대역폭을 극대화. AI 가속기 전용.', ch:'system'},
+    {n:'NAND', lat:50e-6, cost:0.06, end:3e3, e:100, cap:2000, nv:1, col:'--plum', d:'3D 적층 + 다중 레벨로 가장 싸다. 쓰기 수명이 짧다.', ch:'flash'},
+    {n:'NOR', lat:60e-9, cost:20, end:1e5, e:1000, cap:2, nv:1, col:'--plum', d:'바이트 단위 무작위 읽기. 펌웨어 저장.', ch:'flash'},
+    {n:'MRAM', lat:8e-9, cost:200, end:1e12, e:1, cap:1, nv:1, col:'--red', d:'자기 터널 접합. 빠르고 내구성이 좋은 비휘발성. 임베디드 플래시 대체.', ch:'mram'},
+    {n:'PCM', lat:100e-9, cost:2, end:1e8, e:10, cap:128, nv:1, col:'--jade', d:'칼코게나이드의 결정/비정질. 3D XPoint로 SCM 시장을 열었다가 철수.', ch:'pcm'},
+    {n:'ReRAM', lat:40e-9, cost:20, end:1e6, e:1, cap:4, nv:1, col:'--jade', d:'산소 공공 필라멘트. 단순 구조, 크로스바·인메모리 연산 후보.', ch:'rram'},
+    {n:'FeRAM', lat:50e-9, cost:500, end:1e13, e:0.1, cap:0.016, nv:1, col:'--ink3', d:'강유전체 분극. 초저전력 쓰기, 용량이 작다. HfO₂ 강유전체로 부활 중.', ch:'rram'}
+  ];
+  let sel = 1, hits = [];
+  function draw(){
+    const ax = document.getElementById('yAxis').value;
+    const cfg = {cost:{y:[0.01,1e4], lab:'$/GB (로그)'}, end:{y:[1e2,1e17], lab:'쓰기 수명 (회, 로그)'}, e:{y:[1e-3,1e4], lab:'쓰기 에너지 pJ/bit (로그)'}}[ax];
+    const r = J.plot(document.getElementById('cv2'), {x:[3e-10, 3e-4], y:cfg.y, logx:true, logy:true, xlab:'읽기 지연 (로그)', ylab:cfg.lab,
+      xf:t=>t>=1e-6?(t*1e6)+'µs':(t*1e9)+'ns', yf:t=>'1e'+Math.round(Math.log10(t)), pad:{l:52}});
+    const ctx = r.ctx; hits = [];
+    T.forEach((t,i) => {
+      const x = r.X(t.lat), y = r.Y(t[ax]), rad = 6 + Math.log10(t.cap*100+1)*3.2;
+      ctx.beginPath(); ctx.arc(x, y, rad, 0, 7);
+      ctx.fillStyle = J.c(t.col); ctx.globalAlpha = t.nv ? .75 : .15; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = J.c(i === sel ? '--red' : t.col); ctx.lineWidth = i === sel ? 3 : 2; ctx.stroke(); ctx.lineWidth = 1;
+      ctx.fillStyle = J.c('--ink'); ctx.font = '600 12px "Noto Sans KR"'; ctx.textAlign='center'; ctx.fillText(t.n, x, y - rad - 4);
+      hits.push({x, y, rad, i});
+    });
+    const t = T[sel];
+    const f = x => x >= 1e-6 ? J.fmt(x*1e6,0)+' µs' : J.fmt(x*1e9,0)+' ns';
+    document.getElementById('techCard').innerHTML = `<div style="font-family:var(--serif);font-weight:900;font-size:22px;color:var(${t.col})">${t.n}</div>
+      <p style="margin:6px 0 10px;font-size:14px">${t.d}</p>
+      <table class="tb" style="margin:0;font-size:13.5px"><tr><td>읽기 지연</td><td class="num">${f(t.lat)}</td></tr><tr><td>비트 원가</td><td class="num">$${J.fmt(t.cost,2)}/GB</td></tr>
+      <tr><td>쓰기 수명</td><td class="num">10^${Math.round(Math.log10(t.end))}</td></tr><tr><td>쓰기 에너지</td><td class="num">~${t.e} pJ/bit</td></tr><tr><td>비휘발성</td><td class="num">${t.nv ? '○' : '✕'}</td></tr></table>
+      <p style="margin:10px 0 0"><a href="${t.ch}.html">관련 장으로 →</a></p>`;
+  }
+  const cv = document.getElementById('cv2');
+  cv.addEventListener('click', e => { const b = cv.getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top; const h = hits.find(q => Math.hypot(q.x - x, q.y - y) < q.rad + 4); if(h){ sel = h.i; draw(); } });
+  cv.style.cursor = 'pointer';
+  document.getElementById('yAxis').onchange = draw;
+  J.live(draw);
+})();
+J.sim('sim3', (v, box) => {
+  const pts = []; for(let e=5; e<=100; e+=1) pts.push([e, 1e-9*Math.exp(e)]);
+  const tech = [[20,'DRAM 약한 셀 수준'],[45,'캐시용 MRAM'],[60,'저장용 MRAM'],[80,'NAND (10년+)']];
+  J.plot(document.getElementById('cv3'), {x:[5,100], y:[1e-9, 1e30], logy:true, xlab:'장벽 E_b (k_BT)', ylab:'유지 시간 s (로그)', yf:t=>'1e'+Math.round(Math.log10(t)),
+    series:[{pts, color:'--plum', w:3}], hlines:[{y:3.15e8, color:'--jade', label:'10년', dash:[3,3]}], points: tech.map(t => ({x:t[0], y:1e-9*Math.exp(t[0]), color:'--red', r:4, label:t[1]})).concat([{x:v.eb, y:1e-9*Math.exp(v.eb), color:'--ink', r:7}]), pad:{l:52}});
+  const t = 1e-9*Math.exp(v.eb);
+  J.out(box,'t', t > 3.15e7 ? (t > 3.15e17 ? '우주 나이 이상' : J.fmt(t/3.15e7,1)+' 년') : t > 1 ? J.fmt(t,1)+' s' : J.fmt(t*1e6,2)+' µs', t > 3e8 ? 'good' : 'warn');
+  J.out(box,'e', J.fmt(v.eb*4.14e-21*1e18,3)+' aJ ('+v.eb+' k_BT)');
+});
+</script>
+</body>
+</html>

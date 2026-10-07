@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>래치와 SRAM · 메모리 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c7a68'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="sram">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 02 <span class="hanja">第二章 · 鎖</span></div>
+  <h1>래치와 SRAM</h1>
+  <p class="lead">인버터 두 개를 고리로 이으면 놀라운 일이 생긴다. 출력이 서로의 입력이 되어 한쪽이 1이면 다른 쪽은 0, 그 0이 다시 처음 쪽을 1로 붙잡는다. 전원이 있는 한 영원히. 이것이 모든 레지스터와 캐시의 심장인 래치다. 이 장에서는 래치가 얼마나 튼튼한지 재는 "나비 곡선"과, 그 래치를 읽고 쓰기 위해 6T SRAM 셀이 치르는 줄다리기를 실험한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>교차 결합 인버터의 쌍안정성을 전달 특성(VTC)과 나비 곡선으로 설명할 수 있다.</li>
+  <li>정적 잡음 여유(SNM)의 정의와, 보존(hold)·읽기(read) SNM의 차이를 안다.</li>
+  <li>6T 셀에서 읽기 안정성(셀 비 β)과 쓰기 가능성(풀업 비 γ)이 서로 반대 방향의 크기 조정을 요구함을 이해한다.</li>
+  <li>트랜지스터 편차가 전압을 낮출 때 SRAM 수율을 무너뜨리는 V<sub>min</sub> 문제를 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>고리로 이은 두 인버터</h2>
+<p>인버터의 <span class="term">전달 특성(VTC)</span>은 입력이 낮으면 출력이 높고, 입력이 높으면 출력이 낮으며, 가운데 좁은 구간에서 가파르게 바뀌는 S자 곡선이다. 두 인버터를 고리로 이으면, 첫 번째의 VTC와 두 번째의 VTC를 축을 바꿔 겹친 그림에서 교점이 세 개 생긴다. 양 끝 두 점은 안정(작은 흔들림이 되돌아옴), 가운데는 불안정(조금만 흔들려도 한쪽으로 굴러감)이다. 이 그림이 나비 같다고 해서 <span class="term">나비 곡선(butterfly curve)</span>이라 부른다.</p>
+<p>나비의 두 날개 안에 넣을 수 있는 가장 큰 정사각형의 한 변이 <span class="term">정적 잡음 여유(SNM)</span>다. 두 노드에 그만큼의 잡음 전압이 반대 방향으로 들어와도 래치가 뒤집히지 않는다는 뜻이다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-1</span><span class="ttl">나비 곡선과 정적 잡음 여유</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">전원 V_DD <output data-o="vdd"></output></span><input type="range" data-k="vdd" min="0.3" max="1.1" step="0.01" value="0.8" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">두 인버터의 문턱 편차 <output data-o="mm"></output></span><input type="range" data-k="mm" min="0" max="200" step="2" value="0" data-d="0" data-u="mV"></label>
+      <label class="ctrl"><span class="lab">모드</span><select data-k="mode"><option value="hold">보존 (워드라인 꺼짐)</option><option value="read">읽기 (워드라인 켜짐)</option></select></label>
+      <label class="ctrl"><span class="lab">셀 비 β = PD/PG <output data-o="beta"></output></span><input type="range" data-k="beta" min="0.8" max="3" step="0.05" value="1.8" data-d="2"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="380"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">왼쪽 날개 정사각형</span><span class="v" data-r="a"></span></div>
+      <div class="ro"><span class="k">오른쪽 날개 정사각형</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">SNM (작은 쪽)</span><span class="v" data-r="snm"></span></div>
+      <div class="ro"><span class="k">판정</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 초록 곡선은 인버터 1(가로 입력 → 세로 출력), 보라 곡선은 인버터 2를 축을 바꿔 그린 것이다. 빨간 사각형이 각 날개에 들어가는 가장 큰 정사각형이다. 읽기 모드로 바꾸면 비트라인이 "0" 노드를 끌어올려 날개가 쪼그라든다. 편차를 키우면 한쪽 날개만 작아지고, V_DD를 낮추면 둘 다 작아진다 — 어느 순간 날개 하나가 사라지면 래치는 한 상태만 기억하는 고장 셀이 된다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>6T 셀: 읽기와 쓰기의 줄다리기</h2>
+<p>6T SRAM 셀은 래치(트랜지스터 4개: 풀업 PU 두 개, 풀다운 PD 두 개)에 비트라인과 연결하는 <span class="term">패스 게이트(PG)</span> 두 개를 더한 것이다. 읽을 때는 두 비트라인을 V<sub>DD</sub>로 프리차지한 뒤 워드라인을 켠다. "0"을 가진 노드 쪽 비트라인이 PG–PD를 통해 방전되며 차이가 생긴다. 이때 PG는 "0" 노드를 위로 끌어올린다. 그 전압이 상대 인버터의 문턱을 넘으면 셀이 뒤집힌다(<span class="term">읽기 교란</span>). 막으려면 PD가 PG보다 세야 한다(셀 비 β ↑). 쓸 때는 반대로 PG가 비트라인 0으로 "1" 노드를 끌어내려야 하는데, PU가 버틴다. PG가 PU보다 세야 써진다(풀업 비 γ ↓).</p>
+<div class="eq">$$V_{read\,bump} \approx \frac{V_{DD}}{1+\beta},\qquad V_{write} \approx V_{DD}\frac{\gamma}{1+\gamma},\qquad \beta = \frac{(W/L)_{PD}}{(W/L)_{PG}},\ \ \gamma = \frac{(W/L)_{PU}}{(W/L)_{PG}}$$
+<div class="note">두 식 모두 "노드 전압이 인버터 문턱(약 0.45 V<sub>DD</sub>)보다 낮아야" 한다. 읽기는 낮게 머물러야 안전하고, 쓰기는 낮게 끌어내려져야 성공한다.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-2</span><span class="ttl">6T 셀 크기 정하기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">셀 비 β (PD/PG) <output data-o="b"></output></span><input type="range" data-k="b" min="0.6" max="3" step="0.05" value="1.8" data-d="2"></label>
+      <label class="ctrl"><span class="lab">풀업 비 γ (PU/PG) <output data-o="g"></output></span><input type="range" data-k="g" min="0.3" max="2" step="0.05" value="0.6" data-d="2"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="w0">"0" 쓰기</button><button class="sbtn" id="w1">"1" 쓰기</button><button class="sbtn pri" id="rd">읽기</button><span id="cellMsg" class="hint"></span></div>
+    <div class="fig-row" style="align-items:stretch"><div class="canvas-box"><svg id="cellSvg" viewBox="0 0 360 300" style="display:block;width:100%"></svg></div><div class="canvas-box"><canvas id="cv2" data-h="300"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">저장 값 Q</span><span class="v" data-r="q"></span></div>
+      <div class="ro"><span class="k">읽기 시 "0" 노드 상승</span><span class="v" data-r="rb"></span></div>
+      <div class="ro"><span class="k">쓰기 시 "1" 노드 하강점</span><span class="v" data-r="wv"></span></div>
+      <div class="ro"><span class="k">셀 면적 (상대)</span><span class="v" data-r="area"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 오른쪽 지도는 (β, γ) 평면에서 읽기 안정(β 충분)과 쓰기 가능(γ 충분히 작음) 영역이 겹치는 초록 영역을 보여 준다. 빨간 점이 현재 설계. β를 너무 작게 하면 읽기만 해도 값이 뒤집히고, γ를 크게 하면 쓰기가 안 된다. 둘 다 만족하려면 PD는 크고 PU는 작아야 해서 셀이 커진다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>V<sub>min</sub>: 수십억 개 중 가장 약한 셀</h2>
+<p>캐시에는 SRAM 셀이 수천만~수십억 개 있다. 이웃한 트랜지스터의 문턱 전압은 도펀트 원자 몇 개의 차이로 무작위로 어긋나고(4장 DRAM 書의 펠그롬 법칙), 그 편차가 SNM을 깎는다. 전압을 낮추면 SNM 자체가 작아지므로 가장 운이 나쁜 셀부터 고장 난다. 칩 전체가 동작하는 최저 전압이 <span class="term">V<sub>min</sub></span>이고, SRAM은 대개 로직보다 V<sub>min</sub>이 높아 칩 전체의 저전력화를 가로막는다. 그래서 캐시에 별도 전원, 읽기·쓰기 보조 회로, 8T 셀 같은 기법을 쓴다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-3</span><span class="ttl">어레이 수율과 V_min</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">문턱 편차 σ(ΔV_th) <output data-o="s"></output></span><input type="range" data-k="s" min="10" max="60" step="1" value="25" data-d="0" data-u="mV"></label>
+      <label class="ctrl"><span class="lab">어레이 크기 (로그) <output data-o="n"></output></span><input type="range" data-k="n" min="3" max="10" step="0.1" value="7.5" data-d="1"></label>
+      <label class="ctrl"><span class="lab">보조 회로 (읽기 여유 +)</span><select data-k="assist"><option value="0">없음</option><option value="1">워드라인 하강 보조</option><option value="2">8T 셀 (읽기 분리)</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">셀 수</span><span class="v" data-r="cells"></span></div>
+      <div class="ro"><span class="k">V_min (수율 99 %)</span><span class="v" data-r="vmin"></span></div>
+      <div class="ro"><span class="k">0.7 V에서 고장 셀 기대값</span><span class="v" data-r="bad"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로축 V_DD, 세로축 어레이 전체가 무결할 확률. 셀이 많을수록, 편차가 클수록 곡선이 오른쪽(높은 전압)으로 밀린다. 8T 셀은 읽기 경로를 래치와 분리해 읽기 SNM 문제를 없애므로 V_min이 크게 내려간다(대신 셀이 30 % 남짓 커진다). SNM은 실험 2-1의 모델에서 계산한 읽기 SNM을 쓴다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">나비 곡선의 세 교점 중 가운데 점의 성질은?</p><ol><li>가장 안정하다</li><li>불안정해 작은 흔들림에도 한쪽 상태로 굴러간다</li><li>"1"을 뜻한다</li><li>전류가 0이다</li></ol>
+<p class="explain">양 끝 두 점만 안정한 저장 상태다.</p></div>
+<div class="quiz" data-a="2"><p class="q">읽기 SNM이 보존 SNM보다 작은 이유는?</p><ol><li>전압이 높아서</li><li>쓰기 보조 때문에</li><li>패스 게이트가 "0" 노드를 비트라인 쪽으로 끌어올려서</li><li>리프레시 때문에</li></ol>
+<p class="explain">읽는 순간 "0" 노드 전압이 올라 날개가 쪼그라든다.</p></div>
+<div class="quiz" data-a="0"><p class="q">쓰기 가능성을 높이려면?</p><ol><li>풀업을 약하게(γ ↓) 한다</li><li>풀다운을 약하게 한다</li><li>V_DD를 낮춘다</li><li>워드라인을 끈다</li></ol>
+<p class="explain">PG가 PU를 이겨 "1" 노드를 끌어내려야 쓰인다.</p></div>
+<div class="quiz" data-a="3"><p class="q">8T 셀이 V_min을 낮추는 원리는?</p><ol><li>셀을 작게 해서</li><li>전압을 올려서</li><li>리프레시를 해서</li><li>읽기 전용 경로를 따로 두어 읽을 때 래치가 교란되지 않게 해서</li></ol>
+<p class="explain">읽기 SNM = 보존 SNM이 된다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 공통 VTC 모델 */
+function vtc(x, vdd, vm){ const g = 2 + 14*J.clamp((vdd - 0.25)/0.85, 0, 1); return vdd/2*(1 - Math.tanh(g*(x - vm)/vdd)); }
+function snmCalc(vdd, mm, mode, beta){
+  const vm1 = vdd/2 + mm/2, vm2 = vdd/2 - mm/2, d = mode === 'read' ? 0.55*vdd/(1+beta) : 0;
+  const f1 = x => { const y = vtc(x, vdd, vm1); return y + d*(1 - y/vdd); };
+  const f2 = x => { const y = vtc(x, vdd, vm2); return y + d*(1 - y/vdd); };
+  const N = 400, s2 = Math.SQRT2;
+  const c1 = [], c2 = [];
+  for(let i=0;i<=N;i++){ const t = i/N*vdd; c1.push([t, f1(t)]); c2.push([f2(t), t]); }
+  const rot = p => [(p[0]-p[1])/s2, (p[0]+p[1])/s2];
+  const r1 = c1.map(rot), r2 = c2.map(rot).reverse(); // 둘 다 u 증가 순
+  const interp = (arr, u) => { if(u <= arr[0][0]) return arr[0][1]; for(let i=1;i<arr.length;i++) if(arr[i][0] >= u){ const a = arr[i-1], b = arr[i]; return a[1] + (b[1]-a[1])*(u - a[0])/(b[0]-a[0] || 1); } return arr[arr.length-1][1]; };
+  const lo = Math.max(r1[0][0], r2[0][0]), hi = Math.min(r1[r1.length-1][0], r2[r2.length-1][0]);
+  let best = [{v:0,u:0},{v:0,u:0}];
+  for(let k=0;k<=600;k++){ const u = lo + (hi-lo)*k/600, dd = interp(r1,u) - interp(r2,u);
+    if(dd > best[0].v) best[0] = {v:dd, u}; if(-dd > best[1].v) best[1] = {v:-dd, u}; }
+  const sq = best.map(b => { const v1 = interp(r1, b.u), v2 = interp(r2, b.u); const P1 = [(b.u + v1)/s2, (v1 - b.u)/s2], P2 = [(b.u + v2)/s2, (v2 - b.u)/s2]; return {side:b.v/s2, P1, P2}; });
+  return {c1, c2, sq, snm: Math.min(sq[0].side, sq[1].side)};
+}
+
+/* 2-1 */
+J.sim('sim1', (v, box) => {
+  const r = snmCalc(v.vdd, v.mm/1000, v.mode, v.beta);
+  const P = J.plot(document.getElementById('cv1'), {x:[0, v.vdd], y:[0, v.vdd], xlab:'V_Q (V)', ylab:'V_QB (V)', series:[{pts:r.c1, color:'--jade', w:2.5},{pts:r.c2, color:'--plum', w:2.5}], pad:{l:48}});
+  const ctx = P.ctx; ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2;
+  r.sq.forEach(s => { if(s.side < 0.003) return; const x0 = P.X(Math.min(s.P1[0], s.P2[0])), x1 = P.X(Math.max(s.P1[0], s.P2[0])), y0 = P.Y(Math.max(s.P1[1], s.P2[1])), y1 = P.Y(Math.min(s.P1[1], s.P2[1])); ctx.strokeRect(x0, y0, x1-x0, y1-y0); ctx.fillStyle = J.c('--red'); ctx.globalAlpha = .1; ctx.fillRect(x0, y0, x1-x0, y1-y0); ctx.globalAlpha = 1; });
+  ctx.lineWidth = 1;
+  const mv = x => J.fmt(x*1000,0)+' mV';
+  J.out(box,'a', mv(r.sq[0].side)); J.out(box,'b', mv(r.sq[1].side));
+  J.out(box,'snm', mv(r.snm), r.snm > 0.15*v.vdd ? 'good' : r.snm > 0.05*v.vdd ? 'warn' : 'bad');
+  J.out(box,'ok', r.snm > 0.02 ? '쌍안정 — 정상' : '한쪽 상태만 유지 — 고장', r.snm > 0.02 ? 'good' : 'bad');
+});
+
+/* 2-2 6T 셀 */
+(function(){
+  const box = document.getElementById('sim2');
+  let q = 1, msg = '', ev = '';
+  function svgDraw(v){
+    const s = document.getElementById('cellSvg'); s.innerHTML = '';
+    const VQ = q ? 1 : 0;
+    const node = (x, y, val, lab) => { J.svg('circle', {cx:x, cy:y, r:16, fill: val ? 'var(--jade)' : 'var(--card)', stroke:'var(--ink)', 'stroke-width':2}, s); J.svg('text', {x, y:y+5, 'text-anchor':'middle', class:'t-m mono', text:val, style:`fill:${val ? '#fff' : 'var(--ink)'};font-weight:700`}, s); J.svg('text', {x, y:y+34, 'text-anchor':'middle', class:'t-s', text:lab}, s); };
+    J.svg('line', {x1:30, y1:20, x2:30, y2:280, stroke:'var(--indigo)', 'stroke-width':4}, s); J.svg('text', {x:14, y:296, class:'t-s', text:'BL'}, s);
+    J.svg('line', {x1:330, y1:20, x2:330, y2:280, stroke:'var(--indigo)', 'stroke-width':4}, s); J.svg('text', {x:316, y:296, class:'t-s', text:'BL̅'}, s);
+    J.svg('line', {x1:10, y1:40, x2:350, y2:40, stroke: ev ? 'var(--red)' : 'var(--gold)', 'stroke-width':3}, s); J.svg('text', {x:150, y:32, class:'t-s', text:'워드라인 '+(ev ? 'ON' : 'OFF')}, s);
+    const tr = (x, y, w, lab, col) => { J.svg('rect', {x:x-w/2, y, width:w, height:24, rx:4, fill:`var(${col})`, opacity:.8}, s); J.svg('text', {x, y:y+16, 'text-anchor':'middle', class:'t-s', text:lab, style:'fill:#fff;font-weight:700'}, s); };
+    tr(80, 140, 34, 'PG', '--gold'); tr(280, 140, 34, 'PG', '--gold');
+    tr(140, 80, 18 + v.g*18, 'PU', '--red'); tr(220, 80, 18 + v.g*18, 'PU', '--red');
+    tr(140, 210, 18 + v.b*18, 'PD', '--indigo'); tr(220, 210, 18 + v.b*18, 'PD', '--indigo');
+    J.svg('path', {d:'M30 152 H63 M97 152 H124 M296 152 H330 M263 152 H236', stroke:'var(--ink)', 'stroke-width':1.5, fill:'none'}, s);
+    node(140, 152, VQ, 'Q'); node(220, 152, 1-VQ, 'Q̅');
+    J.svg('path', {d:'M156 152 C 175 120, 185 120, 204 152', stroke:'var(--ink3)', fill:'none', 'stroke-dasharray':'3 3'}, s);
+    J.svg('text', {x:180, y:126, 'text-anchor':'middle', class:'t-s', text:'래치'}, s);
+  }
+  function chart(v){
+    const {ctx, w, h} = J.fit(document.getElementById('cv2'));
+    ctx.clearRect(0,0,w,h);
+    const P = {l:44, r:12, t:12, b:36}, X = b => P.l + (b-0.6)/2.4*(w-P.l-P.r), Y = g => h-P.b - (g-0.3)/1.7*(h-P.t-P.b);
+    for(let i=0;i<60;i++) for(let j=0;j<60;j++){ const b = 0.6 + i/59*2.4, g = 0.3 + j/59*1.7, rd = 1/(1+b) < 0.45, wr = g/(1+g) < 0.45;
+      ctx.fillStyle = J.c(rd && wr ? '--jade' : rd ? '--gold' : wr ? '--indigo' : '--red'); ctx.globalAlpha = rd && wr ? .35 : .13; ctx.fillRect(X(b), Y(g) - (h-P.t-P.b)/59, (w-P.l-P.r)/59 + 1, (h-P.t-P.b)/59 + 1); }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(X(v.b), Y(v.g), 7, 0, 7); ctx.fill();
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='center'; ctx.fillText('셀 비 β →', P.l + (w-P.l-P.r)/2, h-10);
+    ctx.save(); ctx.translate(12, h/2); ctx.rotate(-Math.PI/2); ctx.fillText('풀업 비 γ →', 0, 0); ctx.restore();
+    ctx.fillStyle = J.c('--ink'); ctx.font = '600 12px "Noto Sans KR"'; ctx.textAlign='left';
+    ctx.fillText('읽기·쓰기 모두 OK', X(1.9), Y(0.45)); ctx.fillText('읽기 교란', X(0.65), Y(0.45)); ctx.fillText('쓰기 실패', X(1.9), Y(1.6));
+  }
+  const s = J.sim('sim2', (v, b) => {
+    svgDraw(v); chart(v);
+    const rb = 1/(1+v.b), wv = v.g/(1+v.g);
+    J.out(b,'q', q); J.out(b,'rb', J.fmt(rb*100,0)+' % V_DD', rb < 0.45 ? 'good' : 'bad');
+    J.out(b,'wv', J.fmt(wv*100,0)+' % V_DD', wv < 0.45 ? 'good' : 'bad');
+    J.out(b,'area', '× '+J.fmt((2*v.b + 2*v.g + 2)/(2*1.8 + 2*0.6 + 2),2));
+    document.getElementById('cellMsg').textContent = msg;
+  });
+  const doOp = (op, val) => {
+    const v = s.read(); ev = 'on';
+    if(op === 'w'){ const ok = v.g/(1+v.g) < 0.45 || q === val; if(ok){ q = val; msg = `"${val}" 쓰기 성공`; } else msg = `쓰기 실패! 풀업이 버텨 값 유지 → "${q}"`; }
+    else { const upset = 1/(1+v.b) >= 0.45; if(upset){ q = 1 - q; msg = `읽기 교란! 읽는 순간 값이 뒤집힘 → "${q}"`; } else msg = `읽기 성공: "${q}" (비트라인 차이 감지)`; }
+    s.run(); setTimeout(() => { ev = ''; s.run(); }, 600);
+  };
+  document.getElementById('w0').onclick = () => doOp('w', 0);
+  document.getElementById('w1').onclick = () => doOp('w', 1);
+  document.getElementById('rd').onclick = () => doOp('r');
+})();
+
+/* 2-3 V_min */
+function Qf(x){ const t = 1/(1+0.2316419*Math.abs(x)), d = 0.3989423*Math.exp(-x*x/2); const p = d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274)))); return x > 0 ? p : 1-p; }
+const snmTable = (function(){ const t = []; for(let v=0.3; v<=1.101; v+=0.02){ t.push([v, snmCalc(v, 0, 'read', 1.8).snm, snmCalc(v, 0, 'hold', 1.8).snm]); } return t; })();
+J.sim('sim3', (v, box) => {
+  const N = Math.pow(10, v.n), sig = v.s/1000;
+  const assistGain = [1, 1.25, 1][+v.assist];
+  const pts = []; let vmin = null;
+  const yld = row => { const snm = (+v.assist === 2 ? row[2] : row[1])*assistGain; const p = 2*Qf(snm/sig); return Math.exp(-N*p); };
+  snmTable.forEach(row => { const y = yld(row); pts.push([row[0], y*100]); if(vmin === null && y >= 0.99) vmin = row[0]; });
+  J.plot(document.getElementById('cv3'), {x:[0.3,1.1], y:[0,100], xlab:'V_DD (V)', ylab:'어레이 수율 (%)', series:[{pts, color:'--jade', w:3}], hlines:[{y:99, color:'--ink3', dash:[2,3], label:'99 %'}], vlines: vmin ? [{x:vmin, color:'--red', label:'V_min '+J.fmt(vmin,2)+' V'}] : []});
+  J.$('[data-o="n"]', box).textContent = N >= 1e9 ? J.fmt(N/1e9,1)+'G 셀' : N >= 1e6 ? J.fmt(N/1e6,1)+'M 셀' : Math.round(N/1e3)+'K 셀';
+  J.out(box,'cells', Math.round(N).toLocaleString('ko-KR'));
+  J.out(box,'vmin', vmin ? J.fmt(vmin,2)+' V' : '> 1.1 V', vmin && vmin < 0.65 ? 'good' : vmin && vmin < 0.85 ? 'warn' : 'bad');
+  const r07 = snmTable.reduce((a,b) => Math.abs(b[0]-0.7) < Math.abs(a[0]-0.7) ? b : a);
+  const snm7 = (+v.assist === 2 ? r07[2] : r07[1])*assistGain;
+  const nb = N*2*Qf(snm7/sig);
+  J.out(box,'bad', nb < 0.01 ? '≈ 0' : J.fmt(nb, 2), nb >= 1 ? 'bad' : nb > 0.01 ? 'warn' : 'good');
+});
+</script>
+</body>
+</html>

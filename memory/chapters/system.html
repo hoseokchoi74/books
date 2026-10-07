@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>메모리 시스템과 계층 설계 · 메모리 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c7a68'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="system">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 10 <span class="hanja">第十章 · 層</span></div>
+  <h1>메모리 시스템과 계층 설계</h1>
+  <p class="lead">어떤 메모리도 빠르고 크고 싸지 않다. 그래서 컴퓨터는 성격이 다른 메모리를 층층이 쌓고, 자주 쓰는 데이터를 위로 올린다. 데이터센터에서는 이 계층이 HBM, DDR, CXL 메모리, SSD로 넓어졌다. 이 장은 계층을 "설계"하는 관점 — 어떤 데이터를 어디에 두고, 각 층을 얼마나 둘 것인가 — 을 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>메모리 벽이 시간이 지나며 어떻게 커졌는지 성장률로 설명할 수 있다.</li>
+  <li>접근 빈도의 쏠림(Zipf 분포)이 계층 구조를 효과적으로 만드는 이유를 안다.</li>
+  <li>CXL 메모리 티어링과 핫/콜드 페이지 배치의 효과를 계산한다.</li>
+  <li>용량·대역폭·비용 목표를 동시에 만족하는 메모리 구성을 설계한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>메모리 벽은 계속 높아진다</h2>
+<p>프로세서의 연산 능력은 코어 수와 벡터·행렬 유닛 덕분에 2년에 몇 배씩 늘었다. DRAM 대역폭은 같은 기간 1.5–2배, 지연은 거의 그대로다. 그 결과 연산 장치를 쉬지 않게 하려면 바이트 하나당 해야 하는 연산(필요 연산 강도)이 해마다 커진다. AI 가속기에서는 이 비율이 수백 FLOP/B에 이르러, 대부분의 작업이 메모리에 묶인다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-1</span><span class="ttl">연산과 대역폭의 성장 격차</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">연산 성장 (2년마다) <output data-o="c"></output></span><input type="range" data-k="c" min="1.5" max="4" step="0.05" value="2" data-d="1" data-u="배"></label>
+      <label class="ctrl"><span class="lab">메모리 대역폭 성장 (2년마다) <output data-o="m"></output></span><input type="range" data-k="m" min="1.1" max="3" step="0.05" value="1.45" data-d="1" data-u="배"></label>
+      <label class="ctrl"><span class="lab">연도 <output data-o="y"></output></span><input type="range" data-k="y" min="2000" max="2030" step="1" value="2026" data-raw></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">2000년 대비 연산</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">2000년 대비 대역폭</span><span class="v" data-r="m"></span></div>
+      <div class="ro"><span class="k">필요 연산 강도 (2000년 = 4)</span><span class="v" data-r="ai"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 두 직선(로그 눈금) 사이의 간격이 메모리 벽의 높이다. 기본값은 대략적인 추세(연산 2년 2배, 대역폭 2년 1.45배)로, 2026년 값이 오늘날 AI 가속기의 수백 FLOP/B와 비슷해진다. 간격을 줄이는 방법은 세 가지다: 대역폭을 키우거나(HBM), 데이터를 재사용하거나(캐시·타일링), 데이터를 옮기지 않거나(11장 인메모리 컴퓨팅).</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>뜨거운 데이터는 소수다</h2>
+<p>대부분의 작업에서 접근은 소수의 데이터에 몰린다. 페이지를 접근 횟수 순으로 늘어놓으면 k번째 페이지의 빈도가 \(1/k^s\)에 비례하는 <span class="term">Zipf 분포</span>가 흔히 나타난다. s가 클수록 쏠림이 심하다. 그래서 빠르지만 작은 층에 상위 몇 %만 올려도 접근 대부분이 그 층에서 끝난다. 반대로 쏠림이 약하면 계층의 효과가 줄어든다.</p>
+<p>최근 서버는 CPU에 직접 붙은 DDR 외에 <span class="term">CXL</span>로 연결한 메모리 확장 장치를 둔다. 용량당 값은 비슷하거나 싸지만 지연이 DDR보다 수십~백여 ns 길다. 운영체제는 페이지 접근을 추적해 뜨거운 페이지는 DDR로, 차가운 페이지는 CXL로 옮긴다(<span class="term">티어링</span>).</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-2</span><span class="ttl">DDR + CXL + SSD 티어링</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">접근 쏠림 s (Zipf) <output data-o="s"></output></span><input type="range" data-k="s" min="0" max="1.6" step="0.05" value="1.0" data-d="2"></label>
+      <label class="ctrl"><span class="lab">DDR 용량 (데이터 대비) <output data-o="d"></output></span><input type="range" data-k="d" min="1" max="100" step="1" value="20" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">CXL 용량 (데이터 대비) <output data-o="x"></output></span><input type="range" data-k="x" min="0" max="100" step="1" value="80" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">배치 정책</span><select data-k="pol"><option value="hot">뜨거운 페이지를 위로 (티어링)</option><option value="rand">무작위 배치 (티어링 없음)</option></select></label>
+    </div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv2a" data-h="270"></canvas></div><div class="canvas-box"><canvas id="cv2b" data-h="270"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">DDR / CXL / SSD 접근 비율</span><span class="v" data-r="share" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">평균 지연</span><span class="v" data-r="lat"></span></div>
+      <div class="ro"><span class="k">전부 DDR 대비</span><span class="v" data-r="slow"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽은 페이지 순위에 따른 누적 접근 비율(어디까지 DDR·CXL에 담기는지 색으로 표시), 오른쪽은 층별 접근 비율이다. 지연은 DDR 90 ns, CXL 250 ns, SSD 80 µs로 가정했다. 쏠림이 강하면 DDR 20 %만으로도 거의 DDR 속도가 나온다. SSD까지 내려가는 접근이 0.1 %만 생겨도 평균이 크게 무너지는 것도 확인하자.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>용량·대역폭·비용의 삼각형</h2>
+<p>AI 서버를 설계한다고 하자. 모델과 데이터를 담을 <strong>용량</strong>, 연산 장치를 먹일 <strong>대역폭</strong>, 그리고 <strong>비용</strong>. HBM은 대역폭이 압도적이지만 비싸고 용량이 적다. DDR은 균형형, CXL 메모리는 용량을 싸게 늘리지만 대역폭이 작다. 아래 실험에서 목표를 맞추는 가장 싼 조합을 찾아보자.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-3</span><span class="ttl">메모리 구성 설계</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">목표 용량 <output data-o="tc"></output></span><input type="range" data-k="tc" min="128" max="4096" step="64" value="1024" data-d="0" data-u="GB"></label>
+      <label class="ctrl"><span class="lab">목표 대역폭 <output data-o="tb"></output></span><input type="range" data-k="tb" min="100" max="16000" step="100" value="4000" data-d="0" data-u="GB/s"></label>
+      <label class="ctrl"><span class="lab">HBM3E 스택 (36 GB, 1.2 TB/s) <output data-o="h"></output></span><input type="range" data-k="h" min="0" max="12" step="1" value="4" data-d="0" data-u="개"></label>
+      <label class="ctrl"><span class="lab">DDR5 채널 (64 GB, 51 GB/s) <output data-o="dd"></output></span><input type="range" data-k="dd" min="0" max="24" step="1" value="8" data-d="0" data-u="개"></label>
+      <label class="ctrl"><span class="lab">CXL 메모리 (256 GB, 32 GB/s) <output data-o="cx"></output></span><input type="range" data-k="cx" min="0" max="16" step="1" value="0" data-d="0" data-u="개"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="250"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">총 용량</span><span class="v" data-r="cap"></span></div>
+      <div class="ro"><span class="k">총 대역폭</span><span class="v" data-r="bw"></span></div>
+      <div class="ro"><span class="k">메모리 비용 (가정 단가)</span><span class="v" data-r="cost"></span></div>
+      <div class="ro"><span class="k">판정</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>가정 단가.</b> HBM $15/GB, DDR5 $3.5/GB, CXL 메모리 $4/GB(컨트롤러 포함). 실제 가격은 시기마다 크게 다르다. 막대는 각 부품이 용량과 대역폭에 기여하는 몫이다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">계층 구조가 효과적인 근본 이유는?</p><ol><li>모든 메모리가 같은 속도라서</li><li>SSD가 빨라서</li><li>접근이 소수의 뜨거운 데이터에 쏠리기 때문에</li><li>캐시가 크기 때문에</li></ol>
+<p class="explain">쏠림(지역성)이 없으면 작은 빠른 층이 별 도움이 안 된다.</p></div>
+<div class="quiz" data-a="0"><p class="q">CXL 메모리의 주된 장점은?</p><ol><li>CPU 채널 수와 무관하게 용량을 싸게 늘릴 수 있다</li><li>HBM보다 대역폭이 크다</li><li>지연이 DDR보다 짧다</li><li>비휘발성이다</li></ol>
+<p class="explain">대신 지연이 길어, 차가운 데이터를 두는 티어로 쓴다.</p></div>
+<div class="quiz" data-a="3"><p class="q">연산 2년 3배, 대역폭 2년 1.5배면 필요 연산 강도는 2년마다?</p><ol><li>그대로</li><li>1.5배 줄어든다</li><li>4.5배 커진다</li><li>2배 커진다</li></ol>
+<p class="explain">3 / 1.5 = 2배.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 10-1 */
+J.sim('sim1', (v, box) => {
+  const g = (r, y) => Math.pow(r, (y - 2000)/2);
+  const a = [], b = []; for(let y=2000; y<=2030; y+=0.5){ a.push([y, g(v.c, y)]); b.push([y, g(v.m, y)]); }
+  J.plot(document.getElementById('cv1'), {x:[2000,2030], y:[1, Math.max(1e6, g(v.c, 2030)*2)], logy:true, xlab:'연도', ylab:'2000년 대비 (로그)', xf:t=>t, yf:t=>'10^'+Math.round(Math.log10(t)),
+    series:[{pts:a, color:'--red', w:3},{pts:b, color:'--indigo', w:3}], vlines:[{x:v.y, color:'--ink3', dash:[2,3]}], points:[{x:v.y, y:g(v.c, v.y), color:'--red', r:5, label:'연산'},{x:v.y, y:g(v.m, v.y), color:'--indigo', r:5, label:'대역폭'}]});
+  J.out(box,'c', '× '+J.fmt(g(v.c, v.y),0)); J.out(box,'m', '× '+J.fmt(g(v.m, v.y),0));
+  J.out(box,'ai', J.fmt(4*g(v.c, v.y)/g(v.m, v.y),0)+' FLOP/B', 4*g(v.c,v.y)/g(v.m,v.y) > 100 ? 'bad' : 'warn');
+});
+
+/* 10-2 */
+J.sim('sim2', (v, box) => {
+  const N = 2000;
+  const f = Array.from({length:N}, (_,k) => 1/Math.pow(k+1, v.s)); const tot = f.reduce((a,b)=>a+b,0);
+  const nd = Math.round(N*v.d/100), nx = Math.min(N - nd, Math.round(N*v.x/100));
+  let sd, sx;
+  if(v.pol === 'hot'){ sd = f.slice(0, nd).reduce((a,b)=>a+b,0)/tot; sx = f.slice(nd, nd+nx).reduce((a,b)=>a+b,0)/tot; }
+  else { sd = nd/N; sx = nx/N; }
+  const ss = Math.max(0, 1 - sd - sx);
+  const lat = sd*90 + sx*250 + ss*80000;
+  const cum = []; let c = 0; f.forEach((x,k) => { c += x; if(k % 10 === 0) cum.push([k/N*100, c/tot*100]); });
+  J.plot(document.getElementById('cv2a'), {x:[0,100], y:[0,100], xlab:'페이지 (뜨거운 순, %)', ylab:'누적 접근 (%)', series:[{pts:cum, color:'--ink', w:2.5}],
+    bands:[{x0:0, x1:v.d, color:'--jade', alpha:.2},{x0:v.d, x1:Math.min(100, v.d + v.x), color:'--gold', alpha:.2},{x0:Math.min(100, v.d+v.x), x1:100, color:'--red', alpha:.12}]});
+  const {ctx, w, h} = J.fit(document.getElementById('cv2b'));
+  ctx.clearRect(0,0,w,h);
+  [['DDR', sd, '--jade'],['CXL', sx, '--gold'],['SSD', ss, '--red']].forEach((it,i) => { const bw = (w-60)/3, x = 30 + i*bw, hh = it[1]*(h-70);
+    ctx.fillStyle = J.c(it[2]); ctx.globalAlpha = .85; ctx.fillRect(x + 10, h - 40 - hh, bw - 20, hh); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign='center'; ctx.fillText(it[0], x + bw/2, h - 20); ctx.font = '12px "JetBrains Mono"'; ctx.fillText(J.fmt(it[1]*100,2)+'%', x + bw/2, h - 46 - hh); });
+  J.out(box,'share', [sd, sx, ss].map(x => J.fmt(x*100,1)+'%').join(' / '));
+  J.out(box,'lat', lat >= 1000 ? J.fmt(lat/1000,2)+' µs' : J.fmt(lat,0)+' ns', lat < 130 ? 'good' : lat < 500 ? 'warn' : 'bad');
+  J.out(box,'slow', '× '+J.fmt(lat/90,2));
+});
+
+/* 10-3 */
+J.sim('sim3', (v, box) => {
+  const parts = [['HBM3E', v.h*36, v.h*1200, v.h*36*15, '--plum'],['DDR5', v.dd*64, v.dd*51.2, v.dd*64*3.5, '--jade'],['CXL', v.cx*256, v.cx*32, v.cx*256*4, '--gold']];
+  const cap = parts.reduce((a,p)=>a+p[1],0), bw = parts.reduce((a,p)=>a+p[2],0), cost = parts.reduce((a,p)=>a+p[3],0);
+  const {ctx, w, h} = J.fit(document.getElementById('cv3'));
+  ctx.clearRect(0,0,w,h);
+  const rows = [['용량', cap, v.tc, 1],['대역폭', bw, v.tb, 2]];
+  rows.forEach((r,i) => { const y = 30 + i*90, mx = Math.max(r[1], r[2])*1.1, X = x => 90 + x/mx*(w-110);
+    let x0 = 0; parts.forEach(p => { ctx.fillStyle = J.c(p[4]); ctx.globalAlpha = .85; ctx.fillRect(X(x0), y, X(x0 + p[r[3]]) - X(x0), 36); ctx.globalAlpha = 1; x0 += p[r[3]]; });
+    ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(X(r[2]), y - 8); ctx.lineTo(X(r[2]), y + 44); ctx.stroke(); ctx.lineWidth = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(r[0], 80, y + 18);
+    ctx.fillStyle = J.c('--red'); ctx.textAlign='left'; ctx.font = '11px "Noto Sans KR"'; ctx.fillText('목표', X(r[2]) + 4, y - 4); ctx.textBaseline='alphabetic'; });
+  ctx.font = '12px "Noto Sans KR"'; let lx = 90; parts.forEach(p => { ctx.fillStyle = J.c(p[4]); ctx.fillRect(lx, h - 22, 12, 12); ctx.fillStyle = J.c('--ink2'); ctx.fillText(p[0], lx + 16, h - 12); lx += 90; });
+  const okC = cap >= v.tc, okB = bw >= v.tb;
+  J.out(box,'cap', J.fmt(cap,0)+' GB', okC ? 'good' : 'bad'); J.out(box,'bw', bw >= 1000 ? J.fmt(bw/1000,2)+' TB/s' : J.fmt(bw,0)+' GB/s', okB ? 'good' : 'bad');
+  J.out(box,'cost', '$'+Math.round(cost).toLocaleString('en-US'));
+  J.out(box,'ok', okC && okB ? '목표 달성' : !okC && !okB ? '용량·대역폭 부족' : !okC ? '용량 부족' : '대역폭 부족', okC && okB ? 'good' : 'bad');
+});
+</script>
+</body>
+</html>

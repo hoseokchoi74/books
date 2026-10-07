@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>인메모리 컴퓨팅 · 메모리 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c7a68'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="cim">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 11 <span class="hanja">第十一章 · 算</span></div>
+  <h1>인메모리 컴퓨팅</h1>
+  <p class="lead">신경망 계산의 대부분은 행렬과 벡터의 곱이다. 그런데 가중치를 메모리에서 꺼내 오는 데 드는 에너지가 곱셈 자체보다 백 배, 천 배 크다. 그렇다면 가중치를 꺼내지 말고, 가중치가 저장된 그 자리에서 곱하면 어떨까? 저항 메모리 크로스바는 옴의 법칙과 키르히호프의 법칙만으로 행렬–벡터 곱을 한 번에 해낸다. 이 장은 그 우아한 아이디어와 냉정한 대가를 실험한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>데이터 이동 에너지가 연산 에너지를 압도한다는 것을 수치로 확인한다.</li>
+  <li>크로스바에서 \(I_j = \sum_i V_i G_{ij}\)로 행렬–벡터 곱이 이뤄지는 원리를 설명할 수 있다.</li>
+  <li>소자 편차, 배선 저항(IR 강하), ADC 정밀도가 정확도를 깎는 방식을 실험한다.</li>
+  <li>아날로그 CIM과 디지털 SRAM-CIM, PIM의 차이를 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>옮기는 것이 계산보다 비싸다</h2>
+<p>45 nm 공정 기준으로 널리 인용되는 수치(Horowitz, 2014)에 따르면 32비트 부동소수 곱셈은 약 4 pJ, 작은 SRAM에서 64비트를 읽는 데 약 10 pJ, DRAM에서 읽는 데는 1–2 nJ이 든다. 공정이 미세해지며 연산 에너지는 줄었지만, 칩 밖으로 데이터를 옮기는 에너지는 그만큼 줄지 않았다. 그래서 "데이터를 연산으로 보내는" 대신 "연산을 데이터로 보내는" 접근이 주목받는다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-1</span><span class="ttl">MAC 하나의 에너지 내역</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">가중치가 있는 곳</span><select data-k="src"><option value="dram">DRAM</option><option value="sram">온칩 SRAM</option><option value="cim">메모리 안 (아날로그 CIM)</option></select></label>
+      <label class="ctrl"><span class="lab">가중치 재사용 횟수 <output data-o="reuse"></output></span><input type="range" data-k="reuse" min="1" max="256" step="1" value="1" data-d="0" data-u="회"></label>
+      <label class="ctrl"><span class="lab">정밀도</span><select data-k="p"><option value="8">INT8</option><option value="32">FP32</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">MAC 1회 총 에너지</span><span class="v" data-r="e"></span></div>
+      <div class="ro"><span class="k">데이터 이동 비중</span><span class="v" data-r="mv"></span></div>
+      <div class="ro"><span class="k">초당 1천조 MAC 시 전력</span><span class="v" data-r="pw"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 막대는 로그 눈금의 에너지 구성이다(45 nm 대략값, 가중치 읽기 에너지는 재사용 횟수로 나눔). 같은 가중치를 여러 입력에 재사용하면(배치·합성곱) 이동 비용이 나뉘어 준다 — 10장의 연산 강도와 같은 이야기다. 아날로그 CIM은 가중치 이동이 없는 대신 ADC 변환 비용을 낸다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>크로스바: 물리 법칙이 곱셈을 한다</h2>
+<p>가로줄(워드라인)과 세로줄(비트라인)이 교차하는 점마다 저항 메모리 셀을 두고, 그 컨덕턴스 \(G_{ij}\)에 가중치를 저장한다. 가로줄에 입력 전압 \(V_i\)를 걸면 각 셀에 흐르는 전류는 옴의 법칙에 따라 \(V_iG_{ij}\)이고, 세로줄에 모인 전류는 키르히호프의 전류 법칙에 따라 그 합이다. 행렬 크기와 관계없이 <strong>한 번에</strong> 행렬–벡터 곱이 끝난다.</p>
+<div class="eq">$$I_j = \sum_i V_i\,G_{ij}\qquad\Longleftrightarrow\qquad \mathbf{I} = \mathbf{G}^{\mathsf T}\mathbf{V}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-2</span><span class="ttl">4×4 크로스바 행렬–벡터 곱</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">V₀ <output data-o="v0"></output></span><input type="range" data-k="v0" min="0" max="0.3" step="0.01" value="0.2" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">V₁ <output data-o="v1"></output></span><input type="range" data-k="v1" min="0" max="0.3" step="0.01" value="0.1" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">V₂ <output data-o="v2"></output></span><input type="range" data-k="v2" min="0" max="0.3" step="0.01" value="0.25" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">V₃ <output data-o="v3"></output></span><input type="range" data-k="v3" min="0" max="0.3" step="0.01" value="0.05" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">소자 편차 σ <output data-o="sg"></output></span><input type="range" data-k="sg" min="0" max="30" step="1" value="5" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">배선 저항 효과 <output data-o="ir"></output></span><input type="range" data-k="ir" min="0" max="20" step="1" value="3" data-d="0" data-u="%/칸"></label>
+      <label class="ctrl"><span class="lab">ADC 비트 <output data-o="adc"></output></span><input type="range" data-k="adc" min="2" max="10" step="1" value="6" data-d="0"></label>
+    </div>
+    <div class="fig-row" style="align-items:stretch"><div class="canvas-box"><svg id="xbar" viewBox="0 0 340 330" style="display:block;width:100%"></svg></div><div class="canvas-box"><canvas id="cv2" data-h="330"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">이상적 출력 (µA)</span><span class="v" data-r="id" style="font-size:13.5px"></span></div>
+      <div class="ro"><span class="k">실제 출력 (µA)</span><span class="v" data-r="ia" style="font-size:13.5px"></span></div>
+      <div class="ro"><span class="k">상대 오차 (RMS)</span><span class="v" data-r="err"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>사용법.</b> 왼쪽 크로스바의 셀을 누르면 컨덕턴스(가중치)가 0 → 1 → 2 → 3단계(0, 33, 67, 100 µS)로 바뀐다. 오른쪽은 열마다의 출력 전류: 회색이 이상적인 값, 초록이 편차·IR 강하·ADC 양자화를 거친 실제 값이다. 배선 저항이 크면 입력에서 먼 셀일수록 전압이 덜 전달되어 체계적인 오차가 생긴다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>정확도라는 대가</h2>
+<p>디지털 곱셈은 언제나 같은 답을 내지만, 아날로그 크로스바의 답은 소자마다, 온도마다, 시간마다 조금씩 다르다. 큰 행렬일수록 오차가 쌓이고, 출력 전류를 숫자로 바꾸는 ADC가 칩 면적과 전력의 큰 몫을 차지한다. 그래서 실제 제품은 SRAM 셀 옆에 디지털 덧셈기를 붙인 <span class="term">디지털 SRAM-CIM</span>, 또는 DRAM·HBM 뱅크 옆에 연산기를 둔 <span class="term">PIM(Processing-In-Memory)</span>처럼 정확도를 지키는 쪽부터 상용화되고 있다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-3</span><span class="ttl">64×64 크로스바 몬테카를로</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">소자 편차 σ <output data-o="sg"></output></span><input type="range" data-k="sg" min="0" max="30" step="1" value="8" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">ADC 비트 <output data-o="adc"></output></span><input type="range" data-k="adc" min="2" max="10" step="1" value="6" data-d="0"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="290"></canvas></div>
+    <div class="legend"><span><i style="background:var(--red)"></i>ADC 3비트</span><span><i style="background:var(--gold)"></i>5비트</span><span><i style="background:var(--indigo)"></i>7비트</span><span><i style="background:var(--jade)"></i>9비트</span><span><i style="background:var(--red);border-radius:50%"></i>현재 설정</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">출력 SNR</span><span class="v" data-r="snr"></span></div>
+      <div class="ro"><span class="k">유효 비트 (ENOB)</span><span class="v" data-r="enob"></span></div>
+      <div class="ro"><span class="k">판정</span><span class="v" data-r="ok" style="font-size:14px;font-family:var(--sans)"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 곡선은 소자 편차에 따른 출력 오차(RMS, %)로, ADC 비트별로 그렸다. 편차가 작을 때는 ADC 양자화가, 클 때는 소자 편차가 오차를 지배한다. INT8 신경망 추론에는 대략 1 % 아래가 필요하다고 보면, 그 선 아래에 들어오는 조합이 쓸 만한 설계다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">크로스바에서 행렬–벡터 곱의 "덧셈"을 하는 물리 법칙은?</p><ol><li>옴의 법칙</li><li>키르히호프 전류 법칙</li><li>패러데이 법칙</li><li>쿨롱 법칙</li></ol>
+<p class="explain">곱은 옴의 법칙(I = VG), 합은 한 줄에 모이는 전류(KCL).</p></div>
+<div class="quiz" data-a="3"><p class="q">아날로그 CIM의 주요 숙제가 아닌 것은?</p><ol><li>소자 편차</li><li>배선 IR 강하</li><li>ADC 면적·전력</li><li>가중치를 DRAM에서 매번 읽어 오는 에너지</li></ol>
+<p class="explain">그 이동 에너지를 없애려는 것이 CIM의 목적이다.</p></div>
+<div class="quiz" data-a="0"><p class="q">가중치 재사용을 늘리면 MAC당 에너지가 줄어드는 이유는?</p><ol><li>한 번 읽은 가중치의 이동 비용을 여러 연산이 나눠 내기 때문에</li><li>곱셈이 빨라져서</li><li>전압이 낮아져서</li><li>ADC가 꺼져서</li></ol>
+<p class="explain">연산 강도가 오르는 것과 같은 원리다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 11-1 에너지 */
+J.sim('sim1', (v, box) => {
+  const fp = v.p === '32';
+  const mac = fp ? 4.6 : 0.23; // 곱+덧
+  const wread = {dram: fp ? 1300 : 330, sram: fp ? 10 : 2.5, cim: 0}[v.src]/v.reuse;
+  const act = fp ? 5 : 1.25; // 입력/출력 SRAM
+  const adc = v.src === 'cim' ? 1.0 : 0;
+  const items = [['곱셈·덧셈', mac, '--jade'],['가중치 읽기', wread, '--red'],['입·출력 이동', act, '--gold'],['ADC 변환', adc, '--indigo']];
+  const tot = items.reduce((a,i)=>a+i[1],0);
+  const {ctx, w, h} = J.fit(document.getElementById('cv1'));
+  ctx.clearRect(0,0,w,h);
+  const P = {l:110, r:80, t:14, b:30}, bh = (h-P.t-P.b)/items.length, X = e => P.l + (Math.log10(Math.max(e, 0.01)) + 2)/(Math.log10(2000) + 2)*(w-P.l-P.r);
+  [0.01,0.1,1,10,100,1000].forEach(t => { ctx.strokeStyle = J.c('--line2'); ctx.beginPath(); ctx.moveTo(X(t), P.t); ctx.lineTo(X(t), h-P.b); ctx.stroke(); ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign='center'; ctx.fillText(t+' pJ', X(t), h-10); });
+  items.forEach((it,i) => { const y = P.t + i*bh; if(it[1] > 0){ ctx.fillStyle = J.c(it[2]); ctx.globalAlpha = .85; ctx.fillRect(P.l, y+8, X(it[1]) - P.l, bh-16); ctx.globalAlpha = 1; }
+    ctx.fillStyle = J.c('--ink'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(it[0], P.l-8, y+bh/2);
+    ctx.textAlign='left'; ctx.font = '12px "JetBrains Mono"'; ctx.fillText(it[1] > 0 ? J.fmt(it[1],2)+' pJ' : '0', Math.max(P.l, X(it[1])) + 6, y+bh/2); ctx.textBaseline='alphabetic'; });
+  J.out(box,'e', J.fmt(tot,2)+' pJ'); J.out(box,'mv', J.fmt((wread + act)/tot*100,0)+' %', (wread+act)/tot > .8 ? 'bad' : 'warn');
+  J.out(box,'pw', J.fmt(tot*1e-12*1e15,0)+' W', tot*1e3 > 1000 ? 'bad' : 'good');
+});
+
+/* 11-2 크로스바 */
+(function(){
+  const box = document.getElementById('sim2');
+  const G = [[3,1,0,2],[0,2,3,1],[1,3,2,0],[2,0,1,3]];
+  const Gs = [0, 33.3, 66.7, 100]; // µS
+  const noise = Array.from({length:16}, (_,i) => J.gauss(J.rng(i+3)));
+  const s = J.sim('sim2', v => {
+    const V = [v.v0, v.v1, v.v2, v.v3];
+    const ideal = [0,1,2,3].map(j => V.reduce((a,vi,i) => a + vi*Gs[G[i][j]], 0));
+    const act = [0,1,2,3].map(j => V.reduce((a,vi,i) => a + vi*(1 - v.ir/100*(i + j))*Gs[G[i][j]]*(1 + v.sg/100*noise[i*4+j]), 0));
+    const fs = 0.3*100*4, lsb = fs/Math.pow(2, v.adc);
+    const q = act.map(x => Math.round(x/lsb)*lsb);
+    const svg = document.getElementById('xbar'); svg.innerHTML = '';
+    for(let i=0;i<4;i++){ const y = 50 + i*62;
+      J.svg('line', {x1:40, y1:y, x2:300, y2:y, stroke:'var(--gold)', 'stroke-width':4}, svg);
+      J.svg('text', {x:4, y:y+4, class:'t-s mono', text:'V'+i+' '+V[i].toFixed(2)}, svg); }
+    for(let j=0;j<4;j++){ const x = 90 + j*62;
+      J.svg('line', {x1:x, y1:30, x2:x, y2:290, stroke:'var(--indigo)', 'stroke-width':4}, svg);
+      J.svg('text', {x, y:312, 'text-anchor':'middle', class:'t-s mono', text:'I'+j+'↓'}, svg); }
+    for(let i=0;i<4;i++) for(let j=0;j<4;j++){
+      const x = 90 + j*62, y = 50 + i*62, g = J.svg('g', {style:'cursor:pointer'}, svg);
+      J.svg('rect', {x:x-16, y:y-16, width:32, height:32, rx:5, fill:'var(--jade)', opacity:.15 + .8*G[i][j]/3, stroke:'var(--ink3)'}, g);
+      J.svg('text', {x, y:y+5, 'text-anchor':'middle', class:'t-m mono', text:G[i][j], style:`fill:${G[i][j] >= 2 ? '#fff' : 'var(--ink)'};font-weight:700`}, g);
+      g.addEventListener('click', () => { G[i][j] = (G[i][j] + 1) % 4; s.run(); });
+    }
+    const {ctx, w, h} = J.fit(document.getElementById('cv2'));
+    ctx.clearRect(0,0,w,h);
+    const mx = Math.max(...ideal, ...q, 1)*1.15, bw = (w-40)/4;
+    [0,1,2,3].forEach(j => { const x = 20 + j*bw, hi = ideal[j]/mx*(h-60), ha = q[j]/mx*(h-60);
+      ctx.fillStyle = J.c('--ink3'); ctx.globalAlpha = .35; ctx.fillRect(x + 8, h - 30 - hi, bw/2 - 10, hi); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c('--jade'); ctx.fillRect(x + bw/2, h - 30 - ha, bw/2 - 10, ha);
+      ctx.fillStyle = J.c('--ink'); ctx.font = '12px "JetBrains Mono"'; ctx.textAlign='center'; ctx.fillText('I'+j, x + bw/2, h - 12); });
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.fillText('회색 = 이상적, 초록 = 실제(ADC 후)', 20, 16);
+    const rms = Math.sqrt(q.reduce((a,x,j) => a + Math.pow(x - ideal[j], 2), 0)/4)/(Math.max(...ideal) || 1);
+    J.out(box,'id', ideal.map(x => J.fmt(x,1)).join(' · '));
+    J.out(box,'ia', q.map(x => J.fmt(x,1)).join(' · '));
+    J.out(box,'err', J.fmt(rms*100,1)+' %', rms < .02 ? 'good' : rms < .08 ? 'warn' : 'bad');
+  });
+})();
+
+/* 11-3 몬테카를로 */
+(function(){
+  const N = 64, R = J.rng(7);
+  const W = Array.from({length:N*N}, () => R()), X = Array.from({length:8}, () => Array.from({length:N}, () => R()));
+  const Z = Array.from({length:N*N}, () => J.gauss(R));
+  function err(sg, bits){
+    let se = 0, sy = 0;
+    X.forEach(x => { for(let j=0;j<N;j++){ let yi = 0, ya = 0; for(let i=0;i<N;i++){ const w = W[i*N+j]; yi += x[i]*w; ya += x[i]*w*(1 + sg*Z[i*N+j]); }
+      const fs = N*0.6, lsb = fs/Math.pow(2, bits), q = Math.round(ya/lsb)*lsb; se += (q - yi)*(q - yi); sy += yi*yi; } });
+    return Math.sqrt(se/sy);
+  }
+  const cache = {};
+  J.sim('sim3', (v, box) => {
+    const series = [3,5,7,9].map((b,k) => { const key = 'b'+b; if(!cache[key]) cache[key] = Array.from({length:16}, (_,s) => [s*2, err(s*0.02, b)*100]); return {pts:cache[key], color:['--red','--gold','--indigo','--jade'][k], w:2}; });
+    const e = err(v.sg/100, v.adc);
+    J.plot(document.getElementById('cv3'), {x:[0,30], y:[0.01, 100], logy:true, xlab:'소자 편차 σ (%)', ylab:'출력 오차 RMS (%, 로그)', yf:t=>t, series, hlines:[{y:1, color:'--ink', label:'INT8 추론 목표 ~1 %', dash:[4,3]}], points:[{x:v.sg, y:Math.max(0.01, e*100), color:'--red', r:7}]});
+    const snr = 20*Math.log10(1/Math.max(e, 1e-6));
+    J.out(box,'snr', J.fmt(snr,1)+' dB'); J.out(box,'enob', J.fmt((snr - 1.76)/6.02,1)+' 비트');
+    J.out(box,'ok', e < 0.01 ? '추론에 쓸 만함' : e < 0.05 ? '보정·재학습 필요' : '정확도 부족', e < 0.01 ? 'good' : e < 0.05 ? 'warn' : 'bad');
+  });
+})();
+</script>
+</body>
+</html>

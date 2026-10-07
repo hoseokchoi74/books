@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>메모리 기술 선택 놀이터 · 메모리 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c7a68'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+  .pg-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media (max-width:760px){.pg-grid{grid-template-columns:1fr}}
+  .pick{font-family:var(--serif); font-size:30px; font-weight:900; color:var(--jade)}
+</style>
+</head>
+<body data-ch="playground">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 12 <span class="hanja">第十二章 · 擇</span></div>
+  <h1>메모리 기술 선택 놀이터</h1>
+  <p class="lead">"어떤 메모리가 가장 좋은가?"라는 질문에는 답이 없다. "무엇에 쓸 것인가?"가 먼저다. 캐시에는 무한한 쓰기와 속도가, 스마트폰 저장소에는 원가와 보존이, 무선 센서에는 쓰기 에너지가, AI 가중치에는 밀도와 읽기 속도가 중요하다. 요구 사항의 가중치를 정하면 각 기술의 점수가 바뀐다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>용도마다 메모리에 요구하는 성질의 우선순위가 다르다는 것을 체험한다.</li>
+  <li>비휘발성·내구성 같은 "필수 조건"이 후보를 어떻게 걸러 내는지 본다.</li>
+  <li>1–11장의 기술 특성을 한 표로 비교·복습한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>선택실</h2>
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-1</span><span class="ttl">요구 사항으로 메모리 고르기</span></div>
+  <div class="sim-b">
+    <div class="btnrow" id="presets"><span class="hint">용도:</span>
+      <button class="sbtn on" data-p="cache">CPU 캐시</button><button class="sbtn" data-p="main">주기억장치</button><button class="sbtn" data-p="store">대용량 저장</button><button class="sbtn" data-p="mcu">IoT·차량 MCU 내장</button><button class="sbtn" data-p="ai">AI 가중치 (추론 전용)</button></div>
+    <div class="pg-grid">
+      <div>
+        <div class="ctrls" style="grid-template-columns:1fr">
+          <label class="ctrl"><span class="lab">읽기 속도 <output data-o="w0"></output></span><input type="range" data-k="w0" min="0" max="5" step="1" value="5" data-d="0"></label>
+          <label class="ctrl"><span class="lab">쓰기 속도 <output data-o="w1"></output></span><input type="range" data-k="w1" min="0" max="5" step="1" value="5" data-d="0"></label>
+          <label class="ctrl"><span class="lab">내구성 (쓰기 횟수) <output data-o="w2"></output></span><input type="range" data-k="w2" min="0" max="5" step="1" value="5" data-d="0"></label>
+          <label class="ctrl"><span class="lab">보존 (전원 없이) <output data-o="w3"></output></span><input type="range" data-k="w3" min="0" max="5" step="1" value="0" data-d="0"></label>
+          <label class="ctrl"><span class="lab">밀도·원가 <output data-o="w4"></output></span><input type="range" data-k="w4" min="0" max="5" step="1" value="1" data-d="0"></label>
+          <label class="ctrl"><span class="lab">쓰기 에너지 <output data-o="w5"></output></span><input type="range" data-k="w5" min="0" max="5" step="1" value="2" data-d="0"></label>
+          <label class="ctrl"><span class="lab">로직 공정 내장 용이성 <output data-o="w6"></output></span><input type="range" data-k="w6" min="0" max="5" step="1" value="4" data-d="0"></label>
+          <label class="ctrl"><span class="lab">필수 조건</span><select data-k="req"><option value="none">없음</option><option value="nv">비휘발성 필수</option><option value="end">내구성 10¹² 이상 필수</option><option value="both">둘 다</option></select></label>
+        </div>
+      </div>
+      <div>
+        <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+        <div class="canvas-box" style="margin-top:10px"><canvas id="radar" data-h="270"></canvas></div>
+      </div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">1순위</span><span class="v pick" data-r="p1"></span></div>
+      <div class="ro"><span class="k">2순위</span><span class="v" data-r="p2"></span></div>
+      <div class="ro"><span class="k">한 줄 평</span><span class="v" data-r="why" style="font-size:13.5px;font-family:var(--sans)"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 막대는 가중 점수(필수 조건에 걸린 기술은 회색), 레이더는 1·2순위 기술의 성질이다. 점수는 1–11장의 대략적 특성을 0–10으로 정규화한 교육용 값이다. 현실의 선택에는 생태계, 공급망, 신뢰성 검증 같은 요소가 더 크게 작용하기도 한다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>한 표로 복습</h2>
+<div class="tbwrap"><table class="tb" id="tbl"></table></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>생각해 볼 문제</h2>
+<div class="quiz" data-a="2"><p class="q">차량용 MCU의 임베디드 플래시를 대체할 후보로 MRAM이 유력한 이유는?</p><ol><li>가장 싸서</li><li>휘발성이라서</li><li>비휘발성이면서 로직 공정에 넣기 쉽고, 빠르고 내구성이 좋아서</li><li>셀이 가장 작아서</li></ol>
+<p class="explain">eFlash는 28 nm 이하 미세화가 어렵고, MRAM은 배선층에 넣을 수 있다.</p></div>
+<div class="quiz" data-a="0"><p class="q">캐시에 비휘발성 메모리를 쓰기 어려운 가장 큰 이유는?</p><ol><li>쓰기 속도·에너지·내구성이 SRAM에 못 미쳐서</li><li>너무 빨라서</li><li>용량이 너무 커서</li><li>보존이 너무 길어서</li></ol>
+<p class="explain">캐시는 초당 수십억 번 쓴다. 무한 내구성과 ns급 쓰기가 필수다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+(function(){
+  const box = document.getElementById('sim1');
+  const AX = ['읽기 속도','쓰기 속도','내구성','보존','밀도·원가','쓰기 에너지','내장 용이성'];
+  const T = {
+    SRAM:{s:[10,10,10,0,1,9,10], nv:0, end:16, col:'--gold', why:'가장 빠르고 무한히 쓰지만 크고 비싸며 전원이 꺼지면 잊는다.'},
+    DRAM:{s:[8,8,10,0.5,6,7,3], nv:0, end:15, col:'--indigo', why:'균형 잡힌 주기억장치. 리프레시와 별도 공정이 필요하다.'},
+    NAND:{s:[1,0.5,1,9,10,2,1], nv:1, end:3.5, col:'--plum', why:'가장 싼 비트. 느리고 쓰기 수명이 짧다.'},
+    NOR:{s:[6,1,2.5,9.5,3,1.5,5], nv:1, end:5, col:'--plum', why:'빠른 무작위 읽기의 코드 저장용. 쓰기가 느리다.'},
+    MRAM:{s:[8.5,6.5,9,8,3.5,6,8], nv:1, end:12, col:'--red', why:'빠르고 튼튼한 비휘발성. 밀도가 숙제.'},
+    PCM:{s:[6,4.5,5.5,8.5,6.5,3.5,4], nv:1, end:8, col:'--jade', why:'밀도 좋은 비휘발성. 드리프트와 쓰기 전류가 숙제.'},
+    ReRAM:{s:[6.5,6,4.5,8,6,6,7.5], nv:1, end:6, col:'--jade', why:'단순 구조, 크로스바·CIM 후보. 편차가 숙제.'},
+    FeRAM:{s:[6,7,9.5,8.5,1.5,9.5,6], nv:1, end:13, col:'--ink3', why:'쓰기 에너지 최저. 용량이 작다(HfO₂로 개선 중).'}
+  };
+  const PRE = {cache:[5,5,5,0,1,2,4,'none'], main:[4,4,5,0,5,2,0,'none'], store:[1,1,1,5,5,1,0,'nv'], mcu:[3,2,3,5,1,3,5,'nv'], ai:[5,1,0,4,5,1,3,'nv']};
+  let top2 = [];
+  const s = J.sim('sim1', v => {
+    const wts = [v.w0,v.w1,v.w2,v.w3,v.w4,v.w5,v.w6], ws = wts.reduce((a,b)=>a+b,0) || 1;
+    const rows = Object.entries(T).map(([n,t]) => {
+      const blocked = ((v.req === 'nv' || v.req === 'both') && !t.nv) || ((v.req === 'end' || v.req === 'both') && t.end < 12);
+      return {n, t, score: t.s.reduce((a,x,i) => a + x*wts[i], 0)/ws, blocked};
+    }).sort((a,b) => (a.blocked - b.blocked) || (b.score - a.score));
+    top2 = rows.filter(r => !r.blocked).slice(0,2);
+    const {ctx, w, h} = J.fit(document.getElementById('cv1'));
+    ctx.clearRect(0,0,w,h);
+    const P = {l:70, r:50}, bh = (h-20)/rows.length;
+    rows.forEach((r,i) => { const y = 10 + i*bh, len = r.score/10*(w-P.l-P.r);
+      ctx.fillStyle = J.c(r.blocked ? '--line' : r.t.col); ctx.globalAlpha = r.blocked ? .5 : .85; ctx.fillRect(P.l, y+4, len, bh-8); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c(r.blocked ? '--ink3' : '--ink'); ctx.font = (i === 0 && !r.blocked ? '700 ' : '')+'13px "Noto Sans KR"'; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(r.n, P.l-8, y+bh/2);
+      ctx.textAlign='left'; ctx.font = '12px "JetBrains Mono"'; ctx.fillText(r.blocked ? '제외' : J.fmt(r.score,1), P.l+len+6, y+bh/2); });
+    // 레이더
+    const R = J.fit(document.getElementById('radar')), c = R.ctx; c.clearRect(0,0,R.w,R.h);
+    const cx = R.w/2, cy = R.h/2 + 6, rad = Math.min(R.w, R.h)/2 - 40, n = AX.length;
+    const pt = (i, r) => [cx + Math.sin(i/n*Math.PI*2)*rad*r, cy - Math.cos(i/n*Math.PI*2)*rad*r];
+    c.strokeStyle = J.c('--line2'); [0.5,1].forEach(r => { c.beginPath(); for(let i=0;i<=n;i++){ const p = pt(i%n, r); i ? c.lineTo(...p) : c.moveTo(...p); } c.stroke(); });
+    for(let i=0;i<n;i++){ const p = pt(i, 1.17); c.fillStyle = J.c('--ink2'); c.font = '11px "Noto Sans KR"'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(AX[i], p[0], p[1]); }
+    top2.forEach((r,k) => { c.strokeStyle = J.c(k ? '--ink3' : r.t.col); c.lineWidth = k ? 1.5 : 2.5; c.setLineDash(k ? [5,4] : []); c.beginPath(); r.t.s.forEach((x,i) => { const p = pt(i, Math.max(0.03, x/10)); i ? c.lineTo(...p) : c.moveTo(...p); }); c.closePath(); c.stroke(); if(!k){ c.globalAlpha = .15; c.fillStyle = J.c(r.t.col); c.fill(); c.globalAlpha = 1; } c.setLineDash([]); c.lineWidth = 1; });
+    J.out(box,'p1', top2[0] ? top2[0].n : '—'); J.out(box,'p2', top2[1] ? top2[1].n : '—'); J.out(box,'why', top2[0] ? top2[0].t.why : '');
+  });
+  J.$$('#presets button').forEach(b => b.onclick = () => { J.$$('#presets button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    const p = PRE[b.dataset.p]; for(let i=0;i<7;i++) J.$(`[data-k="w${i}"]`, box).value = p[i]; J.$('[data-k="req"]', box).value = p[7]; s.run(); });
+  // 표
+  const tb = document.getElementById('tbl');
+  tb.innerHTML = '<tr><th>기술</th>' + AX.map(a => `<th>${a}</th>`).join('') + '<th>비휘발</th></tr>' + Object.entries(T).map(([n,t]) => `<tr><td><b>${n}</b></td>${t.s.map(x => `<td class="num" style="background:color-mix(in srgb, var(--jade) ${x*6}%, transparent)">${x}</td>`).join('')}<td class="num">${t.nv ? '○' : '✕'}</td></tr>`).join('');
+})();
+</script>
+</body>
+</html>

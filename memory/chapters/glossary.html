@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>용어집 & 종합 퀴즈 · 메모리 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c7a68'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+  .gsearch{width:100%; font-size:16px; padding:11px 14px; border:1.5px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink); font-family:var(--sans)}
+  .gsearch:focus{outline:none; border-color:var(--jade)}
+  .gfilter{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 16px}
+  .glist{display:grid; gap:8px}
+  .gi{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:10px 14px}
+  .gi b{font-family:var(--serif); font-size:16.5px}
+  .gi .en{margin-left:6px}
+  .gi p{margin:4px 0 0; font-size:14.5px; color:var(--ink2)}
+  .gi a.ch{float:right; font-family:var(--mono); font-size:12px; color:var(--red)}
+  .score{font-family:var(--serif); font-size:20px; font-weight:700}
+</style>
+</head>
+<body data-ch="glossary">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 13 <span class="hanja">第十三章 · 結</span></div>
+  <h1>용어집 & 종합 퀴즈</h1>
+  <p class="lead">책 전체의 핵심 용어를 한곳에 모았다. 검색하거나 분류로 걸러 보고, 마지막의 종합 문제로 실력을 점검해 보자.</p>
+</header>
+
+<h2 id="s1"><span class="n">01</span>용어집</h2>
+<input class="gsearch" id="gq" placeholder="용어 검색 (예: TLB, SNM, TMR, 필라멘트)" aria-label="용어 검색">
+<div class="gfilter" id="gf"></div>
+<p class="hint" id="gcount"></p>
+<div class="glist" id="gl"></div>
+
+<h2 id="s2"><span class="n">02</span>종합 퀴즈</h2>
+<p>15문제. 각 문제를 누르면 바로 채점되고 해설이 열린다.</p>
+<div class="readouts" style="margin-bottom:10px"><div class="ro"><span class="k">점수</span><span class="v score" id="score">0 / 15</span></div><div class="ro"><span class="k">푼 문제</span><span class="v" id="done">0</span></div></div>
+<div id="qz"></div>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const G = [
+ ['에너지 장벽','energy barrier','두 저장 상태를 가르는 에너지 차이. 클수록 오래 유지되지만 쓰기가 어렵다.','기초','bits'],
+ ['휘발성 / 비휘발성','volatile / non-volatile','전원이 꺼지면 사라지는지 여부.','기초','bits'],
+ ['만능 메모리','universal memory','빠르고 싸고 무한히 쓸 수 있는 비휘발성 메모리라는 이상.','기초','bits'],
+ ['래치','latch','교차 결합 인버터로 상태를 붙잡는 쌍안정 회로.','SRAM','sram'],
+ ['나비 곡선','butterfly curve','두 인버터 VTC를 축을 바꿔 겹친 그림.','SRAM','sram'],
+ ['SNM','static noise margin','나비 날개에 들어가는 가장 큰 정사각형의 변. 래치의 튼튼함.','SRAM','sram'],
+ ['셀 비 β','cell ratio','풀다운/패스게이트 크기 비. 읽기 안정성.','SRAM','sram'],
+ ['풀업 비 γ','pull-up ratio','풀업/패스게이트 크기 비. 작을수록 쓰기 쉬움.','SRAM','sram'],
+ ['V_min','minimum operating voltage','어레이 전체가 동작하는 최저 전압.','SRAM','sram'],
+ ['캐시 라인','cache line','캐시가 메모리와 주고받는 단위(보통 64 B).','캐시','cache'],
+ ['태그·인덱스·오프셋','tag / index / offset','캐시 조회를 위해 주소를 나눈 세 조각.','캐시','cache'],
+ ['집합 연관','set-associative','블록이 한 집합 안의 여러 웨이 중 하나에 들어가는 캐시.','캐시','cache'],
+ ['3C 미스','compulsory / capacity / conflict','강제·용량·충돌 미스.','캐시','cache'],
+ ['LRU','least recently used','가장 오래 쓰지 않은 블록을 내보내는 교체 정책.','캐시','cache'],
+ ['AMAT','average memory access time','적중 시간 + 미스율 × 미스 비용.','캐시','cache'],
+ ['가상 주소','virtual address','프로그램이 보는 주소. 페이지 테이블로 물리 주소로 번역.','가상 메모리','virtual'],
+ ['페이지 테이블','page table','가상 페이지 → 물리 프레임 대응표. x86-64는 4단계.','가상 메모리','virtual'],
+ ['TLB','translation lookaside buffer','최근 주소 번역을 담은 캐시.','가상 메모리','virtual'],
+ ['TLB 도달 범위','TLB reach','TLB 항목 수 × 페이지 크기.','가상 메모리','virtual'],
+ ['큰 페이지','huge page','2 MB·1 GB 페이지. TLB 도달 범위를 늘린다.','가상 메모리','virtual'],
+ ['페이지 폴트','page fault','물리 메모리에 없는 페이지 접근. 디스크에서 가져온다.','가상 메모리','virtual'],
+ ['스래싱','thrashing','작업 집합보다 프레임이 적어 폴트가 폭증하는 상태.','가상 메모리','virtual'],
+ ['1T1C','one-transistor one-capacitor','DRAM 셀. 커패시터 전하로 저장.','DRAM','dram'],
+ ['리프레시','refresh','새는 전하를 주기적으로 다시 채우는 동작.','DRAM','dram'],
+ ['로우 버퍼','row buffer','센스 앰프에 올라온 열린 행.','DRAM','dram'],
+ ['다중 레벨 셀','multi-level cell','문턱 전압을 여러 단계로 나눠 셀당 여러 비트 저장.','NAND','flash'],
+ ['쓰기 증폭','write amplification','NAND 쓰기량 ÷ 호스트 쓰기량.','NAND','flash'],
+ ['MTJ','magnetic tunnel junction','기준층–MgO–자유층으로 된 MRAM 소자.','MRAM','mram'],
+ ['TMR','tunnel magnetoresistance','(R_AP − R_P)/R_P.','MRAM','mram'],
+ ['STT','spin-transfer torque','스핀 편극 전류로 자화를 뒤집는 현상.','MRAM','mram'],
+ ['열적 안정성 Δ','thermal stability factor','K_eff·V/k_BT. 보존 시간을 정한다.','MRAM','mram'],
+ ['WER','write error rate','쓰기 펄스 후 뒤집히지 않았을 확률.','MRAM','mram'],
+ ['GST','Ge₂Sb₂Te₅','대표 상변화 물질.','PCM','pcm'],
+ ['SET / RESET (PCM)','crystallize / amorphize','결정화(저저항) / 비정질화(고저항).','PCM','pcm'],
+ ['저항 드리프트','resistance drift','비정질 저항이 시간의 거듭제곱으로 오르는 현상.','PCM','pcm'],
+ ['핵생성·성장','nucleation and growth','결정화의 두 단계.','PCM','pcm'],
+ ['산소 공공 필라멘트','oxygen-vacancy filament','ReRAM의 전도 경로.','ReRAM','rram'],
+ ['포밍','forming','처음 필라멘트를 만드는 고전압 동작.','ReRAM','rram'],
+ ['컴플라이언스 전류','compliance current','SET 시 전류 상한. LRS 저항을 정한다.','ReRAM','rram'],
+ ['잔류 분극','remanent polarization','전계를 꺼도 남는 분극 P_r.','FeRAM','rram'],
+ ['보자 전계','coercive field','분극을 뒤집는 데 필요한 전계 E_c.','FeRAM','rram'],
+ ['FeFET','ferroelectric FET','게이트 강유전체 분극으로 V_th를 옮기는 트랜지스터.','FeRAM','rram'],
+ ['메모리 벽','memory wall','연산 성장을 메모리 대역폭·지연이 따라가지 못하는 문제.','시스템','system'],
+ ['Zipf 분포','Zipf distribution','k번째 항목 빈도 ∝ 1/k^s. 접근 쏠림 모델.','시스템','system'],
+ ['CXL','Compute Express Link','PCIe 기반 캐시 일관 인터커넥트. 메모리 확장·풀링.','시스템','system'],
+ ['티어링','memory tiering','뜨거운 페이지를 빠른 층으로 옮기는 관리.','시스템','system'],
+ ['크로스바','crossbar array','워드라인·비트라인 교차점마다 셀을 둔 배열.','CIM','cim'],
+ ['인메모리 컴퓨팅','compute-in-memory, CIM','메모리 배열 안에서 연산을 수행.','CIM','cim'],
+ ['PIM','processing-in-memory','메모리 칩·뱅크 옆에 연산기를 둔 구조.','CIM','cim'],
+ ['IR 강하','IR drop','배선 저항으로 전압이 줄어드는 현상.','CIM','cim']
+];
+(function(){
+  const cats = ['전체', ...new Set(G.map(g => g[3]))];
+  let cat = '전체';
+  const gf = document.getElementById('gf'), gl = document.getElementById('gl'), gq = document.getElementById('gq');
+  gf.innerHTML = cats.map(c => `<button class="sbtn ${c==='전체'?'on':''}" data-c="${c}">${c}</button>`).join('');
+  const chn = s => BOOK.chapters.find(c => c.slug === s).n;
+  function render(){
+    const q = gq.value.trim().toLowerCase();
+    const list = G.filter(g => (cat === '전체' || g[3] === cat) && (!q || (g[0]+g[1]+g[2]).toLowerCase().includes(q)));
+    gl.innerHTML = list.map(g => `<div class="gi"><a class="ch" href="${g[4]}.html">Ch.${chn(g[4])} →</a><b>${g[0]}</b><span class="en">${g[1]}</span><p>${g[2]}</p></div>`).join('') || '<p class="hint">찾는 용어가 없습니다.</p>';
+    document.getElementById('gcount').textContent = `${list.length}개 용어`;
+  }
+  gf.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; J.$$('button', gf).forEach(x => x.classList.remove('on')); b.classList.add('on'); cat = b.dataset.c; render(); });
+  gq.addEventListener('input', render);
+  render();
+  const Q = [
+    ['E_b = 40 k_BT의 대략적 유지 시간은?', ['1 ns','1 s','수 년','영원'], 2, '1장: τ₀e⁴⁰ ≈ 7년.'],
+    ['SRAM이 휘발성인 이유는?', ['커패시터가 새서','장벽을 전원 공급 회로(래치)가 만들어서','쓰기 수명 때문에','자석이라서'], 1, '2장.'],
+    ['읽기 SNM을 키우는 방법은?', ['β를 키운다','γ를 키운다','V_DD를 낮춘다','워드라인을 오래 켠다'], 0, '2장: PD를 PG보다 세게.'],
+    ['충돌 미스를 줄이는 방법은?', ['블록 축소','연관도 증가','V_DD 증가','TLB 제거'], 1, '3장.'],
+    ['TLB 1,536항목 × 4 KB의 도달 범위는?', ['6 MB','1.5 MB','6 GB','4 KB'], 0, '4장.'],
+    ['스래싱의 원인은?', ['캐시가 커서','프레임이 작업 집합보다 적어서','TLB가 커서','SSD가 빨라서'], 1, '4장.'],
+    ['DRAM 읽기가 파괴적인 이유는?', ['전하 공유로 셀 전압이 비트라인과 같아져서','자화가 뒤집혀서','필라멘트가 끊겨서','녹아서'], 0, '5장.'],
+    ['OP를 늘리면 SSD 수명은?', ['줄어든다','늘어난다','그대로','0'], 1, '6장: WAF 감소.'],
+    ['MRAM 저항 차이의 근원은?', ['전하 저장','자화 방향에 따른 스핀 의존 터널링','결정/비정질','산소 공공'], 1, '7장: TMR.'],
+    ['MTJ 지름을 절반으로 하면 Δ는?', ['2배','1/2','1/4','그대로'], 2, '7장: V ∝ d².'],
+    ['PCM RESET의 조건은?', ['결정화 온도 유지','녹인 뒤 급랭','낮은 전압으로 읽기','자기장'], 1, '8장.'],
+    ['ReRAM LRS 저항을 낮추려면?', ['컴플라이언스 전류를 키운다','RESET 전압을 키운다','온도를 낮춘다','셀을 키운다'], 0, '9장.'],
+    ['FeRAM 1T1C 읽기의 특징은?', ['비파괴','파괴적 — 다시 써야 함','읽기 불가','자기장 필요'], 1, '9장.'],
+    ['Zipf 쏠림이 강할수록 작은 빠른 층의 효과는?', ['커진다','작아진다','없다','음수'], 0, '10장.'],
+    ['크로스바에서 곱셈 역할을 하는 법칙은?', ['키르히호프','옴의 법칙','렌츠','쿨롱'], 1, '11장: I = VG.']
+  ];
+  let score = 0, done = 0;
+  document.getElementById('qz').innerHTML = Q.map((q,i) => `<div class="quiz" data-a="${q[2]}"><p class="q" data-n="${i+1}">${q[0]}</p><ol>${q[1].map(o => `<li>${o}</li>`).join('')}</ol><p class="explain">${q[3]}</p></div>`).join('');
+  J.$$('#qz .quiz').forEach(qe => J.$$('li', qe).forEach((li, k) => li.addEventListener('click', () => {
+    if(qe.dataset.scored) return; qe.dataset.scored = 1; done++;
+    if(k === +qe.dataset.a) score++;
+    document.getElementById('score').textContent = `${score} / ${Q.length}`;
+    document.getElementById('done').textContent = done + (done === Q.length ? (score >= 13 ? ' · 집현전 학사 合格!' : score >= 9 ? ' · 잘했어요' : ' · 다시 읽어 보기') : '');
+  })));
+})();
+</script>
+</body>
+</html>

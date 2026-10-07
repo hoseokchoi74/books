@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MRAM: 자석으로 기억하기 · 메모리 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c7a68'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../../assets/iso3d.js"></script>
+</head>
+<body data-ch="mram">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 07 <span class="hanja">第七章 · 磁</span></div>
+  <h1>MRAM: 자석으로 기억하기</h1>
+  <p class="lead">지름 수십 nm의 자석 기둥 두 개를 얇은 절연막을 사이에 두고 겹쳐 놓자. 두 자석의 방향이 같으면 전자가 절연막을 잘 터널링하고(저저항), 반대면 잘 못 한다(고저항). 위쪽 자석의 방향을 전류로 뒤집을 수 있다면 — 그것이 MRAM이다. 전원 없이 기억하고, 거의 무한히 쓸 수 있으며, 수 ns에 읽는다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>자기 터널 접합(MTJ)의 구조와 터널 자기 저항(TMR)을 설명할 수 있다.</li>
+  <li>R–H 이력 곡선에서 보자력과 두 저항 상태를 읽을 수 있다.</li>
+  <li>스핀 전달 토크(STT) 스위칭의 열 활성 영역과 세차 영역, 쓰기 오류율(WER)을 이해한다.</li>
+  <li>열적 안정성 계수 Δ와 셀 크기·보존 시간의 관계를 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>자기 터널 접합</h2>
+<p><span class="term">MTJ(Magnetic Tunnel Junction)</span>는 아래부터 방향이 고정된 <span class="term">기준층(reference layer)</span>, 두께 1 nm 남짓의 <span class="term">MgO 터널 장벽</span>, 방향이 바뀔 수 있는 <span class="term">자유층(free layer)</span>으로 이뤄진다. 강자성체 안에서는 스핀 방향에 따라 전자가 들어갈 수 있는 상태의 수가 다르다. 두 층의 자화가 평행(P)하면 같은 스핀끼리 이어져 터널링이 잘 되고, 반평행(AP)이면 막힌다. 저항 차이의 비율이 <span class="term">TMR</span>이다. 결정성 MgO 장벽 덕분에 상온 TMR이 100–200 %에 이른다.</p>
+<div class="eq">$$\text{TMR} = \frac{R_{AP}-R_P}{R_P},\qquad R_P = \frac{RA}{A_{MTJ}}$$
+<div class="note">RA: 면적-저항 곱(수 Ω·µm²). 셀이 작아지면 저항이 커지므로 RA를 낮춰야 한다.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-1</span><span class="ttl">MTJ 3D 모형과 R–H 이력 곡선</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">TMR <output data-o="tmr"></output></span><input type="range" data-k="tmr" min="20" max="250" step="5" value="150" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">보자력 H_c <output data-o="hc"></output></span><input type="range" data-k="hc" min="10" max="150" step="5" value="60" data-d="0" data-u="mT"></label>
+      <label class="ctrl"><span class="lab">MTJ 지름 <output data-o="d"></output></span><input type="range" data-k="d" min="20" max="100" step="1" value="50" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">RA <output data-o="ra"></output></span><input type="range" data-k="ra" min="2" max="20" step="0.5" value="8" data-d="1" data-u="Ω·µm²"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="sweep">▶ 자기장 쓸기</button><button class="sbtn" id="flip">자유층 뒤집기 (쓰기)</button></div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv1a" data-h="320"></canvas></div><div class="canvas-box"><canvas id="cv1b" data-h="320"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">상태</span><span class="v" data-r="st"></span></div>
+      <div class="ro"><span class="k">R_P / R_AP</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">읽기 0.1 V에서 전류 차</span><span class="v" data-r="di"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽은 MTJ 기둥(드래그로 회전). 화살표가 각 층의 자화 방향이다. 오른쪽은 바깥 자기장 H를 쓸어 갈 때의 저항이다. 자유층은 +H_c에서 평행으로, −H_c에서 반평행으로 뒤집히고, 그 사이에서는 원래 상태를 유지한다 — 이 이력이 곧 기억이다. 셀이 작아질수록 저항이 커지는 것도 확인하자.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>전류로 자석을 뒤집기: STT</h2>
+<p>초기 MRAM은 근처 배선의 자기장으로 썼지만, 셀이 작아질수록 이웃까지 건드렸다. 오늘날의 <span class="term">STT-MRAM</span>은 MTJ에 직접 전류를 흘린다. 기준층을 지나며 스핀이 한 방향으로 정렬된(편극된) 전자가 자유층에 스핀 각운동량을 넘겨주며 토크를 가한다(<span class="term">스핀 전달 토크</span>). 전류가 임계값 \(I_{c0}\)보다 작으면 열 요동의 도움을 받아 확률적으로 뒤집히고(열 활성 영역), 크면 세차 운동하며 결정적으로 뒤집힌다(세차 영역).</p>
+<div class="eq">$$\tau(I) = \begin{cases}\tau_0\,\exp\!\big[\Delta\,(1-I/I_{c0})\big] & I<I_{c0}\\[4pt] \dfrac{\tau_p\,\ln(\pi/2\theta_0)}{I/I_{c0}-1} & I>I_{c0}\end{cases},\qquad \text{WER}(t) \approx e^{-t/\tau}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-2</span><span class="ttl">쓰기 펄스와 쓰기 오류율</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">쓰기 전류 I/I_c0 <output data-o="i"></output></span><input type="range" data-k="i" min="0.3" max="3" step="0.05" value="1.5" data-d="2"></label>
+      <label class="ctrl"><span class="lab">열적 안정성 Δ <output data-o="dl"></output></span><input type="range" data-k="dl" min="30" max="90" step="1" value="60" data-d="0"></label>
+      <label class="ctrl"><span class="lab">펄스 폭 (로그) <output data-o="t"></output></span><input type="range" data-k="t" min="-10" max="-3" step="0.05" value="-8" data-d="0"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">스위칭 시간 τ</span><span class="v" data-r="tau"></span></div>
+      <div class="ro"><span class="k">쓰기 오류율 WER</span><span class="v" data-r="wer"></span></div>
+      <div class="ro"><span class="k">WER 10⁻⁶에 필요한 펄스</span><span class="v" data-r="t6"></span></div>
+      <div class="ro"><span class="k">쓰기 에너지 (I_c0 = 50 µA, R = 5 kΩ)</span><span class="v" data-r="e"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로축은 펄스 폭, 세로축은 쓰기 실패 확률(로그). 곡선은 현재 전류, 회색 점선들은 다른 전류의 곡선이다. 임계 전류 아래에서는 Δ가 클수록 뒤집기가 기하급수로 어려워진다 — 1장의 "유지와 쓰기의 맞바꿈"이 그대로 나타난다. 전류를 키우면 빨라지지만 에너지와 장벽 파괴 위험(내구성)이 커진다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>작은 자석은 쉽게 잊는다</h2>
+<p>자유층 자화가 열 요동으로 저절로 뒤집히지 않으려면 자기 이방성 에너지 \(K_{eff}V\)가 \(k_BT\)보다 충분히 커야 한다. 이 비가 <span class="term">열적 안정성 계수 Δ</span>다. 부피 V가 셀 지름의 제곱에 비례하므로, 셀을 줄이면 Δ가 급격히 떨어진다. 수직 자기 이방성(PMA) 재료와 이중 MgO 계면이 이 한계를 밀어냈다.</p>
+<div class="eq">$$\Delta = \frac{K_{eff}\,V}{k_BT},\qquad P_{fail}(t) = 1 - \exp\!\Big(-\frac{N\,t}{\tau_0 e^{\Delta}}\Big)$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-3</span><span class="ttl">셀 크기와 10년 보존</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">지름 <output data-o="d"></output></span><input type="range" data-k="d" min="10" max="80" step="1" value="40" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">유효 이방성 K_eff <output data-o="k"></output></span><input type="range" data-k="k" min="0.05" max="1" step="0.01" value="0.15" data-d="2" data-u="MJ/m³"></label>
+      <label class="ctrl"><span class="lab">자유층 두께 <output data-o="tf"></output></span><input type="range" data-k="tf" min="1" max="3" step="0.1" value="1.6" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="25" max="150" step="5" value="85" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">어레이 크기 <output data-o="n"></output></span><input type="range" data-k="n" min="3" max="10" step="0.1" value="8" data-d="1"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">Δ</span><span class="v" data-r="dl"></span></div>
+      <div class="ro"><span class="k">셀 하나의 평균 보존</span><span class="v" data-r="tau"></span></div>
+      <div class="ro"><span class="k">10년 동안 어레이에서 잃는 비트</span><span class="v" data-r="lost"></span></div>
+      <div class="ro"><span class="k">필요 Δ (10년, 기대 손실 1비트 미만)</span><span class="v" data-r="need"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 곡선은 지름에 따른 Δ, 빨간 선은 이 어레이가 10년 동안 1비트도 잃지 않기 위한 Δ다. 차량용(150 °C)으로 온도를 올리면 같은 셀의 Δ가 줄어 선 아래로 떨어진다. 임베디드 MRAM이 캐시용(짧은 보존, 작은 Δ, 빠른 쓰기)과 저장용(긴 보존, 큰 Δ)으로 나뉘는 이유다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">R_P = 2 kΩ, TMR = 150 %이면 R_AP는?</p><ol><li>3 kΩ</li><li>5 kΩ</li><li>2.15 kΩ</li><li>300 kΩ</li></ol>
+<p class="explain">R_AP = R_P(1 + 1.5) = 5 kΩ.</p></div>
+<div class="quiz" data-a="0"><p class="q">STT-MRAM의 쓰기 원리는?</p><ol><li>스핀 편극 전류가 자유층에 토크를 가해 자화를 뒤집는다</li><li>주변 배선의 자기장</li><li>열로 녹인다</li><li>전자를 절연막에 가둔다</li></ol>
+<p class="explain">스핀 각운동량 전달.</p></div>
+<div class="quiz" data-a="3"><p class="q">지름을 절반으로 줄이면 Δ는?</p><ol><li>두 배</li><li>그대로</li><li>절반</li><li>1/4</li></ol>
+<p class="explain">V ∝ d². 그래서 미세화가 보존을 위협한다.</p></div>
+<div class="quiz" data-a="2"><p class="q">임계 전류 아래에서 쓰기가 확률적인 이유는?</p><ol><li>전압이 낮아서</li><li>TMR 때문에</li><li>열 요동의 도움으로 장벽을 넘는 열 활성 과정이기 때문에</li><li>ECC 때문에</li></ol>
+<p class="explain">τ = τ₀ exp[Δ(1 − I/I_c0)].</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 7-1 MTJ + R-H */
+(function(){
+  const box = document.getElementById('sim1');
+  const cv3d = document.getElementById('cv1a'), cvL = document.getElementById('cv1b');
+  const cam = {yaw:-0.6, pitch:0.35, scale:40};
+  let state = 'AP', H = 0, ph = 0, sweeping = false, hist = [];
+  const rd = () => ({tmr:+J.$('[data-k="tmr"]',box).value, hc:+J.$('[data-k="hc"]',box).value, d:+J.$('[data-k="d"]',box).value, ra:+J.$('[data-k="ra"]',box).value});
+  const Rs = p => { const area = Math.PI*Math.pow(p.d/2e3, 2); const rp = p.ra/area; return {rp, rap: rp*(1 + p.tmr/100)}; };
+  function draw3d(){
+    const {ctx, w, h} = J.fit(cv3d);
+    cam.scale = Math.min(w, h)/7.5; cam.oy = h*0.05;
+    const S = new J3.Scene();
+    const L = [[-1.6,0.5,'--ink3','하부 전극'],[-1.1,0.7,'--indigo','기준층 (고정)'],[-0.4,0.18,'--gold','MgO 장벽'],[-0.22,0.6,'--red','자유층'],[0.38,0.6,'--ink3','상부 전극']];
+    S.box(-2.2, -2.0, -2.2, 4.4, 0.4, 4.4, '--paper2', {layer:0});
+    L.forEach((l,i) => S.prism(0, l[0], 0, 1.1, l[1], l[2], {layer:1+i, n:24, c:[0, l[0], 0]}));
+    S.render(ctx, cam, w, h);
+    const arrow = (y, dir, col) => { const a = J3.project([-0.8*dir, y, 0], cam, w, h), b = J3.project([0.8*dir, y, 0], cam, w, h);
+      ctx.strokeStyle = J.c(col); ctx.fillStyle = J.c(col); ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      const ang = Math.atan2(b[1]-a[1], b[0]-a[0]); ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(b[0] - 12*Math.cos(ang-0.4), b[1] - 12*Math.sin(ang-0.4)); ctx.lineTo(b[0] - 12*Math.cos(ang+0.4), b[1] - 12*Math.sin(ang+0.4)); ctx.closePath(); ctx.fill(); ctx.lineWidth = 1; };
+    arrow(-0.75, 1, '--card'); arrow(0.1, state === 'P' ? 1 : -1, '--card');
+    ctx.font = '12px "Noto Sans KR"'; ctx.fillStyle = J.c('--ink2'); ctx.textAlign='left';
+    L.forEach(l => { const p = J3.project([1.2, l[0] + l[1]/2, 0], cam, w, h); ctx.fillText(l[3], p[0] + 6, p[1] + 4); });
+    ctx.fillStyle = J.c(state === 'P' ? '--jade' : '--red'); ctx.font = '600 13px "Noto Sans KR"'; ctx.fillText(state === 'P' ? '평행 (P) → 저저항 "0"' : '반평행 (AP) → 고저항 "1"', 10, 20);
+  }
+  function drawLoop(){
+    const p = rd(), r = Rs(p);
+    const Hm = Math.max(200, p.hc*2.2);
+    const up = [], dn = [];
+    for(let x=-Hm; x<=Hm; x+=2){ up.push([x, x < p.hc ? r.rap : r.rp]); dn.push([x, x > -p.hc ? r.rp : r.rap]); }
+    J.plot(cvL, {x:[-Hm,Hm], y:[0, r.rap*1.25], xlab:'바깥 자기장 H (mT)', ylab:'저항 (Ω)', yf:t=>t>=1000?(t/1000)+'k':t,
+      series:[{pts:up, color:'--ink3', w:1.5, dash:[4,3], step:true},{pts:dn, color:'--ink3', w:1.5, dash:[4,3], step:true},{pts:hist, color:'--jade', w:2.5}],
+      points:[{x:H, y: state === 'P' ? r.rp : r.rap, color:'--red', r:7}], vlines:[{x:p.hc, color:'--jade', label:'+H_c', dash:[2,3]},{x:-p.hc, color:'--red', label:'−H_c', align:'right', dash:[2,3]}], pad:{l:50}});
+    J.out(box,'st', state === 'P' ? 'P · 저저항' : 'AP · 고저항');
+    J.out(box,'r', J.fmt(r.rp/1000,2)+' / '+J.fmt(r.rap/1000,2)+' kΩ');
+    J.out(box,'di', J.fmt((0.1/r.rp - 0.1/r.rap)*1e6,1)+' µA', (0.1/r.rp - 0.1/r.rap)*1e6 > 5 ? 'good' : 'warn');
+  }
+  function all(){ draw3d(); drawLoop(); }
+  J3.drag(cv3d, cam, draw3d);
+  J.sim('sim1', () => { hist = []; all(); });
+  document.getElementById('sweep').onclick = e => { sweeping = !sweeping; e.target.textContent = sweeping ? '❚❚ 멈춤' : '▶ 자기장 쓸기'; hist = []; };
+  document.getElementById('flip').onclick = () => { state = state === 'P' ? 'AP' : 'P'; all(); };
+  J.loop(cvL, dt => {
+    if(!cam.user){ cam.yaw += dt*0.15; }
+    if(sweeping){ const p = rd(), Hm = Math.max(200, p.hc*2.2); ph += dt*1.2; H = Hm*Math.sin(ph);
+      if(H > p.hc) state = 'P'; if(H < -p.hc) state = 'AP';
+      const r = Rs(p); hist.push([H, state === 'P' ? r.rp : r.rap]); if(hist.length > 400) hist.shift(); }
+    all();
+  });
+})();
+
+/* 7-2 STT */
+J.sim('sim2', (v, box) => {
+  const t0 = 1e-9, tp = 1e-9;
+  const tau = (I, D) => I < 1 ? t0*Math.exp(D*(1 - I)) : tp*Math.log(Math.PI/2*Math.sqrt(2*D))/(I - 1 + 1e-6);
+  const wer = (t, I) => Math.max(1e-15, Math.exp(-t/tau(I, v.dl)));
+  const curve = I => { const pts = []; for(let e=-10; e<=-3; e+=0.02){ const t = Math.pow(10,e); pts.push([t, wer(t, I)]); } return pts; };
+  const series = [0.6, 0.9, 1.2, 2, 3].map(I => ({pts:curve(I), color:'--ink3', w:1, dash:[3,3]}));
+  series.push({pts:curve(v.i), color:'--red', w:3});
+  const t = Math.pow(10, v.t);
+  J.$('[data-o="t"]', box).textContent = t >= 1e-6 ? J.fmt(t*1e6,2)+' µs' : J.fmt(t*1e9,2)+' ns';
+  J.plot(document.getElementById('cv2'), {x:[1e-10,1e-3], y:[1e-15, 1], logx:true, logy:true, xlab:'펄스 폭 (로그)', ylab:'쓰기 오류율 (로그)',
+    xf:x=>x>=1e-6?(x*1e6)+'µs':(x*1e9)+'ns', yf:y=>'1e'+Math.round(Math.log10(y)), series, points:[{x:t, y:wer(t, v.i), color:'--red', r:6}], hlines:[{y:1e-6, color:'--jade', label:'목표 10⁻⁶', dash:[2,3]}], pad:{l:52}});
+  const ta = tau(v.i, v.dl), t6 = ta*Math.log(1e6);
+  const f = s => s >= 3.15e7 ? J.fmt(s/3.15e7,1)+' 년' : s >= 1 ? J.fmt(s,2)+' s' : s >= 1e-6 ? J.fmt(s*1e6,2)+' µs' : J.fmt(s*1e9,2)+' ns';
+  J.out(box,'tau', f(ta)); J.out(box,'wer', wer(t, v.i).toExponential(1), wer(t, v.i) < 1e-6 ? 'good' : 'bad');
+  J.out(box,'t6', f(t6), t6 < 2e-8 ? 'good' : t6 < 1e-6 ? 'warn' : 'bad');
+  const I = v.i*50e-6; J.out(box,'e', J.fmt(I*I*5000*Math.min(t6, 1e-3)*1e12,2)+' pJ');
+});
+
+/* 7-3 Δ */
+J.sim('sim3', (v, box) => {
+  const kB = 1.380649e-23, T = v.T + 273.15, N = Math.pow(10, v.n);
+  J.$('[data-o="n"]', box).textContent = N >= 1e9 ? J.fmt(N/1e9,1)+' Gb' : N >= 1e6 ? J.fmt(N/1e6,0)+' Mb' : J.fmt(N/1e3,0)+' Kb';
+  const D = d => v.k*1e6*Math.PI*Math.pow(d*1e-9/2, 2)*v.tf*1e-9/(kB*T);
+  const pts = []; for(let d=10; d<=80; d+=0.5) pts.push([d, D(d)]);
+  const ten = 3.15e8, need = Math.log(N*ten/1e-9);
+  const dl = D(v.d), tau = 1e-9*Math.exp(Math.min(dl, 700)), lost = N*(1 - Math.exp(-ten/tau));
+  J.plot(document.getElementById('cv3'), {x:[10,80], y:[0, Math.max(120, need*1.3)], xlab:'MTJ 지름 (nm)', ylab:'Δ', series:[{pts, color:'--red', w:2.5}], hlines:[{y:need, color:'--jade', label:'필요 Δ = '+J.fmt(need,0)}], points:[{x:v.d, y:dl, color:'--ink', r:6}]});
+  const f = s => s >= 3.15e7 ? (s > 3.15e17 ? '우주 나이 이상' : J.fmt(s/3.15e7,1)+' 년') : s >= 1 ? J.fmt(s,1)+' s' : J.fmt(s*1e3,2)+' ms';
+  J.out(box,'dl', J.fmt(dl,1), dl > need ? 'good' : dl > 40 ? 'warn' : 'bad');
+  J.out(box,'tau', f(tau));
+  J.out(box,'lost', lost < 0.01 ? '≈ 0' : lost >= N*0.99 ? '거의 전부' : J.fmt(lost, 1)+' 비트', lost < 1 ? 'good' : 'bad');
+  J.out(box,'need', J.fmt(need,1));
+});
+</script>
+</body>
+</html>

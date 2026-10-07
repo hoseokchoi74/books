@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ReRAM과 FeRAM · 메모리 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c7a68'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="rram">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 09 <span class="hanja">第九章 · 絲</span></div>
+  <h1>ReRAM과 FeRAM</h1>
+  <p class="lead">금속 산화물 박막에 전압을 걸면, 산소 원자가 빠져나간 빈자리(산소 공공)가 줄지어 전극과 전극을 잇는 가느다란 실 — 필라멘트 — 을 만든다. 실이 이어지면 저저항, 끊기면 고저항. 이것이 저항 변화 메모리(ReRAM)다. 한편 원자 배열 자체가 위아래로 쏠린 강유전체는 그 쏠림(분극)으로 비트를 기억한다(FeRAM). 이 장은 두 "결함과 분극의 메모리"를 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>산소 공공 필라멘트의 형성(forming)·SET·RESET 과정을 설명할 수 있다.</li>
+  <li>컴플라이언스 전류가 저저항 상태의 저항을 정하는 원리를 이해한다.</li>
+  <li>양극성 ReRAM의 I–V 이력 곡선을 읽을 수 있다.</li>
+  <li>강유전체의 P–E 이력, 잔류 분극, 보자 전계와 FeRAM의 파괴적 읽기를 설명할 수 있다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>산화물 속의 실</h2>
+<p>HfO₂·TaOₓ 같은 산화물 박막(수 nm)을 두 전극 사이에 둔다. 처음 한 번 높은 전압을 걸면 산소 이온이 위 전극 쪽으로 빠져나가고, 남은 산소 공공이 전기장을 따라 늘어서 전도성 <span class="term">필라멘트</span>가 생긴다(<span class="term">포밍</span>). 이후 반대 전압을 걸면 필라멘트 끝이 산소로 다시 채워져 끊기고(<span class="term">RESET</span>, 고저항), 다시 순방향 전압을 걸면 이어진다(<span class="term">SET</span>, 저저항). 이때 전류가 너무 많이 흐르면 필라멘트가 굵어져 영구 단락되므로 선택 트랜지스터로 전류 상한(<span class="term">컴플라이언스 전류 I<sub>CC</sub></span>)을 둔다. I<sub>CC</sub>가 클수록 필라멘트가 굵고 저항이 낮다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-1</span><span class="ttl">필라멘트 키우고 끊기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">컴플라이언스 전류 I_CC <output data-o="icc"></output></span><input type="range" data-k="icc" min="10" max="300" step="5" value="100" data-d="0" data-u="µA"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="fSet">＋ 전압 (포밍/SET)</button><button class="sbtn warn" id="fReset">− 전압 (RESET)</button><button class="sbtn" id="fNew">새 셀</button></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">상태</span><span class="v" data-r="st"></span></div>
+      <div class="ro"><span class="k">필라멘트 굵기 (공공 열 수)</span><span class="v" data-r="w"></span></div>
+      <div class="ro"><span class="k">저항</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">사이클</span><span class="v" data-r="n"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 회색 점이 산소 공공, 노란 점이 산소 이온이다. ＋ 전압이면 공공이 아래 전극에서 위로 자라 전극을 잇는다(빨간 테두리 = 전도 경로). − 전압이면 위쪽 끝의 공공이 산소로 채워져 얇은 틈(gap)이 생긴다. 실행할 때마다 필라멘트 모양이 조금씩 다르다 — ReRAM의 고질적인 셀 간·사이클 간 편차다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>I–V 이력 곡선</h2>
+<p>양극성 ReRAM의 전압을 0 → +V → 0 → −V → 0으로 쓸어 가면 8자 모양의 이력이 나온다. 고저항 상태에서 \(V_{SET}\)에 이르면 전류가 급증해 컴플라이언스에 걸리고(SET), 이후 저저항 상태로 돌아온다. 음의 방향에서 \(V_{RESET}\)에 이르면 전류가 줄어들며 고저항으로 돌아간다. 읽기는 둘 다 건드리지 않는 작은 전압(0.1–0.2 V)으로 한다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-2</span><span class="ttl">양극성 저항 스위칭 I–V</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">V_SET <output data-o="vs"></output></span><input type="range" data-k="vs" min="0.4" max="2" step="0.05" value="1.0" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">V_RESET <output data-o="vr"></output></span><input type="range" data-k="vr" min="-2" max="-0.4" step="0.05" value="-1.1" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">I_CC <output data-o="icc"></output></span><input type="range" data-k="icc" min="10" max="500" step="10" value="150" data-d="0" data-u="µA"></label>
+      <label class="ctrl"><span class="lab">HRS 저항 <output data-o="hrs"></output></span><input type="range" data-k="hrs" min="20" max="2000" step="10" value="300" data-d="0" data-u="kΩ"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="ivPlay">▶ 전압 쓸기</button></div>
+    <div class="canvas-box"><canvas id="cv2" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">LRS 저항 ≈ V_SET/I_CC 규모</span><span class="v" data-r="lrs"></span></div>
+      <div class="ro"><span class="k">온/오프 비</span><span class="v" data-r="oo"></span></div>
+      <div class="ro"><span class="k">읽기 0.2 V 전류 (LRS/HRS)</span><span class="v" data-r="ir"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 세로축은 |전류|(로그)다. 화살표 방향으로 따라가자: ① 고저항(HRS)에서 출발 → ② V_SET에서 급상승해 I_CC에 묶임 → ③ 저저항(LRS)으로 0 V 복귀 → ④ 음의 방향으로 V_RESET에서 전류 감소 → ⑤ HRS로 복귀. 컴플라이언스를 키우면 LRS 저항이 낮아지지만 RESET에 더 큰 전류가 필요하다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>강유전체: 원자 배열의 쏠림</h2>
+<p>강유전체 결정 속 원자는 두 위치 중 한쪽으로 살짝 치우쳐 있어 전기적 쏠림, 즉 <span class="term">분극 P</span>를 갖는다. 전기장으로 이 쏠림을 반대로 뒤집을 수 있고, 전기장을 꺼도 쏠림이 남는다(<span class="term">잔류 분극 P<sub>r</sub></span>). 뒤집는 데 필요한 전기장이 <span class="term">보자 전계 E<sub>c</sub></span>다. 1T1C FeRAM은 DRAM 커패시터 자리에 강유전체 커패시터를 둔다. 읽을 때 한쪽 방향 전압을 걸어 분극이 뒤집히면 큰 전하(2P<sub>r</sub>)가, 안 뒤집히면 작은 전하가 나온다 — 그래서 읽기가 파괴적이고 다시 써야 한다. 최근에는 CMOS 공정에 쓰는 HfO₂가 얇게 만들면 강유전성을 띤다는 발견(2011)으로 강유전 트랜지스터(FeFET), 강유전 NAND 연구가 활발하다.</p>
+<div class="eq">$$P(E) \approx P_s\tanh\!\left(\frac{E \pm E_c}{2\delta}\right),\qquad Q_{read} = \begin{cases}2P_rA & \text{뒤집힘}\\ \approx 0 & \text{그대로}\end{cases}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-3</span><span class="ttl">P–E 이력과 FeRAM 읽기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">보자 전계 E_c <output data-o="ec"></output></span><input type="range" data-k="ec" min="0.3" max="2" step="0.05" value="1" data-d="2" data-u="MV/cm"></label>
+      <label class="ctrl"><span class="lab">포화 분극 P_s <output data-o="ps"></output></span><input type="range" data-k="ps" min="5" max="40" step="1" value="20" data-d="0" data-u="µC/cm²"></label>
+      <label class="ctrl"><span class="lab">가하는 최대 전계 <output data-o="em"></output></span><input type="range" data-k="em" min="0.3" max="4" step="0.05" value="2.5" data-d="2" data-u="MV/cm"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="peLoop">▶ 전계 쓸기</button><button class="sbtn" id="peRead">읽기 펄스 (+E)</button><span class="hint" id="peMsg"></span></div>
+    <div class="canvas-box"><canvas id="cv3" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">현재 분극</span><span class="v" data-r="p"></span></div>
+      <div class="ro"><span class="k">저장 값</span><span class="v" data-r="bit"></span></div>
+      <div class="ro"><span class="k">읽기 전하 (뒤집힘 / 그대로)</span><span class="v" data-r="q"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로축 전계, 세로축 분극. 최대 전계가 E_c보다 작으면 분극이 뒤집히지 않아 이력이 작은 고리에 머문다 — 쓰기 실패. "읽기 펄스"는 +E를 가한 뒤 나온 전하로 원래 값을 판정하고, "0"이었다면 이제 "1"로 바뀌어 있으므로 다시 써야 한다.</p>
+</div>
+
+<div class="tbwrap"><table class="tb">
+<tr><th></th><th>ReRAM</th><th>FeRAM (1T1C)</th><th>FeFET</th></tr>
+<tr><td>저장 방식</td><td>필라멘트 연결/끊김</td><td>강유전 커패시터 분극</td><td>게이트 강유전체 분극 → V_th 이동</td></tr>
+<tr><td>읽기</td><td>비파괴 (저항)</td><td>파괴적 (전하)</td><td>비파괴 (트랜지스터 전류)</td></tr>
+<tr><td>쓰기 에너지</td><td>중간 (~pJ)</td><td>매우 낮음</td><td>매우 낮음</td></tr>
+<tr><td>내구성</td><td>10⁴–10⁸</td><td>10¹²+</td><td>10⁴–10⁶ (개선 중)</td></tr>
+<tr><td>강점 / 숙제</td><td>단순 구조, 크로스바 / 편차</td><td>저전력 / 용량</td><td>밀도 / 내구성·간섭</td></tr>
+</table></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">컴플라이언스 전류를 키우면 LRS 저항은?</p><ol><li>커진다</li><li>작아진다 (필라멘트가 굵어져서)</li><li>변하지 않는다</li><li>무한대</li></ol>
+<p class="explain">더 많은 공공이 모여 굵은 필라멘트를 만든다.</p></div>
+<div class="quiz" data-a="2"><p class="q">FeRAM 읽기가 파괴적인 이유는?</p><ol><li>필라멘트가 끊어져서</li><li>전하가 새서</li><li>읽기 전압으로 분극을 뒤집어 보며 나오는 전하로 판정하기 때문에</li><li>열로 녹여서</li></ol>
+<p class="explain">뒤집힌 셀은 원래 값으로 다시 써야 한다.</p></div>
+<div class="quiz" data-a="0"><p class="q">ReRAM의 가장 큰 숙제로 꼽히는 것은?</p><ol><li>셀 간·사이클 간 저항 편차</li><li>휘발성</li><li>너무 느린 읽기</li><li>큰 셀 면적</li></ol>
+<p class="explain">필라멘트 형성이 확률적이기 때문이다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 9-1 필라멘트 */
+(function(){
+  const box = document.getElementById('sim1'), cv = document.getElementById('cv1');
+  const W = 30, H = 18; let g, n = 0, formed = false, R = J.rng(1), seed = 1, anim = null, ions = [], thick = 1;
+  function newCell(){ seed++; R = J.rng(seed); g = new Uint8Array(W*H); for(let i=0;i<W*H;i++) g[i] = R() < 0.06 ? 1 : 0; n = 0; formed = false; ions = []; draw(); }
+  const width = () => { let best = 0; for(let x=0;x<W;x++){ let ok = true; for(let y=0;y<H;y++) if(!g[y*W+x]) { ok = false; break; } if(ok) best++; } return best; };
+  const connected = () => { // 아래(y=H-1)에서 위(y=0)까지 공공 경로 존재?
+    const seen = new Uint8Array(W*H), st = []; for(let x=0;x<W;x++) if(g[(H-1)*W+x]){ st.push((H-1)*W+x); seen[(H-1)*W+x] = 1; }
+    while(st.length){ const i = st.pop(), x = i%W, y = Math.floor(i/W); if(y === 0) return true;
+      [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy]) => { const xx = x+dx, yy = y+dy; if(xx>=0&&xx<W&&yy>=0&&yy<H){ const j = yy*W+xx; if(g[j] && !seen[j]){ seen[j] = 1; st.push(j); } } }); }
+    return false; };
+  function grow(){
+    const icc = +J.$('[data-k="icc"]', box).value, cols = Math.max(1, Math.round(icc/50)); thick = cols;
+    const cx = Math.floor(W/2 + (R()-.5)*8);
+    let k = 0;
+    anim = setInterval(() => {
+      for(let c=0;c<cols;c++){ const x = J.clamp(cx + c - Math.floor(cols/2) + Math.round((R()-.5)*1.4), 0, W-1); const y = H-1-k; if(y >= 0){ g[y*W+x] = 1; if(R() < .3) g[y*W + J.clamp(x+1,0,W-1)] = 1; ions.push({x:x+.5, y:y}); } }
+      ions.forEach(o => o.y -= 1.2); ions = ions.filter(o => o.y > -1);
+      k++; draw();
+      if(k >= H){ clearInterval(anim); anim = null; formed = true; n++; ions = []; draw(); }
+    }, 60);
+  }
+  function rupture(){
+    if(!connected()) return;
+    let k = 0; const gap = 2 + Math.floor(R()*3);
+    anim = setInterval(() => { for(let x=0;x<W;x++) if(g[k*W+x] && R() < .85) { g[k*W+x] = 0; ions.push({x:x+.5, y:-0.5+k}); } ions.forEach(o => o.y += 0.6); k++; draw(); if(k >= gap){ clearInterval(anim); anim = null; ions = []; draw(); } }, 90);
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(cv);
+    ctx.clearRect(0,0,w,h);
+    const cs = Math.min((w-40)/W, (h-60)/H), ox = (w - cs*W)/2, oy = 30;
+    ctx.fillStyle = J.c('--gold'); ctx.fillRect(ox, oy - 22, cs*W, 20); ctx.fillStyle = J.c('--ink3'); ctx.fillRect(ox, oy + cs*H + 2, cs*W, 20);
+    ctx.fillStyle = '#fff'; ctx.font = '11px "Noto Sans KR"'; ctx.textAlign='center'; ctx.fillText('상부 전극 (산소 저장층)', w/2, oy - 8); ctx.fillText('하부 전극', w/2, oy + cs*H + 16);
+    ctx.fillStyle = J.c('--paper2'); ctx.fillRect(ox, oy, cs*W, cs*H);
+    const conn = connected();
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(g[y*W+x]){ ctx.fillStyle = J.c('--ink3'); ctx.beginPath(); ctx.arc(ox + x*cs + cs/2, oy + y*cs + cs/2, cs*0.38, 0, 7); ctx.fill(); }
+    if(conn){ ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2; const ws = width(); ctx.strokeRect(ox + (W/2 - 6)*cs, oy, 12*cs, cs*H); ctx.lineWidth = 1; }
+    ions.forEach(o => { ctx.fillStyle = J.c('--gold'); ctx.beginPath(); ctx.arc(ox + o.x*cs, oy + o.y*cs, cs*0.3, 0, 7); ctx.fill(); });
+    const wd = thick, res = conn ? 12900/Math.max(1, wd) + 500 : 3e5;
+    J.out(box,'st', conn ? 'LRS · 연결됨' : formed ? 'HRS · 끊김' : '처음 (포밍 전)', conn ? 'good' : 'warn');
+    J.out(box,'w', conn ? wd+' 열' : '—');
+    J.out(box,'r', res >= 1e5 ? J.fmt(res/1e3,0)+' kΩ' : J.fmt(res/1e3,1)+' kΩ');
+    J.out(box,'n', n);
+  }
+  J.sim('sim1', () => {});
+  document.getElementById('fSet').onclick = () => { if(anim || connected()) return; grow(); };
+  document.getElementById('fReset').onclick = () => { if(anim) return; rupture(); };
+  document.getElementById('fNew').onclick = () => { if(anim){ clearInterval(anim); anim = null; } newCell(); };
+  newCell(); J.live(draw);
+})();
+
+/* 9-2 I-V */
+(function(){
+  let ph = 0, play = false, trace = [], state = 'HRS', PP = null;
+  const s = J.sim('sim2', (v, box) => {
+    const icc = v.icc*1e-6, hrs = v.hrs*1e3, lrs = Math.max(500, 0.45/icc);
+    const Vm = Math.max(v.vs, -v.vr) + 0.4;
+    const r = J.plot(document.getElementById('cv2'), {x:[-Vm, Vm], y:[1e-8, 1e-2], logy:true, xlab:'전압 (V)', ylab:'|전류| (A, 로그)', yf:t=>J.si(t,'A',1),
+      series:[{pts:trace, color:'--jade', w:2.5}], hlines:[{y:icc, color:'--red', label:'I_CC', dash:[4,3]}], vlines:[{x:v.vs, color:'--indigo', label:'V_SET', dash:[2,3]},{x:v.vr, color:'--plum', label:'V_RESET', align:'right', dash:[2,3]}], pad:{l:60}});
+    J.out(box,'lrs', J.fmt(lrs/1e3,2)+' kΩ');
+    J.out(box,'oo', J.fmt(hrs/lrs,0)+' : 1', hrs/lrs > 10 ? 'good' : 'warn');
+    J.out(box,'ir', J.si(0.2/lrs,'A',2)+' / '+J.si(0.2/hrs,'A',2));
+    PP = {icc, hrs, lrs, Vm, vs:v.vs, vr:v.vr};
+  });
+  J.loop(document.getElementById('cv2'), dt => {
+    if(!play || !PP) return;
+    const p = PP; ph += dt*0.35;
+    const V = p.Vm*Math.sin(ph*2*Math.PI);
+    if(state === 'HRS' && V >= p.vs) state = 'LRS';
+    if(state === 'LRS' && V <= p.vr) state = 'HRS';
+    let I = state === 'LRS' ? V/p.lrs : V/p.hrs*(1 + Math.pow(Math.abs(V)/p.vs, 3)*2);
+    if(V > 0) I = Math.min(I, p.icc); // 컴플라이언스는 양의 방향(SET 쪽)에만
+    trace.push([V, Math.max(1e-8, Math.abs(I))]); if(trace.length > 600) trace.shift();
+    s.run();
+  });
+  document.getElementById('ivPlay').onclick = e => { play = !play; e.target.textContent = play ? '❚❚ 멈춤' : '▶ 전압 쓸기'; if(play){ trace = []; state = 'HRS'; ph = 0; } };
+})();
+
+/* 9-3 P-E */
+(function(){
+  let E = 0, ph = 0, play = false, branch = -1, trace = [], msg = '';
+  const box = document.getElementById('sim3');
+  const rd = () => ({ec:+J.$('[data-k="ec"]',box).value, ps:+J.$('[data-k="ps"]',box).value, em:+J.$('[data-k="em"]',box).value});
+  // branch: +1 = 위쪽(양의 잔류), −1 = 아래쪽
+  const P = (p, e, b) => { const d = p.ec*0.35; const up = p.ps*Math.tanh((e + p.ec)/(2*d)), dn = p.ps*Math.tanh((e - p.ec)/(2*d)); return b > 0 ? up : dn; };
+  function update(e){ const p = rd(); if(e > p.ec) branch = 1; if(e < -p.ec) branch = -1; }
+  const s = J.sim('sim3', (v) => {
+    const p = v, a = [], b = []; const Em = Math.max(4, p.em*1.2);
+    for(let e=-Em; e<=Em; e+=0.02){ a.push([e, P(p, e, 1)]); b.push([e, P(p, e, -1)]); }
+    const Pr = P(p, 0, 1);
+    J.plot(document.getElementById('cv3'), {x:[-Em, Em], y:[-p.ps*1.2, p.ps*1.2], xlab:'전계 E (MV/cm)', ylab:'분극 P (µC/cm²)',
+      series:[{pts:a, color:'--ink3', w:1.2, dash:[4,3]},{pts:b, color:'--ink3', w:1.2, dash:[4,3]},{pts:trace, color:'--plum', w:3}],
+      points:[{x:E, y:P(p, E, branch), color:'--red', r:7}], vlines:[{x:p.ec, color:'--jade', label:'E_c', dash:[2,3]},{x:-p.ec, color:'--jade', dash:[2,3]},{x:p.em, color:'--red', dash:[1,3]},{x:-p.em, color:'--red', dash:[1,3]}], pad:{l:46}});
+    J.out(box,'p', J.fmt(P(p, E, branch),1)+' µC/cm²');
+    J.out(box,'bit', branch > 0 ? '"1" (+P_r)' : '"0" (−P_r)');
+    J.out(box,'q', J.fmt(2*Pr*1e-6*1e-9*1e15,0)+' fC / ≈ 0 fC (셀 0.1 µm²)');
+    document.getElementById('peMsg').textContent = msg;
+  });
+  J.loop(document.getElementById('cv3'), dt => {
+    if(!play) return; const p = rd(); ph += dt*0.4; E = p.em*Math.sin(ph*2*Math.PI); update(E);
+    trace.push([E, P(p, E, branch)]); if(trace.length > 500) trace.shift(); s.run();
+  });
+  document.getElementById('peLoop').onclick = e => { play = !play; e.target.textContent = play ? '❚❚ 멈춤' : '▶ 전계 쓸기'; if(play) trace = []; };
+  document.getElementById('peRead').onclick = () => { const p = rd(); const was = branch; play = false; document.getElementById('peLoop').textContent = '▶ 전계 쓸기';
+    E = p.em; update(E); const flipped = was < 0 && branch > 0;
+    msg = flipped ? `원래 "0" → 뒤집히며 큰 전하(2P_r) 방출 → "0"으로 판정, 다시 써야 함` : (p.em <= p.ec ? '전계가 E_c보다 작아 판정 불가' : `원래 "1" → 그대로, 작은 전하 → "1"로 판정`);
+    E = 0; s.run(); };
+})();
+</script>
+</body>
+</html>

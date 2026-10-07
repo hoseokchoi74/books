@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>가상 메모리 · 메모리 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c7a68'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="virtual">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 04 <span class="hanja">第四章 · 譯</span></div>
+  <h1>가상 메모리</h1>
+  <p class="lead">모든 프로그램은 자기 혼자 컴퓨터를 쓰는 줄 안다. 주소 0번부터 수백 TB까지 넓고 깨끗한 공간이 통째로 자기 것이라고. 실제로는 수많은 프로그램이 좁은 물리 메모리를 나눠 쓰고, 일부는 디스크에 내려가 있다. 이 착각을 만들어 주는 것이 가상 메모리, 그리고 그 비용을 숨기는 것이 TLB다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>가상 주소를 페이지 번호와 오프셋으로 나누고, 다단계 페이지 테이블로 물리 주소를 찾는 과정을 따라갈 수 있다.</li>
+  <li>TLB가 왜 필요한지, TLB 도달 범위(reach)와 큰 페이지(huge page)의 효과를 계산한다.</li>
+  <li>페이지 폴트와 교체, 작업 집합(working set), 스래싱(thrashing)을 실험으로 확인한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>주소를 번역하는 표</h2>
+<p>CPU가 내는 주소는 <span class="term">가상 주소(VA)</span>다. 메모리는 4 KB 크기의 <span class="term">페이지</span>로 나뉘고, 운영체제는 프로세스마다 "가상 페이지 → 물리 페이지(프레임)" 대응표인 <span class="term">페이지 테이블</span>을 관리한다. 48비트 주소 공간을 4 KB 페이지로 나누면 페이지가 2³⁶개 — 한 장짜리 표로는 너무 크므로, x86-64는 9비트씩 네 단계로 나눈 <strong>트리</strong>를 쓴다. 주소 하나를 번역하려면 표를 네 번 읽어야 한다(<span class="term">페이지 워크</span>).</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-1</span><span class="ttl">주소 번역 따라가기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">페이지 크기</span><select data-k="ps"><option value="4k">4 KB (4단계 워크)</option><option value="2m">2 MB 큰 페이지 (3단계)</option></select></label>
+      <label class="ctrl"><span class="lab">TLB</span><select data-k="tlb"><option value="miss">미스 (워크 필요)</option><option value="hit">적중</option></select></label>
+      <label class="ctrl"><span class="lab">페이지 테이블 항목이 있는 곳</span><select data-k="loc"><option value="cache">캐시 (~10 클록)</option><option value="dram">DRAM (~250 클록)</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="vaNew">새 가상 주소</button><button class="sbtn pri" id="vaWalk">▶ 워크 애니메이션</button></div>
+    <div class="canvas-box"><svg id="walkSvg" viewBox="0 0 760 360" style="display:block;width:100%"></svg></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">가상 주소</span><span class="v" data-r="va" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">물리 주소</span><span class="v" data-r="pa" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">번역에 쓴 메모리 접근</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">번역 지연</span><span class="v" data-r="lat"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 맨 위 띠가 48비트 가상 주소의 조각들이다. 각 9비트 조각이 해당 단계 표의 몇 번째 항목을 볼지 정하고, 그 항목이 다음 표의 위치를 알려 준다. 마지막 표의 항목이 물리 프레임 번호이고, 거기에 오프셋을 붙이면 물리 주소다. TLB가 적중하면 이 모든 과정을 건너뛴다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>TLB와 도달 범위</h2>
+<p><span class="term">TLB(Translation Lookaside Buffer)</span>는 최근 번역 결과를 담아 두는 작은 캐시다. 항목이 수십~수천 개뿐이므로, TLB가 한 번에 덮을 수 있는 메모리 양 — <span class="term">TLB 도달 범위</span> = 항목 수 × 페이지 크기 — 가 중요하다. 1,536개 항목 × 4 KB = 6 MB. 수십 GB를 뒤지는 데이터베이스나 AI 작업에는 턱없이 작다. 그래서 2 MB·1 GB 큰 페이지를 쓴다.</p>
+<div class="eq">$$\text{Reach} = N_{TLB}\times S_{page},\qquad t_{translate} \approx (1-h_{TLB})\cdot t_{walk}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-2</span><span class="ttl">작업 집합과 TLB 적중률</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">TLB 항목 수 <output data-o="n"></output></span><input type="range" data-k="n" min="32" max="4096" step="32" value="1536" data-d="0" data-u="개"></label>
+      <label class="ctrl"><span class="lab">작업 집합 (로그) <output data-o="ws"></output></span><input type="range" data-k="ws" min="0" max="6" step="0.05" value="3" data-d="0"></label>
+      <label class="ctrl"><span class="lab">페이지 워크 비용 <output data-o="w"></output></span><input type="range" data-k="w" min="20" max="400" step="10" value="60" data-d="0" data-u="클록"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="290"></canvas></div>
+    <div class="legend"><span><i style="background:var(--red)"></i>4 KB 페이지</span><span><i style="background:var(--gold)"></i>2 MB 페이지</span><span><i style="background:var(--jade)"></i>1 GB 페이지</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">도달 범위 (4K / 2M / 1G)</span><span class="v" data-r="r" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">4 KB일 때 접근당 번역 비용</span><span class="v" data-r="c4"></span></div>
+      <div class="ro"><span class="k">2 MB일 때</span><span class="v" data-r="c2"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모델.</b> 작업 집합 안을 고르게 무작위로 접근한다고 보면 적중률 ≈ min(1, 도달 범위 ÷ 작업 집합)이다(실제 프로그램은 지역성 덕분에 이보다 낫다). 작업 집합이 도달 범위를 넘는 순간 번역 비용이 급증한다 — 4 KB 페이지에서는 수 MB만 넘어도 그렇다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>페이지 폴트와 스래싱</h2>
+<p>물리 메모리에 없는 페이지를 건드리면 <span class="term">페이지 폴트</span>가 나고, 운영체제가 디스크(SSD)에서 그 페이지를 읽어 오며 다른 페이지를 내보낸다. SSD에서 4 KB를 읽는 데 수십 µs — DRAM의 천 배다. 프로세스가 당장 쓰는 페이지 묶음(<span class="term">작업 집합</span>)보다 물리 프레임이 적으면 폴트가 폭증해 시간 대부분을 페이지를 옮기는 데 쓰게 된다. 이것이 <span class="term">스래싱</span>이다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-3</span><span class="ttl">프레임 수와 페이지 폴트, 그리고 스래싱</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">물리 프레임 수 (이 프로세스) <output data-o="f"></output></span><input type="range" data-k="f" min="2" max="40" step="1" value="12" data-d="0"></label>
+      <label class="ctrl"><span class="lab">교체 정책</span><select data-k="pol"><option value="lru">LRU</option><option value="fifo">FIFO</option><option value="opt">OPT (미래를 아는 이상적 정책)</option></select></label>
+      <label class="ctrl"><span class="lab">동시 실행 프로세스 수 <output data-o="np"></output></span><input type="range" data-k="np" min="1" max="20" step="1" value="6" data-d="0"></label>
+    </div>
+    <div class="fig-row"><div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div><div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">폴트율 (현재 프레임)</span><span class="v" data-r="fr"></span></div>
+      <div class="ro"><span class="k">유효 접근 시간 (폴트 50 µs)</span><span class="v" data-r="eat"></span></div>
+      <div class="ro"><span class="k">CPU 활용률 (오른쪽)</span><span class="v" data-r="u"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 같은 페이지 접근 기록(작업 집합 약 10페이지씩 바뀌는 단계들)을 프레임 수를 바꿔 돌린 폴트율. 작업 집합보다 프레임이 적어지는 순간 절벽처럼 오른다. 오른쪽: 메모리 64프레임을 프로세스들이 나눠 쓸 때, 프로세스를 늘리면 처음엔 CPU 활용률이 오르다가 각자의 몫이 작업 집합 아래로 떨어지는 순간 무너진다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">4단계 페이지 테이블에서 TLB 미스 하나가 만드는 추가 메모리 접근은 최대 몇 번인가?</p><ol><li>1</li><li>4</li><li>9</li><li>12</li></ol>
+<p class="explain">각 단계 표 항목을 한 번씩 읽는다. 그래서 페이지 워크 캐시로 상위 단계를 캐시한다.</p></div>
+<div class="quiz" data-a="2"><p class="q">TLB 항목 1,024개, 2 MB 페이지의 도달 범위는?</p><ol><li>4 MB</li><li>1 GB</li><li>2 GB</li><li>2 TB</li></ol>
+<p class="explain">1024 × 2 MB = 2 GB.</p></div>
+<div class="quiz" data-a="0"><p class="q">스래싱이 일어나는 조건은?</p><ol><li>각 프로세스에 주어진 프레임이 작업 집합보다 작을 때</li><li>TLB가 클 때</li><li>캐시가 직접 사상일 때</li><li>페이지가 클 때</li></ol>
+<p class="explain">폴트가 폭증해 디스크 입출력이 시간 대부분을 차지한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 4-1 페이지 워크 */
+(function(){
+  const box = document.getElementById('sim1'), svg = document.getElementById('walkSvg');
+  let va, step = 99, timer = null, R = J.rng(7);
+  const rnd = n => Math.floor(R()*Math.pow(2,n));
+  function newVA(){ va = {i:[rnd(9), rnd(9), rnd(9), rnd(9)], off: rnd(12), frames:[rnd(20), rnd(20), rnd(20), rnd(24)]}; step = 99; draw(); }
+  function hex(nb, val){ return '0x'+val.toString(16).padStart(Math.ceil(nb/4),'0'); }
+  function draw(){
+    const v = {ps:J.$('[data-k="ps"]',box).value, tlb:J.$('[data-k="tlb"]',box).value, loc:J.$('[data-k="loc"]',box).value};
+    const big = v.ps === '2m', levels = big ? 3 : 4, names = ['PML4','PDPT','PD','PT'];
+    svg.innerHTML = '';
+    // 주소 띠
+    const segs = big ? [[names[0],9,'--red'],[names[1],9,'--gold'],[names[2],9,'--indigo'],['오프셋 (21)',21,'--jade']] : [[names[0],9,'--red'],[names[1],9,'--gold'],[names[2],9,'--indigo'],[names[3],9,'--plum'],['오프셋 (12)',12,'--jade']];
+    let x = 20; const W = 720/48;
+    const vals = big ? [va.i[0], va.i[1], va.i[2], (va.i[3] << 12) | va.off] : [va.i[0], va.i[1], va.i[2], va.i[3], va.off];
+    segs.forEach((s,k) => { const w = s[1]*W; J.svg('rect', {x, y:14, width:w-2, height:38, fill:`var(${s[2]})`, opacity:.8}, svg);
+      J.svg('text', {x:x+w/2, y:30, 'text-anchor':'middle', class:'t-s', text:s[0], style:'fill:#fff;font-weight:700'}, svg);
+      J.svg('text', {x:x+w/2, y:46, 'text-anchor':'middle', class:'t-s mono', text: vals[k], style:'fill:#fff'}, svg); x += w; });
+    // 표들
+    const tw = 140, gap = (720 - levels*tw)/(levels);
+    for(let l=0;l<levels;l++){
+      const tx = 20 + l*(tw+gap), active = v.tlb === 'miss' && step >= l;
+      J.svg('rect', {x:tx, y:90, width:tw, height:180, rx:5, fill:'var(--card)', stroke: active ? `var(${segs[l][2]})` : 'var(--line)', 'stroke-width': active ? 2.5 : 1}, svg);
+      J.svg('text', {x:tx+tw/2, y:84, 'text-anchor':'middle', class:'t-s', text:names[l]+' 표 (512 항목)'}, svg);
+      for(let r=0;r<8;r++){ const hl = r === 4; J.svg('rect', {x:tx+8, y:100+r*20, width:tw-16, height:16, fill: hl && active ? `var(${segs[l][2]})` : 'var(--paper2)', opacity: hl && active ? .85 : 1}, svg);
+        if(hl) J.svg('text', {x:tx+14, y:112+r*20, class:'t-s mono', text:`[${va.i[l]}] → ${l === levels-1 ? '프레임 '+hex(20, va.frames[3]) : '다음 표'}`, style:`fill:${active ? '#fff' : 'var(--ink3)'}`}, svg); }
+      if(l < levels-1 && active && step > l) J.svg('path', {d:`M${tx+tw-8} 188 C ${tx+tw+gap/2} 188, ${tx+tw+gap/2} 140, ${tx+tw+gap} 140`, stroke:`var(${segs[l][2]})`, 'stroke-width':2.5, fill:'none'}, svg);
+    }
+    J.svg('text', {x:20, y:300, class:'t-s', text:'CR3 레지스터 → 최상위 표의 물리 주소', style:'fill:var(--ink3)'}, svg);
+    const done = v.tlb === 'hit' || step >= levels;
+    const paStr = big ? hex(52, va.frames[3]*Math.pow(2,21) + ((va.i[3] << 12) | va.off)) : hex(52, va.frames[3]*4096 + va.off);
+    J.svg('rect', {x:20, y:314, width:720, height:34, rx:5, fill: done ? 'var(--jade-soft)' : 'var(--paper2)', stroke: done ? 'var(--jade)' : 'var(--line)'}, svg);
+    J.svg('text', {x:30, y:336, class:'t-m mono', text: done ? (v.tlb === 'hit' ? 'TLB 적중 → ' : '워크 완료 → ')+'물리 주소 '+paStr : '번역 중…'}, svg);
+    const vaStr = hex(48, ((((va.i[0]*512 + va.i[1])*512 + va.i[2])*512 + va.i[3])*4096 + va.off));
+    J.out(box,'va', vaStr); J.out(box,'pa', done ? paStr : '…');
+    const n = v.tlb === 'hit' ? 0 : levels, per = v.loc === 'cache' ? 10 : 250;
+    J.out(box,'n', n+' 회', n ? 'warn' : 'good');
+    J.out(box,'lat', (v.tlb === 'hit' ? 1 : n*per + 1)+' 클록', v.tlb === 'hit' ? 'good' : v.loc === 'dram' ? 'bad' : 'warn');
+  }
+  J.$$('select', box).forEach(s => s.addEventListener('input', () => { step = 99; draw(); }));
+  J.sim('sim1', () => {});
+  document.getElementById('vaNew').onclick = newVA;
+  document.getElementById('vaWalk').onclick = () => { clearInterval(timer); step = -1; draw(); timer = setInterval(() => { step++; draw(); if(step >= 4) clearInterval(timer); }, 600); };
+  newVA();
+})();
+
+/* 4-2 TLB */
+J.sim('sim2', (v, box) => {
+  const wsMB = Math.pow(10, v.ws); // 1 MB ~ 1 TB
+  J.$('[data-o="ws"]', box).textContent = wsMB >= 1024 ? J.fmt(wsMB/1024,1)+' GB' : J.fmt(wsMB,1)+' MB';
+  const reach = [4/1024, 2, 1024].map(p => v.n*p); // MB
+  const hit = (r, ws) => Math.min(1, r/ws);
+  const cols = ['--red','--gold','--jade'];
+  const series = reach.map((r,i) => ({pts: Array.from({length:121}, (_,k) => { const ws = Math.pow(10, k*0.05); return [ws, hit(r, ws)*100]; }), color:cols[i], w:2.5}));
+  J.plot(document.getElementById('cv2'), {x:[1, 1e6], y:[0,105], logx:true, xlab:'작업 집합 (MB, 로그)', ylab:'TLB 적중률 (%)', xf:t=>t>=1024?(t/1024)+'G':t+'M', series, vlines:[{x:wsMB, color:'--ink', dash:[2,3]}]});
+  const f = mb => mb >= 1024*1024 ? J.fmt(mb/1048576,1)+'T' : mb >= 1024 ? J.fmt(mb/1024,1)+'G' : J.fmt(mb,1)+'M';
+  J.out(box,'r', reach.map(f).join(' / '));
+  const c4 = (1 - hit(reach[0], wsMB))*v.w, c2 = (1 - hit(reach[1], wsMB))*v.w;
+  J.out(box,'c4', J.fmt(c4,1)+' 클록', c4 > 10 ? 'bad' : c4 > 1 ? 'warn' : 'good');
+  J.out(box,'c2', J.fmt(c2,1)+' 클록', c2 > 10 ? 'bad' : c2 > 1 ? 'warn' : 'good');
+});
+
+/* 4-3 폴트·스래싱 */
+(function(){
+  const R = J.rng(31), T = [];
+  for(let ph=0; ph<8; ph++){ const base = ph*7; for(let k=0;k<150;k++){ T.push(R() < 0.9 ? base + Math.floor(R()*10) : Math.floor(R()*70)); } }
+  function faults(F, pol){
+    let mem = [], f = 0, t = 0; const last = new Map();
+    for(let i=0;i<T.length;i++){
+      const p = T[i]; t++;
+      if(mem.includes(p)){ last.set(p, t); continue; }
+      f++;
+      if(mem.length < F){ mem.push(p); last.set(p, t); continue; }
+      let v = 0;
+      if(pol === 'fifo') v = 0;
+      else if(pol === 'lru'){ mem.forEach((q,k) => { if(last.get(q) < last.get(mem[v])) v = k; }); }
+      else { let far = -1; mem.forEach((q,k) => { let nx = T.indexOf(q, i+1); if(nx < 0) nx = 1e9; if(nx > far){ far = nx; v = k; } }); }
+      mem.splice(v,1); mem.push(p); last.set(p, t);
+    }
+    return f/T.length;
+  }
+  const cache = {};
+  J.sim('sim3', (v, box) => {
+    const key = v.pol; if(!cache[key]) cache[key] = Array.from({length:39}, (_,i) => [i+2, faults(i+2, v.pol)*100]);
+    const fr = cache[key].find(p => p[0] === v.f)[1];
+    J.plot(document.getElementById('cv3a'), {x:[2,40], y:[0,100], xlab:'프레임 수', ylab:'폴트율 (%)', series:[{pts:cache[key], color:'--red', w:2.5}], points:[{x:v.f, y:fr, color:'--ink', r:6}], vlines:[{x:10, color:'--jade', label:'작업 집합 ≈ 10', dash:[2,3]}]});
+    const eat = (1 - fr/100)*0.08 + fr/100*50; // µs
+    J.out(box,'fr', J.fmt(fr,1)+' %', fr > 10 ? 'bad' : fr > 2 ? 'warn' : 'good');
+    J.out(box,'eat', eat >= 1 ? J.fmt(eat,2)+' µs' : J.fmt(eat*1000,0)+' ns');
+    // 다중 프로그래밍
+    const M = 64, ws = 10;
+    const util = n => { const share = M/n, fprob = share >= ws ? 0.001 : Math.min(1, Math.pow(ws/share - 1, 1.2)*0.3 + 0.01); return (1 - Math.pow(0.5, n))*(1/(1 + n*fprob*40)); };
+    const pts = []; for(let n=1;n<=20;n++) pts.push([n, util(n)*100]);
+    J.plot(document.getElementById('cv3b'), {x:[1,20], y:[0,100], xlab:'동시 프로세스 수', ylab:'CPU 활용률 (%)', series:[{pts, color:'--jade', w:2.5}], points:[{x:v.np, y:util(v.np)*100, color:'--red', r:6}], vlines:[{x:M/ws, color:'--red', label:'몫 < 작업 집합', dash:[2,3]}]});
+    J.out(box,'u', J.fmt(util(v.np)*100,0)+' %', util(v.np) > .6 ? 'good' : util(v.np) > .3 ? 'warn' : 'bad');
+  });
+})();
+</script>
+</body>
+</html>

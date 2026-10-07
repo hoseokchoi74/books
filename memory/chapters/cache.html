@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>캐시 · 메모리 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c7a68'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E憶%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+</head>
+<body data-ch="cache">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 03 <span class="hanja">第三章 · 藏</span></div>
+  <h1>캐시</h1>
+  <p class="lead">책상 위에 자주 보는 책 몇 권을 꺼내 두면 서고까지 걸어가지 않아도 된다. 캐시는 메모리의 책상이다. 그런데 책상에 어떤 책을 어디에 둘지, 자리가 차면 무엇을 치울지 정해야 한다. 이 장은 그 규칙들 — 사상(mapping), 연관도, 교체 정책 — 이 적중률을 어떻게 바꾸는지 직접 돌려 본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>주소를 태그·인덱스·오프셋으로 나누는 방법과 직접 사상·집합 연관·완전 연관 캐시를 설명할 수 있다.</li>
+  <li>미스를 강제(compulsory)·용량(capacity)·충돌(conflict) 미스로 분류할 수 있다(3C).</li>
+  <li>캐시 크기·연관도·블록 크기가 미스율에 주는 영향을 실험한다.</li>
+  <li>캐시가 클수록 느려지는 트레이드오프로 최적 L1 크기를 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>주소를 세 조각으로</h2>
+<p>캐시는 메모리를 <span class="term">블록</span>(캐시 라인, 보통 64바이트) 단위로 가져온다. 주소의 가장 아래 비트들은 블록 안의 위치(<span class="term">오프셋</span>), 그 위 몇 비트는 블록이 들어갈 칸의 번호(<span class="term">인덱스</span>), 나머지는 같은 칸을 놓고 경쟁하는 블록들을 구별하는 이름표(<span class="term">태그</span>)다. 블록이 들어갈 수 있는 자리가 정확히 하나면 <span class="term">직접 사상(direct-mapped)</span>, 한 집합 안의 \(A\)개 자리 중 아무 데나 들어가면 <span class="term">\(A\)-웨이 집합 연관</span>, 어디든 들어가면 <span class="term">완전 연관</span>이다.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 760 170" id="addrFig" role="img" aria-label="주소 분해"></svg>
+<figcaption><b>그림 3-1.</b> 32 KB, 8-웨이, 64바이트 라인 L1 캐시의 주소 분해(48비트 가상 주소의 하위 12비트만 인덱스·오프셋에 쓰이는 덕분에, 주소 변환과 캐시 조회를 동시에 시작할 수 있다 — 4장).</figcaption>
+</figure>
+
+<h2 id="s2"><span class="n">02</span>캐시를 직접 돌려 보기</h2>
+<p>미스에는 세 종류가 있다. 처음 보는 블록이라 어쩔 수 없는 <span class="term">강제 미스</span>, 캐시가 작아 쫓겨났던 블록을 다시 찾는 <span class="term">용량 미스</span>, 캐시에 빈자리가 있는데도 같은 집합에 몰려 쫓겨난 <span class="term">충돌 미스</span>. 충돌 미스는 연관도를 높이면 사라지고, 용량 미스는 캐시를 키워야 줄고, 강제 미스는 블록을 크게 하거나 미리 가져와야(prefetch) 준다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-1</span><span class="ttl">캐시 시뮬레이터와 3C 미스</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">캐시 라인 수 <output data-o="L"></output></span><input type="range" data-k="L" min="2" max="5" step="1" value="3" data-d="0"></label>
+      <label class="ctrl"><span class="lab">연관도</span><select data-k="A"><option value="1">직접 사상 (1-웨이)</option><option value="2">2-웨이</option><option value="4">4-웨이</option><option value="0">완전 연관</option></select></label>
+      <label class="ctrl"><span class="lab">블록 크기 <output data-o="B"></output></span><input type="range" data-k="B" min="0" max="3" step="1" value="1" data-d="0"></label>
+      <label class="ctrl"><span class="lab">접근 패턴</span><select data-k="pat"><option value="loop">배열 반복 훑기 (40워드)</option><option value="conf">두 배열 번갈아 (같은 집합 충돌)</option><option value="col">행렬 열 방향 순회</option><option value="rand">무작위</option></select></label>
+      <label class="ctrl"><span class="lab">교체 정책</span><select data-k="rep"><option value="lru">LRU</option><option value="fifo">FIFO</option><option value="rnd">무작위</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="cStep">한 번 접근</button><button class="sbtn pri" id="cPlay">▶ 재생</button><button class="sbtn" id="cAll">끝까지 (200회)</button><button class="sbtn warn" id="cReset">초기화</button></div>
+    <div class="fig-row" style="align-items:stretch"><div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div><div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div></div>
+    <div class="readouts">
+      <div class="ro good"><span class="k">적중</span><span class="v" data-r="h"></span></div>
+      <div class="ro"><span class="k">강제 미스</span><span class="v" data-r="cm"></span></div>
+      <div class="ro warn"><span class="k">용량 미스</span><span class="v" data-r="cap"></span></div>
+      <div class="ro bad"><span class="k">충돌 미스</span><span class="v" data-r="cf"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽은 캐시의 집합(행)과 웨이(열), 칸 안 숫자는 들어 있는 블록 번호다. 방금 접근한 칸이 초록(적중) 또는 빨강(미스)으로 빛난다. 오른쪽은 미스 종류별 누적 막대. "두 배열 번갈아"에서 직접 사상은 충돌 미스투성이지만 2-웨이로 바꾸면 사라진다. "배열 반복"은 배열(40워드)이 캐시보다 크면 LRU가 최악이 된다 — 무작위 교체와 비교해 보자.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>크기와 연관도</h2>
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-2</span><span class="ttl">캐시 크기에 따른 미스율 곡선</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">작업 부하</span><select data-k="w"><option value="mix">혼합 (반복 + 무작위 + 보폭)</option><option value="stride">보폭 접근 위주</option><option value="hot">핫스팟 (80/20)</option></select></label>
+      <label class="ctrl"><span class="lab">블록 크기 (워드) <output data-o="b"></output></span><input type="range" data-k="b" min="1" max="16" step="1" value="4" data-d="0"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="300"></canvas></div>
+    <div class="legend"><span><i style="background:var(--red)"></i>직접 사상</span><span><i style="background:var(--gold)"></i>2-웨이</span><span><i style="background:var(--indigo)"></i>4-웨이</span><span><i style="background:var(--jade)"></i>완전 연관</span></div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 같은 접근 기록(4,000회)을 캐시 크기와 연관도를 바꿔 가며 돌린 결과다. 경험칙 "2:1 규칙" — 크기 N의 직접 사상 캐시는 크기 N/2의 2-웨이 캐시와 미스율이 비슷하다 — 을 곡선에서 확인해 보자. 블록을 키우면 공간 지역성 덕에 미스가 줄다가, 너무 크면 라인 수가 줄어 다시 는다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>큰 캐시는 느린 캐시</h2>
+<p>캐시를 키우면 미스는 줄지만, 배열이 커져 배선이 길어지고 비교할 태그가 늘어 적중 시간이 길어진다. 그래서 작고 빠른 L1, 크고 느린 L2·L3로 계층을 나눈다. 미스율은 대략 크기의 제곱근에 반비례한다는 경험칙(√2 규칙)을 쓰면 최적 크기를 어림할 수 있다.</p>
+<div class="eq">$$\text{AMAT}(S) = t_{hit}(S) + m(S)\cdot t_{miss},\qquad m(S) \approx m_0\sqrt{S_0/S},\qquad t_{hit}(S) \approx t_0 + k\log_2(S/S_0)$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-3</span><span class="ttl">L1 크기 최적화</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">L1 크기 <output data-o="s"></output></span><input type="range" data-k="s" min="3" max="10" step="1" value="5" data-d="0"></label>
+      <label class="ctrl"><span class="lab">미스 비용 (L2까지) <output data-o="tm"></output></span><input type="range" data-k="tm" min="5" max="40" step="1" value="20" data-d="0" data-u="클록"></label>
+      <label class="ctrl"><span class="lab">크기 두 배당 적중 시간 증가 <output data-o="k"></output></span><input type="range" data-k="k" min="0.1" max="1.5" step="0.05" value="0.25" data-d="2" data-u="클록"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="270"></canvas></div>
+    <div class="legend"><span><i style="background:var(--indigo)"></i>적중 시간</span><span><i style="background:var(--gold)"></i>미스율 × 미스 비용</span><span><i style="background:var(--jade)"></i>AMAT (합)</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">이 크기의 적중 시간 / 미스율</span><span class="v" data-r="hm"></span></div>
+      <div class="ro"><span class="k">AMAT</span><span class="v" data-r="amat"></span></div>
+      <div class="ro"><span class="k">최적 크기</span><span class="v" data-r="opt"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모델.</b> 8 KB에서 적중 3클록·미스율 10 %로 정규화했다. 실제 L1이 수십 KB에 머무는 이유가 이 곡선의 바닥이다. 미스 비용이 커지면(느린 하위 계층) 최적점이 오른쪽(큰 캐시)으로 간다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">충돌 미스를 없애는 가장 직접적인 방법은?</p><ol><li>블록을 키운다</li><li>캐시 전압을 올린다</li><li>연관도를 높인다</li><li>프리페치를 끈다</li></ol>
+<p class="explain">같은 집합에 몰린 블록들이 여러 웨이에 함께 머물 수 있게 된다.</p></div>
+<div class="quiz" data-a="0"><p class="q">32 KB, 8-웨이, 64 B 라인 캐시의 집합 수는?</p><ol><li>64</li><li>512</li><li>8</li><li>4096</li></ol>
+<p class="explain">32768 / 64 = 512 라인, 512 / 8 = 64 집합 → 인덱스 6비트.</p></div>
+<div class="quiz" data-a="3"><p class="q">배열이 캐시보다 조금 클 때 반복 훑기에서 LRU가 나쁜 이유는?</p><ol><li>태그가 길어서</li><li>강제 미스가 많아서</li><li>무작위라서</li><li>곧 다시 쓸 블록을 항상 가장 오래된 것으로 보고 내쫓기 때문에</li></ol>
+<p class="explain">순환 접근에서 LRU는 매번 다음에 필요한 블록을 버린다. 무작위 교체가 오히려 낫다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 3-1 */
+(function(){
+  const s = document.getElementById('addrFig');
+  const parts = [['태그', 36, '--indigo', '비트 47–12'],['인덱스', 6, '--gold', '비트 11–6 · 64 집합'],['오프셋', 6, '--jade', '비트 5–0 · 64 B']];
+  let x = 20; const W = 720/48;
+  parts.forEach(p => { const w = p[1]*W*(p[0]==='태그' ? 0.5 : 2.2);
+    J.svg('rect', {x, y:40, width:w, height:46, fill:`var(${p[2]})`, opacity:.8}, s);
+    J.svg('text', {x:x+w/2, y:68, 'text-anchor':'middle', class:'t-m', text:p[0]+' ('+p[1]+'비트)', style:'fill:#fff;font-weight:700'}, s);
+    J.svg('text', {x:x+w/2, y:106, 'text-anchor':'middle', class:'t-s', text:p[3]}, s); x += w + 4; });
+  J.svg('text', {x:20, y:28, class:'t-s', text:'48비트 주소 (태그 구간은 축소해 그림)'}, s);
+  J.svg('text', {x:20, y:146, class:'t-s', text:'조회: ① 인덱스로 집합 하나 선택 → ② 그 집합 8개 웨이의 태그를 동시에 비교 → ③ 일치하면 오프셋 위치의 바이트를 꺼냄'}, s);
+})();
+
+/* 캐시 엔진 */
+function Cache(lines, assoc, rep, seed){
+  this.L = lines; this.A = assoc === 0 ? lines : Math.min(assoc, lines); this.S = this.L/this.A; this.rep = rep;
+  this.sets = Array.from({length:this.S}, () => []); // {blk, t}
+  this.t = 0; this.R = J.rng(seed||5);
+}
+Cache.prototype.access = function(blk){
+  const s = this.sets[blk % this.S]; this.t++;
+  const i = s.findIndex(e => e.blk === blk);
+  if(i >= 0){ if(this.rep === 'lru') s[i].t = this.t; return {hit:true, set:blk % this.S, way:i}; }
+  if(s.length < this.A){ s.push({blk, t:this.t}); return {hit:false, set:blk % this.S, way:s.length-1}; }
+  let v = 0;
+  if(this.rep === 'rnd') v = Math.floor(this.R()*s.length); else s.forEach((e,k) => { if(e.t < s[v].t) v = k; });
+  s[v] = {blk, t:this.t};
+  return {hit:false, set:blk % this.S, way:v};
+};
+
+/* 3-1 */
+(function(){
+  const box = document.getElementById('sim1');
+  let C, F, seen, trace, pos, stats, last, play = false, acc = 0;
+  const rd = () => { const v = {}; J.$$('[data-k]', box).forEach(i => v[i.dataset.k] = i.value); return v; };
+  function makeTrace(v, lines, B){
+    const T = [], R = J.rng(9);
+    for(let k=0;k<200;k++){
+      if(v.pat === 'loop') T.push(k % 40);
+      else if(v.pat === 'conf'){ const span = lines*B; const i = Math.floor(k/2) % (B*2); T.push(k % 2 ? i + span*2 : i); }
+      else if(v.pat === 'col'){ const r = k % 8, c = Math.floor(k/8) % 8; T.push(r*16 + c); }
+      else T.push(Math.floor(R()*96));
+    }
+    return T;
+  }
+  function reset(){
+    const v = rd(), lines = Math.pow(2, +v.L), B = Math.pow(2, +v.B);
+    J.$('[data-o="L"]', box).textContent = lines+' 라인'; J.$('[data-o="B"]', box).textContent = B+' 워드';
+    C = new Cache(lines, +v.A, v.rep, 5); F = new Cache(lines, 0, 'lru', 5); seen = new Set();
+    trace = makeTrace(v, lines, B).map(a => Math.floor(a/B)); pos = 0; stats = {h:0, cm:0, cap:0, cf:0}; last = null; play = false;
+    document.getElementById('cPlay').textContent = '▶ 재생'; draw();
+  }
+  function step(){
+    if(pos >= trace.length){ play = false; return; }
+    const blk = trace[pos++], r = C.access(blk), fr = F.access(blk);
+    if(r.hit) stats.h++; else if(!seen.has(blk)) stats.cm++; else if(!fr.hit) stats.cap++; else stats.cf++;
+    seen.add(blk); last = {...r, blk};
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(document.getElementById('cv1'));
+    ctx.clearRect(0,0,w,h);
+    const S = C.S, A = C.A, cw = Math.min(70, (w-60)/A), ch = Math.min(34, (h-40)/S);
+    ctx.font = '11px "JetBrains Mono"'; ctx.textBaseline='middle';
+    for(let s=0;s<S;s++){
+      ctx.fillStyle = J.c('--ink3'); ctx.textAlign='right'; ctx.fillText('집합 '+s, 52, 30 + s*ch + ch/2);
+      for(let a=0;a<A;a++){
+        const x = 58 + a*cw, y = 30 + s*ch, e = C.sets[s][a], isLast = last && last.set === s && last.way === a;
+        ctx.fillStyle = J.c(isLast ? (last.hit ? '--jade' : '--red') : e ? '--card' : '--paper2'); ctx.globalAlpha = isLast ? .85 : 1;
+        ctx.fillRect(x+2, y+2, cw-4, ch-4); ctx.globalAlpha = 1; ctx.strokeStyle = J.c('--line'); ctx.strokeRect(x+2.5, y+2.5, cw-5, ch-5);
+        if(e){ ctx.fillStyle = J.c(isLast ? '--card' : '--ink'); ctx.textAlign='center'; ctx.fillText('B'+e.blk, x + cw/2, y + ch/2); }
+      }
+    }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    ctx.fillText(`접근 ${pos}/${trace.length}` + (last ? ` · 블록 B${last.blk} → ${last.hit ? '적중' : '미스'}` : ''), 10, 18);
+    // 막대
+    const b = J.fit(document.getElementById('cv1b')), c2 = b.ctx; c2.clearRect(0,0,b.w,b.h);
+    const items = [['적중', stats.h, '--jade'],['강제', stats.cm, '--ink3'],['용량', stats.cap, '--gold'],['충돌', stats.cf, '--red']];
+    const mx = Math.max(10, pos), bw = (b.w-40)/4;
+    items.forEach((it,i) => { const hh = it[1]/mx*(b.h-60); c2.fillStyle = J.c(it[2]); c2.fillRect(20 + i*bw + 8, b.h-30-hh, bw-16, hh);
+      c2.fillStyle = J.c('--ink'); c2.font = '12px "Noto Sans KR"'; c2.textAlign='center'; c2.fillText(it[0], 20 + i*bw + bw/2, b.h-12); c2.font = '12px "JetBrains Mono"'; c2.fillText(it[1], 20 + i*bw + bw/2, b.h-36-hh); });
+    J.out(box,'h', stats.h); J.out(box,'cm', stats.cm); J.out(box,'cap', stats.cap); J.out(box,'cf', stats.cf);
+  }
+  J.$$('[data-k]', box).forEach(i => i.addEventListener('input', reset));
+  document.getElementById('cStep').onclick = () => { step(); draw(); };
+  document.getElementById('cPlay').onclick = e => { play = !play; e.target.textContent = play ? '❚❚ 멈춤' : '▶ 재생'; };
+  document.getElementById('cAll').onclick = () => { while(pos < trace.length) step(); draw(); };
+  document.getElementById('cReset').onclick = reset;
+  reset(); J.live(draw);
+  J.loop(document.getElementById('cv1'), dt => { if(play){ acc += dt; if(acc > 0.12){ acc = 0; step(); draw(); } } });
+})();
+
+/* 3-2 */
+J.sim('sim2', (v, box) => {
+  const R = J.rng(21), T = [];
+  for(let k=0;k<4000;k++){
+    let a;
+    if(v.w === 'stride') a = (k*17) % 2048;
+    else if(v.w === 'hot') a = R() < .8 ? Math.floor(R()*200) : Math.floor(R()*4000);
+    else { const ph = Math.floor(k/500) % 3; a = ph === 0 ? k % 300 : ph === 1 ? Math.floor(R()*3000) : (k*33) % 1500; }
+    T.push(Math.floor(a/v.b));
+  }
+  const sizes = [4,8,16,32,64,128,256,512], cols = ['--red','--gold','--indigo','--jade'];
+  const series = [1,2,4,0].map((A,ai) => ({pts: sizes.map(L => { const c = new Cache(L, A, 'lru', 3); let m = 0; T.forEach(b => { if(!c.access(b).hit) m++; }); return [L, m/T.length*100]; }), color:cols[ai], w:2.5}));
+  J.plot(document.getElementById('cv2'), {x:[4,512], y:[0,100], logx:true, xlab:'캐시 크기 (라인 수, 로그)', ylab:'미스율 (%)', xf:t=>t, series});
+});
+
+/* 3-3 */
+J.sim('sim3', (v, box) => {
+  const S0 = 8, sz = Math.pow(2, v.s), m = s => 0.10*Math.sqrt(S0/s), th = s => 3 + v.k*Math.log2(s/S0);
+  J.$('[data-o="s"]', box).textContent = sz+' KB';
+  const pts = [], hp = [], mp = []; let best = 8, bv = 1e9;
+  for(let e=3; e<=10; e+=0.05){ const s = Math.pow(2,e), a = th(s) + m(s)*v.tm; pts.push([s, a]); hp.push([s, th(s)]); mp.push([s, m(s)*v.tm]); if(a < bv){ bv = a; best = s; } }
+  J.plot(document.getElementById('cv3'), {x:[8,1024], y:[0, 10], logx:true, xlab:'L1 크기 (KB, 로그)', ylab:'클록', xf:t=>t,
+    series:[{pts:hp, color:'--indigo', w:2, dash:[5,4]},{pts:mp, color:'--gold', w:2, dash:[5,4]},{pts, color:'--jade', w:3}],
+    points:[{x:sz, y:th(sz) + m(sz)*v.tm, color:'--red', r:6}], vlines:[{x:best, color:'--jade', label:'최적 '+Math.round(best)+' KB', dash:[2,3]}]});
+  J.out(box,'hm', J.fmt(th(sz),2)+' clk / '+J.fmt(m(sz)*100,1)+' %');
+  J.out(box,'amat', J.fmt(th(sz) + m(sz)*v.tm,2)+' clk');
+  J.out(box,'opt', Math.round(best)+' KB');
+});
+</script>
+</body>
+</html>
