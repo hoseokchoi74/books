@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>포토리소그래피 · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="litho">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 06 <span class="hanja">第六章 · 寫</span></div>
+  <h1>포토리소그래피</h1>
+  <p class="lead">노광은 팹에서 가장 비싸고, 가장 많이 반복되며, 다음 세대를 가능하게 하는 공정이다. 마스크 무늬는 렌즈를 지나며 회절로 일부 정보를 잃은 채 웨이퍼 위에 흐릿한 <span class="term">공간 상</span>(aerial image)으로 맺히고, 감광액이 그것을 문턱값으로 잘라 패턴을 만든다. 이 장은 그 흐릿함을 직접 계산한다: 부분 결맞음 결상, 초점과 노광량의 공정 창, 감광액 속 정재파, 그리고 마스크를 일부러 "틀리게" 그리는 OPC.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>회절 차수와 동공(pupil)으로 공간 상이 만들어지는 과정을 계산한다(아베 결상).</li>
+  <li>부분 결맞음(σ)과 초점 이탈이 대비와 선폭에 주는 영향을 본다.</li>
+  <li>보썽 곡선에서 공정 창(초점 심도 × 노광 관용도)을 읽는다.</li>
+  <li>감광액 두께에 따른 스윙 곡선과 반사 방지막의 역할을 이해한다.</li>
+  <li>근접 효과를 보정하는 OPC의 원리를 2차원 상으로 확인한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>공간 상: 렌즈가 통과시키는 회절 차수</h2>
+<p>주기 p인 선 무늬 마스크는 빛을 sin θ = mλ/p 방향의 회절 차수로 나눈다. 투영 렌즈는 개구수 NA 안의 차수만 모은다. 0차만 들어오면 무늬 정보가 없어 밝기가 평평하고, ±1차가 함께 들어와야 간섭무늬가 맺힌다. 조명을 한 점이 아닌 원반(부분 결맞음 σ)으로 하면 기울어진 조명 성분이 1차를 렌즈 안으로 끌어들여 더 작은 피치까지 찍을 수 있지만 대비는 조금 낮아진다. 초점이 어긋나면 각 차수에 서로 다른 위상이 붙어 상이 무너진다.</p>
+<div class="eq">$$I(x) = \sum_{s\,\in\,\text{광원}}\Bigl|\sum_{m}\, a_m\,P\!\left(\tfrac{m}{p}+s\right)\,e^{\,i2\pi(m/p)x}\,e^{\,i\pi\lambda z (m/p+s)^2}\Bigr|^2,\qquad P(f) = \begin{cases}1 & |f|\le NA/\lambda\\0\end{cases}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-1</span><span class="ttl">아베 결상 시뮬레이터 (선·간격 무늬)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">피치 p <output data-o="p"></output></span><input type="range" data-k="p" min="40" max="400" step="2" value="200" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">파장</span><select data-k="l"><option value="248">KrF 248 nm</option><option value="193" selected>ArF 193 nm</option><option value="134">ArF 액침 (실효 134 nm)</option><option value="13.5">EUV 13.5 nm</option></select></label>
+      <label class="ctrl"><span class="lab">NA <output data-o="na"></output></span><input type="range" data-k="na" min="0.25" max="0.95" step="0.01" value="0.85" data-d="2"></label>
+      <label class="ctrl"><span class="lab">부분 결맞음 σ <output data-o="s"></output></span><input type="range" data-k="s" min="0.05" max="0.95" step="0.05" value="0.6" data-d="2"></label>
+      <label class="ctrl"><span class="lab">초점 이탈 z <output data-o="z"></output></span><input type="range" data-k="z" min="-300" max="300" step="10" value="0" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">대비 (I_max−I_min)/(합)</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">NILS (선 가장자리 기울기)</span><span class="v" data-r="nils"></span></div>
+      <div class="ro"><span class="k">k₁ = (p/2)·NA/λ</span><span class="v" data-r="k1"></span></div>
+      <div class="ro"><span class="k">찍을 수 있는 최소 피치</span><span class="v" data-r="pm"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 동공 평면. 큰 원이 NA 경계, 색 점은 회절 차수(가로 위치 = 공간 주파수)이고, 각 점의 가로 막대는 광원 σ로 퍼진 범위다. 막대가 원 안에 많이 들어올수록 상이 선명하다. 오른쪽: 웨이퍼 위 빛의 세기(빨강)와 마스크(회색 띠). 최소 피치는 λ/(NA(1+σ)). EUV에서 NA를 0.33으로 두려면 슬라이더를 낮추자. 반사·편광·감광액 흐림은 무시했다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>보썽 곡선과 공정 창</h2>
+<p>실제 팹에서는 초점(웨이퍼 높이 오차, 렌즈 수차)과 노광량(광원 출력 흔들림)이 끊임없이 흔들린다. 여러 초점·노광량에서 선폭(CD)을 측정해 그린 그래프가 <span class="term">보썽 곡선</span>(Bossung plot)이다. CD가 목표 ±10 % 안에 드는 초점·노광량 영역이 <span class="term">공정 창</span>이며, 그 안에 직사각형을 그려 얻는 초점 범위가 <b>초점 심도(DOF)</b>, 노광량 범위가 <b>노광 관용도(EL)</b>다. 두 값이 클수록 대량 생산에서 안전하다.</p>
+<div class="eq">$$DOF \approx k_2\,\frac{\lambda}{NA^2}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-2</span><span class="ttl">보썽 곡선과 공정 창</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">피치 (선폭 = 피치/2 목표) <output data-o="p"></output></span><input type="range" data-k="p" min="120" max="400" step="4" value="200" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">NA <output data-o="na"></output></span><input type="range" data-k="na" min="0.5" max="0.93" step="0.01" value="0.75" data-d="2"></label>
+      <label class="ctrl"><span class="lab">σ <output data-o="s"></output></span><input type="range" data-k="s" min="0.2" max="0.9" step="0.05" value="0.6" data-d="2"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">최적 노광량 (상대)</span><span class="v" data-r="e0"></span></div>
+      <div class="ro"><span class="k">DOF (EL 8 % 확보 시)</span><span class="v" data-r="dof"></span></div>
+      <div class="ro"><span class="k">초점 0에서 EL</span><span class="v" data-r="el"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 노광량별 CD–초점 곡선(ArF 193 nm, 문턱 감광액 모형). 초록 띠가 목표 CD ±10 %. 오른쪽: 초점–노광량 평면의 공정 창(색칠 = 사양 만족)과 그 안의 가장 큰 직사각형(EL ≥ 8 % 조건). NA를 키우면 해상도는 좋아지지만 DOF가 λ/NA²로 줄어든다 — 웨이퍼 평탄도(2장)가 중요한 이유다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>감광액 속 정재파와 스윙 곡선</h2>
+<p>빛은 감광액을 지나 아래 기판에서 반사되어 되돌아오며 들어오는 빛과 간섭해 <span class="term">정재파</span>를 만든다. 그 결과 ① 감광액 벽에 물결 무늬가 생기고 ② 감광액 두께가 λ/(4n)만큼만 바뀌어도 흡수되는 에너지가 크게 달라져 CD가 출렁인다(<span class="term">스윙 곡선</span>). 웨이퍼 단차 때문에 감광액 두께는 곳곳에서 다르므로 이것은 치명적이다. 해결책은 감광액 아래에 반사 방지막(BARC)을 까는 것이다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-3</span><span class="ttl">스윙 곡선과 반사 방지막</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">감광액 두께 <output data-o="t"></output></span><input type="range" data-k="t" min="60" max="300" step="1" value="150" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">기판 반사율 <output data-o="r"></output></span><input type="range" data-k="r" min="0" max="0.7" step="0.01" value="0.55" data-d="2"></label>
+      <label class="ctrl"><span class="lab">반사 방지막 BARC <output data-o="b"></output></span><input type="checkbox" data-k="b"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">흡수 에너지 (상대)</span><span class="v" data-r="e"></span></div>
+      <div class="ro"><span class="k">스윙 비 (최대−최소)/평균</span><span class="v" data-r="sw"></span></div>
+      <div class="ro"><span class="k">스윙 주기 λ/2n</span><span class="v" data-r="per"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 감광액 단면 속 빛 세기(깊이 방향 정재파). 오른쪽: 두께에 따른 흡수 에너지(스윙 곡선)와 지금 두께. ArF 193 nm, 감광액 n = 1.7, 흡수 α = 1.2 µm⁻¹. BARC를 켜면 실효 반사율이 1 % 수준으로 떨어져 곡선이 평평해진다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>OPC: 일부러 틀리게 그린 마스크</h2>
+<p>렌즈는 높은 공간 주파수를 잘라 내므로, 웨이퍼 위 상은 마스크를 흐리게 한 모습이다. 직사각형 끝은 짧아지고(<span class="term">선 끝 후퇴</span>), 모서리는 둥글어지며, 촘촘한 선과 외딴 선의 폭이 달라진다. <span class="term">광 근접 보정</span>(OPC)은 이 왜곡을 미리 계산해 마스크 모양을 반대로 비튼다 — 선 끝에 망치머리, 모서리에 세리프를 붙이고, 외딴 선 옆에는 찍히지 않을 만큼 가는 보조선(SRAF)을 둔다. 오늘날 마스크 한 장의 OPC 계산에는 수천 대의 컴퓨터가 하루 넘게 쓰인다.</p>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-4</span><span class="ttl">2차원 상과 OPC</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">흐림 정도 (λ/NA 비례) <output data-o="b"></output></span><input type="range" data-k="b" min="10" max="40" step="1" value="24" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">OPC</span><select data-k="opc"><option value="0">없음 (설계 그대로)</option><option value="1">망치머리 + 세리프</option><option value="2">+ 보조선 (SRAF)</option></select></label>
+      <label class="ctrl"><span class="lab">노광량 (문턱) <output data-o="th"></output></span><input type="range" data-k="th" min="0.3" max="0.6" step="0.01" value="0.45" data-d="2"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv4a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv4b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">선 끝 후퇴</span><span class="v" data-r="le"></span></div>
+      <div class="ro"><span class="k">외딴 선 폭 / 목표</span><span class="v" data-r="iso"></span></div>
+      <div class="ro"><span class="k">목표와 다른 픽셀</span><span class="v" data-r="epe"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 마스크(검정 = 빛 통과하는 무늬, 1 칸 = 4 nm)와 목표 윤곽(초록 선). 오른쪽: 가우스 흐림으로 근사한 공간 상(색)과 문턱에서 자른 인쇄 윤곽(빨간 선). OPC를 켜면 빨간 윤곽이 초록 목표에 다가간다. 보조선은 외딴 선을 촘촘한 선처럼 보이게 해 폭과 초점 심도를 맞춰 준다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">ArF(193 nm), NA 0.85, σ = 0.6에서 찍을 수 있는 최소 피치는 약?</p><ol><li>60 nm</li><li>142 nm</li><li>227 nm</li><li>386 nm</li></ol>
+<p class="explain">λ/(NA(1+σ)) = 193/(0.85×1.6) ≈ 142 nm.</p></div>
+<div class="quiz" data-a="3"><p class="q">NA를 키울 때 초점 심도는?</p><ol><li>NA에 비례해 커진다</li><li>변하지 않는다</li><li>NA에 반비례</li><li>NA²에 반비례해 줄어든다</li></ol>
+<p class="explain">DOF ≈ k₂λ/NA².</p></div>
+<div class="quiz" data-a="0"><p class="q">스윙 곡선을 줄이는 가장 직접적인 방법은?</p><ol><li>반사 방지막(BARC)으로 기판 반사를 줄인다</li><li>노광량을 늘린다</li><li>감광액을 두 번 바른다</li><li>NA를 키운다</li></ol>
+<p class="explain">정재파는 기판 반사에서 생기므로 반사를 줄이면 스윙이 사라진다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 아베 결상 (1D, 50 % 선·간격, 투과 무늬) */
+function aerial(p, lam, na, sig, z, N = 200){
+  const fc = na/lam, ns = 15, I = new Float64Array(N);
+  const am = m => m === 0 ? 0.5 : Math.sin(Math.PI*m/2)/(Math.PI*m);
+  for(let k=0;k<ns;k++){ const s = (ns === 1 ? 0 : (k/(ns - 1)*2 - 1))*sig*fc, wgt = Math.sqrt(Math.max(0, 1 - Math.pow(k/(ns - 1)*2 - 1, 2))) + 0.15;
+    for(let i=0;i<N;i++){ const x = i/N*2*p; let re = 0, im = 0;
+      for(let m = -9; m <= 9; m++){ const f = m/p + s; if(Math.abs(f) > fc) continue; const a = am(m); if(!a) continue; const ph = 2*Math.PI*(m/p)*x + Math.PI*lam*z*f*f; re += a*Math.cos(ph); im += a*Math.sin(ph); }
+      I[i] += (re*re + im*im)*wgt; } }
+  let mx = 0; for(let k=0;k<ns;k++) mx += Math.sqrt(Math.max(0, 1 - Math.pow(k/(ns - 1)*2 - 1, 2))) + 0.15;
+  for(let i=0;i<N;i++) I[i] /= mx; return I;
+}
+J.sim('sim1', (v, box) => {
+  const lam = +v.l, I = aerial(v.p, lam, v.na, v.s, v.z), N = I.length;
+  let mx = 0, mn = 9; I.forEach(x => { mx = Math.max(mx, x); mn = Math.min(mn, x); });
+  const c = (mx - mn)/(mx + mn + 1e-9);
+  // NILS at edge (x = p/4 + ... 투과 영역은 m 정의상 중심 0)
+  const ie = Math.round(N/8), dI = (I[ie + 1] - I[ie - 1])/(2*(2*v.p/N)), nils = Math.abs(dI)*(v.p/2)/(I[ie] + 1e-9);
+  { const {ctx, w, h} = J.fit(document.getElementById('cv1a')); ctx.clearRect(0,0,w,h);
+    const cx = w/2, cy = h/2, R = Math.min(w, h)*0.32, fc = v.na/lam, sc = R/fc;
+    ctx.strokeStyle = J.c('--ink2'); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+    ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('NA 경계 (동공)', cx, cy - R - 8);
+    for(let m = -5; m <= 5; m++){ if(m !== 0 && m % 2 === 0) continue; const f = m/v.p, x = cx + f*sc; if(Math.abs(x - cx) > w/2) continue;
+      const half = v.s*fc*sc, inside = Math.max(0, Math.min(fc, f + v.s*fc) - Math.max(-fc, f - v.s*fc))/(2*v.s*fc);
+      ctx.strokeStyle = J.c(m === 0 ? '--ink' : Math.abs(m) === 1 ? '--red' : '--gold'); ctx.lineWidth = 6; ctx.globalAlpha = .35; ctx.beginPath(); ctx.moveTo(x - half, cy); ctx.lineTo(x + half, cy); ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c(m === 0 ? '--ink' : Math.abs(m) === 1 ? '--red' : '--gold'); ctx.beginPath(); ctx.arc(x, cy, 6, 0, 7); ctx.fill();
+      ctx.fillStyle = J.c('--ink'); ctx.font = '11px "JetBrains Mono"'; ctx.fillText((m > 0 ? '+' : '') + m, x, cy + 22); if(m !== 0) ctx.fillText(J.fmt(inside*100, 0) + '%', x, cy - 12); } }
+  { const pts = Array.from(I, (y, i) => [i/N*2*v.p, y]);
+    const P = J.plot(document.getElementById('cv1b'), {x:[0, 2*v.p], y:[0, 1.2], xlab:'위치 (nm)', ylab:'세기', series:[{pts, color:'--red', w:3}]});
+    const ctx = P.ctx; ctx.fillStyle = J.c('--ink3'); ctx.globalAlpha = .2; for(let q = 0; q < 4; q++){ const x0 = q*v.p/2 + v.p/4; if(q % 2 === 0) ctx.fillRect(P.X(x0), P.P.t, P.X(x0 + v.p/2) - P.X(x0), 10); } ctx.globalAlpha = 1; }
+  const pm = lam/(v.na*(1 + v.s));
+  J.out(box,'c', J.fmt(c*100, 0) + ' %', c > 0.5 ? 'good' : c > 0.2 ? 'warn' : 'bad'); J.out(box,'nils', J.fmt(nils, 2), nils > 2 ? 'good' : nils > 1 ? 'warn' : 'bad');
+  J.out(box,'k1', J.fmt(v.p/2*v.na/lam, 2), v.p/2*v.na/lam >= 0.28 ? '' : 'warn'); J.out(box,'pm', J.fmt(pm, 0) + ' nm');
+});
+
+/* 6-2 보썽 */
+J.sim('sim2', (v, box) => {
+  const lam = 193, p = v.p, target = p/2, N = 240;
+  const cache = new Map(), img = z => { if(!cache.has(z)) cache.set(z, aerial(p, lam, v.na, v.s, z, N)); return cache.get(z); };
+  const cdAt = (z, dose, th0) => { const I = img(z); const th = th0/dose; // 선(어두운 곳, 양성 감광액: I < th 이 남음) — 여기선 투과 무늬 폭을 CD로
+    let cnt = 0; for(let i=0;i<N/2;i++) if(I[i] > th) cnt++; return cnt/(N/2)*p; };
+  // 최적 노광: 초점 0에서 CD = target
+  let a = 0.05, b = 3; for(let k=0;k<30;k++){ const m = (a + b)/2; if(cdAt(0, m, 0.3) < target) a = m; else b = m; } const E0 = (a + b)/2;
+  const doses = [0.9, 0.95, 1, 1.05, 1.1], cols = ['--plum','--indigo','--red','--gold','--jade'], zs = [];
+  for(let z = -250; z <= 250; z += 25) zs.push(z);
+  const S = doses.map((d, k) => ({pts:zs.map(z => [z, cdAt(z, d*E0, 0.3)]), color:cols[k], w: d === 1 ? 3 : 1.6}));
+  J.plot(document.getElementById('cv2a'), {x:[-250, 250], y:[0, p], xlab:'초점 (nm)', ylab:'CD (nm)', series:S, bands:[{y0:target*0.9, y1:target*1.1, color:'--jade', alpha:.15}]});
+  // 공정 창 지도
+  const {ctx, w, h} = J.fit(document.getElementById('cv2b')); ctx.clearRect(0,0,w,h);
+  const L = 50, B = h - 34, X = z => L + (z + 250)/500*(w - L - 10), Y = d => B - (d - 0.8)/0.4*(B - 10);
+  const grid = []; const dz = 25, dd = 0.02;
+  for(let z = -250; z <= 250; z += dz){ const row = []; for(let d = 0.8; d <= 1.2001; d += dd){ const cd = cdAt(z, d*E0, 0.3), ok = Math.abs(cd - target) <= target*0.1; row.push(ok);
+    ctx.fillStyle = J.c(ok ? '--jade' : '--paper2'); ctx.globalAlpha = ok ? .55 : 1; ctx.fillRect(X(z - dz/2), Y(d + dd/2), X(z + dz/2) - X(z - dz/2) + .5, Y(d - dd/2) - Y(d + dd/2) + .5); ctx.globalAlpha = 1; } grid.push(row); }
+  // EL >= 8%에서 최대 DOF 직사각형
+  let best = {dof:0}; const nd = grid[0].length, need = Math.ceil(0.08/dd) + 1;
+  for(let d0 = 0; d0 + need <= nd; d0++){ let run = 0, bestRun = 0, end = 0; grid.forEach((row, zi) => { const ok = row.slice(d0, d0 + need).every(x => x); run = ok ? run + 1 : 0; if(run > bestRun){ bestRun = run; end = zi; } });
+    const dof = (bestRun - 1)*dz; if(dof > best.dof) best = {dof, d0, end, n:bestRun}; }
+  if(best.dof > 0){ const z1 = -250 + (best.end - best.n + 1)*dz, z2 = -250 + best.end*dz, dA = 0.8 + best.d0*dd, dB = dA + (need - 1)*dd; ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2.5; ctx.strokeRect(X(z1), Y(dB), X(z2) - X(z1), Y(dA) - Y(dB)); }
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('초점 (nm)', (L + w)/2, h - 6); [-200, -100, 0, 100, 200].forEach(z => ctx.fillText(z, X(z), B + 14));
+  ctx.textAlign = 'right'; [0.8, 0.9, 1, 1.1, 1.2].forEach(d => ctx.fillText(J.fmt(d, 1) + '×', L - 4, Y(d) + 4));
+  let el0 = 0; { const row = grid[Math.round(250/dz)]; let run = 0; row.forEach(x => { run = x ? run + 1 : 0; el0 = Math.max(el0, run); }); }
+  J.out(box,'e0', J.fmt(E0, 3)); J.out(box,'dof', J.fmt(best.dof, 0) + ' nm', best.dof > 150 ? 'good' : best.dof > 50 ? 'warn' : 'bad'); J.out(box,'el', J.fmt(Math.max(0, el0 - 1)*dd*100, 0) + ' %');
+});
+
+/* 6-3 스윙 */
+J.sim('sim3', (v, box) => {
+  const lam = 193, n = 1.7, alpha = 1.2e-3, R = v.b ? 0.002 : v.r, rr = Math.sqrt(R);
+  const absorbed = t => { let s = 0; for(let z = 0; z <= t; z += 1){ const f = Math.exp(-alpha*z), b = rr*Math.exp(-alpha*(2*t - z)); s += alpha*(f*f + b*b + 2*f*b*Math.cos(4*Math.PI*n*(t - z)/lam)); } return s; };
+  const absorbed0 = t => (1 - Math.exp(-2*alpha*t))/2;
+  const pts = []; let mx = 0, mn = 9, sum = 0, cnt = 0; for(let t = 60; t <= 300; t += 2){ const e = absorbed(t)/absorbed0(t); pts.push([t, e]); if(t >= 120 && t <= 240){ mx = Math.max(mx, e); mn = Math.min(mn, e); sum += e; cnt++; } }
+  const e0 = absorbed(v.t)/absorbed0(v.t);
+  J.plot(document.getElementById('cv3b'), {x:[60, 300], y:[0, 2.2], xlab:'감광액 두께 (nm)', ylab:'흡수 에너지 (반사 없을 때 = 1)', series:[{pts, color:'--plum', w:3}], points:[{x:v.t, y:e0, color:'--red', r:6}]});
+  const {ctx, w, h} = J.fit(document.getElementById('cv3a')); ctx.clearRect(0,0,w,h);
+  const top = 30, bot = h - 40, Z = z => top + z/v.t*(bot - top);
+  for(let z = 0; z <= v.t; z += 1){ const f = Math.exp(-alpha*z), b = rr*Math.exp(-alpha*(2*v.t - z)), I = f*f + b*b + 2*f*b*Math.cos(4*Math.PI*n*(v.t - z)/lam);
+    ctx.fillStyle = `rgba(150, 70, 200, ${J.clamp(I/2.2, 0.05, 1)})`; ctx.fillRect(40, Z(z), w*0.45, Z(z + 1) - Z(z) + .5);
+    ctx.fillStyle = J.c('--red'); ctx.fillRect(w*0.55 + I*w*0.18, Z(z), 2, 1.2); }
+  ctx.fillStyle = v.b ? '#3a3a3a' : '#9aa3b5'; ctx.fillRect(40, bot, w - 60, 18); ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left';
+  ctx.fillText(v.b ? 'BARC (반사 1 %)' : '기판 (반사 ' + J.fmt(v.r*100, 0) + ' %)', 44, bot + 13); ctx.fillText('↓ 193 nm 빛', 44, 20); ctx.fillText('세기 →', w*0.55, 20);
+  J.out(box,'e', J.fmt(e0, 2)); J.out(box,'sw', J.fmt((mx - mn)/(sum/cnt)*100, 0) + ' %', (mx - mn)/(sum/cnt) < 0.1 ? 'good' : 'bad'); J.out(box,'per', J.fmt(lam/(2*n), 1) + ' nm');
+});
+
+/* 6-4 OPC 2D */
+J.sim('sim4', (v, box) => {
+  const W = 110, H = 70, px = 4; // 4 nm/px
+  const mask = new Float32Array(W*H), tgt = new Uint8Array(W*H);
+  const rect = (a, x0, y0, x1, y1, val = 1) => { for(let y = Math.max(0, y0); y < Math.min(H, y1); y++) for(let x = Math.max(0, x0); x < Math.min(W, x1); x++) a[y*W + x] = val; };
+  // 목표: 촘촘한 선 3개(폭 10px=40nm, 간격 10px), 그 아래 외딴 선, 오른쪽 L자
+  [8, 28, 48].forEach(y => rect(tgt, 10, y, 60, y + 10)); rect(tgt, 74, 10, 84, 60); rect(tgt, 74, 50, 104, 60);
+  for(let i=0;i<W*H;i++) mask[i] = tgt[i];
+  if(+v.opc >= 1){ [8, 28, 48].forEach(y => { rect(mask, 7, y - 1, 13, y + 11); rect(mask, 57, y - 1, 63, y + 11); }); rect(mask, 73, 7, 85, 12); rect(mask, 101, 49, 107, 61); rect(mask, 72, 58, 75, 62); }
+  if(+v.opc >= 2){ rect(mask, 66, 14, 68, 46); rect(mask, 91, 12, 93, 44); rect(mask, 74, 14, 75, 48, 0); }
+  // 가우스 흐림 (분리형)
+  const sg = v.b/px, kr = Math.ceil(sg*3), K = []; let ks = 0; for(let i = -kr; i <= kr; i++){ const g = Math.exp(-i*i/(2*sg*sg)); K.push(g); ks += g; } K.forEach((g, i) => K[i] = g/ks);
+  const tmp = new Float32Array(W*H), img = new Float32Array(W*H);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ let s = 0; for(let i = -kr; i <= kr; i++){ const xx = x + i; if(xx >= 0 && xx < W) s += mask[y*W + xx]*K[i + kr]; } tmp[y*W + x] = s; }
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ let s = 0; for(let i = -kr; i <= kr; i++){ const yy = y + i; if(yy >= 0 && yy < H) s += tmp[yy*W + x]*K[i + kr]; } img[y*W + x] = s; }
+  const pr = i => img[i] > v.th ? 1 : 0;
+  const draw = (id, field, fn) => { const {ctx, w, h} = J.fit(document.getElementById(id)); ctx.clearRect(0,0,w,h); const s = Math.min(w/W, h/H), ox = (w - W*s)/2, oy = (h - H*s)/2;
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){ ctx.fillStyle = fn(field[y*W + x]); ctx.fillRect(ox + x*s, oy + y*s, s + .4, s + .4); }
+    const edge = (arr, col) => { ctx.fillStyle = J.c(col); for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){ const i = y*W + x; const a = arr(i); if(a && (!arr(i - 1) || !arr(i + 1) || !arr(i - W) || !arr(i + W))) ctx.fillRect(ox + x*s, oy + y*s, s, s); } };
+    return {edge}; };
+  draw('cv4a', mask, m => m ? '#222' : '#e9e4d6').edge(i => tgt[i], '--jade');
+  draw('cv4b', img, q => `hsl(${260 - q*220}, 70%, ${20 + q*55}%)`).edge(pr, '--red');
+  // 측정
+  let y = 13, xe = 0; for(let x = 0; x < W; x++) if(pr(y*W + x)) xe = x; const pull = (60 - 1 - xe)*px;
+  let wI = 0; for(let x = 68; x < 100; x++) if(pr(35*W + x)) wI++;
+  let diff = 0; for(let i=0;i<W*H;i++) if(pr(i) !== tgt[i]) diff++;
+  J.out(box,'le', J.fmt(Math.max(0, pull), 0) + ' nm', pull <= 4 ? 'good' : pull <= 12 ? 'warn' : 'bad'); J.out(box,'iso', J.fmt(wI*px, 0) + ' / 40 nm', Math.abs(wI*px - 40) <= 4 ? 'good' : 'warn');
+  J.out(box,'epe', diff + '개 (' + J.fmt(diff/(W*H)*100, 1) + ' %)');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>금속 배선 (BEOL) · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="beol">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 11 <span class="hanja">第十一章 · 線</span></div>
+  <h1>금속 배선 (BEOL)</h1>
+  <p class="lead">트랜지스터는 줄어들수록 빨라지지만, 그것들을 잇는 배선은 가늘어질수록 느려진다. 저항은 단면적에 반비례해 커지고, 촘촘한 선 사이의 용량은 줄지 않기 때문이다. 오늘날 칩 성능과 전력의 상당 부분은 배선이 결정한다. 이 장은 구리 배선을 만드는 다마신 공정, 수십 nm 선에서 비저항이 커지는 이유, RC 지연, 그리고 배선 수명을 정하는 전자 이동을 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>이중 다마신 공정 순서를 단면으로 따라간다.</li>
+  <li>표면·결정립계 산란과 장벽막 때문에 가는 선의 실효 비저항이 커지는 것을 계산한다.</li>
+  <li>분포 RC 지연과 저유전율(low-k) 절연막의 효과를 비교한다.</li>
+  <li>블랙의 식으로 전자 이동 수명을 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>이중 다마신: 홈을 파고 채우고 갈아 낸다</h2>
+<p>알루미늄 시절에는 금속을 깔고 식각해 선을 만들었다. 그런데 구리는 휘발성 화합물을 만들지 않아 플라스마로 깎기 어렵다. 그래서 1997년 IBM이 거꾸로 하는 방법을 도입했다. 절연막에 홈(트렌치)과 구멍(비아)을 먼저 파고, 구리가 절연막으로 퍼지지 않게 장벽막(TaN/Ta)을 입힌 뒤, 씨앗층 위에 구리를 전기 도금으로 채우고, CMP로 넘친 부분을 걷어 낸다. 상감(象嵌) 공예처럼 홈에 금속을 박아 넣는다 해서 <span class="term">다마신</span>, 비아와 트렌치를 한 번에 채우면 <b>이중 다마신</b>이다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-1</span><span class="ttl">이중 다마신 7단계</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><button class="sbtn" id="b1p">← 이전</button><button class="sbtn pri" id="b1n">다음 단계 →</button><button class="sbtn" id="b1a">자동 재생</button><span class="hint" id="b1s"></span></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">단계</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">핵심 공정</span><span class="v" data-r="ty" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 맨 아래 주황 = 아래층 구리선(M1), 하늘색 = 저유전율 절연막(ILD), 연보라 = 식각 정지·확산 방지막(SiCN), 검정 테두리 = 장벽막(TaN/Ta), 주황 = 새 구리. 비아를 먼저 뚫고(via-first) 트렌치를 나중에 판다. 도금은 바닥부터 차오르도록(bottom-up fill) 첨가제를 조절한다 — 그렇지 않으면 입구가 먼저 막혀 안에 빈틈(void)이 남는다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>가는 선의 비저항은 왜 커지나</h2>
+<p>구리의 벌크 비저항은 1.7 µΩ·cm지만, 전자가 평균 39 nm(평균 자유 행로) 움직인 뒤 산란한다. 선폭이 이와 비슷해지면 전자가 선의 표면과 결정립계에 자주 부딪혀 비저항이 커진다(<span class="term">크기 효과</span>). 게다가 장벽막(수 nm)은 전기를 거의 나르지 않으므로 선폭 20 nm에서 단면적의 상당 부분을 낭비한다. 그래서 가장 가는 배선에는 평균 자유 행로가 짧고 장벽막이 필요 없는 코발트·루테늄을 쓰기 시작했다.</p>
+<div class="eq">$$\rho \approx \rho_0\left[1 + \frac{3}{8}\frac{\lambda}{w}(1-p) + \frac{3}{2}\frac{\lambda}{g}\frac{R}{1-R}\right],\qquad R_{line} = \frac{\rho L}{(w - 2t_b)(h - t_b)}$$<div class="note">λ: 평균 자유 행로, p: 표면 정반사 비율, g: 결정립 크기(≈ w), R: 결정립계 반사 계수 (푹스–손드하이머 + 마야다스–샤츠케스 근사)</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-2</span><span class="ttl">금속별 선 저항 비교</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">선폭 w <output data-o="w"></output></span><input type="range" data-k="w" min="8" max="100" step="1" value="20" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">종횡비 h/w <output data-o="ar"></output></span><input type="range" data-k="ar" min="1" max="3" step="0.1" value="2" data-d="1"></label>
+      <label class="ctrl"><span class="lab">Cu 장벽막 두께 <output data-o="tb"></output></span><input type="range" data-k="tb" min="0.5" max="5" step="0.1" value="2" data-d="1" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">Cu 실효 비저항</span><span class="v" data-r="cu"></span></div>
+      <div class="ro"><span class="k">선 저항 Cu / Co / Ru (Ω/µm)</span><span class="v" data-r="r" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">가장 좋은 금속</span><span class="v" data-r="best"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 선폭에 따른 길이 1 µm당 저항(로그). Cu(주황, 장벽막 포함), Co(파랑, 장벽 1 nm), Ru(초록, 장벽 없음). 선이 가늘어지면 Cu 곡선이 가파르게 올라 다른 금속과 교차한다. 오른쪽: 지금 선의 단면 — 회색 테두리가 전류를 거의 못 나르는 장벽막이다. 매개변수(λ: Cu 39, Co 11.8, Ru 6.6 nm; ρ₀: 1.7, 6.2, 7.1 µΩ·cm)는 문헌 근사값.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>RC 지연과 저유전율 절연막</h2>
+<p>긴 배선은 저항 R과 이웃 선과의 용량 C가 길이를 따라 퍼져 있는 분포 RC 회로다. 지연은 0.38RC로, R과 C가 모두 길이에 비례하므로 <b>길이의 제곱</b>에 비례한다. 길이를 두 배로 하면 지연은 네 배. 그래서 긴 선 중간중간에 신호를 다시 세우는 버퍼(리피터)를 넣는다. 용량을 줄이려 절연막의 유전율 k를 SiO₂(3.9–4.2)에서 탄소를 넣은 SiCOH(~3.0), 구멍을 낸 다공성 막(~2.5), 공기 틈(~1.5–2)으로 낮춰 왔지만, 막이 무르고 약해져 CMP와 패키징에서 깨지기 쉽다.</p>
+<div class="eq">$$t_{RC} \approx 0.38\,r\,c\,L^2,\qquad c \approx \varepsilon_0 k\left(2\frac{h}{s} + 2\frac{w}{t_{ILD}}\right)$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-3</span><span class="ttl">배선 길이와 지연</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">배선 길이 <output data-o="L"></output></span><input type="range" data-k="L" min="1" max="3.5" step="0.05" value="2.7" data-log="1" data-si="m" data-d="0"></label>
+      <label class="ctrl"><span class="lab">절연막</span><select data-k="k"><option value="4.0">SiO₂ (k = 4.0)</option><option value="3.0" selected>SiCOH (k = 3.0)</option><option value="2.5">다공성 low-k (2.5)</option><option value="1.8">공기 틈 (1.8)</option></select></label>
+      <label class="ctrl"><span class="lab">배선 층</span><select data-k="lay"><option value="m1">M1 (폭 14 nm)</option><option value="mx" selected>중간층 (폭 40 nm)</option><option value="top">상위층 (폭 400 nm)</option></select></label>
+      <label class="ctrl"><span class="lab">리피터 넣기 <output data-o="rep"></output></span><input type="checkbox" data-k="rep"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">선 저항 / 용량</span><span class="v" data-r="rc" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">RC 지연</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">게이트 지연(~5 ps)의</span><span class="v" data-r="x"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 길이(로그)에 따른 배선 지연. 기울기 2인 직선이 L² 법칙이다. 가는 M1은 짧은 거리만, 굵은 상위층은 칩을 가로지르는 긴 신호에 쓴다. 리피터를 최적 간격으로 넣으면 지연이 길이에 비례(기울기 1)하게 바뀐다. 점선은 게이트 하나의 지연(~5 ps).</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>전자 이동: 전자 바람에 쓸려 가는 원자</h2>
+<p>전류 밀도가 아주 높으면(1 MA/cm² 이상) 흐르는 전자들이 금속 원자에 운동량을 전해 원자를 전자 흐름 방향으로 조금씩 밀어낸다(<span class="term">전자 이동</span>, EM). 원자가 빠져나간 쪽엔 빈 구멍(보이드)이 생겨 선이 끊어지고, 쌓인 쪽엔 언덕(힐록)이 생겨 이웃 선과 붙는다. 수명은 블랙의 식으로 예측한다. 온도가 조금만 올라도 수명이 크게 준다.</p>
+<div class="eq">$$\text{MTTF} = A\,J^{-n}\,e^{E_a/kT}\qquad (n \approx 2,\ E_a \approx 0.9\ \text{eV, Cu 계면 확산})$$</div>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-4</span><span class="ttl">배선 수명 계산기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">전류 밀도 J <output data-o="j"></output></span><input type="range" data-k="j" min="0.2" max="10" step="0.1" value="1.5" data-d="1" data-u="MA/cm²"></label>
+      <label class="ctrl"><span class="lab">동작 온도 <output data-o="T"></output></span><input type="range" data-k="T" min="60" max="150" step="5" value="105" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">덮개층</span><select data-k="cap"><option value="0.9">SiCN 덮개 (E_a 0.9 eV)</option><option value="1.3">코발트 덮개 (E_a 1.3 eV, 계면 강화)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv4a" data-h="250"></canvas></div>
+      <div class="canvas-box"><canvas id="cv4b" data-h="250"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">예상 수명 (MTTF)</span><span class="v" data-r="m"></span></div>
+      <div class="ro"><span class="k">10년 목표 대비</span><span class="v" data-r="x"></span></div>
+      <div class="ro"><span class="k">허용 최대 J (10년, 이 온도)</span><span class="v" data-r="jm"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 배선 속 구리 원자(점)가 전자 흐름(→) 방향으로 밀려 왼쪽 끝 비아 근처에 보이드가 자라는 모습(빨리 감기). 오른쪽: 온도별 수명–전류 밀도 그래프(로그). 기준: 1 MA/cm², 105 °C에서 SiCN 덮개 수명 30년으로 정규화. 시험은 300 °C 근처에서 가속해 몇 주 만에 끝내고 이 식으로 동작 조건 수명을 외삽한다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">구리 배선에 다마신 공정을 쓰는 주된 이유는?</p><ol><li>구리가 비싸서</li><li>구리는 플라스마로 식각하기 어려워서</li><li>노광이 필요 없어서</li><li>구리가 투명해서</li></ol>
+<p class="explain">구리 할로겐화물이 휘발되지 않아 건식 식각이 어렵다. 그래서 절연막을 파고 채운다.</p></div>
+<div class="quiz" data-a="3"><p class="q">배선 길이가 3배가 되면 분포 RC 지연은?</p><ol><li>3배</li><li>√3배</li><li>6배</li><li>9배</li></ol>
+<p class="explain">R과 C가 모두 L에 비례하므로 RC ∝ L².</p></div>
+<div class="quiz" data-a="0"><p class="q">블랙의 식(n = 2)에서 전류 밀도를 2배로 하면 수명은?</p><ol><li>1/4</li><li>1/2</li><li>2배</li><li>그대로</li></ol>
+<p class="explain">MTTF ∝ J⁻² → (1/2)² = 1/4.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 11-1 이중 다마신 */
+(function(){
+  const S = [['① 절연막 증착 (방지막 + low-k ILD)','CVD / 스핀 코팅'],['② 비아 노광·식각','노광 + 플라스마 식각'],['③ 트렌치 노광·식각','노광 + 식각 (정지막에서 멈춤)'],['④ 장벽막·씨앗층','PVD TaN/Ta + Cu 씨앗'],['⑤ 구리 전기 도금 (바닥부터 채움)','전기 도금 + 첨가제'],['⑥ CMP','구리·장벽막 연마'],['⑦ 덮개층','SiCN 증착 → 다음 층']];
+  let k = 0, auto = false, acc = 0; const box = document.getElementById('sim1');
+  function draw(){
+    const {ctx, w, h} = J.fit(document.getElementById('cv1')); ctx.clearRect(0,0,w,h);
+    const L = 30, Rr = w - 30, X = f => L + f*(Rr - L), b0 = h - 40, cap = 10, ild = 150, ty = b0 - cap - ild, tt = ty + 70;
+    ctx.fillStyle = '#a9d4ef'; ctx.fillRect(L, b0, Rr - L, 30);
+    ctx.fillStyle = '#d98b3a'; ctx.fillRect(X(0.4), b0, X(0.6) - X(0.4), 26); ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('아래층 구리 M1', X(0.62), b0 + 18);
+    ctx.fillStyle = '#c8b6e2'; ctx.fillRect(L, b0 - cap, Rr - L, cap);
+    ctx.fillStyle = '#a9d4ef'; ctx.fillRect(L, ty, Rr - L, ild);
+    const via = [X(0.46), X(0.54)], tr = [X(0.3), X(0.7)];
+    const cut = (x0, x1, y0, y1) => { ctx.fillStyle = J.c('--paper'); ctx.fillRect(x0, y0, x1 - x0, y1 - y0); };
+    if(k === 1){ cut(via[0], via[1], ty, b0); ctx.fillStyle = '#e7b75a'; ctx.fillRect(L, ty - 14, via[0] - L, 14); ctx.fillRect(via[1], ty - 14, Rr - via[1], 14); }
+    if(k >= 2){ cut(via[0], via[1], tt, b0); cut(tr[0], tr[1], ty, tt); if(k === 2){ ctx.fillStyle = '#e7b75a'; ctx.fillRect(L, ty - 14, tr[0] - L, 14); ctx.fillRect(tr[1], ty - 14, Rr - tr[1], 14); } }
+    if(k >= 3){ ctx.strokeStyle = '#222'; ctx.lineWidth = 3; ctx.beginPath(); if(k < 6){ ctx.moveTo(L, ty); } else ctx.moveTo(tr[0], ty); ctx.lineTo(tr[0], ty); ctx.lineTo(tr[0], tt); ctx.lineTo(via[0], tt); ctx.lineTo(via[0], b0); ctx.lineTo(via[1], b0); ctx.lineTo(via[1], tt); ctx.lineTo(tr[1], tt); ctx.lineTo(tr[1], ty); if(k < 6) ctx.lineTo(Rr, ty); ctx.stroke(); }
+    if(k >= 4){ ctx.fillStyle = '#d98b3a'; ctx.fillRect(via[0] + 2, tt, via[1] - via[0] - 4, b0 - tt - 1); ctx.fillRect(tr[0] + 2, ty + 1, tr[1] - tr[0] - 4, tt - ty);
+      if(k === 4){ ctx.fillRect(L, ty - 30, Rr - L, 30); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('넘친 구리 (과도금)', w/2, ty - 12); } }
+    if(k >= 6){ ctx.fillStyle = '#c8b6e2'; ctx.fillRect(L, ty - cap, Rr - L, cap); }
+    ctx.fillStyle = J.c('--ink2'); ctx.textAlign = 'left'; ctx.fillText('low-k 절연막', L + 6, ty + ild/2);
+    J.out(box,'st', S[k][0]); J.out(box,'ty', S[k][1]); J.$('#b1s').textContent = `${k + 1} / ${S.length}`;
+  }
+  J.$('#b1n').onclick = () => { k = Math.min(S.length - 1, k + 1); draw(); }; J.$('#b1p').onclick = () => { k = Math.max(0, k - 1); draw(); };
+  J.$('#b1a').onclick = e => { auto = !auto; e.target.classList.toggle('on', auto); };
+  J.loop(document.getElementById('cv1'), dt => { if(auto && (acc += dt) > 1.4){ acc = 0; k = (k + 1) % S.length; draw(); } });
+  J.live(draw);
+})();
+
+/* 11-2 크기 효과 */
+const MET = {Cu:{r0:1.7, lam:39, tb:null, col:'--gold'}, Co:{r0:6.2, lam:11.8, tb:1, col:'--indigo'}, Ru:{r0:7.1, lam:6.6, tb:0, col:'--jade'}};
+const rhoEff = (m, w) => { const M = MET[m], p = 0.2, Rg = 0.35; return M.r0*(1 + 3/8*M.lam/w*(1 - p) + 1.5*M.lam/w*Rg/(1 - Rg)); };
+const Rline = (m, w, ar, tbCu) => { const M = MET[m], tb = M.tb === null ? tbCu : M.tb, h = w*ar, a = Math.max(0.5, (w - 2*tb))*Math.max(0.5, (h - tb)); return rhoEff(m, Math.max(1, w - 2*tb))*1e-8*1e-6/(a*1e-18); }; // Ω/µm
+J.sim('sim2', (v, box) => {
+  const S = Object.keys(MET).map(m => { const pts = []; for(let w = 8; w <= 100; w += 1) pts.push([w, Rline(m, w, v.ar, v.tb)]); return {pts, color:MET[m].col, w:3}; });
+  J.plot(document.getElementById('cv2a'), {x:[8, 100], y:[1, 3000], logx:true, logy:true, xlab:'선폭 (nm)', ylab:'저항 (Ω/µm)', xf:t => J.fmt(t, 0), yf:t => J.fmt(t, 0), series:S, vlines:[{x:v.w, color:'--ink'}]});
+  const {ctx, w, h} = J.fit(document.getElementById('cv2b')); ctx.clearRect(0,0,w,h);
+  const H = v.w*v.ar, sc = Math.min((w - 60)/v.w, (h - 60)/H)*0.85, cx = w/2, cy = h/2, W2 = v.w*sc, H2 = H*sc, tb = v.tb*sc;
+  ctx.fillStyle = '#a9d4ef'; ctx.fillRect(10, 10, w - 20, h - 20);
+  ctx.fillStyle = '#555'; ctx.fillRect(cx - W2/2, cy - H2/2, W2, H2);
+  ctx.fillStyle = '#d98b3a'; ctx.fillRect(cx - W2/2 + tb, cy - H2/2, W2 - 2*tb, H2 - tb);
+  ctx.fillStyle = J.c('--ink'); ctx.font = '12px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.fillText(`Cu ${v.w}×${J.fmt(H, 0)} nm, 장벽 ${v.tb} nm`, cx, 26);
+  ctx.fillText(`구리가 차지하는 단면 ${J.fmt((v.w - 2*v.tb)*(H - v.tb)/(v.w*H)*100, 0)} %`, cx, h - 16);
+  const r = {Cu:Rline('Cu', v.w, v.ar, v.tb), Co:Rline('Co', v.w, v.ar, v.tb), Ru:Rline('Ru', v.w, v.ar, v.tb)}, best = Object.keys(r).sort((a, b) => r[a] - r[b])[0];
+  J.out(box,'cu', J.fmt(rhoEff('Cu', Math.max(1, v.w - 2*v.tb)), 2) + ' µΩ·cm'); J.out(box,'r', `${J.fmt(r.Cu, 0)} / ${J.fmt(r.Co, 0)} / ${J.fmt(r.Ru, 0)}`); J.out(box,'best', best, 'good');
+});
+
+/* 11-3 RC */
+J.sim('sim3', (v, box) => {
+  const LAY = {m1:{w:14, ar:2, s:14, m:'Ru'}, mx:{w:40, ar:2, s:40, m:'Cu'}, top:{w:400, ar:2, s:400, m:'Cu'}}[v.lay], k = +v.k;
+  const r = Rline(LAY.m, LAY.w, LAY.ar, 2), cpu = 8.854e-12*k*(2*LAY.ar + 2*LAY.w/(LAY.w*2))*1e-6*1.0; // F/µm (근사)
+  const tgate = 5e-12, delay = Lum => { const d0 = 0.38*r*cpu*Lum*Lum; if(!v.rep) return d0; const Lopt = Math.sqrt(2*tgate/(0.38*r*cpu)); return Lum <= Lopt ? d0 : Lum/Lopt*(0.38*r*cpu*Lopt*Lopt + tgate); };
+  J.$('[data-o="L"]', box).textContent = J.fmt(v.L, v.L < 100 ? 1 : 0) + ' µm';
+  const pts = [], p4 = []; for(let e = 0; e <= 4; e += 0.02){ const L = Math.pow(10, e); pts.push([L, delay(L)*1e12]); }
+  ['4.0','1.8'].forEach(kk => { if(kk === v.k) return; });
+  J.plot(document.getElementById('cv3'), {x:[1, 1e4], y:[1e-3, 1e6], logx:true, logy:true, xlab:'배선 길이 (µm)', ylab:'지연 (ps)', xf:t => J.fmt(t, 0), yf:t => J.sci(t, 0),
+    series:[{pts, color:'--red', w:3}], hlines:[{y:5, color:'--ink3', label:'게이트 지연 5 ps'}], points:[{x:v.L, y:delay(v.L)*1e12, color:'--ink', r:6}]});
+  const d = delay(v.L);
+  J.out(box,'rc', J.si(r*v.L, 'Ω') + ' / ' + J.si(cpu*v.L, 'F')); J.out(box,'t', d < 1e-9 ? J.fmt(d*1e12, 2) + ' ps' : J.fmt(d*1e9, 2) + ' ns', d < 5e-12 ? 'good' : d < 1e-10 ? 'warn' : 'bad');
+  J.out(box,'x', J.fmt(d/tgate, 1) + '배');
+});
+
+/* 11-4 EM */
+(function(){
+  let V = null, t = 0; const box = document.getElementById('sim4'); const R = J.rng(4), A = Array.from({length:160}, () => ({x:R(), y:R()}));
+  const mttf = (J, T, Ea) => 30*Math.pow(J/1, -2)*Math.exp(Ea/8.617e-5*(1/(T + 273) - 1/378));
+  J.sim('sim4', v => { V = v; const Ea = +v.cap, m = mttf(v.j, v.T, Ea);
+    const S = [85, 105, 125].map((T, i) => { const pts = []; for(let j = 0.2; j <= 10; j += 0.1) pts.push([j, mttf(j, T, Ea)]); return {pts, color:['--jade','--gold','--red'][i], w: T === v.T ? 3 : 1.6}; });
+    J.plot(document.getElementById('cv4b'), {x:[0.2, 10], y:[0.01, 1e5], logx:true, logy:true, xlab:'전류 밀도 (MA/cm²)', ylab:'수명 (년)', xf:t => J.fmt(t, 1), yf:t => J.sci(t, 0), series:S, hlines:[{y:10, color:'--ink3', label:'10년'}], points:[{x:v.j, y:m, color:'--ink', r:6}]});
+    const jm = Math.sqrt(mttf(1, v.T, Ea)/10);
+    J.out(box,'m', m > 1 ? J.fmt(m, 1) + '년' : J.fmt(m*365, 0) + '일', m >= 10 ? 'good' : 'bad'); J.out(box,'x', '×' + J.fmt(m/10, 2)); J.out(box,'jm', J.fmt(jm, 2) + ' MA/cm²'); });
+  J.loop(document.getElementById('cv4a'), dt => { if(!V) return; const rate = Math.min(3, 3/Math.max(0.05, mttf(V.j, V.T, +V.cap)))*0.6; t += dt*rate; const tt = t % 1.2;
+    const {ctx, w, h} = J.fit(document.getElementById('cv4a')); ctx.clearRect(0,0,w,h);
+    const L = 30, Rr = w - 30, top = 90, bot = 150; ctx.fillStyle = '#d98b3a'; ctx.globalAlpha = .35; ctx.fillRect(L, top, Rr - L, bot - top); ctx.globalAlpha = 1;
+    ctx.fillStyle = '#555'; ctx.fillRect(L - 14, top - 40, 14, bot - top + 40); ctx.fillRect(Rr, top - 40, 14, bot - top + 40);
+    const vo = Math.min(0.35, tt*0.3); ctx.fillStyle = J.c('--paper'); ctx.beginPath(); ctx.ellipse(L + 4, (top + bot)/2, vo*(Rr - L)*0.5 + 1, (bot - top)/2*Math.min(1, vo*3), 0, 0, 7); ctx.fill();
+    A.forEach(a => { const x = L + Math.min(0.995, a.x*(1 - vo) + vo + tt*0.02*a.y)*(Rr - L), y = top + a.y*(bot - top); ctx.fillStyle = '#b8682a'; ctx.beginPath(); ctx.arc(Math.min(Rr - 2, x), y, 2.4, 0, 7); ctx.fill(); });
+    if(vo > 0.1){ ctx.fillStyle = '#b8682a'; ctx.beginPath(); ctx.ellipse(Rr - 10, top - 4, 20*vo*3, 8*vo*3, 0, Math.PI, 0); ctx.fill(); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('전자 흐름 →  (원자도 → 로 밀림)', w/2, 40);
+    ctx.fillStyle = J.c('--red'); ctx.fillText(vo > 0.2 ? '보이드 → 단선!' : '', L + 70, bot + 30); ctx.fillStyle = J.c('--ink3'); ctx.fillText('비아', L - 7, top - 46); ctx.fillText('비아', Rr + 7, top - 46); });
+})();
+</script>
+</body>
+</html>

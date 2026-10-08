@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EUV와 다중 패터닝 · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="euv">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 07 <span class="hanja">第七章 · 細</span></div>
+  <h1>EUV와 다중 패터닝</h1>
+  <p class="lead">ArF 액침 노광의 한계는 피치 약 80 nm다. 그런데 2010년대 칩은 40 nm, 지금은 20 nm대 피치를 쓴다. 이 틈을 메운 것이 두 가지다. 하나는 한 층을 여러 번 나눠 찍거나 측벽(스페이서)을 이용해 피치를 절반·4분의 1로 쪼개는 <b>다중 패터닝</b>, 다른 하나는 파장 13.5 nm의 <b>EUV</b>다. 둘 다 새로운 적을 만들었다 — 층 사이 정렬 오차와 피치 흔들림, 그리고 빛 알갱이 수가 모자라서 생기는 확률적 결함.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>LELE·SADP·SAQP로 피치를 쪼개는 과정을 단면으로 따라간다.</li>
+  <li>정렬 오차와 스페이서 두께 오차가 만드는 피치 흔들림(pitch walking)을 계산한다.</li>
+  <li>EUV 광자 에너지가 커서 같은 노광량에 광자 수가 적다는 것과, 그로 인한 확률적 결함을 실험한다.</li>
+  <li>오버레이 예산을 제곱합으로 쌓아 본다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>측벽으로 피치 쪼개기: SADP와 SAQP</h2>
+<p><b>LELE</b>(노광-식각-노광-식각)는 홀수 선과 짝수 선을 두 장의 마스크로 따로 찍는다. 간단하지만 두 번째 노광이 첫 번째와 어긋나면 선 간격이 그대로 틀어진다. <b>SADP</b>(자기 정렬 이중 패터닝)는 한 번 찍은 굵은 심(맨드릴) 양옆에 막을 고르게 입힌 뒤(ALD) 위아래만 깎아 측벽(스페이서)만 남기고, 심을 제거한다. 스페이서 두 줄이 생기니 피치가 절반이 되고, 정렬은 공정 자체가 보장한다. 이것을 한 번 더 하면 <b>SAQP</b>, 피치 4분의 1이다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-1</span><span class="ttl">SADP / SAQP 공정 따라가기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">방식</span><select data-k="m"><option value="2">SADP (피치 ½)</option><option value="4">SAQP (피치 ¼)</option></select></label>
+      <label class="ctrl"><span class="lab">처음 노광 피치 <output data-o="p"></output></span><input type="range" data-k="p" min="80" max="160" step="4" value="96" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b1p">← 이전</button><button class="sbtn pri" id="b1n">다음 단계 →</button><span class="hint" id="b1s"></span></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="270"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">단계</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">최종 피치</span><span class="v" data-r="fp"></span></div>
+      <div class="ro"><span class="k">이 층에 쓰는 공정 단계 (대략)</span><span class="v" data-r="n"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 회색 = 하드마스크 막, 노랑 = 맨드릴(심), 초록 = 스페이서, 아래 회색 = 깎을 막. 마지막 단계에서 스페이서 무늬가 아래 막으로 옮겨진다. 실제로는 선을 끊는 "컷" 마스크가 따로 더 필요하다. 단계 수가 늘어나는 만큼 원가와 사이클 타임이 늘어난다 — EUV 단일 노광이 경제적으로 매력적인 이유다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>피치 흔들림: 짝수 칸과 홀수 칸이 다르다</h2>
+<p>SADP에서 스페이서 사이의 간격은 두 종류다. 맨드릴이 있던 자리(심 간격)와 이웃 스페이서 사이의 자리(골 간격). 맨드릴 선폭이 목표보다 크거나 스페이서가 두꺼우면 두 간격이 서로 달라져 선이 짝을 지어 몰린다. 이것이 <span class="term">피치 흔들림</span>(pitch walking)이다. LELE에서는 두 번째 노광의 정렬 오차가 그대로 간격 차이가 된다.</p>
+<div class="eq">$$\text{SADP: } s_{core} = w_{mandrel},\quad s_{gap} = p_0 - w_{mandrel} - 2t_{spacer};\qquad \text{LELE: } s_{1,2} = \tfrac{p}{2} - w \pm \Delta_{OL}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-2</span><span class="ttl">피치 흔들림 측정</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">방식</span><select data-k="m"><option value="sadp">SADP</option><option value="lele">LELE</option></select></label>
+      <label class="ctrl"><span class="lab">맨드릴 선폭 오차 (SADP) <output data-o="dm"></output></span><input type="range" data-k="dm" min="-6" max="6" step="0.5" value="2" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">스페이서 두께 오차 (SADP) <output data-o="ds"></output></span><input type="range" data-k="ds" min="-3" max="3" step="0.25" value="0" data-d="2" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">2차 노광 정렬 오차 (LELE) <output data-o="ol"></output></span><input type="range" data-k="ol" min="-8" max="8" step="0.5" value="3" data-d="1" data-u="nm"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="230"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">간격 A / 간격 B</span><span class="v" data-r="s"></span></div>
+      <div class="ro"><span class="k">피치 흔들림 |A−B|</span><span class="v" data-r="pw"></span></div>
+      <div class="ro"><span class="k">판정 (목표 피치 48 nm, 허용 ±2 nm)</span><span class="v" data-r="j" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>설정.</b> 최종 목표: 선 24 nm / 간격 24 nm(피치 48). SADP: 맨드릴 피치 96 nm, 맨드릴 24 nm, 스페이서 24 nm. 무작위 흔들림(σ 0.5 nm)을 더해 그렸다. SADP는 정렬 오차와 무관하지만 맨드릴 선폭에 민감하고, LELE는 반대다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>EUV와 광자 산탄 잡음</h2>
+<p>EUV 광자 하나의 에너지는 hc/λ = 92 eV로 ArF(6.4 eV)의 14배다. 같은 노광량(mJ/cm²)이면 광자 수가 14분의 1이다. 20 nm 콘택 구멍 하나에 떨어지는 광자가 수천 개뿐이면 푸아송 통계의 흔들림(√N)이 무시 못 할 크기가 되어, 어떤 구멍은 너무 작게, 드물게는 아예 안 뚫린다. 칩에 구멍이 수십억 개이므로 10⁻¹²의 확률도 문제가 된다. 노광량을 올리면 줄어들지만 처리량(시간당 웨이퍼)이 떨어진다 — EUV의 근본적 줄다리기다.</p>
+<div class="eq">$$N_{photon} = \frac{\text{Dose}\times A}{h c/\lambda},\qquad \frac{\sigma_N}{N} = \frac{1}{\sqrt{N}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-3</span><span class="ttl">콘택 구멍 1,600개의 확률적 운명</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">빛</span><select data-k="l"><option value="13.5" selected>EUV 13.5 nm</option><option value="193">ArF 193 nm (비교)</option></select></label>
+      <label class="ctrl"><span class="lab">노광량 <output data-o="d"></output></span><input type="range" data-k="d" min="10" max="120" step="2" value="30" data-d="0" data-u="mJ/cm²"></label>
+      <label class="ctrl"><span class="lab">구멍 지름 <output data-o="w"></output></span><input type="range" data-k="w" min="10" max="40" step="1" value="18" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">감광액 흡수·반응 효율 <output data-o="q"></output></span><input type="range" data-k="q" min="5" max="40" step="1" value="15" data-d="0" data-u="%"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b3r">다시 굽기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">구멍당 평균 광자 (흡수)</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">구멍 크기 흔들림 3σ</span><span class="v" data-r="cd"></span></div>
+      <div class="ro"><span class="k">막힌 구멍 확률</span><span class="v" data-r="p"></span></div>
+      <div class="ro"><span class="k">구멍 100억 개 칩의 불량 수</span><span class="v" data-r="chip"></span></div>
+      <div class="ro"><span class="k">상대 처리량 (30 mJ = 100 %)</span><span class="v" data-r="th"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형.</b> 구멍마다 흡수 광자 수를 푸아송 난수로 뽑고, 받은 에너지에 비례해 크기를 정했다(평균의 70 % 미만이면 막힘). 왼쪽: 40×40 구멍 지도(빨강 = 막힘, 크기 = 인쇄된 지름). 오른쪽: 광자 수 분포와 막힘 문턱. 막힘 확률은 정규 근사 꼬리로 계산. 처리량은 광원 출력이 일정할 때 노광량에 반비례한다고 보았다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>오버레이 예산</h2>
+<p>층과 층의 정렬 오차(오버레이)는 여러 원인이 독립적으로 더해진다: 노광기 스테이지·렌즈, 웨이퍼 휨과 열 변형, 마스크 위치 오차, 측정 오차, 공정이 만든 비대칭. 독립 오차는 제곱합의 제곱근(RSS)으로 합친다. 최신 공정의 오버레이 허용치는 2 nm 안팎 — 원자 열 개 남짓이다.</p>
+<div class="eq">$$OL_{total} = \sqrt{\textstyle\sum_i OL_i^2}$$</div>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-4</span><span class="ttl">오버레이 예산 쌓기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">노광기 (스테이지·렌즈) <output data-o="a"></output></span><input type="range" data-k="a" min="0.3" max="3" step="0.1" value="1.0" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">웨이퍼 변형 (보정 후) <output data-o="b"></output></span><input type="range" data-k="b" min="0.3" max="3" step="0.1" value="1.2" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">마스크 위치 오차 <output data-o="c"></output></span><input type="range" data-k="c" min="0.2" max="2" step="0.1" value="0.6" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">측정·공정 비대칭 <output data-o="d"></output></span><input type="range" data-k="d" min="0.2" max="2" step="0.1" value="0.8" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">허용치 <output data-o="t"></output></span><input type="range" data-k="t" min="1" max="6" step="0.1" value="2.0" data-d="1" data-u="nm"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="220"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">단순 합</span><span class="v" data-r="sum"></span></div>
+      <div class="ro"><span class="k">RSS 합</span><span class="v" data-r="rss"></span></div>
+      <div class="ro"><span class="k">가장 큰 몫</span><span class="v" data-r="big" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 막대 길이는 각 항목의 제곱(분산) 기여 비율이다. RSS에서는 가장 큰 항목 하나가 전체를 지배한다 — 작은 항목을 절반으로 줄여도 별 효과가 없고, 가장 큰 것을 줄여야 한다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">SADP에서 스페이서 두 줄이 생기는 이유는?</p><ol><li>두 번 노광해서</li><li>마스크가 두 장이라서</li><li>맨드릴 양쪽 벽에 막이 남아서</li><li>스페이서를 반으로 잘라서</li></ol>
+<p class="explain">맨드릴 하나의 왼쪽·오른쪽 측벽에 각각 스페이서가 생겨 선이 두 배가 된다.</p></div>
+<div class="quiz" data-a="1"><p class="q">같은 노광량에서 EUV 광자 수는 ArF의 약?</p><ol><li>14배</li><li>1/14</li><li>같다</li><li>1/2</li></ol>
+<p class="explain">광자 에너지가 92 eV 대 6.4 eV로 14배이므로 개수는 1/14.</p></div>
+<div class="quiz" data-a="3"><p class="q">오버레이 항목이 3, 1, 1 nm일 때 RSS 합은 약?</p><ol><li>5 nm</li><li>1.7 nm</li><li>4 nm</li><li>3.3 nm</li></ol>
+<p class="explain">√(9 + 1 + 1) = √11 ≈ 3.3 nm.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 7-1 SADP/SAQP */
+(function(){
+  let k = 0, V = {m:'2', p:96}; const box = document.getElementById('sim1');
+  const S2 = ['① 하드마스크 위에 맨드릴 노광·식각','② 스페이서 막 고르게 증착 (ALD)','③ 위·아래 스페이서 식각 (측벽만 남김)','④ 맨드릴 제거 → 피치 ½','⑤ 스페이서 무늬를 아래 막에 전사'];
+  const S4 = ['① 맨드릴 노광·식각','② 1차 스페이서 증착','③ 1차 스페이서 식각','④ 맨드릴 제거 (피치 ½ 스페이서 = 새 맨드릴)','⑤ 2차 스페이서 증착','⑥ 2차 스페이서 식각','⑦ 1차 스페이서 제거 → 피치 ¼','⑧ 아래 막에 전사'];
+  function draw(){
+    const S = V.m === '2' ? S2 : S4, {ctx, w, h} = J.fit(document.getElementById('cv1')); ctx.clearRect(0,0,w,h);
+    const span = V.p*3.2, sc = (w - 40)/span, X = nm => 20 + nm*sc, base = h - 50, Hm = 70;
+    ctx.fillStyle = '#8f98a8'; ctx.fillRect(X(0), base, X(span) - X(0), 40);
+    const four = V.m === '4', p = V.p, wm = p/2*(four ? 1 : 0.5)*(four ? 1 : 1), ts = four ? p/8 : p/4;
+    // 단계별 구조
+    const mand = []; for(let x = p/4; x < span; x += p) mand.push([x - (four ? p/4 : p/8), x + (four ? p/4 : p/8)]);
+    const spc1 = []; mand.forEach(([a, b]) => { spc1.push([a - ts, a]); spc1.push([b, b + ts]); });
+    const spc2 = []; spc1.forEach(([a, b]) => { spc2.push([a - ts, a]); spc2.push([b, b + ts]); });
+    const rects = (arr, col, y0, hh) => { ctx.fillStyle = J.c(col); arr.forEach(([a, b]) => { if(b > 0 && a < span) ctx.fillRect(X(Math.max(0, a)), y0, X(Math.min(span, b)) - X(Math.max(0, a)), hh); }); };
+    const top = base - Hm;
+    if(!four){
+      if(k <= 2) rects(mand, '--gold', top, Hm);
+      if(k === 1){ ctx.fillStyle = J.c('--jade'); ctx.globalAlpha = .7; ctx.fillRect(X(0), top - ts*sc*0.5, X(span) - X(0), ts*sc*0.5); ctx.globalAlpha = 1; rects(spc1, '--jade', top, Hm); }
+      if(k >= 2 && k <= 3) rects(spc1, '--jade', top, Hm);
+      if(k === 4){ ctx.fillStyle = '#8f98a8'; ctx.fillRect(X(0), base, X(span) - X(0), 40); ctx.fillStyle = J.c('--paper'); let last = 0; spc1.slice().sort((a, b) => a[0] - b[0]).forEach(([a, b]) => { if(a > last) ctx.fillRect(X(last), base, X(a) - X(last), 30); last = Math.max(last, b); }); if(last < span) ctx.fillRect(X(last), base, X(span) - X(last), 30); rects(spc1, '--jade', top + Hm*0.5, Hm*0.5); }
+    } else {
+      if(k <= 3) { if(k <= 2) rects(mand, '--gold', top, Hm); }
+      if(k === 1){ ctx.fillStyle = J.c('--jade'); ctx.globalAlpha = .7; ctx.fillRect(X(0), top - 6, X(span) - X(0), 6); ctx.globalAlpha = 1; rects(spc1, '--jade', top, Hm); }
+      if(k >= 2 && k <= 5) rects(spc1, '--jade', top, Hm);
+      if(k === 4){ ctx.fillStyle = J.c('--plum'); ctx.globalAlpha = .6; ctx.fillRect(X(0), top - 6, X(span) - X(0), 6); ctx.globalAlpha = 1; rects(spc2, '--plum', top, Hm); }
+      if(k >= 5) rects(spc2.filter(([a, b]) => !spc1.some(([c, d]) => Math.abs(a - c) < 1e-6)), '--plum', top, Hm);
+      if(k === 7){ ctx.fillStyle = '#8f98a8'; ctx.fillRect(X(0), base, X(span) - X(0), 40); ctx.fillStyle = J.c('--paper'); const fin = spc2.slice().sort((a, b) => a[0] - b[0]); let last = 0; fin.forEach(([a, b]) => { if(a > last) ctx.fillRect(X(last), base, X(a) - X(last), 30); last = Math.max(last, b); }); }
+    }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('깎을 막', X(0) + 4, base + 22);
+    ctx.textAlign = 'center'; ctx.fillStyle = J.c('--ink3'); ctx.fillText(`처음 피치 ${p} nm`, X(p*0.75), 16);
+    J.out(box,'st', S[k]); J.out(box,'fp', J.fmt(p/(+V.m), 0) + ' nm', 'good'); J.out(box,'n', V.m === '2' ? '약 12단계 (+컷 마스크)' : '약 25단계 (+컷 마스크)');
+    J.$('#b1s').textContent = `${k + 1} / ${S.length}`;
+  }
+  J.sim('sim1', v => { if(v.m !== V.m) k = 0; V = v; draw(); });
+  J.$('#b1n').onclick = () => { k = Math.min((V.m === '2' ? S2 : S4).length - 1, k + 1); draw(); };
+  J.$('#b1p').onclick = () => { k = Math.max(0, k - 1); draw(); };
+})();
+
+/* 7-2 피치 흔들림 */
+J.sim('sim2', (v, box) => {
+  const R = J.rng(5), sadp = v.m === 'sadp', lines = [];
+  for(let i=0;i<12;i++){ let x0, wd = 24;
+    if(sadp){ const mi = Math.floor(i/2), mc = 12 + mi*96 + 24, wm = 24 + v.dm, ts = 24 + v.ds; x0 = i % 2 === 0 ? mc - wm/2 - ts : mc + wm/2; wd = ts; }
+    else { x0 = i*48 + (i % 2 ? v.ol : 0); }
+    x0 += J.gauss(R)*0.5; lines.push([x0, x0 + wd]); }
+  const sp = []; for(let i=1;i<lines.length;i++) sp.push(lines[i][0] - lines[i-1][1]);
+  const A = sp.filter((_, i) => i % 2 === 0), B = sp.filter((_, i) => i % 2 === 1), mA = A.reduce((a, b) => a + b, 0)/A.length, mB = B.reduce((a, b) => a + b, 0)/B.length;
+  const {ctx, w, h} = J.fit(document.getElementById('cv2')); ctx.clearRect(0,0,w,h);
+  const sc = (w - 40)/600, X = nm => 20 + nm*sc;
+  ctx.fillStyle = '#8f98a8'; ctx.fillRect(10, 150, w - 20, 30);
+  lines.forEach(([a, b], i) => { ctx.fillStyle = J.c(sadp ? '--jade' : (i % 2 ? '--plum' : '--indigo')); ctx.fillRect(X(a), 60, (b - a)*sc, 90); });
+  sp.forEach((s, i) => { const x = (lines[i][1] + lines[i + 1][0])/2; ctx.fillStyle = J.c(i % 2 ? '--red' : '--gold'); ctx.font = '600 11px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.fillText(J.fmt(s, 1), X(x), 50); });
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText(sadp ? '초록 = 스페이서 선 (금색 숫자 = 심 자리 간격, 빨강 = 골 간격)' : '파랑 = 1차 노광, 보라 = 2차 노광 선', 14, 20);
+  const pw = Math.abs(mA - mB);
+  J.out(box,'s', J.fmt(mA, 1) + ' / ' + J.fmt(mB, 1) + ' nm'); J.out(box,'pw', J.fmt(pw, 1) + ' nm', pw <= 2 ? 'good' : 'bad');
+  J.out(box,'j', pw <= 2 ? '통과' : '불량: 저항·용량 불균일', pw <= 2 ? 'good' : 'bad');
+});
+
+/* 7-3 EUV 산탄 잡음 */
+(function(){
+  let seed = 1; const box = document.getElementById('sim3');
+  function pois(R, m){ if(m > 60){ return Math.max(0, Math.round(m + Math.sqrt(m)*J.gauss(R))); } let L = Math.exp(-m), k = 0, p = 1; do { k++; p *= R(); } while(p > L); return k - 1; }
+  function erfcs(x){ const t = 1/(1 + 0.3275911*Math.abs(x)), y = (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x); return x >= 0 ? y : 2 - y; }
+  J.sim('sim3', v => { const lam = +v.l, Eph = 1240/lam*1.602e-19, A = Math.PI*Math.pow(v.w*1e-7/2, 2), N = v.d*1e-3*A/Eph*v.q/100;
+    const R = J.rng(seed), n = 40, cnt = [], {ctx, w, h} = J.fit(document.getElementById('cv3a')); ctx.clearRect(0,0,w,h);
+    const cs = Math.min(w, h)/n; let miss = 0;
+    ctx.fillStyle = J.c('--gold-soft'); ctx.fillRect(0, 0, w, h);
+    for(let i=0;i<n;i++) for(let j=0;j<n;j++){ const k = pois(R, N); cnt.push(k); const f = k/N, r = f < 0.7 ? 0 : cs*0.42*Math.sqrt(Math.min(1.6, f));
+      const x = (w - n*cs)/2 + (i + .5)*cs, y = (h - n*cs)/2 + (j + .5)*cs;
+      if(r === 0){ miss++; ctx.fillStyle = J.c('--red'); ctx.fillRect(x - cs*0.4, y - cs*0.4, cs*0.8, cs*0.8); } else { ctx.fillStyle = '#2b2b2b'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); } }
+    const mx = Math.max(...cnt), mn = Math.min(...cnt), B = 30, hist = new Array(B).fill(0), lo = Math.max(0, N - 5*Math.sqrt(N + 1)), hi = N + 5*Math.sqrt(N + 1);
+    cnt.forEach(k => { const b = Math.floor((k - lo)/(hi - lo)*B); if(b >= 0 && b < B) hist[b]++; });
+    const P = J.plot(document.getElementById('cv3b'), {x:[lo, hi], y:[0, Math.max(...hist)*1.15], xlab:'구멍이 흡수한 광자 수', ylab:'구멍 수', series:[{pts:hist.map((c, i) => [lo + (i + .5)/B*(hi - lo), c]), color:'--indigo', w:2.5, step:true, fill:.2}], vlines:[{x:0.7*N, color:'--red', label:'막힘 문턱'}]});
+    const z = (N - 0.7*N)/Math.sqrt(Math.max(1, N)), pfail = 0.5*erfcs(z/Math.SQRT2);
+    J.out(box,'n', J.fmt(N, 0) + '개'); J.out(box,'cd', '±' + J.fmt(3/Math.sqrt(Math.max(1, N))/2*v.w*100/100, 2) + ' nm', 3/Math.sqrt(N)/2 < 0.05 ? 'good' : 'warn');
+    J.out(box,'p', J.sci(Math.max(pfail, 1e-300), 2), pfail < 1e-12 ? 'good' : 'bad'); J.out(box,'chip', pfail*1e10 < 0.01 ? '≈ 0개' : J.sci(pfail*1e10, 2) + '개', pfail*1e10 < 0.01 ? 'good' : 'bad');
+    J.out(box,'th', J.fmt(30/v.d*100, 0) + ' %');
+    J.$('[data-o="w"]', box).textContent = v.w + ' nm'; });
+  J.$('#b3r').onclick = () => { seed++; J.$('#sim3 [data-k="d"]').dispatchEvent(new Event('input')); };
+})();
+
+/* 7-4 오버레이 */
+J.sim('sim4', (v, box) => {
+  const it = [['노광기', v.a, '--indigo'], ['웨이퍼 변형', v.b, '--plum'], ['마스크', v.c, '--gold'], ['측정·비대칭', v.d, '--jade']];
+  const sum = it.reduce((a, b) => a + b[1], 0), rss = Math.sqrt(it.reduce((a, b) => a + b[1]*b[1], 0));
+  const {ctx, w, h} = J.fit(document.getElementById('cv4')); ctx.clearRect(0,0,w,h);
+  let x = 20; const W = w - 40, tot = it.reduce((a, b) => a + b[1]*b[1], 0);
+  it.forEach(([n, val, c]) => { const ww = val*val/tot*W; ctx.fillStyle = J.c(c); ctx.globalAlpha = .8; ctx.fillRect(x, 40, ww, 50); ctx.globalAlpha = 1;
+    ctx.fillStyle = '#fff'; ctx.font = '600 11.5px "Noto Sans KR"'; ctx.textAlign = 'center'; if(ww > 60) ctx.fillText(`${n} ${J.fmt(val*val/tot*100, 0)}%`, x + ww/2, 70); x += ww; });
+  const Xs = q => 20 + q/6*W; ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('분산 기여 비율', 20, 30);
+  ctx.strokeStyle = J.c('--line'); ctx.beginPath(); ctx.moveTo(20, 150); ctx.lineTo(20 + W, 150); ctx.stroke();
+  [[rss, '--red', 'RSS ' + J.fmt(rss, 2)], [sum, '--ink3', '단순 합 ' + J.fmt(sum, 1)], [v.t, '--jade', '허용 ' + J.fmt(v.t, 1)]].forEach(([q, c, l], i) => { ctx.fillStyle = J.c(c); ctx.fillRect(Xs(Math.min(6, q)) - 2, 135, 4, 30); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(l + ' nm', Xs(Math.min(6, q)), 128 - (i % 2)*0 + (i === 2 ? 52 : 0)); });
+  for(let q = 0; q <= 6; q++){ ctx.fillStyle = J.c('--ink3'); ctx.font = '10.5px "JetBrains Mono"'; ctx.fillText(q, Xs(q), 200); }
+  const big = it.slice().sort((a, b) => b[1] - a[1])[0];
+  J.out(box,'sum', J.fmt(sum, 2) + ' nm'); J.out(box,'rss', J.fmt(rss, 2) + ' nm', rss <= v.t ? 'good' : 'bad'); J.out(box,'big', big[0] + ' (' + J.fmt(big[1]*big[1]/tot*100, 0) + ' %)');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>확산·이온 주입·열처리 · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="doping">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 05 <span class="hanja">第五章 · 摻</span></div>
+  <h1>확산·이온 주입·열처리</h1>
+  <p class="lead">트랜지스터의 소스·드레인, 웰, 문턱 전압 조절층 — 모두 원하는 곳에 원하는 만큼 불순물을 넣어 만든다. 1970년대까지는 뜨거운 노에서 기체 도펀트를 표면으로 스며들게 하는 <b>확산</b>을 썼고, 지금은 이온을 가속해 쏘아 넣는 <b>이온 주입</b> 뒤에 짧고 뜨거운 <b>열처리</b>로 활성화한다. 이 장의 핵심 숫자는 셋이다: 접합 깊이, 면저항, 그리고 열 예산 Dt.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>픽의 법칙으로 선증착(erfc)과 드라이브인(가우스) 분포를 계산한다.</li>
+  <li>접합 깊이와 면저항을 구하고 공정 조건과의 관계를 이해한다.</li>
+  <li>이온 주입의 투사 범위 R<sub>p</sub>, 분산 ΔR<sub>p</sub>, 도즈, 채널링을 다룬다.</li>
+  <li>열처리 방식별 열 예산(√Dt)을 비교해 얕은 접합이 어려운 이유를 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>확산: 픽의 법칙</h2>
+<p>도펀트 원자는 고온에서 격자의 빈자리(공공)나 틈새를 타고 뛰어다닌다. 농도 기울기가 있으면 알짜 흐름이 생기고(픽 제1법칙), 이것이 시간에 따른 분포 변화를 정한다(제2법칙). 확산 계수 D는 온도에 지수적으로 민감해서, 100 °C만 올려도 10배 넘게 커진다.</p>
+<div class="eq">$$J = -D\frac{\partial C}{\partial x},\qquad \frac{\partial C}{\partial t} = D\frac{\partial^2 C}{\partial x^2},\qquad D = D_0\,e^{-E_a/kT}$$
+<div class="note"><b>선증착</b>(표면 농도 C<sub>s</sub> 고정): C = C<sub>s</sub> erfc(x/2√Dt), 들어간 양 Q = 2C<sub>s</sub>√(Dt/π). <b>드라이브인</b>(양 Q 고정): C = Q/√(πDt) · e<sup>−x²/4Dt</sup>. 접합 깊이 x<sub>j</sub>는 C(x<sub>j</sub>) = 기판 농도 N<sub>B</sub>인 곳.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-1</span><span class="ttl">2단계 확산: 선증착 + 드라이브인</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">도펀트</span><select data-k="dp"><option value="B">붕소 B (p형)</option><option value="P">인 P (n형)</option><option value="As">비소 As (n형, 느림)</option></select></label>
+      <label class="ctrl"><span class="lab">선증착 온도 <output data-o="T1"></output></span><input type="range" data-k="T1" min="850" max="1050" step="5" value="950" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">선증착 시간 <output data-o="t1"></output></span><input type="range" data-k="t1" min="5" max="120" step="5" value="30" data-d="0" data-u="분"></label>
+      <label class="ctrl"><span class="lab">드라이브인 온도 <output data-o="T2"></output></span><input type="range" data-k="T2" min="900" max="1200" step="5" value="1100" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">드라이브인 시간 <output data-o="t2"></output></span><input type="range" data-k="t2" min="0" max="240" step="5" value="60" data-d="0" data-u="분"></label>
+      <label class="ctrl"><span class="lab"><span>기판 농도 N<sub>B</sub></span> <output data-o="nb"></output></span><input type="range" data-k="nb" min="14" max="17" step="0.1" value="15" data-log="1"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="310"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">들어간 양 Q (도즈)</span><span class="v" data-r="q"></span></div>
+      <div class="ro"><span class="k">접합 깊이 x<sub>j</sub></span><span class="v" data-r="xj"></span></div>
+      <div class="ro"><span class="k">표면 농도 (최종)</span><span class="v" data-r="cs"></span></div>
+      <div class="ro"><span class="k">면저항 R<sub>s</sub></span><span class="v" data-r="rs"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 점선: 선증착 직후의 erfc 분포(표면 농도 = 고용 한계). 실선: 드라이브인 후의 가우스 분포. 회색 수평선이 기판 농도 — 교차점이 접합 깊이다. 면저항은 Σ(q·μ(N)·N·Δx)의 역수로 계산했다(이동도는 농도 의존). D 값: B·P·As의 표준 D₀, E<sub>a</sub> (본질 확산, 농도 의존 확산은 무시).</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>이온 주입</h2>
+<p>이온 주입은 도펀트 양(도즈, 개/cm²)을 전류계로 정확히 세면서 넣고, 깊이를 가속 에너지로 정한다. 이온은 실리콘 핵·전자와 부딪히며 감속해 평균 깊이 R<sub>p</sub> 근처에 멈추고, 분포는 대략 가우스다. 결정 축 방향으로 쏘면 원자 열 사이 "통로"를 따라 깊이 들어가는 <span class="term">채널링</span> 꼬리가 생긴다 — 그래서 웨이퍼를 7° 기울여 쏜다. 무거운 이온을 많이 넣으면 결정이 비정질로 깨지는데, 이것은 이후 고상 재결정으로 회복된다.</p>
+<div class="eq">$$N(x) = \frac{Q}{\sqrt{2\pi}\,\Delta R_p}\,\exp\!\left[-\frac{(x-R_p)^2}{2\Delta R_p^2}\right],\qquad N_{peak} \approx \frac{0.4\,Q}{\Delta R_p}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-2</span><span class="ttl">이온 주입 분포 설계</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">이온</span><select data-k="ion"><option value="B">B⁺ (11 amu)</option><option value="BF2">BF₂⁺ (49 amu, 얕은 p⁺)</option><option value="P">P⁺ (31 amu)</option><option value="As" selected>As⁺ (75 amu)</option></select></label>
+      <label class="ctrl"><span class="lab">에너지 <output data-o="E"></output></span><input type="range" data-k="E" min="1" max="200" step="1" value="30" data-d="0" data-u="keV"></label>
+      <label class="ctrl"><span class="lab">도즈 <output data-o="Q"></output></span><input type="range" data-k="Q" min="11" max="16" step="0.1" value="15" data-log="1"></label>
+      <label class="ctrl"><span class="lab">기울기</span><select data-k="tilt"><option value="7">7° (채널링 방지)</option><option value="0">0° (결정 축 방향)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">R<sub>p</sub> / ΔR<sub>p</sub></span><span class="v" data-r="rp"></span></div>
+      <div class="ro"><span class="k">최고 농도</span><span class="v" data-r="pk"></span></div>
+      <div class="ro"><span class="k">결정 손상</span><span class="v" data-r="am" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">주입 시간 (빔 5 mA, 300 mm)</span><span class="v" data-r="time"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 깊이 분포(로그). 기울기 0°면 채널링 꼬리(점선 영역)가 붙는다. 오른쪽: 결정 격자를 위에서 본 모습 — 0°에서는 원자 열 사이가 뻥 뚫린 통로로 보인다. R<sub>p</sub>·ΔR<sub>p</sub>는 LSS 표의 근사 멱함수. BF₂⁺는 붕소 하나가 에너지의 11/49만 나눠 받아 매우 얕게 들어간다. 도즈가 크면 시간이 오래 걸린다 — 고농도 주입이 주입기의 병목이다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>열처리와 열 예산</h2>
+<p>주입한 도펀트는 결정 격자 자리로 들어가야 전자·정공을 내놓는다(<span class="term">활성화</span>). 높은 온도일수록 활성화는 잘 되지만 도펀트가 확산해 접합이 깊어진다. 그래서 "뜨겁게, 그러나 아주 짧게"가 발전 방향이었다: 노(분 단위) → RTA(초) → 스파이크(1초 미만) → 플래시·레이저(밀리초 이하). 확산 거리는 √(Dt)로 어림하는데, D가 온도에 지수적이라 최고 온도 근처의 짧은 시간이 대부분을 결정한다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-3</span><span class="ttl">어닐 방식별 열 예산</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><button class="sbtn" data-a="0">노 900 °C 30분</button><button class="sbtn" data-a="1">RTA 1050 °C 10초</button><button class="sbtn on" data-a="2">스파이크 1080 °C</button><button class="sbtn" data-a="3">레이저 1300 °C 0.3 ms</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">유효 √(Dt) (붕소)</span><span class="v" data-r="l"></span></div>
+      <div class="ro"><span class="k">접합 깊이 (주입 직후 → 후)</span><span class="v" data-r="xj"></span></div>
+      <div class="ro"><span class="k">활성화 (대략)</span><span class="v" data-r="act"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형.</b> 왼쪽: 온도–시간 프로파일(로그 시간). 오른쪽: 2 keV 붕소 1×10¹⁵ cm⁻² 주입 분포가 어닐 후 넓어진 모습(기판 10¹⁸ 기준 접합 깊이). Dt = ∫D(T(t))dt로 수치 적분했다. 실제 얕은 접합에서는 주입 손상이 일시적으로 확산을 수십 배 빠르게 하는 TED 현상이 있어 더 복잡하다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="0"><p class="q">드라이브인 동안 일정하게 유지되는 것은?</p><ol><li>도펀트 총량 Q</li><li>표면 농도</li><li>접합 깊이</li><li>확산 계수</li></ol>
+<p class="explain">표면을 막고 가열하므로 총량은 그대로, 분포만 넓어진다(가우스).</p></div>
+<div class="quiz" data-a="2"><p class="q">이온 주입 때 웨이퍼를 7° 기울이는 이유는?</p><ol><li>더 빠르게 주입하려고</li><li>도즈를 늘리려고</li><li>결정 통로를 따라 깊이 들어가는 채널링을 막으려고</li><li>손상을 늘리려고</li></ol>
+<p class="explain">결정 축과 어긋나게 쏘면 이온이 통로를 타지 못한다.</p></div>
+<div class="quiz" data-a="3"><p class="q">ΔR<sub>p</sub> = 10 nm, 도즈 10¹⁵ cm⁻²일 때 최고 농도는 약?</p><ol><li>10¹⁵ cm⁻³</li><li>10¹⁸ cm⁻³</li><li>10¹⁹ cm⁻³</li><li>4×10²⁰ cm⁻³</li></ol>
+<p class="explain">0.4 × 10¹⁵ / 10⁻⁶ cm = 4×10²⁰ cm⁻³.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const DIF = {B:{D0:0.76, Ea:3.46, sol:{850:1e20, 950:2e20, 1050:3e20}}, P:{D0:3.85, Ea:3.66}, As:{D0:22.9, Ea:4.1}};
+const Dof = (dp, Tc) => { const d = DIF[dp]; return d.D0*Math.exp(-d.Ea/(8.617e-5*(Tc + 273))); }; // cm²/s
+const solub = (dp, Tc) => ({B:1.5e20, P:4e20, As:5e20})[dp]*Math.pow((Tc + 273)/1323, 2.5);
+const mob = (N, n) => n ? 68.5 + (1414 - 68.5)/(1 + Math.pow(N/9.2e16, 0.711)) : 44.9 + (470.5 - 44.9)/(1 + Math.pow(N/2.23e17, 0.719));
+function erfc(x){ const t = 1/(1 + 0.3275911*Math.abs(x)), y = (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x); return x >= 0 ? y : 2 - y; }
+function sheet(prof, NB, n){ let g = 0; prof.forEach(([x, N], i) => { if(i === 0) return; const dx = (x - prof[i-1][0])*1e-4, Ne = N - NB; if(Ne > 0) g += 1.6e-19*mob(N, n)*Ne*dx; }); return g > 0 ? 1/g : Infinity; }
+
+/* 5-1 */
+J.sim('sim1', (v, box) => {
+  J.$('[data-o="nb"]', box).textContent = J.sci(v.nb, 1) + ' cm⁻³';
+  const D1 = Dof(v.dp, v.T1), D2 = Dof(v.dp, v.T2), t1 = v.t1*60, t2 = v.t2*60, Cs = solub(v.dp, v.T1);
+  const Q = 2*Cs*Math.sqrt(D1*t1/Math.PI);
+  const L1 = 2*Math.sqrt(D1*t1), pre = x => Cs*erfc(x/L1);
+  const Dt = D1*t1/2 + D2*t2; // 드라이브인 근사 (선증착 분포를 가우스 출발로)
+  const drv = x => t2 > 0 ? Q/Math.sqrt(Math.PI*Dt)*Math.exp(-x*x/(4*Dt)) : pre(x);
+  const xmax = Math.max(1e-5, Math.sqrt(4*Dt*Math.log(Math.max(10, (Q/Math.sqrt(Math.PI*Dt))/v.nb)))*1.6), XU = xmax*1e4;
+  const p1 = [], p2 = [], prof = [];
+  for(let i=0;i<=300;i++){ const x = i/300*xmax; p1.push([x*1e4, Math.max(1e13, pre(x))]); const c = Math.max(1e13, drv(x)); p2.push([x*1e4, c]); prof.push([x*1e4, c]); }
+  let xj = 0; for(let i=1;i<prof.length;i++) if(prof[i-1][1] >= v.nb && prof[i][1] < v.nb){ xj = prof[i][0]; break; }
+  J.plot(document.getElementById('cv1'), {x:[0, XU], y:[1e14, 1e21], logy:true, xlab:'깊이 (µm)', ylab:'농도 (cm⁻³)', yf:t => J.sci(t, 0), series:[{pts:p1, color:'--ink3', w:1.8, dash:[5,4]},{pts:p2, color: v.dp === 'B' ? '--indigo' : '--red', w:3}],
+    hlines:[{y:v.nb, color:'--ink3', label:'기판 N_B'}], vlines: xj ? [{x:xj, color:'--jade', label:'x_j'}] : []});
+  J.out(box,'q', J.sci(Q, 2) + ' cm⁻²'); J.out(box,'xj', xj ? J.fmt(xj, 3) + ' µm' : '—'); J.out(box,'cs', J.sci(drv(0), 2) + ' cm⁻³'); J.out(box,'rs', J.fmt(sheet(prof, v.nb, v.dp !== 'B'), 0) + ' Ω/□');
+});
+
+/* 5-2 이온 주입 */
+const IMP = {B:{a:3.3, b:0.97, s:0.42, m:11}, BF2:{a:3.3, b:0.97, s:0.45, m:49}, P:{a:1.25, b:1.0, s:0.38, m:31}, As:{a:0.75, b:0.92, s:0.36, m:75}};
+J.sim('sim2', (v, box) => {
+  const p = IMP[v.ion], bf = v.ion === 'BF2', pp = bf ? IMP.B : p, Rp = pp.a*Math.pow(bf ? v.E*11/49 : v.E, pp.b), dR = Rp*p.s + 1.5, Q = v.Q;
+  J.$('[data-o="Q"]', box).textContent = J.sci(Q, 1) + ' cm⁻²';
+  const Np = Q/(Math.sqrt(2*Math.PI)*dR*1e-7), ch = v.tilt === '0';
+  const N = x => Np*Math.exp(-(x - Rp)*(x - Rp)/(2*dR*dR)) + (ch && x > Rp ? 0.04*Np*Math.exp(-(x - Rp)/(2.5*Rp)) : 0);
+  const xm = Math.max(30, (Rp + 4*dR)*(ch ? 2.6 : 1.3)), pts = [];
+  for(let i=0;i<=300;i++){ const x = i/300*xm; pts.push([x, Math.max(1e14, N(x))]); }
+  const amThr = {B:1e17*50, BF2:2e14, P:5e14, As:1.5e14}[v.ion];
+  J.plot(document.getElementById('cv2a'), {x:[0, xm], y:[1e15, 1e22], logy:true, xlab:'깊이 (nm)', ylab:'농도 (cm⁻³)', yf:t => J.sci(t, 0), series:[{pts, color:'--red', w:3, fill:.12}], vlines:[{x:Rp, color:'--ink3', label:'R_p'}],
+    bands: ch ? [{x0:Rp + 2*dR, x1:xm, color:'--gold', alpha:.15}] : []});
+  // 결정 격자 평면도
+  const {ctx, w, h} = J.fit(document.getElementById('cv2b')); ctx.clearRect(0,0,w,h);
+  const cx = w/2, cy = h/2, s = 22, th = ch ? 0 : 7*Math.PI/180;
+  for(let i=-12;i<=12;i++) for(let j=-12;j<=12;j++) for(let l=0;l<4;l++){ // 4 깊이층 투영
+    const off = ch ? 0 : l*s*Math.tan(th)*2.2, x = cx + i*s + (l % 2)*s/2 + off, y = cy + j*s + (l % 2)*s/2 + off*0.5;
+    if(x < 0 || x > w || y < 0 || y > h) continue; ctx.fillStyle = J.c('--indigo'); ctx.globalAlpha = 0.25 + l*0.12; ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill(); }
+  ctx.globalAlpha = 1; ctx.fillStyle = J.c('--ink'); ctx.font = '600 12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(ch ? '0°: 원자 열 사이 통로가 열려 보임' : '7°: 통로가 가려짐', cx, h - 10);
+  const am = Q > amThr; const t = Q*1.6e-19*706.9/(5e-3);
+  J.out(box,'rp', J.fmt(Rp, 1) + ' / ' + J.fmt(dR, 1) + ' nm'); J.out(box,'pk', J.sci(Np, 2) + ' cm⁻³');
+  J.out(box,'am', am ? '비정질화 (재결정 필요)' : '점결함 수준', am ? 'warn' : 'good'); J.out(box,'time', t < 60 ? J.fmt(t, 1) + '초' : J.fmt(t/60, 1) + '분');
+});
+
+/* 5-3 열 예산 */
+(function(){
+  const A = [
+    {n:'노', prof:t => t < 600 ? 600 + 300*t/600 : t < 2400 ? 900 : Math.max(600, 900 - 300*(t - 2400)/900), tEnd:3300, act:0.6},
+    {n:'RTA', prof:t => t < 10 ? 600 + 450*t/10 : t < 20 ? 1050 : Math.max(600, 1050 - 450*(t - 20)/8), tEnd:30, act:0.8},
+    {n:'스파이크', prof:t => { const pk = 1080, r = 250; return t < 4 ? 600 + (pk - 600)*Math.pow(t/4, 2) : Math.max(600, pk - (t - 4)*r/2*1.6); }, tEnd:8, act:0.88},
+    {n:'레이저', prof:t => 700 + 600*Math.exp(-Math.pow((t - 0.002)/0.00025, 2)), tEnd:0.004, act:0.95}];
+  let sel = 2; const box = document.getElementById('sim3');
+  function draw(){
+    const a = A[sel], N = 4000; let Dt = 0; const tp = [];
+    for(let i=0;i<=N;i++){ const t = i/N*a.tEnd, T = a.prof(t); Dt += Dof('B', T)*a.tEnd/N; if(i % 20 === 0) tp.push([Math.max(1e-5, t), T]); }
+    J.plot(document.getElementById('cv3a'), {x:[1e-5, 5000], y:[500, 1400], logx:true, xlab:'시간 (s)', ylab:'온도 (°C)', xf:t => J.si(t, 's'), series:A.map((q, k) => { const pts = []; for(let i=0;i<=400;i++){ const t = i/400*q.tEnd; pts.push([Math.max(1e-5, t), q.prof(t)]); } return {pts, color: k === sel ? '--red' : '--ink3', w: k === sel ? 3 : 1.2}; })});
+    const Rp = 8, dR = 4.5, Q = 1e15, NB = 1e18, L2 = 2*Dt*1e14; // nm²
+    const s0 = dR*dR, s1 = s0 + L2, N0 = x => Q/(Math.sqrt(2*Math.PI*s0)*1e-7)*Math.exp(-(x - Rp)*(x - Rp)/(2*s0)), N1 = x => Q/(Math.sqrt(2*Math.PI*s1)*1e-7)*(Math.exp(-(x - Rp)*(x - Rp)/(2*s1)) + Math.exp(-(x + Rp)*(x + Rp)/(2*s1)));
+    const p0 = [], p1 = []; let xj0 = 0, xj1 = 0; for(let x = 0; x <= 120; x += 0.25){ const a0 = N0(x), a1 = N1(x); p0.push([x, Math.max(1e15, a0)]); p1.push([x, Math.max(1e15, a1)]); if(!xj0 && a0 < NB && x > Rp) xj0 = x; if(!xj1 && a1 < NB && x > Rp) xj1 = x; }
+    J.plot(document.getElementById('cv3b'), {x:[0, 120], y:[1e16, 1e22], logy:true, xlab:'깊이 (nm)', ylab:'붕소 (cm⁻³)', yf:t => J.sci(t, 0), series:[{pts:p0, color:'--ink3', w:1.8, dash:[5,4]},{pts:p1, color:'--indigo', w:3}], hlines:[{y:NB, color:'--ink3', label:'기판 10¹⁸'}]});
+    J.out(box,'l', J.fmt(Math.sqrt(Dt)*1e7, 2) + ' nm'); J.out(box,'xj', J.fmt(xj0, 0) + ' → ' + J.fmt(xj1, 0) + ' nm', xj1 < 20 ? 'good' : xj1 < 40 ? 'warn' : 'bad'); J.out(box,'act', J.fmt(a.act*100, 0) + ' %');
+  }
+  J.$$('#sim3 [data-a]').forEach(b => b.onclick = () => { J.$$('#sim3 [data-a]').forEach(x => x.classList.remove('on')); b.classList.add('on'); sel = +b.dataset.a; draw(); });
+  J.live(draw);
+})();
+</script>
+</body>
+</html>

@@ -49,9 +49,10 @@
   /* 과학 표기: 8.6×10⁹ */
   J.sci = function(x, d=2, unit=''){
     if(!isFinite(x)) return '—'; if(x === 0) return '0' + (unit ? ' ' + unit : '');
-    const e = Math.floor(Math.log10(Math.abs(x))), m = x/Math.pow(10, e);
+    let e = Math.floor(Math.log10(Math.abs(x))), m = x/Math.pow(10, e);
+    if(Math.abs(+m.toFixed(Math.max(0, d-1))) >= 10){ m /= 10; e++; }
     const sup = String(e).replace('-', '⁻').replace(/\d/g, c => '⁰¹²³⁴⁵⁶⁷⁸⁹'[c]);
-    return (e >= -2 && e <= 3 ? J.fmt(x, d) : (+m.toFixed(d-1)) + '×10' + sup) + (unit ? ' ' + unit : '');
+    return (e >= -2 && e <= 3 ? J.fmt(x, d) : (+m.toFixed(Math.max(0, d-1))) + '×10' + sup) + (unit ? ' ' + unit : '');
   };
   /* ── 실험 바인딩: data-k 슬라이더 → 값 객체 → update(v) ── */
   J.sim = function(id, update){

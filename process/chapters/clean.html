@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>세정과 오염 제어 · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="clean">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 03 <span class="hanja">第三章 · 淨</span></div>
+  <h1>세정과 오염 제어</h1>
+  <p class="lead">반도체 공정 단계의 약 4분의 1은 무언가를 만드는 것이 아니라 <b>씻는</b> 일이다. 나노미터 입자 하나는 배선을 끊고, 표면에 남은 철 원자 10¹⁰개(1 cm²당)는 DRAM 셀의 전하를 새게 하며, 손가락 기름 한 겹은 산화막을 망친다. 이 장은 오염이 왜 그렇게 끈질기게 붙는지, 어떤 약품 순서로 떼어 내는지, 얼마나 헹궈야 하는지를 숫자로 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>입자 오염이 표면에 붙는 힘(반데르발스)을 중력·유체 항력과 비교한다.</li>
+  <li>RCA 세정(SC1·SC2·HF)의 각 단계가 무엇을 제거하는지 알고 순서를 설계한다.</li>
+  <li>헹굼 탱크의 희석을 지수 함수로 계산한다.</li>
+  <li>금속 오염이 소수 운반자 수명을 줄이는 정도를 계산한다.</li>
+</ul></div>
+
+<div class="tbwrap"><table class="tb">
+<tr><th>오염</th><th>예</th><th>주는 피해</th><th>주된 제거법</th></tr>
+<tr><td>입자</td><td>먼지, 공정 부산물, 장비 마모 조각</td><td>패턴 결함, 배선 단락·단선</td><td>SC1 + 메가소닉, 스크러버</td></tr>
+<tr><td>금속</td><td>Fe, Ni, Cu, Na, K</td><td>누설 전류, 산화막 열화, 수명 감소</td><td>SC2 (HCl/H₂O₂), 희석 HF</td></tr>
+<tr><td>유기물</td><td>감광액 찌꺼기, 사람 기름, 공기 중 탄화수소</td><td>산화막·증착막 불량</td><td>SPM (황산/과산화수소), 오존수, 애싱</td></tr>
+<tr><td>자연 산화막</td><td>공기 중 수 Å SiO₂</td><td>콘택 저항 증가, 에피 성장 방해</td><td>희석 HF</td></tr>
+</table></div>
+
+<h2 id="s1"><span class="n">01</span>왜 작은 입자는 떨어지지 않는가</h2>
+<p>입자가 표면에 붙는 주된 힘은 <span class="term">반데르발스 힘</span>으로, 입자 지름 d에 비례한다. 반면 입자를 떼어 내려는 중력은 d³, 물의 흐름이 미는 힘(항력)은 대략 d²에 비례한다. 그래서 입자가 작아질수록 붙는 힘이 상대적으로 압도적으로 커진다. 0.1 µm 입자에는 붙는 힘이 자기 무게의 수억 배다. 그래서 단순히 물을 뿌려서는 안 되고, 화학적으로 입자 밑을 살짝 깎아 내거나(리프트오프), 표면과 입자를 같은 전하로 만들어 밀어내거나(제타 전위), 고주파 음파(메가소닉)로 흔들어야 한다.</p>
+<div class="eq">$$F_{vdW} \approx \frac{A\,d}{12\,z^2},\qquad F_g = \frac{\pi}{6}d^3\rho g,\qquad F_{drag} \approx 3\pi\mu d\,v_{(d/2)}$$<div class="note">A: 하마커 상수(~10⁻¹⁹ J), z: 접촉 거리(~0.4 nm). 표면 근처 유속은 벽에서 0이라 작은 입자는 느린 물살밖에 느끼지 못한다.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-1</span><span class="ttl">입자를 떼어 낼 수 있을까?</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">입자 지름 <output data-o="d"></output></span><input type="range" data-k="d" min="-2" max="1.5" step="0.05" value="-1" data-log="1" data-si="µm"></label>
+      <label class="ctrl"><span class="lab">헹굼 물 속도 (표면 1 mm 위) <output data-o="v"></output></span><input type="range" data-k="v" min="0.1" max="5" step="0.1" value="1" data-d="1" data-u="m/s"></label>
+      <label class="ctrl"><span class="lab">메가소닉 (가속도 증폭) <output data-o="m"></output></span><input type="checkbox" data-k="m"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">붙는 힘 (반데르발스)</span><span class="v" data-r="fa"></span></div>
+      <div class="ro"><span class="k">떼는 힘 (항력 + 음파)</span><span class="v" data-r="fd"></span></div>
+      <div class="ro"><span class="k">결과</span><span class="v" data-r="r" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 로그–로그 그래프에서 세 힘의 기울기가 다르다(반데르발스 1, 항력 2, 중력 3). 세로 점선이 지금 입자 크기. 입자는 미끄러지기보다 굴러서 떨어지므로, 떼는 힘(실선)이 붙는 힘(점선)의 약 1/200만 넘어도 떨어진다고 보았다. 메가소닉(~1 MHz)은 표면 바로 위 경계층을 얇게 만들고 음향 흐름을 일으켜 작은 입자에도 큰 힘을 전한다. 단, 세면 미세 패턴을 부러뜨릴 수 있다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>RCA 세정 설계하기</h2>
+<p>1965년 RCA의 컨이 개발한 세정법은 지금도 표준의 뼈대다. <b>SC1</b>(NH₄OH:H₂O₂:H₂O, 약 70 °C)은 과산화수소가 표면을 산화시키고 암모니아가 그 산화막을 살짝 녹여 입자를 들어 올리며, 높은 pH에서 표면과 입자가 모두 음전하를 띠어 서로 밀어낸다. 다만 알칼리 용액에서 금속이 다시 붙는다. <b>SC2</b>(HCl:H₂O₂:H₂O)는 금속을 녹는 염화물로 만들어 제거한다. <b>DHF</b>(희석 불산)는 산화막을 녹인다. 유기물이 많으면 맨 앞에 <b>SPM</b>(피라냐 용액)을 둔다. 순서가 결과를 바꾼다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-2</span><span class="ttl">세정 레시피 짜기 (최대 5단계)</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><span class="hint">단계 추가:</span><button class="sbtn" data-s="SPM">SPM (유기물)</button><button class="sbtn" data-s="SC1">SC1 (입자)</button><button class="sbtn" data-s="SC2">SC2 (금속)</button><button class="sbtn" data-s="DHF">DHF (산화막)</button><button class="sbtn" data-s="DIW">DIW 헹굼</button><button class="sbtn warn" id="b2c">레시피 지우기</button><button class="sbtn" id="b2s">표준 RCA 넣기</button></div>
+    <div class="canvas-box"><canvas id="cv2" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">레시피</span><span class="v" data-r="seq" style="font-size:13.5px"></span></div>
+      <div class="ro"><span class="k">마지막 표면 상태</span><span class="v" data-r="sf" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">점수 (100점 만점)</span><span class="v" data-r="sc"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>규칙(단순화).</b> 시작 상태: 입자·금속·유기물·자연 산화막이 모두 100. SPM은 유기물 −95, SC1은 입자 −90(유기물이 많으면 효과 절반)·유기물 −50이지만 금속 +20·산화막 생성, SC2는 금속 −95·산화막 생성, DHF는 산화막 제거·금속 −50이지만 소수성 표면에 입자 +15, 약품 뒤에 헹굼이 없으면 잔류물 감점. 게이트 산화 직전이라면 "깨끗하고 얇은 산화막(친수성)"으로 끝나는 것이 목표다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>얼마나 헹궈야 하나</h2>
+<p>약품 뒤에는 초순수(DIW, 비저항 18.2 MΩ·cm)로 헹군다. 넘쳐흐르는(overflow) 헹굼 탱크에서 잘 섞인다고 가정하면 남은 약품 농도는 지수 함수로 줄어든다. 시간 상수 τ = V/Q(탱크 부피/유량)다. 헹굼 물의 비저항을 재서 끝났는지 판단한다. 반도체 팹 하나는 하루에 수만 톤의 초순수를 쓴다.</p>
+<div class="eq">$$C(t) = C_0\,e^{-t/\tau},\qquad \tau = \frac{V}{Q}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-3</span><span class="ttl">오버플로 헹굼 탱크</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">탱크 부피 V <output data-o="V"></output></span><input type="range" data-k="V" min="10" max="60" step="5" value="30" data-d="0" data-u="L"></label>
+      <label class="ctrl"><span class="lab">초순수 유량 Q <output data-o="Q"></output></span><input type="range" data-k="Q" min="5" max="60" step="5" value="20" data-d="0" data-u="L/분"></label>
+      <label class="ctrl"><span class="lab">목표: 처음 농도의 <output data-o="g"></output></span><input type="range" data-k="g" min="-9" max="-3" step="1" value="-6" data-log="1" data-d="0"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="260"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="260"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">시간 상수 τ</span><span class="v" data-r="tau"></span></div>
+      <div class="ro"><span class="k">목표까지 시간</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">쓴 초순수</span><span class="v" data-r="w"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 탱크와 남은 약품(색의 진하기). 오른쪽: 시간에 따른 남은 농도(로그). 농도를 10배 줄이는 데 2.3τ가 걸린다 — 100만분의 1까지는 약 13.8τ. 유량을 두 배로 하면 시간은 절반이지만 물 사용량은 그대로라는 점에 주목하자. 그래서 실제로는 "빠르게 비우고 다시 채우는(QDR)" 방식도 쓴다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>금속 오염과 운반자 수명</h2>
+<p>철·금 같은 금속 원자는 실리콘 띠틈 가운데쯤에 에너지 준위를 만들어 전자와 정공이 쉽게 재결합하는 정거장이 된다(SRH 재결합). 그래서 금속 농도가 높아질수록 <span class="term">소수 운반자 수명</span> τ가 짧아진다. 수명이 짧으면 태양전지 효율이 떨어지고, 이미지 센서에 암전류 얼룩이 생기며, DRAM 셀 전하가 빨리 샌다.</p>
+<div class="eq">$$\tau \approx \frac{1}{\sigma\, v_{th}\, N_t},\qquad L = \sqrt{D\tau}$$<div class="note">σ: 포획 단면적(Fe: ~10⁻¹⁴ cm²), v<sub>th</sub>: 열속도(~10⁷ cm/s), N<sub>t</sub>: 금속 농도, L: 확산 거리.</div></div>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-4</span><span class="ttl">철 오염이 수명을 얼마나 줄이나</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">철 농도 (부피) <output data-o="n"></output></span><input type="range" data-k="n" min="9" max="14" step="0.1" value="11" data-log="1" data-d="0"></label>
+      <label class="ctrl"><span class="lab">금속 종류</span><select data-k="m"><option value="1e-14">철 Fe (σ ≈ 10⁻¹⁴ cm²)</option><option value="5e-15">니켈 Ni</option><option value="3e-15">구리 Cu</option><option value="1e-13">금 Au (매우 강한 재결합 중심)</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="270"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">금속 원자 비율</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">소수 운반자 수명</span><span class="v" data-r="tau"></span></div>
+      <div class="ro"><span class="k">확산 거리 L (전자)</span><span class="v" data-r="L"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 금속 농도가 10배 늘면 수명은 10배 준다(기울기 −1 직선). 초록 띠는 고효율 태양전지·이미지 센서가 원하는 수명(&gt; 1 ms) 영역. 10¹⁰ cm⁻³는 실리콘 원자 5조 개 중 하나다 — 이 정도까지 막아야 한다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">입자가 작아질수록 떼어 내기 어려운 이유는?</p><ol><li>무거워져서</li><li>정전기가 사라져서</li><li>붙는 힘(∝d)이 떼는 힘(∝d², d³)보다 덜 줄어서</li><li>물에 녹아서</li></ol>
+<p class="explain">지름이 10배 작아지면 반데르발스 힘은 10배, 항력은 100배, 중력은 1000배 줄어든다.</p></div>
+<div class="quiz" data-a="1"><p class="q">RCA 세정에서 금속 오염을 주로 제거하는 단계는?</p><ol><li>SC1</li><li>SC2 (HCl/H₂O₂)</li><li>DIW 헹굼</li><li>SPM</li></ol>
+<p class="explain">SC2는 금속을 녹는 염화물 착물로 만들어 씻어 낸다.</p></div>
+<div class="quiz" data-a="3"><p class="q">τ = 1.5분인 헹굼 탱크에서 약품을 1/1000로 줄이려면 약?</p><ol><li>1.5분</li><li>4.5분</li><li>7분</li><li>10.4분</li></ol>
+<p class="explain">t = τ ln(1000) ≈ 1.5 × 6.9 ≈ 10.4분.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 3-1 힘 비교 */
+J.sim('sim1', (v, box) => {
+  const A = 1e-19, z = 4e-10, rho = 2200, mu = 1e-3, g = 9.8, delta = v.m ? 3e-6 : 5e-5; // 경계층 두께 (메가소닉은 음향 경계층이 얇음)
+  const Fa = d => A*d/(12*z*z), Fg = d => Math.PI/6*d*d*d*rho*g;
+  const Fd = d => { const u = v.v*Math.min(1, (d/2)/delta); return 3*Math.PI*mu*d*u*1.7; };
+  const d = v.d*1e-6, xs = [], a = [], b = [], c = [];
+  for(let e = -2; e <= 1.5; e += 0.02){ const dd = Math.pow(10, e)*1e-6; a.push([Math.pow(10, e), Fa(dd)]); b.push([Math.pow(10, e), Fd(dd)]); c.push([Math.pow(10, e), Fg(dd)]); }
+  J.plot(document.getElementById('cv1'), {x:[0.01, 30], y:[1e-22, 1e-4], logx:true, logy:true, xlab:'입자 지름 (µm)', ylab:'힘 (N)', xf:t => J.fmt(t, 2), yf:t => J.sci(t, 0),
+    series:[{pts:a, color:'--red', w:2.5, dash:[6,4]},{pts:b, color:'--jade', w:3},{pts:c, color:'--ink3', w:1.5}], vlines:[{x:v.d, color:'--ink'}],
+    points:[{x:v.d, y:Fa(d), color:'--red', label:'붙는 힘'},{x:v.d, y:Fd(d), color:'--jade', label:'떼는 힘'},{x:v.d, y:Fg(d), color:'--ink3', label:'중력'}]});
+  J.out(box,'fa', J.sci(Fa(d), 2, 'N')); J.out(box,'fd', J.sci(Fd(d), 2, 'N'));
+  const ok = Fd(d) > Fa(d)*0.005; // 굴림 모멘트: 접촉 반지름이 작아 붙는 힘의 1/200 정도로도 굴러 떨어짐
+  J.out(box,'r', ok ? '떨어진다 (굴러 나감)' : '그대로 붙어 있음', ok ? 'good' : 'bad');
+});
+
+/* 3-2 레시피 */
+(function(){
+  let seq = []; const box = document.getElementById('sim2');
+  const STEP = {
+    SPM:s => { s.org *= 0.05; s.res = 1; s.ox = Math.max(s.ox, 30); },
+    SC1:s => { const eff = s.org > 40 ? 0.55 : 0.9; s.par *= 1 - eff; s.org *= 0.5; s.met = Math.min(150, s.met*1.2 + 5); s.ox = Math.max(s.ox, 30); s.res = 1; s.hyd = 1; },
+    SC2:s => { s.met *= 0.05; s.ox = Math.max(s.ox, 30); s.res = 1; s.hyd = 1; },
+    DHF:s => { s.ox = 0; s.met *= 0.5; s.par = s.par*1 + 15; s.res = 1; s.hyd = 0; },
+    DIW:s => { s.res = 0; s.par *= 0.9; }
+  };
+  function run(){ const s = {par:100, met:100, org:100, ox:100, res:0, hyd:0}, hist = [Object.assign({}, s)]; seq.forEach(k => { STEP[k](s); hist.push(Object.assign({}, s)); }); return {s, hist}; }
+  function draw(){
+    const {s, hist} = run(), {ctx, w, h} = J.fit(document.getElementById('cv2')); ctx.clearRect(0,0,w,h);
+    const cats = [['par','입자','--red'],['met','금속','--plum'],['org','유기물','--gold'],['ox','산화막 두께','--indigo']], cw = (w - 40)/Math.max(1, hist.length), bw = Math.min(16, (cw - 14)/4);
+    ctx.strokeStyle = J.c('--line2'); ctx.beginPath(); ctx.moveTo(30, h - 40); ctx.lineTo(w - 10, h - 40); ctx.stroke();
+    hist.forEach((st, i) => { const x0 = 30 + i*cw + cw/2 - bw*2;
+      cats.forEach(([k, n, c], j) => { const val = Math.min(150, st[k]), bh = val/150*(h - 80); ctx.fillStyle = J.c(c); ctx.globalAlpha = .8; ctx.fillRect(x0 + j*bw, h - 40 - bh, bw - 2, bh); ctx.globalAlpha = 1; });
+      ctx.fillStyle = J.c('--ink'); ctx.font = '600 11.5px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(i === 0 ? '시작' : (i + '. ' + seq[i - 1]), 30 + i*cw + cw/2, h - 22);
+      if(i > 0 && st.res && (i === hist.length - 1 || seq[i] !== 'DIW')) { ctx.fillStyle = J.c('--red'); ctx.font = '10.5px "Noto Sans KR"'; ctx.fillText('약품 잔류!', 30 + i*cw + cw/2, h - 8); } });
+    cats.forEach(([k, n, c], j) => { ctx.fillStyle = J.c(c); ctx.fillRect(w - 230 + j*58, 8, 10, 10); ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText(n, w - 216 + j*58, 17); });
+    let resPen = 0; seq.forEach((k, i) => { if(k !== 'DIW' && seq[i + 1] !== 'DIW') resPen += 8; });
+    const score = Math.max(0, Math.round(100 - s.par*0.35 - s.met*0.3 - s.org*0.2 - Math.abs(s.ox - 30)*0.25 - resPen - (seq.length > 9 ? 10 : 0)));
+    J.out(box,'seq', seq.length ? seq.join(' → ') : '(비어 있음)');
+    J.out(box,'sf', `입자 ${J.fmt(s.par, 0)} · 금속 ${J.fmt(s.met, 0)} · 유기물 ${J.fmt(s.org, 0)} · ${s.ox > 0 ? '친수성 산화막' : '소수성(맨 실리콘)'}`);
+    J.out(box,'sc', score + '점', score >= 85 ? 'good' : score >= 60 ? 'warn' : 'bad');
+  }
+  J.$$('#sim2 [data-s]').forEach(b => b.onclick = () => { if(seq.length < 10){ seq.push(b.dataset.s); draw(); } });
+  J.$('#b2c').onclick = () => { seq = []; draw(); };
+  J.$('#b2s').onclick = () => { seq = ['SPM','DIW','DHF','DIW','SC1','DIW','SC2','DIW']; draw(); };
+  J.live(draw);
+})();
+
+/* 3-3 헹굼 */
+(function(){
+  let V0 = null, t = 0; const box = document.getElementById('sim3');
+  J.sim('sim3', v => { V0 = v; t = 0;
+    const tau = v.V/v.Q, T = tau*Math.log(1/v.g);
+    J.$('[data-o="g"]', box).textContent = J.sci(v.g, 1);
+    const pts = []; for(let x = 0; x <= Math.max(T*1.3, 5); x += Math.max(T*1.3, 5)/200) pts.push([x, Math.exp(-x/tau)]);
+    J.plot(document.getElementById('cv3b'), {x:[0, Math.max(T*1.3, 5)], y:[1e-10, 1], logy:true, xlab:'시간 (분)', ylab:'남은 농도', yf:t => J.sci(t, 0), series:[{pts, color:'--indigo', w:3}], hlines:[{y:v.g, color:'--red', label:'목표'}], vlines:[{x:T, color:'--jade'}]});
+    J.out(box,'tau', J.fmt(tau, 2) + '분'); J.out(box,'t', J.fmt(T, 1) + '분'); J.out(box,'w', J.fmt(T*v.Q, 0) + ' L');
+  });
+  J.loop(document.getElementById('cv3a'), dt => { if(!V0) return; t += dt*0.6;
+    const tau = V0.V/V0.Q, T = tau*Math.log(1/V0.g), tt = t % (T*1.2 + 1), c = Math.exp(-tt/tau);
+    const {ctx, w, h} = J.fit(document.getElementById('cv3a')); ctx.clearRect(0,0,w,h);
+    const tw = Math.min(w*0.5, 40 + V0.V*3), x0 = (w - tw)/2, y0 = 40, th = h - 70;
+    ctx.fillStyle = `rgba(${Math.round(120 + 135*(1 - c))}, ${Math.round(60 + 140*(1 - c))}, ${Math.round(200)}, ${0.25 + 0.6*Math.pow(c, 0.25)})`; ctx.fillRect(x0, y0, tw, th);
+    ctx.strokeStyle = J.c('--ink2'); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x0, y0 - 10); ctx.lineTo(x0, y0 + th); ctx.lineTo(x0 + tw, y0 + th); ctx.lineTo(x0 + tw, y0 - 10); ctx.stroke();
+    ctx.fillStyle = '#d9dde6'; for(let k=0;k<5;k++) ctx.fillRect(x0 + 10 + k*(tw - 20)/5, y0 + 20, 3, th - 40);
+    ctx.strokeStyle = J.c('--indigo'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0 + tw/2, 4); ctx.lineTo(x0 + tw/2, y0 + th - 6); ctx.stroke();
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(`${J.fmt(tt, 1)}분 · 남은 농도 ${J.sci(c, 1)}`, w/2, h - 10);
+    ctx.textAlign = 'left'; ctx.fillText('초순수 ↓', x0 + tw/2 + 6, 16); ctx.fillText('넘침 →', x0 + tw + 4, y0 - 2); });
+})();
+
+/* 3-4 수명 */
+J.sim('sim4', (v, box) => {
+  const sig = +v.m, vth = 1e7, N = v.n, tau = 1/(sig*vth*N), L = Math.sqrt(36*tau);
+  J.$('[data-o="n"]', box).textContent = J.sci(N, 1) + ' cm⁻³';
+  const pts = []; for(let e = 9; e <= 14; e += 0.05){ const n = Math.pow(10, e); pts.push([n, Math.min(5e-3, 1/(1/(sig*vth*n) + 0) )]); }
+  const intr = 5e-3; const pts2 = pts.map(([n]) => [n, 1/(sig*vth*n + 1/intr)]);
+  J.plot(document.getElementById('cv4'), {x:[1e9, 1e14], y:[1e-7, 1e-2], logx:true, logy:true, xlab:'금속 농도 (cm⁻³)', ylab:'수명 (s)', xf:t => J.sci(t, 0), yf:t => J.si(t, 's'),
+    bands:[{y0:1e-3, y1:1e-2, color:'--jade', alpha:.15}], series:[{pts:pts2, color:'--red', w:3}], points:[{x:N, y:1/(sig*vth*N + 1/intr), color:'--ink', r:6}]});
+  const te = 1/(sig*vth*N + 1/intr);
+  J.out(box,'r', `원자 ${J.sci(5e22/N, 1)}개당 1개`); J.out(box,'tau', J.si(te, 's'), te > 1e-3 ? 'good' : te > 1e-5 ? 'warn' : 'bad'); J.out(box,'L', J.si(Math.sqrt(36*te)/100, 'm'));
+});
+</script>
+</body>
+</html>

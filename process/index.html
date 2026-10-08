@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>반도체 공정 書 · 집현전</title>
+<meta name="description" content="집현전 인터랙티브 교과서 — 웨이퍼 위에 새기는 천 개의 단계: 산화·확산·노광·EUV·식각·증착·CMP·배선·집적·수율을 직접 실험하며 배우는 반도체 공정 교과서">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/jade.css">
+<link rel="stylesheet" href="../assets/book.css">
+<script src="book.js"></script>
+<script src="../assets/book.js"></script>
+<script src="../assets/iso3d.js"></script>
+<style>
+  .hero{display:grid; grid-template-columns:1.05fr 1fr; gap:40px; align-items:center; padding:56px 0 40px}
+  .hero h1{font-size:clamp(34px,5.4vw,58px); margin:14px 0 18px; font-weight:900; line-height:1.18}
+  .hero h1 em{font-style:normal; color:var(--wood2)}
+  .hero p.lead{font-size:17.5px; color:var(--ink2); max-width:560px}
+  .hero .cta{display:flex; gap:10px; flex-wrap:wrap; margin:24px 0 18px}
+  .hero .chips{display:flex; gap:8px; flex-wrap:wrap}
+  .hero .chips span{font-size:13px; border:1px solid var(--line); border-radius:3px; padding:2px 10px; background:var(--card); color:var(--ink2)}
+  .stage{position:relative; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:10px; box-shadow:inset 0 0 0 5px var(--card), inset 0 0 0 6px var(--line2), var(--shadow)}
+  .stage canvas{display:block; width:100%}
+  .stage .over{position:absolute; left:18px; top:14px; font-size:12px; color:var(--ink3)}
+  .stage .bar{display:flex; gap:8px; align-items:center; padding:4px 8px; font-size:12.5px; color:var(--ink2); flex-wrap:wrap}
+  .titleslip{position:absolute; right:-12px; top:-18px; writing-mode:vertical-rl; background:var(--paper); border:1px solid var(--line); padding:12px 7px; font-family:var(--serif); font-weight:900; letter-spacing:.3em; font-size:17px; box-shadow:var(--shadow)}
+  .titleslip small{display:block; font-weight:400; font-size:11px; letter-spacing:.15em; color:var(--ink3); margin-top:6px}
+  @media (max-width:900px){ .hero{grid-template-columns:1fr; padding-top:32px} .titleslip{right:6px; top:-14px} }
+  section.block{padding:46px 0 10px}
+  section.block > h2{font-size:28px; margin:0 0 8px; font-weight:900}
+  section.block > p.sub{color:var(--ink2); margin:0 0 22px; max-width:760px}
+  .chain svg{width:100%; height:auto; display:block}
+  .chain a:hover circle.blk, .chain a:hover rect.blk{stroke:var(--red); stroke-width:3}
+  .nums{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px}
+  .num{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px; position:relative; overflow:hidden}
+  .num b{font-family:var(--serif); font-size:30px; font-weight:900; display:block}
+  .num span{font-size:14px; color:var(--ink2)}
+  .num:after{content:attr(data-h); position:absolute; right:10px; bottom:-14px; font-family:var(--serif); font-size:64px; color:var(--ink); opacity:.05; font-weight:900}
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px}
+  .card{display:flex; flex-direction:column; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:3px; padding:18px 18px 16px 24px; color:var(--ink); position:relative; transition:transform .15s, box-shadow .15s}
+  .card:before{content:''; position:absolute; left:8px; top:10px; bottom:10px; width:1px; background:var(--line)}
+  .card:hover{transform:translateY(-3px); box-shadow:var(--shadow); text-decoration:none; border-color:var(--wood2)}
+  .card .cn{font-family:var(--mono); font-size:11.5px; color:var(--wood2); letter-spacing:.15em}
+  .card h3{margin:0; font-size:18.5px}
+  .card p{margin:0; font-size:14px; color:var(--ink2); line-height:1.65; flex:1}
+  .card .tags{display:flex; gap:5px; flex-wrap:wrap; margin-top:6px}
+  .paths{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px}
+  .path{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px}
+  .path h3{margin:0 0 4px; font-size:17px}
+  .path p{margin:0 0 10px; font-size:14px; color:var(--ink2)}
+  .path .seq{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .path .seq a{font-family:var(--mono); font-size:13px; border:1px solid var(--wood2); color:var(--wood2); border-radius:3px; padding:1px 8px}
+  .path .seq i{color:var(--ink3); font-style:normal; font-size:12px}
+  .howto{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px}
+  .how{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px; text-align:center}
+  .how .hj{font-family:var(--serif); font-size:32px; font-weight:900; color:var(--red)}
+  .how b{display:block; font-family:var(--serif); margin:2px 0 4px}
+  .how span{font-size:13.5px; color:var(--ink2)}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<div class="wrap">
+
+<section class="hero">
+  <div>
+    <div class="kicker">Interactive Process Textbook · 集賢殿 器部 第五</div>
+    <h1>웨이퍼 위에 새기는<br><em>천 개의 단계</em></h1>
+    <p class="lead">최첨단 칩 한 장은 석 달 동안 1,000개가 넘는 공정을 지난다. 쌓고, 빛으로 그리고, 깎고, 심고, 갈아 내기를 수십 번. 딜–그로브 산화, 픽의 확산, 아베 결상과 보썽 곡선, EUV 광자 잡음, 플라스마 시스, ALD, 프레스턴 연마, 전자 이동, GAA, 그리고 수율까지 — 계산기와 시뮬레이터로 직접 돌려 보며 배우는 반도체 공정 교과서입니다.</p>
+    <div class="cta">
+      <a class="btn red" href="chapters/overview.html" style="background:var(--wood2);border-color:var(--wood2)">1장부터 펼치기 →</a>
+      <a class="btn ghost" href="chapters/playground.html">공정 레시피 놀이터</a>
+    </div>
+    <div class="chips"><span>15개 장</span><span>48개 실험</span><span>3D 모형</span><span>공대 학부 수준</span></div>
+  </div>
+  <div class="stage">
+    <div class="titleslip">工程 書<small>製造之道</small></div>
+    <div class="over" id="hOver">드래그해서 돌려 보세요</div>
+    <canvas id="hero3d" data-h="400" aria-label="칩 단면 3D 모형"></canvas>
+    <div class="bar" id="modeBtns">
+      <button class="sbtn" data-m="0">웨이퍼</button><button class="sbtn" data-m="1">FEOL</button><button class="sbtn" data-m="2">MOL</button><button class="sbtn on" data-m="3">BEOL</button>
+      <button class="sbtn" id="hAuto">▶ 쌓기 재생</button>
+    </div>
+  </div>
+</section>
+
+<section class="block chain">
+  <div class="kicker">The process loop</div>
+  <h2>한 층을 만드는 고리</h2>
+  <p class="sub">거의 모든 층은 같은 고리를 돈다: <b>증착 → 노광 → 식각 → (주입·열처리) → 세정 → CMP → 계측</b>. 이 고리를 수십 바퀴 돌면 칩이 된다. 각 칸을 누르면 해당 장으로 갑니다.</p>
+  <figure class="fig" style="margin:0">
+    <svg viewBox="0 0 980 300" role="img" aria-label="공정 고리"><g id="chainG"></g></svg>
+    <figcaption><b>그림 0-1.</b> 한 층의 공정 고리와 그 바탕(웨이퍼·팹 운영·수율). 바깥 화살표가 다음 층으로 넘어가는 반복이다.</figcaption>
+  </figure>
+</section>
+
+<section class="block">
+  <div class="kicker">Process in numbers</div>
+  <h2>숫자로 보는 첨단 공정</h2>
+  <p class="sub">이 책을 덮을 즈음이면 아래 숫자가 왜 그 값인지 설명할 수 있게 됩니다. (2025–26년 대략값)</p>
+  <div class="nums">
+    <div class="num" data-h="段"><b>1,000+ 단계</b><span>최첨단 로직 웨이퍼 한 장이 지나는 공정 수 → 1장</span></div>
+    <div class="num" data-h="月"><b>~3개월</b><span>사이클 타임. 대부분은 장비 앞에서 기다리는 시간 → 1장</span></div>
+    <div class="num" data-h="層"><b>0.6 nm</b><span>HKMG 게이트 절연막의 SiO₂ 환산 두께(EOT) → 12장</span></div>
+    <div class="num" data-h="光"><b>13.5 nm</b><span>EUV 파장. 광자 하나 에너지 92 eV → 7장</span></div>
+    <div class="num" data-h="準"><b>~2 nm</b><span>층 사이 오버레이 허용치 → 7장</span></div>
+    <div class="num" data-h="深"><b>AR 50+</b><span>3D 낸드 채널 구멍의 종횡비 → 8장</span></div>
+    <div class="num" data-h="磨"><b>수 Å</b><span>CMP 후 웨이퍼 표면 거칠기 → 10장</span></div>
+    <div class="num" data-h="率"><b>C<sub>pk</sub> ≥ 1.33</b><span>핵심 공정에 요구되는 공정 능력 → 13장</span></div>
+  </div>
+</section>
+
+<section class="block" id="chapters">
+  <div class="kicker">Table of contents · 目次</div>
+  <h2>전체 장</h2>
+  <p class="sub">각 장은 <b>개념 → 그림 → 수식 → 실험 → 문제</b> 순서로 짜여 있습니다.</p>
+  <div class="cards" id="cards"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">Reading paths</div>
+  <h2>추천 학습 경로</h2>
+  <p class="sub">관심사와 직무에 따라 이렇게 읽어 보세요.</p>
+  <div class="paths" id="paths"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">How to read</div>
+  <h2>이 책 읽는 법</h2>
+  <div class="howto">
+    <div class="how"><div class="hj">讀</div><b>읽기</b><span>물리·화학 원리부터. 영어 용어는 괄호로 함께 씁니다.</span></div>
+    <div class="how"><div class="hj">觀</div><b>보기</b><span>단면 단계 그림과 3D 모형으로 공정 순서를 그립니다.</span></div>
+    <div class="how"><div class="hj">算</div><b>계산하기</b><span>딜–그로브, 레일리, 프레스턴, 블랙… 식을 직접 돌립니다.</span></div>
+    <div class="how"><div class="hj">觸</div><b>만지기</b><span>슬라이더를 끝까지. 공정 창의 가장자리에서 배웁니다.</span></div>
+    <div class="how"><div class="hj">問</div><b>확인하기</b><span>장마다 문제, 마지막 장에서 20문제 종합 퀴즈.</span></div>
+  </div>
+</section>
+
+</div>
+<footer class="site">반도체 공정 書 — 집현전 인터랙티브 교과서 시리즈 · 수치는 교육용 근사 모델이며 특정 회사·장비의 사양이 아닙니다.<br>콘텐츠 CC BY 4.0 · 코드 MIT</footer>
+
+<script>
+(function(){
+  const B = window.BOOK;
+  document.getElementById('cards').innerHTML = B.chapters.map(c => `
+    <a class="card" href="chapters/${c.slug}.html"><span class="cn">CHAPTER ${c.n}</span><h3>${c.title}</h3><p>${c.desc}</p>
+    <span class="tags">${c.tags.map(t => `<span class="tag ${t==='시뮬레이터'?'sim':t==='3D'?'d3':''}">${t}</span>`).join('')}</span></a>`).join('');
+  const P = [
+    ['입문 · 전체 그림','공정이 처음이라면. 흐름과 핵심 단위 공정.',['01','04','06','08','09','10']],
+    ['포토·패터닝 엔지니어','노광에서 다중 패터닝까지.',['02','06','07','08','13']],
+    ['식각·박막 엔지니어','플라스마와 증착, 평탄화.',['08','09','10','11']],
+    ['소자·집적 엔지니어','열공정에서 GAA까지.',['04','05','12','14']],
+    ['수율·품질 엔지니어','오염, 결함, 통계.',['01','03','13','14']],
+    ['배선·신뢰성','BEOL과 수명.',['09','10','11','13']]
+  ];
+  const slug = n => B.chapters.find(c => c.n === n).slug;
+  document.getElementById('paths').innerHTML = P.map(p => `<div class="path"><h3>${p[0]}</h3><p>${p[1]}</p><div class="seq">${p[2].map(n => `<a href="chapters/${slug(n)}.html">${n}</a>`).join('<i>→</i>')}</div></div>`).join('');
+})();
+
+(function(){
+  const g = document.getElementById('chainG'), cx = 490, cy = 150, R = 105;
+  const items = [['증착','CVD·ALD·PVD','deposition','--indigo'],['노광','EUV·ArF','litho','--red'],['식각','플라스마','etch','--plum'],['주입·열처리','확산·어닐','doping','--wood2'],['세정','RCA','clean','--jade'],['CMP','평탄화','cmp','--gold'],['계측','SPC','yield','--ink3']];
+  items.forEach(([t, s, ch, c], i) => { const a = -Math.PI/2 + i/items.length*Math.PI*2, x = cx + R*1.55*Math.cos(a), y = cy + R*Math.sin(a);
+    const l = J.svg('a', {href:'chapters/' + ch + '.html'}, g);
+    J.svg('rect', {class:'blk', x:x - 62, y:y - 26, width:124, height:52, rx:26, fill:'var(--card)', stroke:`var(${c})`, 'stroke-width':2.2}, l);
+    J.svg('text', {x, y:y - 2, 'text-anchor':'middle', class:'t-m', text:t, style:'font-weight:700'}, l);
+    J.svg('text', {x, y:y + 15, 'text-anchor':'middle', class:'t-s', text:s}, l);
+    const a2 = a + Math.PI*2/items.length*0.5, x2 = cx + R*1.25*Math.cos(a2), y2 = cy + R*0.8*Math.sin(a2);
+    J.svg('text', {x:x2, y:y2 + 5, 'text-anchor':'middle', class:'t-m', text:'→', style:`fill:var(--ink3);transform-origin:${x2}px ${y2}px;transform:rotate(${(a2 + Math.PI/2)*180/Math.PI}deg)`}, g); });
+  J.svg('circle', {cx, cy, r:48, fill:'var(--paper2)', stroke:'var(--line)'}, g);
+  J.svg('text', {x:cx, y:cy - 4, 'text-anchor':'middle', class:'t-l', text:'한 층'}, g); J.svg('text', {x:cx, y:cy + 16, 'text-anchor':'middle', class:'t-s', text:'× 수십 번 반복'}, g);
+  const side = [['웨이퍼', 'wafer', 70, 80], ['팹 흐름', 'overview', 70, 150], ['산화', 'oxidation', 70, 220], ['배선', 'beol', 910, 80], ['집적', 'integration', 910, 150], ['놀이터', 'playground', 910, 220]];
+  side.forEach(([t, ch, x, y]) => { const l = J.svg('a', {href:'chapters/' + ch + '.html'}, g); J.svg('rect', {class:'blk', x:x - 52, y:y - 18, width:104, height:36, rx:4, fill:'var(--card)', stroke:'var(--wood2)', 'stroke-width':1.5}, l); J.svg('text', {x, y:y + 5, 'text-anchor':'middle', class:'t-m', text:t}, l); });
+})();
+
+/* 히어로 3D: 칩 단면 쌓기 */
+(function(){
+  const cv = document.getElementById('hero3d'), cam = {yaw:-0.7, pitch:0.5, scale:30};
+  let stage = 3, prog = 1, auto = false, t = 0;
+  const over = ['웨이퍼: p형 실리콘 기판', 'FEOL: 핀·게이트·소스/드레인', 'MOL: 콘택 플러그', 'BEOL: 구리 배선 층층이'];
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h); cam.scale = Math.min(w, h*1.2)/15.5; cam.oy = h*0.24;
+    const S = new J3.Scene(), lv = stage + Math.min(1, prog) - 1;
+    S.box(-5, -1.5, -3, 10, 1.5, 6, '#8f98a8', {layer:0});
+    if(lv > 0){ [-1.8, -0.6, 0.6, 1.8].forEach(z => S.box(-4.6, 0, z - 0.15, 9.2, 0.7*Math.min(1, lv), 0.3, '--jade', {layer:1}));
+      if(lv > 0.4) [-3.2, -1.1, 1.1, 3.2].forEach(x => S.box(x - 0.25, 0, -2.6, 0.5, 1.4*Math.min(1, (lv - 0.4)/0.6), 5.2, '#5b6170', {layer:2})); }
+    if(lv > 1){ const f = Math.min(1, lv - 1); [-2.15, 0, 2.15].forEach(x => [-1.8, 0.6].forEach(z => S.box(x - 0.2, 0.7, z - 0.2, 0.4, 1.3*f, 0.4, '#d98b3a', {layer:3}))); }
+    const L = Math.max(0, lv - 2)*5;
+    for(let m = 0; m < 5; m++){ const f = J.clamp(L - m, 0, 1); if(f <= 0) break; const y = 2.1 + m*0.75, wd = 0.3 + m*0.12, along = m % 2 === 0;
+      for(let k = -2; k <= 2; k++){ const off = k*(1 + m*0.25); if(Math.abs(off) > 4.5) continue;
+        if(along) S.box(-4.6, y, off - wd/2, 9.2*f, 0.35, wd, '#d98b3a', {layer:4 + m}); else S.box(off - wd/2, y, -2.8, wd, 0.35, 5.6*f, '#c47a2c', {layer:4 + m}); }
+      S.box(-5, y - 0.4, -3, 10, 0.4, 6, '#a9d4ef', {layer:4 + m, alpha:0.18}); }
+    S.render(ctx, cam, w, h);
+  }
+  J3.drag(cv, cam, draw); J.live(draw);
+  const setStage = s => { stage = s; prog = 0; J.$$('#modeBtns [data-m]').forEach(x => x.classList.toggle('on', +x.dataset.m === s)); J.$('#hOver').textContent = over[s] + ' · 드래그해서 돌려 보세요'; };
+  J.$$('#modeBtns [data-m]').forEach(b => b.onclick = () => { auto = false; J.$('#hAuto').classList.remove('on'); setStage(+b.dataset.m); });
+  J.$('#hAuto').onclick = e => { auto = !auto; e.target.classList.toggle('on', auto); if(auto) setStage(0); };
+  J.$('#hOver').textContent = over[3] + ' · 드래그해서 돌려 보세요';
+  J.loop(cv, dt => { t += dt; if(!cam.user) cam.yaw += dt*0.12; if(prog < 1) prog = Math.min(1, prog + dt*0.8); if(auto && prog >= 1 && (t % 2.2) < dt){ setStage((stage + 1) % 4); } draw(); });
+})();
+</script>
+</body>
+</html>

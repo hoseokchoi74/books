@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>팹과 공정 흐름 · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="overview">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 01 <span class="hanja">第一章 · 流</span></div>
+  <h1>팹과 공정 흐름</h1>
+  <p class="lead">최첨단 로직 칩 한 장의 웨이퍼는 공장(<span class="term">팹</span>) 안에서 약 석 달 동안 1,000개가 넘는 공정 단계를 지난다. 같은 노광기와 식각기를 수십 번씩 다시 찾아가고, 단계 사이마다 측정과 세정을 받는다. 이 장은 책 전체의 지도다. 팹의 구역, 칩 단면의 층 구조(FEOL·MOL·BEOL), 그리고 웨이퍼가 팹 안에서 기다리는 시간을 결정하는 대기열의 법칙을 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>팹의 주요 구역(베이)과 각 구역의 장비를 안다.</li>
+  <li>칩 단면을 FEOL·MOL·BEOL로 나누고, 층마다 배선 피치가 어떻게 달라지는지 본다.</li>
+  <li>리틀의 법칙과 대기열 모형으로 장비 가동률과 사이클 타임의 관계를 계산한다.</li>
+  <li>공정 세대에 따라 웨이퍼 원가에서 각 공정이 차지하는 비중을 비교한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>팹의 지도와 웨이퍼의 여정</h2>
+<p>팹은 같은 종류의 장비를 모은 <span class="term">베이</span>로 나뉜다: 노광(포토), 식각, 증착(박막), 확산·산화(퍼니스), 이온 주입, CMP, 세정, 계측. 웨이퍼 25장을 담은 상자(<span class="term">FOUP</span>)가 천장 레일 로봇(AMHS)을 타고 베이 사이를 오간다. 공정 순서는 "노광 → 식각 → 증착 → CMP → 세정 → 계측"의 고리를 층마다 되풀이하는 모양이라, 웨이퍼는 같은 베이를 수십 번 방문한다(<b>재진입 흐름</b>, re-entrant flow).</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-1</span><span class="ttl">FOUP 하나의 팹 여행</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">공정 세대</span><select data-k="node"><option value="0">180 nm (약 400단계)</option><option value="1">28 nm (약 700단계)</option><option value="2" selected>5 nm (약 1,200단계)</option></select></label>
+      <label class="ctrl"><span class="lab">재생 속도 <output data-o="sp"></output></span><input type="range" data-k="sp" min="1" max="20" step="1" value="6" data-d="0" data-u="단계/초"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b1r">처음부터</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="320"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="320"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">진행 단계</span><span class="v" data-r="st"></span></div>
+      <div class="ro"><span class="k">지금 공정</span><span class="v" data-r="now" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">노광 횟수 (마스크 층)</span><span class="v" data-r="m"></span></div>
+      <div class="ro"><span class="k">경과 (하루 1.2층 기준)</span><span class="v" data-r="d"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 팹 평면도. 빨간 점(FOUP)이 공정 순서대로 베이를 오가고, 선은 지나간 경로다. 오른쪽: 베이별 누적 방문 횟수. 세대가 내려갈수록 마스크 층과 단계 수가 늘어 같은 베이를 더 자주 찾는다. 단계 수·비율은 공개 자료 기반 대략값이다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>칩의 단면: FEOL · MOL · BEOL</h2>
+<p>공정은 위치에 따라 셋으로 나뉜다. 규소 기판 위에 트랜지스터를 만드는 <span class="term">FEOL</span>(Front-End-Of-Line), 트랜지스터의 소스·드레인·게이트에 첫 금속 접점을 다는 <span class="term">MOL</span>(Middle-Of-Line, 콘택), 그리고 그 위로 수십 층의 구리 배선을 쌓는 <span class="term">BEOL</span>(Back-End-Of-Line)이다. 배선은 아래층일수록 가늘고 촘촘하며(피치 20–30 nm), 위로 갈수록 굵어져 전원과 긴 신호를 나른다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-2</span><span class="ttl">로직 칩 단면 탐험</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">층 고르기 <output data-o="L"></output></span><input type="range" data-k="L" min="0" max="15" step="1" value="0" data-d="0"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2" data-h="380"></canvas></div>
+      <div class="canvas-box" style="padding:14px 16px" id="info2"></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">구분</span><span class="v" data-r="g"></span></div>
+      <div class="ro"><span class="k">배선 피치</span><span class="v" data-r="p"></span></div>
+      <div class="ro"><span class="k">주로 쓰는 노광</span><span class="v" data-r="l" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽 단면의 세로축은 실제 비율이 아니다(위층은 줄여 그림). 아래층 배선은 원자 수십 개 폭이라 EUV나 다중 패터닝이 필요하지만, 꼭대기 층은 마이크로미터 단위라 오래된 i선 노광으로도 충분하다. 공정 비용 대부분이 아래 몇 층에 몰린다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>기다림의 수학: 리틀의 법칙과 가동률</h2>
+<p>팹에서 웨이퍼는 대부분의 시간을 <b>장비 앞 줄에서</b> 보낸다. 실제 가공 시간 대비 전체 체류 시간의 비를 <span class="term">X-factor</span>라 하는데 보통 3–4다. 팹 전체에 쌓인 웨이퍼 수(재공, WIP), 하루 생산량(처리량, TH), 체류 시간(사이클 타임, CT) 사이에는 <span class="term">리틀의 법칙</span>이 성립한다. 장비를 비싸게 샀으니 가동률을 높이고 싶지만, 가동률이 100 %에 가까워지면 대기 시간이 폭발한다(킹맨 근사).</p>
+<div class="eq">$$\text{WIP} = \text{TH}\times\text{CT},\qquad CT_q \approx \left(\frac{c_a^2 + c_e^2}{2}\right)\left(\frac{u}{1-u}\right)t_e$$<div class="note">u: 가동률, t<sub>e</sub>: 한 번 가공 시간, c<sub>a</sub>, c<sub>e</sub>: 도착·가공 시간의 변동 계수(들쭉날쭉한 정도).</div></div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-3</span><span class="ttl">가동률을 올리면 사이클 타임은?</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">병목 장비 가동률 u <output data-o="u"></output></span><input type="range" data-k="u" min="50" max="98" step="1" value="85" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">변동성 (c²) <output data-o="c"></output></span><input type="range" data-k="c" min="0.2" max="3" step="0.1" value="1" data-d="1"></label>
+      <label class="ctrl"><span class="lab">하루 투입 웨이퍼 <output data-o="th"></output></span><input type="range" data-k="th" min="500" max="5000" step="100" value="2000" data-d="0" data-u="장"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="270"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="270"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">X-factor</span><span class="v" data-r="x"></span></div>
+      <div class="ro"><span class="k">사이클 타임 (5 nm, 순 가공 25일)</span><span class="v" data-r="ct"></span></div>
+      <div class="ro"><span class="k">재공 WIP</span><span class="v" data-r="wip"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 가동률에 따른 X-factor(킹맨 근사, 변동성별 세 곡선). 오른쪽: 병목 장비 앞의 대기열을 흉내 낸 무작위 시뮬레이션 — 막대가 대기 중인 FOUP 수다. 가동률 85 %에서 95 %로 올리면 생산량은 12 % 늘지만 기다리는 시간은 세 배 가까이 늘어난다. 신제품을 빨리 내놓아야 하는 팹이 일부러 가동률을 낮게 두는 이유다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>웨이퍼 한 장의 원가는 어디로 가나</h2>
+<p>세대가 내려갈수록 웨이퍼 한 장의 가공비는 가파르게 오른다. 가장 큰 몫은 노광이다. 마스크 층이 늘고, 장비 한 대가 수천억 원인 EUV를 쓰기 때문이다. 식각과 증착도 다중 패터닝과 3차원 구조 때문에 단계가 늘었다.</p>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-4</span><span class="ttl">세대별 웨이퍼 원가 구성</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><button class="sbtn" data-n="0">180 nm</button><button class="sbtn" data-n="1">28 nm</button><button class="sbtn" data-n="2">7 nm</button><button class="sbtn on" data-n="3">3 nm</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv4a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv4b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">웨이퍼 가공비 (대략)</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">노광 비중</span><span class="v" data-r="l"></span></div>
+      <div class="ro"><span class="k">마스크 층 수</span><span class="v" data-r="m"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>주의.</b> 업계 분석 자료를 단순화한 교육용 추정치다(장비 감가상각 포함, 300 mm 기준, 180 nm는 200 mm 환산). 실제 값은 회사·시기·생산량에 따라 크게 다르다. 오른쪽은 세대별 총 가공비 막대.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">하루 2,000장을 투입하고 사이클 타임이 90일이면 팹 안의 재공(WIP)은?</p><ol><li>2,000장</li><li>22장</li><li>18만 장</li><li>90장</li></ol>
+<p class="explain">WIP = TH × CT = 2,000 × 90 = 180,000장.</p></div>
+<div class="quiz" data-a="0"><p class="q">구리 배선 층을 만드는 공정 구간은?</p><ol><li>BEOL</li><li>FEOL</li><li>웨이퍼 성장</li><li>후공정 패키징</li></ol>
+<p class="explain">트랜지스터 위 배선 층을 쌓는 구간이 Back-End-Of-Line이다.</p></div>
+<div class="quiz" data-a="3"><p class="q">가동률을 90 %에서 95 %로 올리면 킹맨 근사의 대기 시간 항 u/(1−u)는?</p><ol><li>그대로</li><li>5 % 늘어난다</li><li>절반이 된다</li><li>약 2.1배가 된다</li></ol>
+<p class="explain">9 → 19. 약 2.1배.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 1-1 FOUP 여행 */
+const BAYS = [['노광','--red',0.15,0.2],['식각','--plum',0.45,0.2],['증착','--indigo',0.75,0.2],['CMP','--gold',0.75,0.55],['세정','--jade',0.45,0.55],['계측','--ink3',0.15,0.55],['퍼니스·열처리','--wood2',0.15,0.85],['이온 주입','--red',0.45,0.85],['에피·특수','--indigo',0.75,0.85]];
+(function(){
+  const NODE = [{steps:400, masks:28, loop:[0,5,1,4,2,3,4,5,6,7]}, {steps:700, masks:45, loop:[0,5,1,4,2,4,3,5,7,6]}, {steps:1200, masks:80, loop:[0,5,1,4,2,5,0,1,4,3,5,2,8,7,6]}];
+  let V = {node:'2', sp:6}, k = 0, acc = 0, path = [], counts;
+  const box = document.getElementById('sim1');
+  function route(i){ const N = NODE[+V.node]; return N.loop[i % N.loop.length]; }
+  function reset(){ k = 0; path = []; counts = new Array(BAYS.length).fill(0); }
+  reset();
+  function draw(){
+    const {ctx, w, h} = J.fit(document.getElementById('cv1a')); ctx.clearRect(0,0,w,h);
+    const X = f => 20 + f*(w - 40), Y = f => 10 + f*(h - 20), bw = (w - 40)*0.24, bh = (h - 20)*0.2;
+    ctx.fillStyle = J.c('--paper2'); ctx.fillRect(10, 6, w - 20, h - 12);
+    ctx.strokeStyle = J.c('--line'); ctx.setLineDash([6,4]); ctx.strokeRect(10, 6, w - 20, h - 12); ctx.setLineDash([]);
+    BAYS.forEach(([n, c, fx, fy], i) => { ctx.fillStyle = J.c('--card'); ctx.strokeStyle = J.c(c); ctx.lineWidth = 2; ctx.fillRect(X(fx) - bw/2, Y(fy) - bh/2, bw, bh); ctx.strokeRect(X(fx) - bw/2, Y(fy) - bh/2, bw, bh);
+      ctx.fillStyle = J.c('--ink'); ctx.font = '600 12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(n, X(fx), Y(fy) + 4); });
+    ctx.strokeStyle = J.c('--red'); ctx.globalAlpha = .25; ctx.lineWidth = 1.5; ctx.beginPath();
+    path.slice(-40).forEach((b, i) => { const p = BAYS[b]; i ? ctx.lineTo(X(p[2]), Y(p[3])) : ctx.moveTo(X(p[2]), Y(p[3])); }); ctx.stroke(); ctx.globalAlpha = 1;
+    if(path.length){ const b = BAYS[path[path.length - 1]], q = (acc*V.sp) % 1; const nb = BAYS[route(k)]; const x = J.lerp(X(b[2]), X(nb[2]), q), y = J.lerp(Y(b[3]), Y(nb[3]), q);
+      ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.fill(); }
+    const N = NODE[+V.node], mx = Math.max(1, ...counts);
+    const c2 = J.fit(document.getElementById('cv1b')), g = c2.ctx; g.clearRect(0,0,c2.w,c2.h);
+    const bh2 = (c2.h - 20)/BAYS.length;
+    BAYS.forEach(([n, c], i) => { const y = 10 + i*bh2; g.fillStyle = J.c(c); g.globalAlpha = .75; g.fillRect(100, y + 3, (counts[i]/Math.max(mx, N.steps*0.25))*(c2.w - 160), bh2 - 8); g.globalAlpha = 1;
+      g.fillStyle = J.c('--ink'); g.font = '12px "Noto Sans KR"'; g.textAlign = 'right'; g.fillText(n, 94, y + bh2/2 + 3); g.textAlign = 'left'; g.font = '11px "JetBrains Mono"'; g.fillText(counts[i], 104 + (counts[i]/Math.max(mx, N.steps*0.25))*(c2.w - 160), y + bh2/2 + 3); });
+    J.out(box,'st', `${k} / ${N.steps}`, k >= N.steps ? 'good' : ''); J.out(box,'now', path.length ? BAYS[path[path.length - 1]][0] : '—');
+    J.out(box,'m', Math.min(N.masks, Math.round(k/N.steps*N.masks)) + ' / ' + N.masks);
+    J.out(box,'d', J.fmt(k/N.steps*N.masks/1.2, 0) + '일');
+  }
+  function step(){ const N = NODE[+V.node]; if(k >= N.steps) return; const b = route(k); path.push(b); counts[b]++; k++; }
+  J.sim('sim1', v => { const ch = v.node !== V.node; V = v; if(ch) reset(); draw(); });
+  J.$('#b1r').onclick = () => { reset(); draw(); };
+  J.loop(document.getElementById('cv1a'), dt => { acc += dt; if(acc*V.sp >= 1){ const n = Math.floor(acc*V.sp); for(let i=0;i<n;i++) step(); acc -= n/V.sp; } draw(); });
+})();
+
+/* 1-2 단면 */
+(function(){
+  const LY = [
+    ['기판 · 트랜지스터 (FEOL)', 'FEOL', '게이트 피치 ~48 nm', 'EUV + 다중 패터닝', '핀/나노시트 채널, 게이트, 소스·드레인 에피. 공정 단계의 약 40 %.'],
+    ['콘택 · 게이트 콘택 (MOL)', 'MOL', '~48 nm', 'EUV', '트랜지스터 단자와 첫 금속을 잇는 텅스텐·코발트 플러그.'],
+    ['M0 / M1', 'BEOL 하부', '~24–28 nm', 'EUV (+자기정렬)', '가장 촘촘한 배선. 셀 안의 짧은 연결.'],
+    ['M2', 'BEOL 하부', '~32 nm', 'EUV', '이웃 셀 사이 연결.'], ['M3', 'BEOL 하부', '~32 nm', 'EUV', ''], ['M4', 'BEOL 중간', '~40 nm', 'ArF 액침 SADP', ''],
+    ['M5', 'BEOL 중간', '~44 nm', 'ArF 액침', ''], ['M6', 'BEOL 중간', '~64 nm', 'ArF 액침', ''], ['M7', 'BEOL 중간', '~80 nm', 'ArF 액침', ''],
+    ['M8', 'BEOL 중간', '~80 nm', 'ArF', ''], ['M9', 'BEOL 상부', '~160 nm', 'ArF', '블록 사이 긴 신호선.'], ['M10', 'BEOL 상부', '~160 nm', 'KrF', ''],
+    ['M11', 'BEOL 상부', '~360 nm', 'KrF', ''], ['M12', 'BEOL 상부', '~720 nm', 'i선', '전원 분배망. 두껍고 넓다.'], ['M13 (두꺼운 금속)', 'BEOL 상부', '~1.3 µm', 'i선', '전원·클록 간선.'],
+    ['패드 · 범프', '패키지 연결', '수십 µm', 'i선', '패키지 기판과 납땜으로 이어지는 출입구.']];
+  J.sim('sim2', (v, box) => {
+    const L = v.L, {ctx, w, h} = J.fit(document.getElementById('cv2')); ctx.clearRect(0,0,w,h);
+    const n = LY.length, rh = (h - 20)/n;
+    for(let i=0;i<n;i++){ const y = h - 10 - (i + 1)*rh, on = i === L;
+      ctx.fillStyle = J.c(i === 0 ? '--paper2' : '--card'); ctx.fillRect(10, y, w - 20, rh - 1);
+      const pitch = i < 2 ? 10 : Math.min(60, 6 + i*3.6), wd = pitch*0.5;
+      const col = i === 0 ? '--jade' : i === 1 ? '--ink3' : i === n - 1 ? '--gold' : '--wood2';
+      ctx.fillStyle = J.c(col); ctx.globalAlpha = on ? 1 : .55;
+      if(i === 0){ for(let x = 20; x < w - 20; x += pitch*1.6){ ctx.fillRect(x, y + rh*0.3, pitch*0.6, rh*0.7); } }
+      else for(let x = 16 + (i % 2)*pitch/2; x < w - 16 - wd; x += pitch) ctx.fillRect(x, y + rh*0.2, wd, rh*0.6);
+      ctx.globalAlpha = 1;
+      if(on){ ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2.5; ctx.strokeRect(9, y - 1, w - 18, rh + 1); }
+      ctx.fillStyle = J.c(on ? '--red' : '--ink2'); ctx.font = (on ? '700 ' : '') + '10.5px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.fillText(LY[i][0].split(' (')[0], w - 14, y + rh*0.7); }
+    const d = LY[L];
+    document.getElementById('info2').innerHTML = `<div style="font-size:12px;color:var(--ink3)">${d[1]}</div><h3 style="margin:4px 0 8px;font-size:19px">${d[0]}</h3><p style="margin:0 0 8px">${d[4] || '아래층과 위층 배선을 잇는 중간 배선층. 위로 갈수록 넓고 두꺼워진다.'}</p><p style="margin:0;font-size:13.5px;color:var(--ink2)">피치: <b>${d[2]}</b><br>노광: <b>${d[3]}</b></p>`;
+    J.out(box,'g', d[1]); J.out(box,'p', d[2]); J.out(box,'l', d[3]);
+  });
+})();
+
+/* 1-3 대기열 */
+(function(){
+  let V = {u:85, c:1, th:2000}, Q = [], t = 0, inq = 0, busy = 0;
+  const box = document.getElementById('sim3');
+  J.sim('sim3', v => { V = v;
+    const curves = [0.5, 1, 2].map(c => { const p = []; for(let u = 0.5; u <= 0.985; u += 0.005) p.push([u*100, 1 + c*u/(1 - u)*0.42]); return {pts:p, color: c === 1 ? '--red' : '--ink3', w: c === 1 ? 2.5 : 1.5, dash: c === 1 ? [] : [4,3]}; });
+    const u = v.u/100, xf = 1 + v.c*u/(1 - u)*0.42;
+    J.plot(document.getElementById('cv3a'), {x:[50, 100], y:[1, 12], xlab:'가동률 (%)', ylab:'X-factor', series:curves, points:[{x:v.u, y:Math.min(12, xf), color:'--ink', r:6}]});
+    const ct = 25*xf, wip = v.th*ct;
+    J.out(box,'x', J.fmt(xf, 2), xf < 3 ? 'good' : xf < 5 ? 'warn' : 'bad'); J.out(box,'ct', J.fmt(ct, 0) + '일 (' + J.fmt(ct/30, 1) + '개월)'); J.out(box,'wip', J.fmt(wip/1e4, 1) + '만 장');
+  });
+  function draw(dt){
+    const u = V.u/100, lam = u*3, mu = 3; // 초당
+    t += dt;
+    if(Math.random() < lam*dt) inq++;
+    if(busy > 0){ busy -= dt; } else if(inq > 0){ inq--; const m = 1/mu; const a = Math.min(1.4, Math.sqrt(V.c)); busy = Math.max(0.05*m, m*(1 - a) - a*Math.log(Math.random() + 1e-9)*m); }
+    Q.push(inq); if(Q.length > 240) Q.shift();
+    const {ctx, w, h} = J.fit(document.getElementById('cv3b')); ctx.clearRect(0,0,w,h);
+    const mx = Math.max(10, ...Q), bw = (w - 20)/240;
+    ctx.fillStyle = J.c('--indigo'); Q.forEach((q, i) => { const bh = q/mx*(h - 40); ctx.globalAlpha = .7; ctx.fillRect(10 + i*bw, h - 20 - bh, Math.max(1, bw - .3), bh); }); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText(`병목 장비 앞 대기 FOUP 수 (지금 ${inq}개, 최대 ${Math.max(...Q)}개)`, 10, 14);
+  }
+  J.loop(document.getElementById('cv3b'), draw);
+})();
+
+/* 1-4 원가 */
+(function(){
+  const N = [{n:'180 nm', c:1500, m:22, s:[18,22,20,10,10,8,12]}, {n:'28 nm', c:3000, m:45, s:[28,20,18,10,8,8,8]}, {n:'7 nm', c:9300, m:80, s:[33,19,18,9,7,8,6]}, {n:'3 nm', c:18000, m:90, s:[36,18,18,8,6,9,5]}];
+  const CAT = [['노광','--red'],['식각','--plum'],['증착','--indigo'],['CMP·세정','--gold'],['주입·열처리','--wood2'],['계측·검사','--ink3'],['기타','--line']];
+  let sel = 3; const box = document.getElementById('sim4');
+  function draw(){
+    const d = N[sel];
+    { const {ctx, w, h} = J.fit(document.getElementById('cv4a')); ctx.clearRect(0,0,w,h);
+      const cx = w*0.38, cy = h/2, r = Math.min(w*0.32, h*0.42); let a0 = -Math.PI/2;
+      d.s.forEach((p, i) => { const a1 = a0 + p/100*Math.PI*2; ctx.fillStyle = J.c(CAT[i][1]); ctx.globalAlpha = .85; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, a0, a1); ctx.fill(); ctx.globalAlpha = 1;
+        const am = (a0 + a1)/2; ctx.fillStyle = '#fff'; ctx.font = '600 11.5px "JetBrains Mono"'; ctx.textAlign = 'center'; if(p >= 6) ctx.fillText(p + '%', cx + Math.cos(am)*r*0.65, cy + Math.sin(am)*r*0.65 + 4); a0 = a1; });
+      CAT.forEach(([n, c], i) => { ctx.fillStyle = J.c(c); ctx.fillRect(w*0.75, 30 + i*24, 12, 12); ctx.fillStyle = J.c('--ink'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText(n, w*0.75 + 18, 40 + i*24); }); }
+    { const {ctx, w, h} = J.fit(document.getElementById('cv4b')); ctx.clearRect(0,0,w,h);
+      const bw = (w - 60)/N.length, mx = 20000;
+      N.forEach((q, i) => { const bh = q.c/mx*(h - 60), x = 40 + i*bw; ctx.fillStyle = J.c(i === sel ? '--red' : '--wood2'); ctx.globalAlpha = i === sel ? .9 : .5; ctx.fillRect(x + 6, h - 30 - bh, bw - 12, bh); ctx.globalAlpha = 1;
+        ctx.fillStyle = J.c('--ink'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(q.n, x + bw/2, h - 12); ctx.font = '11px "JetBrains Mono"'; ctx.fillText('$' + J.fmt(q.c, 0), x + bw/2, h - 36 - bh); }); }
+    J.out(box,'c', '$' + J.fmt(d.c, 0)); J.out(box,'l', d.s[0] + ' %'); J.out(box,'m', '약 ' + d.m + '층');
+  }
+  J.$$('#sim4 [data-n]').forEach(b => b.onclick = () => { J.$$('#sim4 [data-n]').forEach(x => x.classList.remove('on')); b.classList.add('on'); sel = +b.dataset.n; draw(); });
+  J.live(draw);
+})();
+</script>
+</body>
+</html>

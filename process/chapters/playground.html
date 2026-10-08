@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>공정 레시피 놀이터 · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="playground">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 14 <span class="hanja">第十四章 · 試</span></div>
+  <h1>공정 레시피 놀이터</h1>
+  <p class="lead">이제 공정 엔지니어가 되어 보자. 산화 온도와 시간, 문턱 전압 조절 주입, 소스·드레인 주입 에너지, 어닐 온도, 노광량과 초점, 식각 트리밍 — 여덟 개의 손잡이를 돌려 목표 트랜지스터를 만든다. 손잡이 하나가 여러 결과를 동시에 바꾸고, 어떤 결과는 서로 반대로 움직인다. 실제 공정 개발이 바로 이 줄다리기다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>단위 공정 조건이 소자 특성(I<sub>on</sub>, I<sub>off</sub>, 게이트 누설)으로 이어지는 연결 고리를 체험한다.</li>
+  <li>성능과 누설, 성능과 원가 사이의 맞바꿈(trade-off)을 이해한다.</li>
+  <li>세 가지 제품 목표(고성능, 모바일, 저전력 IoT)에 맞는 레시피를 찾는다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>레시피 시뮬레이터</h2>
+<p>단순화한 모형이지만 앞 장들의 관계를 그대로 엮었다: 산화 조건 → 게이트 산화막 두께(4장) → 게이트 용량과 터널 누설(12장). 주입 에너지와 어닐 → 접합 깊이(5장). 노광량·초점·식각 트림 → 게이트 길이와 그 흔들림(6·8장). 게이트 길이가 짧을수록, 접합이 깊을수록, 산화막이 두꺼울수록 드레인 전압이 채널을 휘어잡는 <b>단채널 효과</b>(DIBL)가 커져 문턱 전압이 떨어지고 누설이 는다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-1</span><span class="ttl">나만의 트랜지스터 레시피</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><span class="hint">미션:</span><button class="sbtn on" data-m="hp">고성능 CPU</button><button class="sbtn" data-m="mob">균형 모바일 AP</button><button class="sbtn" data-m="iot">저전력 IoT</button><span style="flex:1"></span><button class="sbtn" id="bReset">기본 레시피</button></div>
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">① 산화 온도 <output data-o="T"></output></span><input type="range" data-k="T" min="750" max="950" step="5" value="850" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">② 산화 시간 <output data-o="t"></output></span><input type="range" data-k="t" min="1" max="30" step="0.5" value="8" data-d="1" data-u="분"></label>
+      <label class="ctrl"><span class="lab">③ 문턱 조절 주입 도즈 <output data-o="vt"></output></span><input type="range" data-k="vt" min="12" max="13.3" step="0.05" value="12.6" data-log="1"></label>
+      <label class="ctrl"><span class="lab">④ S/D 주입 에너지 (As) <output data-o="E"></output></span><input type="range" data-k="E" min="2" max="30" step="1" value="10" data-d="0" data-u="keV"></label>
+      <label class="ctrl"><span class="lab">⑤ 스파이크 어닐 온도 <output data-o="A"></output></span><input type="range" data-k="A" min="950" max="1100" step="5" value="1030" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">⑥ 노광량 <output data-o="dose"></output></span><input type="range" data-k="dose" min="20" max="40" step="0.5" value="30" data-d="1" data-u="mJ/cm²"></label>
+      <label class="ctrl"><span class="lab">⑦ 초점 오프셋 <output data-o="f"></output></span><input type="range" data-k="f" min="-100" max="100" step="5" value="0" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">⑧ 식각 트림 <output data-o="trim"></output></span><input type="range" data-k="trim" min="0" max="15" step="0.5" value="5" data-d="1" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">산화막 (EOT)</span><span class="v" data-r="tox"></span></div>
+      <div class="ro"><span class="k">게이트 길이 L<sub>g</sub> (3σ)</span><span class="v" data-r="lg"></span></div>
+      <div class="ro"><span class="k">접합 깊이 x<sub>j</sub></span><span class="v" data-r="xj"></span></div>
+      <div class="ro"><span class="k">V<sub>th</sub> (DIBL)</span><span class="v" data-r="vth"></span></div>
+      <div class="ro"><span class="k">I<sub>on</sub> (상대)</span><span class="v" data-r="ion"></span></div>
+      <div class="ro"><span class="k">I<sub>off</sub></span><span class="v" data-r="ioff"></span></div>
+      <div class="ro"><span class="k">게이트 누설</span><span class="v" data-r="jg"></span></div>
+      <div class="ro"><span class="k">미션 결과</span><span class="v" data-r="ok" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 만들어진 트랜지스터 단면(산화막 두께·게이트 길이·접합 깊이가 비율대로 반영). 오른쪽: 세 가지 성적과 미션 목표(초록 영역 안이면 통과). I<sub>on</sub>은 기본 레시피 = 1.0으로 정규화, I<sub>off</sub>는 nA/µm. 게이트 길이 흔들림(3σ)이 크면 가장 짧은 트랜지스터 기준으로 누설을 계산한다(최악 조건). 모든 미션을 통과하는 레시피를 찾아보자.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>미션 힌트</h2>
+<div class="tbwrap"><table class="tb">
+<tr><th>미션</th><th>목표</th><th>힌트</th></tr>
+<tr><td>고성능 CPU</td><td>I<sub>on</sub> ≥ 1.25, I<sub>off</sub> ≤ 100 nA/µm, 게이트 누설 ≤ 100 A/cm²</td><td>얇은 산화막·짧은 게이트로 전류를 키우되, 단채널 효과는 얕은 접합으로 억누른다.</td></tr>
+<tr><td>균형 모바일 AP</td><td>I<sub>on</sub> ≥ 1.0, I<sub>off</sub> ≤ 20 nA/µm, 게이트 누설 ≤ 20 A/cm²</td><td>문턱 조절 주입을 조금 늘리고, 초점을 0에 맞춰 길이 흔들림을 줄인다.</td></tr>
+<tr><td>저전력 IoT</td><td>I<sub>on</sub> ≥ 0.5, I<sub>off</sub> ≤ 1 nA/µm, 게이트 누설 ≤ 0.1 A/cm²</td><td>산화막을 두껍게(터널 누설 ↓), 게이트를 길게, 문턱 전압을 높게. 대신 전류는 포기.</td></tr>
+</table></div>
+
+<div class="think"><p><b>생각해 보기.</b> 실제 칩은 한 웨이퍼 위에서 고성능 트랜지스터와 저누설 트랜지스터를 동시에 만들어야 한다(12장의 다중 V<sub>th</sub>). 이 놀이터에서 손잡이 몇 개를 "트랜지스터 종류마다 따로" 바꿀 수 있다면 어떤 것을 고르겠는가? 그 대가로 늘어나는 공정(마스크) 수는?</p></div>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+(function(){
+  const MIS = {hp:{ion:1.25, ioff:100, jg:100, n:'고성능 CPU'}, mob:{ion:1.0, ioff:20, jg:20, n:'균형 모바일'}, iot:{ion:0.5, ioff:1, jg:0.1, n:'저전력 IoT'}};
+  let mis = 'hp'; const box = document.getElementById('sim1');
+  const DEF = {T:850, t:8, vt:12.6, E:10, A:1030, dose:30, f:0, trim:5};
+  function model(v){
+    const k = 8.617e-5, r = 0.32*Math.exp(-1.3/k*(1/(v.T + 273) - 1/1123)); const tox = 0.5 + r*Math.pow(v.t, 0.6)*0.55; // nm
+    const Nch = v.vt; const cdP = 34 + (30 - v.dose)*1.1, dof = 120, fpen = Math.max(0, Math.abs(v.f) - dof/4)/(dof/4);
+    const Lg = Math.max(6, cdP - v.trim - fpen*2), sig3 = 1.2 + fpen*3 + v.trim*0.12;
+    const Rp = 0.75*Math.pow(v.E, 0.92), D = 22.9*Math.exp(-4.1/(k*(v.A + 273)))*1.5, xj = Rp + 2.2*(Rp*0.36 + 1.5) + 2*Math.sqrt(D*1.2)*1e7;
+    const lam = Math.sqrt(3*tox*xj), dibl = (L) => 0.9*Math.exp(-L/(1.6*lam));
+    const vt0 = 0.12 + 0.11*Math.log10(Nch/1e12)*2 + 0.06*(tox - 1.0);
+    const Lmin = Lg - sig3, vth = vt0 - dibl(Lg), vthMin = vt0 - dibl(Lmin), ss = 62*(1 + 0.6*dibl(Lmin)) ;
+    const Vdd = 0.8, ion = Math.pow(Math.max(0.01, Vdd - vth), 1.3)/(tox*Math.pow(Lg, 0.6));
+    const ioff = 300*Math.pow(10, -vthMin*1000/ss); // nA/µm
+    const jg = 1e3*Math.exp(-(tox - 1.0)/0.08);
+    return {tox, Lg, sig3, xj, vth, ion, ioff, jg, cdP};
+  }
+  const base = model(Object.assign({}, DEF, {vt:Math.pow(10, DEF.vt)})).ion;
+  J.sim('sim1', (v, b) => {
+    J.$('[data-o="vt"]', b).textContent = J.sci(v.vt, 2) + ' cm⁻²';
+    const m = model(v), ion = m.ion/base, M = MIS[mis];
+    // 단면
+    { const {ctx, w, h} = J.fit(document.getElementById('cv1a')); ctx.clearRect(0,0,w,h);
+      const sc = (w - 40)/120, cx = w/2, sub = h*0.55, X = nm => cx + nm*sc;
+      ctx.fillStyle = '#8f98a8'; ctx.fillRect(20, sub, w - 40, h - 20 - sub);
+      const xjs = Math.min(h - 40 - sub, m.xj*sc*1.2);
+      ctx.fillStyle = '#e05a4a'; [[20, X(-m.Lg/2)], [X(m.Lg/2), w - 20]].forEach(([a, b2]) => { ctx.beginPath(); ctx.moveTo(a, sub); ctx.lineTo(b2, sub); ctx.quadraticCurveTo(b2 + (a < cx ? xjs*0.3 : -xjs*0.3), sub + xjs, a < cx ? b2 - xjs*0.5 : b2 + xjs*0.5, sub + xjs); ctx.lineTo(a, sub + xjs); ctx.fill(); });
+      const toxs = Math.max(2, m.tox*sc*3); ctx.fillStyle = '#f0d36a'; ctx.fillRect(X(-m.Lg/2), sub - toxs, m.Lg*sc, toxs);
+      ctx.fillStyle = '#5b6170'; ctx.fillRect(X(-m.Lg/2), sub - toxs - 60, m.Lg*sc, 60);
+      ctx.fillStyle = J.c('--indigo'); ctx.fillRect(X(-m.Lg/2) - 8, sub - toxs - 60, 8, 60 + toxs); ctx.fillRect(X(m.Lg/2), sub - toxs - 60, 8, 60 + toxs);
+      ctx.fillStyle = '#fff'; ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('게이트', cx, sub - toxs - 28); ctx.fillText('소스', (20 + X(-m.Lg/2))/2, sub + 16); ctx.fillText('드레인', (X(m.Lg/2) + w - 20)/2, sub + 16);
+      ctx.fillStyle = J.c('--ink2'); ctx.fillText(`L_g ${J.fmt(m.Lg, 1)} nm · x_j ${J.fmt(m.xj, 1)} nm · 산화막 ${J.fmt(m.tox, 2)} nm (3배 과장)`, cx, 20);
+      ctx.strokeStyle = J.c('--red'); ctx.setLineDash([3,3]); ctx.strokeRect(X(-(m.Lg - m.sig3)/2), sub - toxs - 66, (m.Lg - m.sig3)*sc, 4); ctx.setLineDash([]); }
+    // 성적표
+    { const {ctx, w, h} = J.fit(document.getElementById('cv1b')); ctx.clearRect(0,0,w,h);
+      const rows = [['I_on (클수록 좋음)', ion, M.ion, 'up', 0, 2], ['I_off nA/µm (로그)', m.ioff, M.ioff, 'dn', -2, 4], ['게이트 누설 A/cm² (로그)', m.jg, M.jg, 'dn', -3, 4]];
+      const rh = (h - 30)/3;
+      rows.forEach(([n, val, tgt, dir, lo, hi], i) => { const y = 14 + i*rh, L = 20, W = w - 40, log = i > 0;
+        const P = q => L + J.clamp((log ? Math.log10(Math.max(1e-6, q)) - lo : q - lo)/(hi - lo), 0, 1)*W;
+        ctx.fillStyle = J.c('--paper2'); ctx.fillRect(L, y + 20, W, 22);
+        ctx.fillStyle = J.c('--jade'); ctx.globalAlpha = .25; if(dir === 'up') ctx.fillRect(P(tgt), y + 20, L + W - P(tgt), 22); else ctx.fillRect(L, y + 20, P(tgt) - L, 22); ctx.globalAlpha = 1;
+        const pass = dir === 'up' ? val >= tgt : val <= tgt;
+        ctx.fillStyle = J.c(pass ? '--jade' : '--red'); ctx.fillRect(P(val) - 3, y + 14, 6, 34);
+        ctx.fillStyle = J.c('--ink'); ctx.font = '600 12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText(n, L, y + 12);
+        ctx.textAlign = 'right'; ctx.font = '12px "JetBrains Mono"'; ctx.fillText((log ? J.sci(val, 2) : J.fmt(val, 2)) + (pass ? ' ✓' : ' ✗'), L + W, y + 12); }); }
+    const pass = ion >= M.ion && m.ioff <= M.ioff && m.jg <= M.jg;
+    J.out(b,'tox', J.fmt(m.tox, 2) + ' nm', m.jg <= M.jg ? 'good' : 'bad'); J.out(b,'lg', J.fmt(m.Lg, 1) + ' ± ' + J.fmt(m.sig3, 1) + ' nm', m.sig3 < 2.5 ? 'good' : 'warn'); J.out(b,'xj', J.fmt(m.xj, 1) + ' nm');
+    J.out(b,'vth', J.fmt(m.vth, 3) + ' V'); J.out(b,'ion', J.fmt(ion, 2), ion >= M.ion ? 'good' : 'bad'); J.out(b,'ioff', J.sci(m.ioff, 2) + ' nA/µm', m.ioff <= M.ioff ? 'good' : 'bad');
+    J.out(b,'jg', J.sci(m.jg, 2) + ' A/cm²', m.jg <= M.jg ? 'good' : 'bad'); J.out(b,'ok', pass ? M.n + ' 통과! 🎉' : M.n + ' 미달', pass ? 'good' : 'bad');
+  });
+  J.$$('#sim1 [data-m]').forEach(bt => bt.onclick = () => { J.$$('#sim1 [data-m]').forEach(x => x.classList.remove('on')); bt.classList.add('on'); mis = bt.dataset.m; J.$('#sim1 [data-k="T"]').dispatchEvent(new Event('input')); });
+  J.$('#bReset').onclick = () => { Object.entries(DEF).forEach(([k, val]) => { const e = J.$(`#sim1 [data-k="${k}"]`); e.value = k === 'vt' ? val : val; }); J.$('#sim1 [data-k="T"]').dispatchEvent(new Event('input')); };
+  window._recipe = o => { Object.entries(o).forEach(([k, val]) => { J.$(`#sim1 [data-k="${k}"]`).value = val; }); J.$('#sim1 [data-k="T"]').dispatchEvent(new Event('input')); return J.$('#sim1 .readouts').innerText.replace(/\n/g, ' '); };
+  window._mis = m => { mis = m; };
+})();
+</script>
+</body>
+</html>

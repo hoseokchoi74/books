@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>용어집 & 종합 퀴즈 · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+  .gsearch{width:100%; font-size:16px; padding:11px 14px; border:1.5px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink); font-family:var(--sans)}
+  .gsearch:focus{outline:none; border-color:var(--gold)}
+  .gfilter{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 16px}
+  .glist{display:grid; gap:8px}
+  .gi{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:10px 14px}
+  .gi b{font-family:var(--serif); font-size:16.5px}
+  .gi .en{margin-left:6px}
+  .gi p{margin:4px 0 0; font-size:14.5px; color:var(--ink2)}
+  .gi a.ch{float:right; font-family:var(--mono); font-size:12px; color:var(--red)}
+  .score{font-family:var(--serif); font-size:20px; font-weight:700}
+</style>
+</head>
+<body data-ch="glossary">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 15 <span class="hanja">第十五章 · 結</span></div>
+  <h1>용어집 & 종합 퀴즈</h1>
+  <p class="lead">공정 전체의 핵심 용어를 한곳에 모았다. 검색하거나 분류로 걸러 보고, 마지막의 종합 문제로 실력을 점검해 보자.</p>
+</header>
+
+<h2 id="s1"><span class="n">01</span>용어집</h2>
+<input class="gsearch" id="gq" placeholder="용어 검색 (예: EOT, OPC, ALD, 디싱, Cpk)" aria-label="용어 검색">
+<div class="gfilter" id="gf"></div>
+<p class="hint" id="gcount"></p>
+<div class="glist" id="gl"></div>
+
+<h2 id="s2"><span class="n">02</span>종합 퀴즈</h2>
+<p>20문제. 각 장을 고루 섞었다. 각 문제를 누르면 바로 채점되고 해설이 열린다.</p>
+<div class="readouts" style="margin-bottom:10px"><div class="ro"><span class="k">점수</span><span class="v score" id="score">0 / 20</span></div><div class="ro"><span class="k">푼 문제</span><span class="v" id="done">0</span></div></div>
+<div id="qz"></div>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const G = [
+ [
+  "팹",
+  "fab",
+  "반도체 웨이퍼 가공 공장. 클린룸 속 수백 대 장비로 이루어진다.",
+  "팹·웨이퍼",
+  "overview"
+ ],
+ [
+  "FEOL / MOL / BEOL",
+  "front/middle/back-end-of-line",
+  "트랜지스터 / 콘택 / 금속 배선을 만드는 공정 구간.",
+  "팹·웨이퍼",
+  "overview"
+ ],
+ [
+  "FOUP",
+  "front-opening unified pod",
+  "웨이퍼 25장을 담아 운반하는 밀폐 용기.",
+  "팹·웨이퍼",
+  "overview"
+ ],
+ [
+  "사이클 타임",
+  "cycle time",
+  "웨이퍼 투입부터 완성까지 걸리는 시간. 첨단 공정은 3–4개월.",
+  "팹·웨이퍼",
+  "overview"
+ ],
+ [
+  "리틀의 법칙",
+  "Little's law",
+  "재공 = 처리량 × 사이클 타임.",
+  "팹·웨이퍼",
+  "overview"
+ ],
+ [
+  "밀러 지수",
+  "Miller index",
+  "결정면을 (hkl)로 나타내는 방법. CMOS는 (100).",
+  "팹·웨이퍼",
+  "wafer"
+ ],
+ [
+  "편석 계수",
+  "segregation coefficient",
+  "고체와 액체 속 도펀트 농도 비 k₀.",
+  "팹·웨이퍼",
+  "wafer"
+ ],
+ [
+  "샤일 식",
+  "Scheil equation",
+  "잉곳 축 방향 도펀트 농도: C = k₀C₀(1−f)^(k₀−1).",
+  "팹·웨이퍼",
+  "wafer"
+ ],
+ [
+  "게터링",
+  "gettering",
+  "금속 불순물을 소자 영역 밖 함정에 붙잡아 두는 것.",
+  "팹·웨이퍼",
+  "wafer"
+ ],
+ [
+  "무결함층 (DZ)",
+  "denuded zone",
+  "표면 근처 산소 석출물이 없는 깨끗한 층.",
+  "팹·웨이퍼",
+  "wafer"
+ ],
+ [
+  "TTV / 평탄도",
+  "total thickness variation / flatness",
+  "웨이퍼 두께 편차와 표면 굴곡. 노광 초점 심도 예산을 먹는다.",
+  "팹·웨이퍼",
+  "wafer"
+ ],
+ [
+  "RCA 세정",
+  "RCA clean",
+  "SC1(입자·유기물), SC2(금속), HF(산화막)로 이루어진 표준 습식 세정.",
+  "세정·열공정",
+  "clean"
+ ],
+ [
+  "메가소닉",
+  "megasonic cleaning",
+  "MHz 대역 음파로 미세 입자를 떼어 내는 세정.",
+  "세정·열공정",
+  "clean"
+ ],
+ [
+  "반데르발스 힘",
+  "van der Waals force",
+  "입자를 표면에 붙이는 힘. 입자 지름에 비례.",
+  "세정·열공정",
+  "clean"
+ ],
+ [
+  "소수 운반자 수명",
+  "minority carrier lifetime",
+  "전자-정공이 재결합하기까지의 평균 시간. 금속 오염에 민감.",
+  "세정·열공정",
+  "clean"
+ ],
+ [
+  "딜–그로브 모형",
+  "Deal–Grove model",
+  "열산화 두께 x² + Ax = B(t + τ).",
+  "세정·열공정",
+  "oxidation"
+ ],
+ [
+  "선형 / 포물선 속도 상수",
+  "B/A, B",
+  "얇을 때는 반응(B/A), 두꺼울 때는 확산(B)이 성장을 지배.",
+  "세정·열공정",
+  "oxidation"
+ ],
+ [
+  "LOCOS / STI",
+  "local oxidation / shallow trench isolation",
+  "소자 분리 방식. 새부리 문제로 STI로 바뀜.",
+  "세정·열공정",
+  "oxidation"
+ ],
+ [
+  "픽의 법칙",
+  "Fick's laws",
+  "확산 흐름 J = −D dC/dx, ∂C/∂t = D ∂²C/∂x².",
+  "세정·열공정",
+  "doping"
+ ],
+ [
+  "접합 깊이",
+  "junction depth",
+  "도펀트 농도가 기판 농도와 같아지는 깊이 x_j.",
+  "세정·열공정",
+  "doping"
+ ],
+ [
+  "면저항",
+  "sheet resistance",
+  "얇은 층의 저항 R_s (Ω/□).",
+  "세정·열공정",
+  "doping"
+ ],
+ [
+  "투사 범위 R_p",
+  "projected range",
+  "주입 이온이 멈추는 평균 깊이.",
+  "세정·열공정",
+  "doping"
+ ],
+ [
+  "채널링",
+  "channeling",
+  "결정 축 통로를 따라 이온이 깊이 들어가는 현상.",
+  "세정·열공정",
+  "doping"
+ ],
+ [
+  "열 예산",
+  "thermal budget",
+  "공정 전체의 Dt. 얕은 접합을 위해 최소화.",
+  "세정·열공정",
+  "doping"
+ ],
+ [
+  "스파이크 / 레이저 어닐",
+  "spike / laser anneal",
+  "초 이하·밀리초 이하의 초고속 열처리.",
+  "세정·열공정",
+  "doping"
+ ],
+ [
+  "공간 상",
+  "aerial image",
+  "렌즈를 지나 웨이퍼 위에 맺힌 빛의 세기 분포.",
+  "패터닝",
+  "litho"
+ ],
+ [
+  "개구수 NA",
+  "numerical aperture",
+  "렌즈가 모으는 빛의 각도. 해상도 ∝ λ/NA.",
+  "패터닝",
+  "litho"
+ ],
+ [
+  "부분 결맞음 σ",
+  "partial coherence",
+  "조명 원반 크기. 피치 한계와 대비를 바꾼다.",
+  "패터닝",
+  "litho"
+ ],
+ [
+  "k₁",
+  "k1 factor",
+  "공정 난이도 지수: 선폭 = k₁λ/NA. 이론 하한 0.25.",
+  "패터닝",
+  "litho"
+ ],
+ [
+  "초점 심도 DOF",
+  "depth of focus",
+  "CD를 유지하는 초점 범위. ∝ λ/NA².",
+  "패터닝",
+  "litho"
+ ],
+ [
+  "보썽 곡선",
+  "Bossung plot",
+  "초점·노광량별 CD 그래프. 공정 창을 읽는다.",
+  "패터닝",
+  "litho"
+ ],
+ [
+  "스윙 곡선",
+  "swing curve",
+  "감광액 두께에 따라 흡수 에너지가 출렁이는 현상.",
+  "패터닝",
+  "litho"
+ ],
+ [
+  "BARC",
+  "bottom anti-reflective coating",
+  "감광액 아래 반사 방지막.",
+  "패터닝",
+  "litho"
+ ],
+ [
+  "OPC",
+  "optical proximity correction",
+  "근접 효과를 미리 보정해 마스크 모양을 바꾸는 것.",
+  "패터닝",
+  "litho"
+ ],
+ [
+  "SRAF",
+  "sub-resolution assist feature",
+  "찍히지 않을 만큼 가는 보조 패턴.",
+  "패터닝",
+  "litho"
+ ],
+ [
+  "SADP / SAQP",
+  "self-aligned double/quadruple patterning",
+  "스페이서로 피치를 ½, ¼로 쪼개는 패터닝.",
+  "패터닝",
+  "euv"
+ ],
+ [
+  "LELE",
+  "litho-etch-litho-etch",
+  "두 번 노광·식각으로 홀수/짝수 선을 나눠 찍는 방법.",
+  "패터닝",
+  "euv"
+ ],
+ [
+  "피치 흔들림",
+  "pitch walking",
+  "다중 패터닝에서 간격이 짝수·홀수 번갈아 달라지는 현상.",
+  "패터닝",
+  "euv"
+ ],
+ [
+  "EUV",
+  "extreme ultraviolet",
+  "파장 13.5 nm 노광. 반사 광학·진공 필요.",
+  "패터닝",
+  "euv"
+ ],
+ [
+  "광자 산탄 잡음",
+  "photon shot noise",
+  "광자 수가 적어 생기는 √N 흔들림. 확률적 결함의 원인.",
+  "패터닝",
+  "euv"
+ ],
+ [
+  "오버레이",
+  "overlay",
+  "층 사이 정렬 오차. 제곱합으로 예산을 짠다.",
+  "패터닝",
+  "euv"
+ ],
+ [
+  "시스",
+  "sheath",
+  "플라스마와 웨이퍼 사이 전기장 층. 이온을 수직 가속.",
+  "박막·평탄화",
+  "etch"
+ ],
+ [
+  "이방성",
+  "anisotropy",
+  "수직 대 수평 식각 비. 1이면 완전 수직.",
+  "박막·평탄화",
+  "etch"
+ ],
+ [
+  "선택비",
+  "selectivity",
+  "식각할 막과 다른 막의 식각 속도 비.",
+  "박막·평탄화",
+  "etch"
+ ],
+ [
+  "과식각",
+  "over-etch",
+  "불균일을 감안해 계산보다 더 깎는 것.",
+  "박막·평탄화",
+  "etch"
+ ],
+ [
+  "ARDE",
+  "aspect-ratio dependent etching",
+  "좁고 깊을수록 식각이 느려지는 현상.",
+  "박막·평탄화",
+  "etch"
+ ],
+ [
+  "종말점 검출",
+  "endpoint detection",
+  "OES 신호 변화로 식각 완료 시점을 찾는 것.",
+  "박막·평탄화",
+  "etch"
+ ],
+ [
+  "CVD",
+  "chemical vapor deposition",
+  "기체 반응으로 막을 쌓는 증착.",
+  "박막·평탄화",
+  "deposition"
+ ],
+ [
+  "반응 / 물질 전달 율속",
+  "reaction / mass-transport limited",
+  "CVD 성장을 정하는 느린 단계.",
+  "박막·평탄화",
+  "deposition"
+ ],
+ [
+  "단차 피복",
+  "step coverage / conformality",
+  "구멍 바닥·벽에 쌓인 두께 비율.",
+  "박막·평탄화",
+  "deposition"
+ ],
+ [
+  "부착 계수",
+  "sticking coefficient",
+  "충돌한 분자가 표면에 붙을 확률.",
+  "박막·평탄화",
+  "deposition"
+ ],
+ [
+  "ALD",
+  "atomic layer deposition",
+  "자기 제한 반응으로 원자층을 한 겹씩 쌓는 증착.",
+  "박막·평탄화",
+  "deposition"
+ ],
+ [
+  "PVD (스퍼터)",
+  "physical vapor deposition",
+  "이온으로 표적을 두드려 원자를 날려 쌓는 증착.",
+  "박막·평탄화",
+  "deposition"
+ ],
+ [
+  "CMP",
+  "chemical mechanical polishing",
+  "화학 슬러리와 패드로 표면을 평탄화.",
+  "박막·평탄화",
+  "cmp"
+ ],
+ [
+  "프레스턴 식",
+  "Preston equation",
+  "연마 속도 RR = K_p P v.",
+  "박막·평탄화",
+  "cmp"
+ ],
+ [
+  "평탄화 길이",
+  "planarization length",
+  "CMP 패드가 밀도를 평균하는 거리.",
+  "박막·평탄화",
+  "cmp"
+ ],
+ [
+  "더미 필",
+  "dummy fill",
+  "밀도를 고르게 하려 넣는 가짜 패턴.",
+  "박막·평탄화",
+  "cmp"
+ ],
+ [
+  "디싱 / 이로전",
+  "dishing / erosion",
+  "넓은 금속 가운데가 파임 / 촘촘한 영역 전체가 낮아짐.",
+  "박막·평탄화",
+  "cmp"
+ ],
+ [
+  "다마신",
+  "damascene",
+  "절연막에 홈을 파고 금속을 채운 뒤 갈아 내는 배선 공정.",
+  "배선·집적",
+  "beol"
+ ],
+ [
+  "장벽막",
+  "barrier layer",
+  "구리 확산을 막는 TaN/Ta 막.",
+  "배선·집적",
+  "beol"
+ ],
+ [
+  "크기 효과",
+  "resistivity size effect",
+  "선폭이 평균 자유 행로에 가까워지면 비저항이 커지는 현상.",
+  "배선·집적",
+  "beol"
+ ],
+ [
+  "RC 지연",
+  "RC delay",
+  "배선 저항·용량에 의한 지연. 길이²에 비례.",
+  "배선·집적",
+  "beol"
+ ],
+ [
+  "low-k",
+  "low-k dielectric",
+  "유전율이 낮은 층간 절연막.",
+  "배선·집적",
+  "beol"
+ ],
+ [
+  "전자 이동 (EM)",
+  "electromigration",
+  "전자 흐름이 금속 원자를 밀어 보이드를 만드는 현상.",
+  "배선·집적",
+  "beol"
+ ],
+ [
+  "블랙의 식",
+  "Black's equation",
+  "EM 수명 MTTF = A J⁻ⁿ e^(Ea/kT).",
+  "배선·집적",
+  "beol"
+ ],
+ [
+  "HKMG",
+  "high-k metal gate",
+  "고유전율 절연막 + 금속 게이트.",
+  "배선·집적",
+  "integration"
+ ],
+ [
+  "EOT",
+  "equivalent oxide thickness",
+  "SiO₂로 환산한 게이트 절연막 두께.",
+  "배선·집적",
+  "integration"
+ ],
+ [
+  "변형 실리콘",
+  "strained silicon",
+  "응력으로 이동도를 높인 채널.",
+  "배선·집적",
+  "integration"
+ ],
+ [
+  "내부 스페이서",
+  "inner spacer",
+  "GAA에서 게이트와 S/D를 갈라놓는 절연막.",
+  "배선·집적",
+  "integration"
+ ],
+ [
+  "일함수",
+  "work function",
+  "금속에서 전자를 꺼내는 에너지. 문턱 전압을 정한다.",
+  "배선·집적",
+  "integration"
+ ],
+ [
+  "DIBL",
+  "drain-induced barrier lowering",
+  "드레인 전압이 문턱을 낮추는 단채널 효과.",
+  "배선·집적",
+  "playground"
+ ],
+ [
+  "SPC",
+  "statistical process control",
+  "관리도로 공정 이상을 감시하는 방법.",
+  "수율·관리",
+  "yield"
+ ],
+ [
+  "관리 한계",
+  "control limits",
+  "평균 ± 3σ 선.",
+  "수율·관리",
+  "yield"
+ ],
+ [
+  "C_p / C_pk",
+  "process capability",
+  "규격 대비 공정 흔들림 지수.",
+  "수율·관리",
+  "yield"
+ ],
+ [
+  "음이항 수율 모형",
+  "negative binomial yield",
+  "결함 군집을 반영한 수율 Y = (1 + DA/α)^(−α).",
+  "수율·관리",
+  "yield"
+ ]
+];
+(function(){
+  const cats = ['전체', ...new Set(G.map(g => g[3]))];
+  let cat = '전체';
+  const gf = document.getElementById('gf'), gl = document.getElementById('gl'), gq = document.getElementById('gq');
+  gf.innerHTML = cats.map(c => `<button class="sbtn ${c==='전체'?'on':''}" data-c="${c}">${c}</button>`).join('');
+  const chn = s => BOOK.chapters.find(c => c.slug === s).n;
+  function render(){
+    const q = gq.value.trim().toLowerCase();
+    const list = G.filter(g => (cat === '전체' || g[3] === cat) && (!q || (g[0]+g[1]+g[2]).toLowerCase().includes(q)));
+    gl.innerHTML = list.map(g => `<div class="gi"><a class="ch" href="${g[4]}.html">Ch.${chn(g[4])} →</a><b>${g[0]}</b><span class="en">${g[1]}</span><p>${g[2]}</p></div>`).join('') || '<p class="hint">찾는 용어가 없습니다.</p>';
+    document.getElementById('gcount').textContent = `${list.length}개 용어`;
+  }
+  gf.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; J.$$('button', gf).forEach(x => x.classList.remove('on')); b.classList.add('on'); cat = b.dataset.c; render(); });
+  gq.addEventListener('input', render);
+  render();
+  const Q = [["WIP 18만 장, 하루 투입 2,000장이면 사이클 타임은?",["9일","90일","900일","2일"],1,"1장. CT = WIP/TH."],["CMOS 로직 웨이퍼의 표준 결정면은?",["(111)","(110)","(100)","(211)"],2,"2장."],["k₀ < 1 도펀트의 잉곳 꼬리 쪽 농도는?",["낮다","높다","같다","0"],1,"2장. 샤일 식."],["입자가 작을수록 떼기 어려운 이유는?",["붙는 힘이 떼는 힘보다 천천히 줄어서","무거워서","정전기 때문","녹아서"],0,"3장."],["두꺼운 산화막의 성장은?",["t에 비례","√t에 비례","t²에 비례","일정"],1,"4장."],["드라이브인에서 보존되는 양은?",["표면 농도","총 도즈","접합 깊이","D"],1,"5장."],["BF₂⁺로 주입하는 이유는?",["붕소를 얕게 넣으려고","빠르게","싸게","깊게"],0,"5장."],["최소 피치 λ/(NA(1+σ)): ArF, NA 0.85, σ 0.6이면?",["227 nm","142 nm","90 nm","60 nm"],1,"6장."],["NA를 키우면 DOF는?",["커진다","그대로","NA²에 반비례해 준다","NA에 비례"],2,"6장."],["스윙 곡선의 원인은?",["기판 반사로 생긴 정재파","렌즈 수차","먼지","온도"],0,"6장."],["SADP의 최종 피치는 처음 맨드릴 피치의?",["2배","같음","½","¼"],2,"7장."],["같은 노광량에서 EUV 광자 수는 ArF의?",["14배","같음","1/14","1/2"],2,"7장."],["이방성을 높이는 식각 조건은?",["고압·저바이어스","저압·고바이어스","라디칼 비중 ↑","고온"],1,"8장."],["좁은 구멍이 얕게 파이는 현상은?",["ARDE","디싱","언더컷","채널링"],0,"8장."],["깊은 구멍에 고른 막을 원하면?",["부착 계수 크게","부착 계수 작게 (ALD)","PVD","온도 낮게"],1,"9장."],["프레스턴 식에서 P 2배, v 2배면 연마 속도는?",["2배","4배","1배","8배"],1,"10장."],["구리 배선에 다마신을 쓰는 이유는?",["구리 건식 식각이 어려워서","싸서","빨라서","투명해서"],0,"11장."],["HfO₂(k=20) 2 nm의 EOT는?",["2 nm","0.39 nm","10 nm","0.1 nm"],1,"12장. 2×3.9/20."],["μ가 규격 중앙에서 벗어나면 줄어드는 지수는?",["Cp","Cpk","둘 다 그대로","σ"],1,"13장."],["결함이 뭉쳐 있을 때 실제 수율은 푸아송 예측보다?",["높다","낮다","같다","0"],0,"13장."]];
+  let score = 0, done = 0;
+  document.getElementById('qz').innerHTML = Q.map((q,i) => `<div class="quiz" data-a="${q[2]}"><p class="q" data-n="${i+1}">${q[0]}</p><ol>${q[1].map(o => `<li>${o}</li>`).join('')}</ol><p class="explain">${q[3]}</p></div>`).join('');
+  J.$$('#qz .quiz').forEach(qe => J.$$('li', qe).forEach((li, k) => li.addEventListener('click', () => {
+    if(qe.dataset.scored) return; qe.dataset.scored = 1; done++;
+    if(k === +qe.dataset.a) score++;
+    document.getElementById('score').textContent = `${score} / ${Q.length}`;
+    document.getElementById('done').textContent = done + (done === Q.length ? (score >= 17 ? ' · 집현전 학사 合格!' : score >= 12 ? ' · 잘했어요' : ' · 다시 읽어 보기') : '');
+  })));
+})();
+</script>
+</body>
+</html>

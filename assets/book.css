@@ -15,7 +15,7 @@
 
 main.chapter{padding:40px 48px 80px; max-width:900px; width:100%; margin:0 auto}
 @media (max-width:980px){
-  .layout{grid-template-columns:1fr}
+  .layout{grid-template-columns:minmax(0,1fr)}
   .toc{position:fixed; left:0; top:51px; width:290px; z-index:40; transform:translateX(-105%); transition:transform .25s; background:var(--paper); box-shadow:var(--shadow)}
   .toc.open{transform:none}
   main.chapter{padding:28px 16px 60px}

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>박막 증착: CVD·ALD·PVD · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="deposition">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 09 <span class="hanja">第九章 · 積</span></div>
+  <h1>박막 증착: CVD·ALD·PVD</h1>
+  <p class="lead">칩은 수십 종류의 얇은 막을 쌓아 만든다: 절연막(SiO₂, SiN, 저유전율 막), 게이트 막(HfO₂, 금속), 배선용 장벽막(TaN)과 씨앗층(Cu). 막을 쌓는 방법은 크게 셋이다. 기체를 표면에서 반응시키는 <b>CVD</b>, 원자층을 한 겹씩 자기 제한적으로 쌓는 <b>ALD</b>, 표적을 이온으로 두드려 원자를 날려 보내는 <b>PVD</b>(스퍼터). 이 장은 "얼마나 빨리"와 "구석구석 얼마나 고르게"를 정하는 원리를 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>CVD의 반응 율속·물질 전달 율속 영역을 아레니우스 그래프로 구분한다.</li>
+  <li>부착 계수와 종횡비가 단차 피복(conformality)을 결정함을 몬테카를로로 실험한다.</li>
+  <li>ALD의 자기 제한 반응, 포화 곡선, 온도 창을 이해한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>CVD: 반응이 느린가, 공급이 느린가</h2>
+<p>CVD에서 막이 자라려면 반응 기체가 경계층을 지나 표면에 도착하고(물질 전달 계수 h<sub>g</sub>), 표면에서 반응해야 한다(반응 속도 상수 k<sub>s</sub>). 두 저항이 직렬로 이어진 셈이다. 낮은 온도에서는 반응이 느려 k<sub>s</sub>가 지배하고(<b>반응 율속</b>), 성장 속도가 온도에 지수적으로 민감하다 — 웨이퍼 온도를 아주 균일하게 맞춰야 한다. 높은 온도에서는 공급이 따라가지 못해 h<sub>g</sub>가 지배하고(<b>물질 전달 율속</b>), 온도에는 둔감하지만 기체 흐름이 고른 것이 중요하다. 수백 장을 세워 넣는 노(LPCVD)는 반응 율속 영역에서 운전한다.</p>
+<div class="eq">$$G = \frac{k_s h_g}{k_s + h_g}\cdot\frac{C_g}{N_{film}},\qquad k_s = k_0\,e^{-E_a/kT}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-1</span><span class="ttl">CVD 성장 속도 아레니우스 그래프</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="450" max="1100" step="5" value="650" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab"><span>활성화 에너지 E<sub>a</sub></span> <output data-o="e"></output></span><input type="range" data-k="e" min="1" max="2.5" step="0.05" value="1.6" data-d="2" data-u="eV"></label>
+      <label class="ctrl"><span class="lab"><span>압력 (낮을수록 h<sub>g</sub> ↑)</span> <output data-o="p"></output></span><input type="range" data-k="p" min="0.1" max="760" step="0.1" value="0.3" data-d="1" data-u="Torr"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">성장 속도</span><span class="v" data-r="g"></span></div>
+      <div class="ro"><span class="k">영역</span><span class="v" data-r="reg" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">온도 1 °C 차이에 의한 두께 차</span><span class="v" data-r="s"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: log(성장 속도) vs 1000/T. 오른쪽(높은 온도)의 평평한 부분이 물질 전달 율속, 왼쪽의 가파른 직선이 반응 율속이다. 압력을 낮추면(LPCVD) 기체 확산이 빨라져 h<sub>g</sub>가 커지고 반응 율속 영역이 넓어진다. 오른쪽: 노 속에 겹겹이 세운 웨이퍼 100장에 기체가 앞에서 뒤로 흐를 때의 두께 분포.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>단차 피복: 깊은 구멍 바닥까지</h2>
+<p>도랑이나 구멍 속에 막을 입힐 때, 위쪽 입구는 사방에서 분자가 날아오지만 바닥은 입구를 통해 보이는 좁은 하늘에서만 받는다. 분자가 처음 닿은 곳에 바로 붙으면(부착 계수 s ≈ 1, 스퍼터 PVD) 입구에 막이 쌓여 튀어나오고(오버행) 바닥은 얇다. 붙을 확률이 낮으면(s ≪ 1) 분자가 여러 번 튕기며 구멍 속으로 고루 퍼져 <b>컨포멀</b>한 막이 된다. ALD는 표면 반응이 자기 제한적이라 사실상 s → 0처럼 행동해 종횡비 100에서도 거의 100 % 피복한다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-2</span><span class="ttl">분자 몬테카를로: 도랑 속 막 두께</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">부착 계수 s <output data-o="s"></output></span><input type="range" data-k="s" min="-3" max="0" step="0.05" value="-1" data-log="1" data-d="3"></label>
+      <label class="ctrl"><span class="lab">종횡비 (깊이/폭) <output data-o="ar"></output></span><input type="range" data-k="ar" min="1" max="12" step="0.5" value="4" data-d="1"></label>
+      <label class="ctrl"><span class="lab">입사 분포</span><select data-k="d"><option value="cos">코사인 (CVD·ALD 기체)</option><option value="dir">방향성 (콜리메이트 PVD)</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b2r">분자 다시 쏘기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="320"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="320"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">바닥 / 위 두께</span><span class="v" data-r="bt"></span></div>
+      <div class="ro"><span class="k">벽 아래쪽 / 위</span><span class="v" data-r="sw"></span></div>
+      <div class="ro"><span class="k">추적한 분자</span><span class="v" data-r="n"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형.</b> 분자 수천 개를 도랑 입구로 쏘아 직선으로 날아가게 하고, 표면에 닿으면 확률 s로 붙고 아니면 코사인 분포로 다시 튀어 나가게 했다(분자 사이 충돌 없음 = 낮은 압력). 두께는 각 표면에 부딪힌 횟수 × s로 셌다. 왼쪽: 도랑 단면과 쌓인 막(두께 과장), 몇 개 분자의 궤적. 오른쪽: 표면 위치별 상대 두께(입구 위 평면 = 1).</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>ALD: 한 번에 원자 한 층</h2>
+<p>ALD는 두 반응물을 <b>번갈아</b> 넣는다. 예를 들어 Al₂O₃는 TMA(트라이메틸알루미늄)를 넣어 표면의 –OH 자리에 붙이고 → 퍼지로 남은 기체를 빼고 → 물(H₂O)을 넣어 반응시키고 → 다시 퍼지. 각 반응은 표면 자리가 다 차면 멈추므로(<span class="term">자기 제한</span>) 펄스를 넉넉히 주면 한 주기당 두께가 일정하다(약 0.1 nm). 퍼지가 짧으면 두 기체가 섞여 CVD처럼 반응해 균일성이 깨지고, 온도가 너무 낮으면 응축, 너무 높으면 분해나 탈착이 일어난다 — 그 사이가 <b>ALD 창</b>이다.</p>
+<div class="eq">$$\theta(t) = 1 - e^{-t/\tau_{sat}},\qquad \text{두께} = \text{GPC}\times N_{cycle}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-3</span><span class="ttl">ALD 레시피: 펄스·퍼지·온도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">전구체 펄스 <output data-o="tp"></output></span><input type="range" data-k="tp" min="0.01" max="1" step="0.01" value="0.3" data-d="2" data-u="s"></label>
+      <label class="ctrl"><span class="lab">퍼지 <output data-o="tg"></output></span><input type="range" data-k="tg" min="0.1" max="10" step="0.1" value="3" data-d="1" data-u="s"></label>
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="100" max="400" step="5" value="250" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">주기 수 <output data-o="n"></output></span><input type="range" data-k="n" min="10" max="500" step="10" value="100" data-d="0"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="270"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="270"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">표면 포화도</span><span class="v" data-r="sat"></span></div>
+      <div class="ro"><span class="k">주기당 두께 GPC</span><span class="v" data-r="gpc"></span></div>
+      <div class="ro"><span class="k">막 두께 / 불균일</span><span class="v" data-r="th"></span></div>
+      <div class="ro"><span class="k">한 장 공정 시간</span><span class="v" data-r="time"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형 (Al₂O₃ 유사).</b> 왼쪽: 펄스 시간에 따른 표면 포화(τ<sub>sat</sub> = 30 ms) — 웨이퍼 가장자리는 기체가 늦게 도착해 포화가 느리다고 보았다(τ 2배). 오른쪽: 온도에 따른 GPC(ALD 창 150–300 °C). 퍼지가 1초보다 짧으면 기상 반응(CVD) 성분이 섞여 GPC와 불균일이 커진다. ALD의 약점은 느리다는 것: 주기당 수 초 × 수백 주기.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="0"><p class="q">LPCVD 노에서 웨이퍼 수백 장을 촘촘히 세워도 두께가 고른 이유는?</p><ol><li>반응 율속 영역에서 운전하여 기체 공급 차이에 둔감해서</li><li>물질 전달 율속이라서</li><li>온도가 균일하지 않아도 되어서</li><li>압력이 높아서</li></ol>
+<p class="explain">반응 율속이면 성장 속도가 공급(h<sub>g</sub>)이 아닌 온도로 정해진다. 노는 온도가 균일하다.</p></div>
+<div class="quiz" data-a="2"><p class="q">깊은 구멍에 고른 막을 입히려면 부착 계수는?</p><ol><li>1에 가깝게</li><li>상관없다</li><li>작게 (여러 번 튕기도록)</li><li>음수로</li></ol>
+<p class="explain">작은 부착 계수는 분자가 구멍 속까지 퍼지게 한다.</p></div>
+<div class="quiz" data-a="1"><p class="q">ALD에서 퍼지 시간이 너무 짧으면?</p><ol><li>더 고르게 쌓인다</li><li>두 반응물이 기상에서 섞여 CVD 성분이 생긴다</li><li>막이 전혀 안 쌓인다</li><li>온도가 내려간다</li></ol>
+<p class="explain">남은 전구체와 반응물이 만나 자기 제한성이 깨진다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 9-1 CVD */
+J.sim('sim1', (v, box) => {
+  const k = 8.617e-5, ks = T => 1e7*Math.exp(-v.e/(k*(T + 273))), hg = T => 2.5*Math.pow((T + 273)/923, 1.75)/Math.pow(v.p/0.3, 0.6)*1, G = T => ks(T)*hg(T)/(ks(T) + hg(T))*60; // nm/min 스케일
+  const pts = [], pk = [], ph = []; for(let T = 400; T <= 1150; T += 5){ const x = 1000/(T + 273); pts.push([x, G(T)]); pk.push([x, ks(T)*60]); ph.push([x, hg(T)*60]); }
+  J.plot(document.getElementById('cv1a'), {x:[0.7, 1.5], y:[1e-3, 1e3], logy:true, xlab:'1000/T (1/K)', ylab:'성장 속도 (nm/분)', yf:t => J.sci(t, 0),
+    series:[{pts:pk, color:'--ink3', w:1.4, dash:[4,3]},{pts:ph, color:'--ink3', w:1.4, dash:[2,3]},{pts, color:'--indigo', w:3}], points:[{x:1000/(v.T + 273), y:G(v.T), color:'--red', r:6}]});
+  const g0 = G(v.T), dGdT = (G(v.T + 1) - G(v.T - 1))/2/g0, reacLim = ks(v.T) < hg(v.T);
+  // 노 속 100장: 기체가 소모되며 감소
+  const wafers = []; let C = 1; for(let i=0;i<100;i++){ const kk = ks(v.T), hh = hg(v.T), gi = kk*hh/(kk + hh)*C; wafers.push([i + 1, gi]); C *= 1 - 0.006*kk/(kk + hh); }
+  const m = wafers[0][1]; J.plot(document.getElementById('cv1b'), {x:[1, 100], y:[0, 1.1], xlab:'노 안 웨이퍼 순번 (기체 입구 → 끝)', ylab:'두께 (첫 장 = 1)', series:[{pts:wafers.map(([i, g]) => [i, g/m]), color:'--plum', w:3}]});
+  J.out(box,'g', J.fmt(g0, g0 < 1 ? 3 : 1) + ' nm/분'); J.out(box,'reg', reacLim ? '반응 율속 (온도에 민감)' : '물질 전달 율속 (흐름에 민감)', reacLim ? 'warn' : 'good');
+  J.out(box,'s', J.fmt(Math.abs(dGdT)*100, 2) + ' %/°C', Math.abs(dGdT) < 0.01 ? 'good' : 'warn');
+});
+
+/* 9-2 몬테카를로 단차 피복 */
+(function(){
+  let seed = 1; const box = document.getElementById('sim2');
+  J.sim('sim2', v => run(v));
+  J.$('#b2r').onclick = () => { seed++; J.$('#sim2 [data-k="s"]').dispatchEvent(new Event('input')); };
+  function run(v){
+    const R = J.rng(seed), W = 1, D = v.ar, s = v.s, NS = 40; // 면: 위 평면(좌/우), 벽(좌/우), 바닥
+    const segs = []; // [x1,y1,x2,y2,nx,ny,label]
+    const topL = 1.2, n = NS;
+    for(let i=0;i<10;i++) segs.push([-W/2 - topL + i*topL/10, 0, -W/2 - topL + (i + 1)*topL/10, 0, 0, -1, 'T']);
+    for(let i=0;i<10;i++) segs.push([W/2 + i*topL/10, 0, W/2 + (i + 1)*topL/10, 0, 0, -1, 'T']);
+    for(let i=0;i<n;i++){ segs.push([-W/2, i*D/n, -W/2, (i + 1)*D/n, 1, 0, 'L' + i]); segs.push([W/2, i*D/n, W/2, (i + 1)*D/n, -1, 0, 'R' + i]); }
+    for(let i=0;i<10;i++) segs.push([-W/2 + i*W/10, D, -W/2 + (i + 1)*W/10, D, 0, -1, 'B']);
+    const hit = new Float64Array(segs.length), traces = [];
+    const cosDir = (nx, ny) => { const u = R(), a = Math.asin(2*u - 1); const tx = -ny, ty = nx; return [Math.cos(a)*nx + Math.sin(a)*tx, Math.cos(a)*ny + Math.sin(a)*ty]; };
+    const N = s < 0.01 ? 1200 : s < 0.05 ? 2500 : 4000;
+    for(let k=0;k<N;k++){
+      let x = (R() - .5)*(W + 2*topL), y = -0.001, d;
+      if(v.d === 'dir'){ const a = J.gauss(R)*0.08; d = [Math.sin(a), Math.cos(a)]; } else { d = cosDir(0, 1); }
+      const tr = k < 6 ? [[x, y]] : null;
+      for(let bounce = 0; bounce < 120; bounce++){
+        let best = 1e9, bi = -1;
+        segs.forEach((sg, i) => { const [x1, y1, x2, y2] = sg, ex = x2 - x1, ey = y2 - y1, den = d[0]*ey - d[1]*ex; if(Math.abs(den) < 1e-12) return;
+          const t = ((x1 - x)*ey - (y1 - y)*ex)/den, u = ((x1 - x)*d[1] - (y1 - y)*d[0])/den; if(t > 1e-9 && u >= 0 && u <= 1 && t < best){ best = t; bi = i; } });
+        if(bi < 0) break; // 밖으로 나감
+        x += d[0]*best; y += d[1]*best; if(tr) tr.push([x, y]);
+        hit[bi]++; // 충돌(입사) 횟수 — 두께 ∝ s × 입사 플럭스
+        if(R() < s) break;
+        const sg = segs[bi];
+        if(sg[6] === 'T') d = cosDir(0, -1); else if(sg[6] === 'B') d = cosDir(0, -1); else d = cosDir(sg[4], 0);
+        x += d[0]*1e-6; y += d[1]*1e-6;
+      }
+      if(tr) traces.push(tr);
+    }
+    const len = i => Math.hypot(segs[i][2] - segs[i][0], segs[i][3] - segs[i][1]);
+    const flux = Array.from(hit, (h, i) => h/len(i));
+    const topF = flux.filter((_, i) => segs[i][6] === 'T').reduce((a, b) => a + b, 0)/20;
+    const bot = flux.filter((_, i) => segs[i][6] === 'B').reduce((a, b) => a + b, 0)/10/topF;
+    const wallT = (flux[segs.findIndex(sg => sg[6] === 'L0')] + flux[segs.findIndex(sg => sg[6] === 'R0')])/2/topF;
+    const wallB = (flux[segs.findIndex(sg => sg[6] === 'L' + (n - 1))] + flux[segs.findIndex(sg => sg[6] === 'R' + (n - 1))])/2/topF;
+    // 그리기
+    const {ctx, w, h} = J.fit(document.getElementById('cv2a')); ctx.clearRect(0,0,w,h);
+    const sc = Math.min((w - 40)/(W + 2*topL), (h - 50)/(D + 0.3)), ox = w/2, oy = 30, X = x => ox + x*sc, Y = y => oy + y*sc, thk = 0.18*sc;
+    ctx.fillStyle = '#a9d4ef'; ctx.fillRect(X(-W/2 - topL), Y(0), X(-W/2) - X(-W/2 - topL), Y(D + 0.25) - Y(0)); ctx.fillRect(X(W/2), Y(0), X(W/2 + topL) - X(W/2), Y(D + 0.25) - Y(0)); ctx.fillRect(X(-W/2), Y(D), X(W/2) - X(-W/2), Y(D + 0.25) - Y(D));
+    ctx.fillStyle = J.c('--red'); segs.forEach((sg, i) => { const f = Math.min(2, flux[i]/topF)*thk; const [x1, y1, x2, y2, nx, ny] = sg; ctx.beginPath(); ctx.moveTo(X(x1), Y(y1)); ctx.lineTo(X(x2), Y(y2)); ctx.lineTo(X(x2) + nx*f, Y(y2) + ny*f); ctx.lineTo(X(x1) + nx*f, Y(y1) + ny*f); ctx.fill(); });
+    ctx.strokeStyle = J.c('--ink'); ctx.lineWidth = .8; ctx.globalAlpha = .6; traces.forEach(tr => { ctx.beginPath(); ctx.moveTo(X(tr[0][0]), 0); tr.forEach(([x, y]) => ctx.lineTo(X(x), Y(y))); ctx.stroke(); }); ctx.globalAlpha = 1;
+    const prof = []; for(let i=0;i<n;i++) prof.push([(i + .5)/n*D, (flux[segs.findIndex(sg => sg[6] === 'L' + i)] + flux[segs.findIndex(sg => sg[6] === 'R' + i)])/2/topF]);
+    J.plot(document.getElementById('cv2b'), {x:[0, D], y:[0, 1.2], xlab:'벽을 따라 깊이 (폭 단위)', ylab:'상대 두께', series:[{pts:prof, color:'--red', w:3}], hlines:[{y:bot, color:'--indigo', label:'바닥'},{y:1, color:'--ink3', label:'위 평면'}]});
+    J.out(box,'bt', J.fmt(bot*100, 0) + ' %', bot > 0.9 ? 'good' : bot > 0.5 ? 'warn' : 'bad'); J.out(box,'sw', J.fmt(wallB*100, 0) + ' % / ' + J.fmt(wallT*100, 0) + ' %'); J.out(box,'n', N + '개');
+  }
+})();
+
+/* 9-3 ALD */
+J.sim('sim3', (v, box) => {
+  const tau = 0.03, sat = 1 - Math.exp(-v.tp/tau), satE = 1 - Math.exp(-v.tp/(2*tau));
+  const win = T => T < 150 ? 1 + (150 - T)/50*0.6 : T > 300 ? 1 + (T - 300)/60*0.8 : 1; // 응축 / 분해
+  const gpc0 = 0.11*win(v.T), cvd = v.tg < 1 ? (1 - v.tg)*0.08 : 0;
+  const gpc = gpc0*sat + cvd, gpcE = gpc0*satE + cvd*1.6, th = gpc*v.n, thE = gpcE*v.n, nonu = Math.abs(th - thE)/th*100 + (v.T > 300 ? (v.T - 300)/10 : 0);
+  const p1 = [], p2 = []; for(let t = 0; t <= 1; t += 0.005){ p1.push([t, 1 - Math.exp(-t/tau)]); p2.push([t, 1 - Math.exp(-t/(2*tau))]); }
+  J.plot(document.getElementById('cv3a'), {x:[0, 0.4], y:[0, 1.05], xlab:'펄스 시간 (s)', ylab:'표면 포화도', series:[{pts:p1, color:'--jade', w:3},{pts:p2, color:'--gold', w:2, dash:[5,4]}], vlines:[{x:Math.min(0.4, v.tp), color:'--red'}]});
+  const p3 = []; for(let T = 100; T <= 400; T += 5) p3.push([T, 0.11*win(T)]);
+  J.plot(document.getElementById('cv3b'), {x:[100, 400], y:[0, 0.25], xlab:'온도 (°C)', ylab:'GPC (nm/주기)', series:[{pts:p3, color:'--indigo', w:3}], bands:[{x0:150, x1:300, color:'--jade', alpha:.15}], points:[{x:v.T, y:gpc, color:'--red', r:6}]});
+  J.out(box,'sat', J.fmt(sat*100, 1) + ' %', sat > 0.99 ? 'good' : 'warn'); J.out(box,'gpc', J.fmt(gpc, 3) + ' nm');
+  J.out(box,'th', J.fmt(th, 1) + ' nm / ±' + J.fmt(nonu, 1) + ' %', nonu < 1 ? 'good' : nonu < 5 ? 'warn' : 'bad'); J.out(box,'time', J.fmt((2*v.tp + 2*v.tg)*v.n/60, 1) + '분');
+});
+</script>
+</body>
+</html>

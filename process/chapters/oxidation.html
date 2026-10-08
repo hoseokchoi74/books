@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>열산화 · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="oxidation">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 04 <span class="hanja">第四章 · 酸化</span></div>
+  <h1>열산화</h1>
+  <p class="lead">실리콘이 반도체의 왕이 된 큰 이유 하나는, 그냥 뜨겁게 데우기만 해도 표면에 품질 좋은 유리막(SiO₂)이 자란다는 점이다. 게르마늄이나 갈륨비소는 이렇게 좋은 자연 절연막을 갖지 못했다. 이 장에서는 산화막 두께를 예측하는 딜–그로브 모형을 직접 돌려 보고, 웨이퍼 색으로 산화막 두께를 읽어 내며, 소자를 서로 갈라놓는 절연 구조가 LOCOS에서 STI로 바뀐 이유를 본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>산화제가 기체 → 산화막 → 계면으로 이동하는 세 흐름에서 딜–그로브 식을 이끌어 낸다.</li>
+  <li>온도·분위기(건식/습식)·결정면·압력이 산화 속도에 주는 영향을 계산한다.</li>
+  <li>박막 간섭으로 산화막 두께에 따라 웨이퍼 색이 바뀌는 원리를 이해한다.</li>
+  <li>LOCOS의 새부리(bird's beak)와 STI의 차이를 단면으로 비교한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>딜–그로브 모형</h2>
+<p>산화는 실리콘 표면이 아니라 <b>SiO₂/Si 계면</b>에서 일어난다. 산소(또는 물) 분자가 ① 기체에서 산화막 표면으로 옮겨 가고(F₁), ② 이미 자란 산화막을 뚫고 확산해(F₂), ③ 계면에서 실리콘과 반응한다(F₃). 정상 상태에서 세 흐름이 같다고 놓으면 두께 x와 시간 t의 관계가 나온다. 막이 얇을 때는 반응이 느린 쪽이라 두께가 시간에 비례하고(<b>선형 영역</b>, 속도 B/A), 두꺼워지면 확산이 느린 쪽이라 √t에 비례한다(<b>포물선 영역</b>, 속도 B).</p>
+
+<figure class="fig">
+<svg viewBox="0 0 860 220" role="img" aria-label="딜 그로브 모형" id="fig1"></svg>
+<figcaption><b>그림 4-1.</b> 딜–그로브 모형의 세 흐름과 산화제 농도 분포. 산화막이 두꺼워질수록 확산 거리가 길어져 계면 농도 C<sub>i</sub>가 낮아지고 성장이 느려진다. 실리콘 1 nm가 소모되어 산화막 약 2.27 nm가 된다(원래 표면 아래로 44 %).</figcaption>
+</figure>
+
+<div class="eq">$$x^2 + A\,x = B\,(t + \tau),\qquad x = \frac{A}{2}\left[\sqrt{1 + \frac{t+\tau}{A^2/4B}} - 1\right]$$
+<div class="note">B = C₁e<sup>−E₁/kT</sup>(포물선 속도 상수), B/A = C₂e<sup>−E₂/kT</sup>(선형 속도 상수). τ는 처음 산화막 x<sub>i</sub>에 해당하는 시간 보정. 건식 산화의 초기 수십 nm는 이 식보다 빠르게 자라는데, 경험적으로 x<sub>i</sub> ≈ 25 nm를 넣어 보정한다.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-1</span><span class="ttl">딜–그로브 산화 계산기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="800" max="1200" step="10" value="1000" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">시간 <output data-o="t"></output></span><input type="range" data-k="t" min="0.1" max="10" step="0.1" value="1" data-d="1" data-u="시간"></label>
+      <label class="ctrl"><span class="lab">분위기</span><select data-k="amb"><option value="dry">건식 O₂</option><option value="wet">습식 H₂O</option></select></label>
+      <label class="ctrl"><span class="lab">결정면</span><select data-k="ori"><option value="100">(100)</option><option value="111">(111)</option></select></label>
+      <label class="ctrl"><span class="lab">압력 <output data-o="P"></output></span><input type="range" data-k="P" min="0.2" max="20" step="0.1" value="1" data-d="1" data-u="기압"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">산화막 두께</span><span class="v" data-r="x"></span></div>
+      <div class="ro"><span class="k">B (포물선)</span><span class="v" data-r="B"></span></div>
+      <div class="ro"><span class="k">B/A (선형)</span><span class="v" data-r="BA"></span></div>
+      <div class="ro"><span class="k">지금 영역</span><span class="v" data-r="reg" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 굵은 선은 현재 조건의 두께–시간 곡선, 점선은 선형 근사(Bt/A)와 포물선 근사(√Bt). 두께가 A/2보다 작으면 선형 영역이다. 습식은 물 분자의 용해도가 산소보다 수백 배 커서 B가 크다 — 두꺼운 소자 분리 산화막에 쓰고, 얇고 치밀해야 하는 게이트 산화막에는 건식을 쓴다. 고압 산화는 같은 두께를 더 낮은 온도·짧은 시간에 얻게 해 준다. (상수: Deal–Grove, Jaeger 교과서 값)</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>산화막의 색: 두께를 눈으로 읽기</h2>
+<p>산화막이 깔린 웨이퍼는 두께에 따라 갈색, 보라, 파랑, 노랑, 초록으로 빛난다. 산화막 위 표면과 아래 계면에서 반사된 빛이 서로 간섭해, 두께와 파장에 따라 어떤 색은 보강되고 어떤 색은 상쇄되기 때문이다. 엔지니어들은 이 <b>색표</b>로 두께를 어림했다. 같은 색이 일정 두께마다 되풀이되므로 1차·2차를 구분해야 한다.</p>
+<div class="eq">$$r = \frac{r_{01} + r_{12}\,e^{-2i\delta}}{1 + r_{01}r_{12}\,e^{-2i\delta}},\qquad \delta = \frac{2\pi n_{ox} d}{\lambda}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-2</span><span class="ttl">산화막 간섭색</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">산화막 두께 <output data-o="d"></output></span><input type="range" data-k="d" min="0" max="1200" step="5" value="300" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">보는 각도 <output data-o="a"></output></span><input type="range" data-k="a" min="0" max="60" step="1" value="0" data-d="0" data-u="°"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="280"></canvas></div>
+    </div>
+    <div class="canvas-box" style="margin-top:8px"><canvas id="cv2c" data-h="70"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">보이는 색 (sRGB)</span><span class="v" data-r="rgb"></span></div>
+      <div class="ro"><span class="k">반사가 가장 약한 파장</span><span class="v" data-r="min"></span></div>
+      <div class="ro"><span class="k">밝기 (Y)</span><span class="v" data-r="Y"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>계산.</b> 공기/SiO₂(n = 1.46)/Si(n ≈ 3.9–4.3, 파장 의존) 3층 박막의 반사율을 가시광 380–780 nm에서 계산하고, CIE 1931 색 맞춤 함수로 sRGB 색을 만들었다. 왼쪽: 웨이퍼 색. 오른쪽: 반사 스펙트럼. 아래: 0–1200 nm 두께 색표(▼ 지금 두께). 비스듬히 보면 광로가 짧아져 색이 얇은 쪽으로 이동한다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>소자 분리: LOCOS에서 STI로</h2>
+<p>이웃 트랜지스터 사이에는 두꺼운 절연막을 깔아 전기적으로 갈라놓아야 한다. 예전에는 질화막(Si₃N₄)으로 트랜지스터 자리를 덮고 나머지를 두껍게 산화시키는 <span class="term">LOCOS</span>를 썼다. 그런데 산화제가 질화막 가장자리 아래로 옆으로 파고들어 새부리 모양(<span class="term">bird's beak</span>)으로 활성 영역을 잠식했다. 0.25 µm 세대부터는 실리콘에 도랑을 파고 산화막을 채운 뒤 CMP로 평탄화하는 <span class="term">STI</span>(얕은 도랑 소자 분리)로 바뀌었다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-3</span><span class="ttl">새부리는 활성 영역을 얼마나 먹나</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">방식</span><select data-k="m"><option value="locos">LOCOS</option><option value="sti">STI</option></select></label>
+      <label class="ctrl"><span class="lab">분리 산화막 두께 <output data-o="tox"></output></span><input type="range" data-k="tox" min="100" max="800" step="10" value="500" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">설계상 활성 영역 폭 <output data-o="w"></output></span><input type="range" data-k="w" min="0.1" max="2" step="0.05" value="0.8" data-d="2" data-u="µm"></label>
+      <label class="ctrl"><span class="lab">패드 산화막 (응력 완충) <output data-o="pad"></output></span><input type="range" data-k="pad" min="5" max="50" step="5" value="20" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="270"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">새부리 길이 (한쪽)</span><span class="v" data-r="bb"></span></div>
+      <div class="ro"><span class="k">실제 활성 폭</span><span class="v" data-r="we"></span></div>
+      <div class="ro"><span class="k">잃은 비율</span><span class="v" data-r="loss"></span></div>
+      <div class="ro"><span class="k">표면 단차</span><span class="v" data-r="step"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형.</b> 새부리 길이 ≈ 0.4 × 산화막 두께 × (패드 산화막 / 20 nm)<sup>0.3</sup>(경험적 근사). 패드 산화막이 두꺼울수록 산화제가 옆으로 잘 들어간다. 활성 폭 0.8 µm에 500 nm LOCOS면 폭의 절반을 잃는다. STI는 도랑 모서리 둥글림만큼만 잃고, 표면도 평평하다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">두꺼운 산화막 영역에서 두께는 시간에 대해?</p><ol><li>t에 비례</li><li>√t에 비례</li><li>t²에 비례</li><li>일정</li></ol>
+<p class="explain">확산이 느린 쪽이 되어 x² ≈ Bt, 즉 x ∝ √t (포물선 영역).</p></div>
+<div class="quiz" data-a="2"><p class="q">산화막 100 nm를 기르면 소모되는 실리콘 두께는?</p><ol><li>100 nm</li><li>227 nm</li><li>44 nm</li><li>0 nm</li></ol>
+<p class="explain">두께비 0.44.</p></div>
+<div class="quiz" data-a="0"><p class="q">LOCOS가 STI로 바뀐 주된 이유는?</p><ol><li>새부리가 활성 영역을 잠식하고 표면 단차가 커서</li><li>산화막이 더 싸서</li><li>STI가 고온이 필요 없어서</li><li>LOCOS는 절연이 안 돼서</li></ol>
+<p class="explain">미세화로 활성 영역이 좁아지자 새부리 잠식과 단차가 치명적이 되었다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 4-1 */
+(function(){
+  const s = document.getElementById('fig1');
+  J.svg('rect', {x:20, y:30, width:220, height:150, fill:'var(--indigo-soft)'}, s); J.svg('text', {x:130, y:22, 'text-anchor':'middle', class:'t-m', text:'기체 (O₂ 또는 H₂O)'}, s);
+  J.svg('rect', {x:240, y:30, width:260, height:150, fill:'#a9d4ef', opacity:.8}, s); J.svg('text', {x:370, y:22, 'text-anchor':'middle', class:'t-m', text:'SiO₂ (두께 x)'}, s);
+  J.svg('rect', {x:500, y:30, width:220, height:150, fill:'#8f98a8'}, s); J.svg('text', {x:610, y:22, 'text-anchor':'middle', class:'t-m', text:'Si'}, s);
+  J.svg('path', {d:'M30 60 L230 60 L250 80 L490 150 L500 150', fill:'none', stroke:'var(--red)', 'stroke-width':3}, s);
+  J.svg('text', {x:40, y:54, class:'t-s', text:'C_G (기체 농도)', style:'fill:var(--red)'}, s); J.svg('text', {x:250, y:74, class:'t-s', text:'C_O', style:'fill:var(--red)'}, s); J.svg('text', {x:460, y:142, class:'t-s', text:'C_i', style:'fill:var(--red)'}, s);
+  [[150,'F₁ = h(C*−C_O) 기체 수송'],[370,'F₂ = D(C_O−C_i)/x 확산'],[560,'F₃ = k_s C_i 반응']].forEach(([x, t]) => { J.svg('path', {d:`M${x - 40} 120 l80 0 m-8 -6 l8 6 l-8 6`, fill:'none', stroke:'var(--ink)', 'stroke-width':2}, s); J.svg('text', {x, y:110, 'text-anchor':'middle', class:'t-s', text:t, style:'font-weight:700'}, s); });
+  J.svg('text', {x:770, y:90, class:'t-s', text:'정상 상태:'}, s); J.svg('text', {x:770, y:110, class:'t-s', text:'F₁ = F₂ = F₃'}, s); J.svg('text', {x:770, y:130, class:'t-s', text:'→ 딜–그로브 식'}, s);
+  J.svg('line', {x1:500, y1:30, x2:500, y2:180, stroke:'var(--red)', 'stroke-width':2, 'stroke-dasharray':'4 3'}, s); J.svg('text', {x:500, y:200, 'text-anchor':'middle', class:'t-s', text:'반응이 일어나는 계면'}, s);
+})();
+
+/* 4-1 딜-그로브 */
+function DG(T, amb, ori, P){
+  const k = 8.617e-5, Tk = T + 273;
+  const p = amb === 'dry' ? {C1:772, E1:1.23, C2:6.23e6, E2:2.0, xi:0.025} : {C1:386, E1:0.71, C2:1.63e8, E2:2.05, xi:0};
+  const B = p.C1*Math.exp(-p.E1/(k*Tk))*P, BA = p.C2*Math.exp(-p.E2/(k*Tk))*P/(ori === '100' ? 1.68 : 1), A = B/BA;
+  const tau = (p.xi*p.xi + A*p.xi)/B;
+  return {B, BA, A, x: t => (-A + Math.sqrt(A*A + 4*B*(t + tau)))/2};
+}
+J.sim('sim1', (v, box) => {
+  const d = DG(v.T, v.amb, v.ori, v.P), xt = d.x(v.t)*1000;
+  const tm = 10, cur = [], lin = [], par = [];
+  for(let t = 0; t <= tm; t += 0.05){ cur.push([t, d.x(t)*1000]); lin.push([t, d.BA*t*1000]); par.push([t, Math.sqrt(d.B*t)*1000]); }
+  const ymax = Math.max(50, d.x(tm)*1000*1.1);
+  J.plot(document.getElementById('cv1'), {x:[0, tm], y:[0, ymax], xlab:'시간 (h)', ylab:'두께 (nm)', series:[{pts:lin, color:'--jade', w:1.5, dash:[5,4]},{pts:par, color:'--gold', w:1.5, dash:[5,4]},{pts:cur, color:'--indigo', w:3}],
+    hlines:[{y:d.A/2*1000, color:'--ink3', label:'A/2 (영역 경계)'}], points:[{x:v.t, y:xt, color:'--red', r:6}]});
+  J.out(box,'x', J.fmt(xt, 1) + ' nm'); J.out(box,'B', J.sci(d.B, 2) + ' µm²/h'); J.out(box,'BA', J.sci(d.BA, 2) + ' µm/h');
+  J.out(box,'reg', xt/1000 < d.A/2 ? '선형 (반응 율속)' : '포물선 (확산 율속)');
+});
+
+/* 4-2 간섭색 */
+const cmf = (l => { const g = (x, m, a, b) => Math.exp(-0.5*Math.pow((x - m)/(x < m ? a : b), 2));
+  return x => [1.056*g(x,599.8,37.9,31.0) + 0.362*g(x,442.0,16.0,26.7) - 0.065*g(x,501.1,20.4,26.2), 0.821*g(x,568.8,46.9,40.5) + 0.286*g(x,530.9,16.3,31.1), 1.217*g(x,437.0,11.8,36.0) + 0.681*g(x,459.0,26.0,13.8)]; })();
+const nSi = l => 3.55 + 3.2e5/(l*l); // 파장 의존 (대략, 흡수 무시)
+function refl(d, l, ang){ const n0 = 1, n1 = 1.46, n2 = nSi(l), s0 = Math.sin(ang*Math.PI/180), c1 = Math.sqrt(1 - Math.pow(s0/n1, 2));
+  const r01 = (n0 - n1)/(n0 + n1), r12 = (n1 - n2)/(n1 + n2), dl = 2*Math.PI*n1*d*c1/l;
+  const ce = Math.cos(2*dl), se = -Math.sin(2*dl); // e^{-2iδ}
+  const nr = r01 + r12*ce, ni = r12*se, dr = 1 + r01*r12*ce, di = r01*r12*se;
+  return (nr*nr + ni*ni)/(dr*dr + di*di); }
+function colorOf(d, ang){ let X = 0, Y = 0, Z = 0, Wy = 0; for(let l = 380; l <= 780; l += 5){ const c = cmf(l), R = refl(d, l, ang); X += R*c[0]; Y += R*c[1]; Z += R*c[2]; Wy += c[1]; }
+  X /= Wy; Y /= Wy; Z /= Wy; const k = 1.3; const lin = [3.2406*X - 1.5372*Y - 0.4986*Z, -0.9689*X + 1.8758*Y + 0.0415*Z, 0.0557*X - 0.2040*Y + 1.0570*Z].map(c => J.clamp(c*k, 0, 1));
+  const gam = lin.map(c => Math.round(255*(c <= 0.0031308 ? 12.92*c : 1.055*Math.pow(c, 1/2.4) - 0.055))); return {rgb:gam, Y}; }
+(function(){
+  let strip = null;
+  J.sim('sim2', (v, box) => {
+    const c = colorOf(v.d, v.a);
+    { const {ctx, w, h} = J.fit(document.getElementById('cv2a')); ctx.clearRect(0,0,w,h);
+      const r = Math.min(w, h)/2 - 14, cx = w/2, cy = h/2;
+      const g = ctx.createRadialGradient(cx - r*0.4, cy - r*0.4, r*0.1, cx, cy, r); g.addColorStop(0, `rgb(${c.rgb.map(x => Math.min(255, x + 40))})`); g.addColorStop(1, `rgb(${c.rgb})`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill(); ctx.fillStyle = J.c('--card'); ctx.fillRect(cx - 6, cy + r - 3, 12, 6);
+      ctx.fillStyle = J.c('--ink'); ctx.font = '600 13px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.fillText(`SiO₂ ${v.d} nm`, cx, 18); }
+    const sp = []; let mn = 1, ml = 0; for(let l = 380; l <= 780; l += 2){ const R = refl(v.d, l, v.a); sp.push([l, R]); if(R < mn){ mn = R; ml = l; } }
+    J.plot(document.getElementById('cv2b'), {x:[380, 780], y:[0, 0.6], xlab:'파장 (nm)', ylab:'반사율', series:[{pts:sp, color:'--ink', w:2.5}], points:[{x:ml, y:mn, color:'--red', r:5}]});
+    { const {ctx, w, h} = J.fit(document.getElementById('cv2c')); if(!strip || strip.w !== w){ strip = {w, cols:[]}; for(let i=0;i<w;i++) strip.cols.push(colorOf(i/w*1200, 0).rgb); }
+      strip.cols.forEach((cc, i) => { ctx.fillStyle = `rgb(${cc})`; ctx.fillRect(i, 18, 1.5, h - 36); });
+      ctx.fillStyle = J.c('--ink'); const x = v.d/1200*w; ctx.beginPath(); ctx.moveTo(x, 16); ctx.lineTo(x - 6, 4); ctx.lineTo(x + 6, 4); ctx.fill();
+      ctx.fillStyle = J.c('--ink2'); ctx.font = '10.5px "JetBrains Mono"'; ctx.textAlign = 'center'; [0, 200, 400, 600, 800, 1000, 1200].forEach(t => ctx.fillText(t, Math.min(w - 12, Math.max(10, t/1200*w)), h - 4)); }
+    J.out(box,'rgb', '#' + c.rgb.map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase()); J.out(box,'min', J.fmt(ml, 0) + ' nm'); J.out(box,'Y', J.fmt(c.Y*100, 0) + ' %');
+  });
+})();
+
+/* 4-3 LOCOS vs STI */
+J.sim('sim3', (v, box) => {
+  const loc = v.m === 'locos', t = v.tox/1000, bb = loc ? 0.4*t*Math.pow(v.pad/20, 0.3) : 0.02, we = Math.max(0, v.w - 2*bb);
+  const {ctx, w, h} = J.fit(document.getElementById('cv3')); ctx.clearRect(0,0,w,h);
+  const span = v.w + 2.4, sc = (w - 40)/span, cx = w/2, X = u => cx + u*sc, top = 100, Y = u => top + u*sc*0.9;
+  ctx.fillStyle = '#8f98a8'; ctx.fillRect(20, top, w - 40, h - 20 - top);
+  const ox = '#a9d4ef';
+  if(loc){
+    const prof = u => { const a = Math.abs(u) - v.w/2; if(a < -bb) return 0; if(a > 0.3) return 1; const s = (a + bb)/(bb + 0.3); return 0.5 - 0.5*Math.cos(Math.PI*Math.min(1, s)); };
+    ctx.fillStyle = ox; ctx.beginPath();
+    for(let u = -span/2; u <= span/2; u += span/400){ const f = prof(u); ctx.lineTo(X(u), Y(-0.56*t*f)); }
+    for(let u = span/2; u >= -span/2; u -= span/400){ const f = prof(u); ctx.lineTo(X(u), Y(0.44*t*f + 0.002)); }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#c9a36b'; ctx.fillRect(X(-v.w/2), Y(-0.56*t*0) - 14, v.w*sc, 10);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('질화막 마스크', X(0), Y(0) - 18);
+    ctx.fillStyle = J.c('--red'); ctx.fillText('새부리 →', X(-v.w/2 - 0.15), Y(-0.3*t) - 4);
+  } else {
+    const d = 0.3;
+    ctx.fillStyle = ox; ctx.fillRect(20, top, X(-v.w/2) - 20, d*sc*0.9); ctx.fillRect(X(v.w/2), top, w - 20 - X(v.w/2), d*sc*0.9);
+    ctx.strokeStyle = J.c('--ink2'); ctx.lineWidth = 1; ctx.strokeRect(20, top, X(-v.w/2) - 20, d*sc*0.9); ctx.strokeRect(X(v.w/2), top, w - 20 - X(v.w/2), d*sc*0.9);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('도랑을 산화막으로 채우고 CMP', X(-v.w/2 - 0.6), top - 8);
+  }
+  ctx.strokeStyle = J.c('--jade'); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X(-we/2), top + 4); ctx.lineTo(X(we/2), top + 4); ctx.stroke();
+  ctx.strokeStyle = J.c('--ink3'); ctx.setLineDash([4,3]); ctx.lineWidth = 1; [-v.w/2, v.w/2].forEach(u => { ctx.beginPath(); ctx.moveTo(X(u), 20); ctx.lineTo(X(u), h - 20); ctx.stroke(); }); ctx.setLineDash([]);
+  ctx.fillStyle = J.c('--jade'); ctx.font = '600 12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(`실제 활성 폭 ${J.fmt(we, 2)} µm`, X(0), top + 24);
+  ctx.fillStyle = J.c('--ink3'); ctx.fillText(`설계 폭 ${J.fmt(v.w, 2)} µm`, X(0), 30);
+  J.out(box,'bb', loc ? J.fmt(bb*1000, 0) + ' nm' : '≈ 20 nm (모서리)'); J.out(box,'we', J.fmt(we, 2) + ' µm', we/v.w > 0.85 ? 'good' : we/v.w > 0.5 ? 'warn' : 'bad');
+  J.out(box,'loss', J.fmt((1 - we/v.w)*100, 0) + ' %'); J.out(box,'step', loc ? J.fmt(v.tox*0.56, 0) + ' nm' : '≈ 0 (평탄)');
+});
+</script>
+</body>
+</html>

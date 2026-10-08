@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>플라스마 식각 · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="etch">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 08 <span class="hanja">第八章 · 蝕</span></div>
+  <h1>플라스마 식각</h1>
+  <p class="lead">노광이 감광액에 그린 무늬를 실제 막에 새기는 것이 식각이다. 오늘날의 식각은 거의 모두 <span class="term">플라스마</span> 속에서 일어난다. 반응성 라디칼이 화학적으로 막을 녹이고, 전기장으로 가속된 이온이 위에서 아래로 두드려 수직 벽을 만든다. 3D 낸드의 깊이 수 µm, 지름 100 nm짜리 구멍(종횡비 50 이상)을 뚫는 일은 오늘날 가장 어려운 공정 중 하나다. 이 장은 식각의 네 가지 숙제 — 이방성, 선택비, 종횡비 의존성, 종말점 — 를 차례로 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>플라스마의 시스(sheath)가 이온을 수직으로 가속하는 원리와 압력·전력의 역할을 이해한다.</li>
+  <li>선택비와 과식각(over-etch)으로 마스크·하부막 손실을 계산한다.</li>
+  <li>좁고 깊은 구멍일수록 느려지는 종횡비 의존 식각(ARDE)을 실험한다.</li>
+  <li>광 방출 분광 신호로 식각 종말점을 찾는다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>플라스마와 시스: 이온은 왜 수직으로 떨어지나</h2>
+<p>저압 기체에 고주파(RF) 전력을 걸면 전자가 가속되어 기체 분자를 쪼개 이온과 라디칼을 만든다. 가벼운 전자가 웨이퍼로 먼저 달아나 웨이퍼 표면이 음전위가 되면서 플라스마와 웨이퍼 사이에 얇은 <span class="term">시스</span>가 생긴다. 양이온은 이 시스의 강한 전기장에 끌려 웨이퍼에 거의 수직으로 떨어진다. 압력이 높으면 시스를 지나는 동안 기체와 부딪혀 방향이 흐트러지고, 전압이 높으면 더 곧게 더 세게 떨어진다. 라디칼은 전하가 없어 사방에서 와서 화학적으로(등방성) 깎는다.</p>
+<div class="eq">$$\text{이방성 } A = 1 - \frac{r_{lateral}}{r_{vertical}},\qquad \theta_{ion} \sim \sqrt{\frac{kT_i}{eV_{sheath}}}\ (\text{충돌 없을 때})$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-1</span><span class="ttl">시스 속 이온과 식각 단면</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">바이어스 전압 <output data-o="v"></output></span><input type="range" data-k="v" min="20" max="800" step="10" value="300" data-d="0" data-u="V"></label>
+      <label class="ctrl"><span class="lab">압력 <output data-o="p"></output></span><input type="range" data-k="p" min="2" max="200" step="1" value="20" data-d="0" data-u="mTorr"></label>
+      <label class="ctrl"><span class="lab">라디칼 화학 식각 비중 <output data-o="c"></output></span><input type="range" data-k="c" min="0" max="100" step="5" value="30" data-d="0" data-u="%"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">이온 입사각 퍼짐 (1σ)</span><span class="v" data-r="ang"></span></div>
+      <div class="ro"><span class="k">이방성 A</span><span class="v" data-r="A"></span></div>
+      <div class="ro"><span class="k">벽 기울기</span><span class="v" data-r="sl"></span></div>
+      <div class="ro"><span class="k">하부 손상 위험</span><span class="v" data-r="dm" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 플라스마(위)에서 시스를 지나 웨이퍼로 떨어지는 이온 궤적. 압력이 높을수록 충돌로 꺾인다. 오른쪽: 같은 시간 식각한 도랑 단면(감광액 = 노랑). 라디칼 비중이 크면 옆으로 파고들고(언더컷), 이온 각이 넓으면 벽이 휘거나 기울어진다. 전압을 너무 높이면 수직성은 좋아지지만 마스크가 빨리 닳고 바닥 결정이 손상된다. 단순 모형.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>선택비와 과식각</h2>
+<p>식각할 막의 두께는 웨이퍼 위치마다 조금씩 다르고, 식각 속도도 고르지 않다. 그래서 가장 늦게 뚫리는 곳까지 확실히 뚫으려고 계산보다 20–50 % 더 깎는다(<span class="term">과식각</span>). 그 동안 이미 뚫린 곳은 아래층(정지막)이 깎이고, 처음부터 감광액(마스크)도 함께 닳는다. 그래서 <span class="term">선택비</span> — 식각할 막 속도 ÷ 다른 막 속도 — 가 높아야 한다.</p>
+<div class="eq">$$\text{정지막 손실} = \frac{t_{film}\cdot OE}{S_{film:stop}},\qquad \text{마스크 손실} = \frac{t_{film}(1 + OE)}{S_{film:mask}}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-2</span><span class="ttl">과식각 예산 짜기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">식각할 막 두께 <output data-o="t"></output></span><input type="range" data-k="t" min="50" max="500" step="10" value="200" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">두께·속도 불균일 (±) <output data-o="u"></output></span><input type="range" data-k="u" min="0" max="20" step="1" value="8" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">과식각 <output data-o="oe"></output></span><input type="range" data-k="oe" min="0" max="100" step="5" value="30" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">선택비 막:정지막 <output data-o="ss"></output></span><input type="range" data-k="ss" min="2" max="100" step="1" value="20" data-d="0"></label>
+      <label class="ctrl"><span class="lab">선택비 막:마스크 <output data-o="sm"></output></span><input type="range" data-k="sm" min="1" max="20" step="0.5" value="4" data-d="1"></label>
+      <label class="ctrl"><span class="lab">마스크 두께 <output data-o="mt"></output></span><input type="range" data-k="mt" min="30" max="300" step="10" value="100" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="260"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">가장 얇은 곳 정지막 손실</span><span class="v" data-r="sl"></span></div>
+      <div class="ro"><span class="k">가장 두꺼운 곳</span><span class="v" data-r="open" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">남은 마스크</span><span class="v" data-r="mr"></span></div>
+      <div class="ro"><span class="k">판정 (정지막 10 nm)</span><span class="v" data-r="j" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 웨이퍼 위 다섯 위치의 단면. 막 두께가 다르기 때문에 가장 얇은 곳은 일찍 뚫려 정지막(빨강)을 깎기 시작하고, 가장 두꺼운 곳은 과식각이 모자라면 덜 뚫린다. 불균일이 클수록 필요한 과식각이 커지고, 그만큼 높은 선택비가 필요하다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>깊을수록 느려진다: ARDE</h2>
+<p>좁고 깊은 구멍의 바닥까지는 라디칼과 이온이 잘 내려가지 못하고, 반응 생성물도 잘 빠져나오지 못한다. 그래서 같은 시간에 좁은 도랑은 넓은 도랑보다 얕게 파인다(<span class="term">RIE lag</span>, 종횡비 의존 식각). 3D 낸드의 채널 구멍이나 DRAM 커패시터 구멍처럼 종횡비가 50–100인 구조에서는 바닥에 가까울수록 식각 속도가 처음의 몇 분의 1로 떨어지고, 구멍이 휘거나(bowing) 비틀리는 문제도 생긴다.</p>
+<div class="eq">$$r(AR) \approx \frac{r_0}{1 + AR/AR_0}\qquad (AR = \text{깊이}/\text{폭})$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-3</span><span class="ttl">폭이 다른 구멍 여섯 개를 동시에 식각</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">식각 시간 <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="600" step="10" value="300" data-d="0" data-u="초"></label>
+      <label class="ctrl"><span class="lab">AR₀ (수송 능력) <output data-o="a"></output></span><input type="range" data-k="a" min="5" max="60" step="1" value="15" data-d="0"></label>
+      <label class="ctrl"><span class="lab">표면 식각 속도 r₀ <output data-o="r"></output></span><input type="range" data-k="r" min="2" max="20" step="0.5" value="8" data-d="1" data-u="nm/s"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">가장 넓은 구멍 깊이</span><span class="v" data-r="d1"></span></div>
+      <div class="ro"><span class="k">가장 좁은 구멍 깊이</span><span class="v" data-r="d2"></span></div>
+      <div class="ro"><span class="k">가장 좁은 구멍 종횡비</span><span class="v" data-r="ar"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 폭 400, 200, 100, 60, 40, 25 nm 구멍의 단면(같은 시간). 오른쪽: 시간에 따른 깊이. dz/dt = r₀/(1 + z/(w·AR₀))를 적분했다. AR₀가 큰 공정(압력 낮게, 이온 에너지 높게, 펄스 플라스마)일수록 좁은 구멍도 잘 판다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>언제 멈출까: 종말점 검출</h2>
+<p>플라스마는 빛을 낸다. 막이 깎이면서 나오는 반응 생성물(예: 산화막을 깎을 때 CO, 실리콘을 깎을 때 SiF)은 고유한 파장으로 빛나므로, 그 빛의 세기를 <span class="term">광 방출 분광</span>(OES)으로 지켜보면 막이 다 깎인 순간 신호가 떨어진다. 웨이퍼 전체가 동시에 뚫리지 않으므로 신호는 계단이 아니라 비탈로 떨어진다. 비탈이 시작될 때 멈추면 덜 뚫린 곳이 남고, 끝까지 기다리면 과식각이 길어진다.</p>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-4</span><span class="ttl">OES 신호로 종말점 잡기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">웨이퍼 내 불균일 (±) <output data-o="u"></output></span><input type="range" data-k="u" min="1" max="20" step="1" value="6" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">노출 면적 비 (패턴 밀도) <output data-o="o"></output></span><input type="range" data-k="o" min="1" max="60" step="1" value="20" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">종말점 판정 문턱 (신호 감소) <output data-o="th"></output></span><input type="range" data-k="th" min="10" max="90" step="5" value="50" data-d="0" data-u="%"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="280"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">종말점 시각</span><span class="v" data-r="ep"></span></div>
+      <div class="ro"><span class="k">그때 덜 뚫린 면적</span><span class="v" data-r="un"></span></div>
+      <div class="ro"><span class="k">신호 대 잡음</span><span class="v" data-r="snr"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형.</b> 막 두께 200 nm, 속도 2 nm/s(평균 100초). 위치별 뚫리는 시각이 정규 분포라 신호 감소는 누적 정규 곡선 모양이다. 노출 면적이 작으면(콘택 구멍 1–2 %) 신호 변화가 잡음에 묻혀 검출이 어렵다 — 그래서 콘택 식각에는 시간 고정 + 넉넉한 과식각을 쓰거나 더 민감한 분석을 한다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">식각의 이방성을 높이는 조건은?</p><ol><li>압력을 높이고 바이어스를 낮춘다</li><li>압력을 낮추고 바이어스를 높인다</li><li>라디칼 비중을 높인다</li><li>온도를 높인다</li></ol>
+<p class="explain">충돌이 적고 시스 전압이 높을수록 이온이 수직으로 들어온다.</p></div>
+<div class="quiz" data-a="2"><p class="q">막 200 nm, 과식각 30 %, 막:정지막 선택비 20이면 정지막 손실은?</p><ol><li>30 nm</li><li>10 nm</li><li>3 nm</li><li>60 nm</li></ol>
+<p class="explain">200 × 0.3 / 20 = 3 nm.</p></div>
+<div class="quiz" data-a="0"><p class="q">같은 시간 식각했을 때 좁은 구멍이 얕은 이유는?</p><ol><li>바닥까지 반응물이 잘 못 내려가고 생성물이 잘 못 빠져서</li><li>좁은 곳의 막이 더 단단해서</li><li>마스크가 더 두꺼워서</li><li>빛이 적게 들어가서</li></ol>
+<p class="explain">종횡비 의존 수송 제한(ARDE).</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 8-1 */
+(function(){
+  let V = {v:300, p:20, c:30}, P = [], t = 0; const box = document.getElementById('sim1');
+  const sigma = () => Math.min(25, Math.sqrt(0.05/V.v)*180/Math.PI*0.6 + 0.09*V.p*Math.sqrt(100/V.v)); // 도
+  function profile(){ const s = sigma()*Math.PI/180, chem = V.c/100, ion = 1 - chem, vr = ion*1 + chem*0.5, lat = chem*0.5 + ion*Math.sin(s)*0.6; return {A:1 - lat/vr, lat, vr, s}; }
+  function drawA(dt){
+    const {ctx, w, h} = J.fit(document.getElementById('cv1a')); ctx.clearRect(0,0,w,h);
+    const sh = h*0.35, sb = h - 50;
+    const g = ctx.createLinearGradient(0, 0, 0, sh); g.addColorStop(0, 'rgba(160,90,220,.55)'); g.addColorStop(1, 'rgba(160,90,220,.15)'); ctx.fillStyle = g; ctx.fillRect(10, 10, w - 20, sh - 10);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('플라스마 (이온 + 라디칼 + 전자)', 16, 26); ctx.fillText(`시스 (${V.v} V)`, 16, (sh + sb)/2);
+    ctx.strokeStyle = J.c('--line'); ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(10, sh); ctx.lineTo(w - 10, sh); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#8f98a8'; ctx.fillRect(10, sb, w - 20, h - sb - 8); ctx.fillStyle = '#fff'; ctx.fillText('웨이퍼 (−)', 16, sb + 22);
+    if(dt){ t += dt; if(P.length < 40 && Math.random() < 0.8) P.push({x:20 + Math.random()*(w - 40), y:sh, vx:0, path:[]}); }
+    const s = sigma()*Math.PI/180, coll = V.p/200;
+    P.forEach(p => { const sp = 2 + V.v/100; p.y += sp*(dt ? 60*dt : 0)*2; if(dt && Math.random() < coll*0.25) p.vx += J.gauss()*Math.tan(s)*2.5; p.x += p.vx*(dt ? 60*dt : 0)*2; p.path.push([p.x, p.y]); if(p.path.length > 40) p.path.shift(); });
+    P = P.filter(p => p.y < sb);
+    P.forEach(p => { ctx.strokeStyle = J.c('--red'); ctx.globalAlpha = .5; ctx.lineWidth = 1.2; ctx.beginPath(); p.path.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, 7); ctx.fill(); });
+    for(let k=0;k<V.c/6;k++){ const x = 20 + ((k*97 + t*40*(k % 3 + 1)) % (w - 40)), y = 30 + ((k*53 + t*30) % (sb - 40)); ctx.fillStyle = J.c('--jade'); ctx.beginPath(); ctx.arc(x, y, 2.5, 0, 7); ctx.fill(); }
+  }
+  function drawB(){
+    const pr = profile(), {ctx, w, h} = J.fit(document.getElementById('cv1b')); ctx.clearRect(0,0,w,h);
+    const top = 70, D = h - top - 30, W0 = w*0.25, cx = w/2, depth = D*0.85, latE = pr.lat/pr.vr*depth, slope = Math.tan(pr.s)*0.5*depth;
+    ctx.fillStyle = '#a9d4ef'; ctx.fillRect(20, top, w - 40, h - 30 - top); ctx.fillStyle = '#8f98a8'; ctx.fillRect(20, h - 30, w - 40, 20);
+    ctx.fillStyle = J.c('--paper'); ctx.beginPath();
+    const bow = pr.s*depth*0.25;
+    ctx.moveTo(cx - W0/2 - latE*0.3, top);
+    ctx.quadraticCurveTo(cx - W0/2 - latE - bow, top + depth*0.35, cx - W0/2 + slope - latE*0.4, top + depth);
+    ctx.lineTo(cx + W0/2 - slope + latE*0.4, top + depth);
+    ctx.quadraticCurveTo(cx + W0/2 + latE + bow, top + depth*0.35, cx + W0/2 + latE*0.3, top);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e7b75a'; const mt = 22*Math.max(0.15, 1 - V.v/1200); ctx.fillRect(20, top - mt, cx - W0/2 - 20, mt); ctx.fillRect(cx + W0/2, top - mt, w - 20 - cx - W0/2, mt);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('감광액 (얇아짐 = 마스크 소모)', cx, top - 30);
+    J.out(box,'ang', J.fmt(sigma(), 1) + '°'); J.out(box,'A', J.fmt(pr.A, 2), pr.A > 0.9 ? 'good' : pr.A > 0.7 ? 'warn' : 'bad');
+    J.out(box,'sl', J.fmt(90 - Math.atan(Math.tan(pr.s)*0.5)*180/Math.PI, 1) + '°'); J.out(box,'dm', V.v > 500 ? '높음 (바닥 손상·마스크 소모)' : V.v > 250 ? '보통' : '낮음', V.v > 500 ? 'bad' : V.v > 250 ? 'warn' : 'good');
+  }
+  J.sim('sim1', v => { V = v; drawA(0); drawB(); });
+  J.loop(document.getElementById('cv1a'), dt => drawA(dt));
+})();
+
+/* 8-2 과식각 */
+J.sim('sim2', (v, box) => {
+  const pos = [-1, -0.5, 0, 0.5, 1], thick = pos.map(p => v.t*(1 + p*v.u/100)), tNom = v.t*(1 + v.oe/100); // 깎은 등가 두께
+  const {ctx, w, h} = J.fit(document.getElementById('cv2')); ctx.clearRect(0,0,w,h);
+  const cw = (w - 40)/5, sc = (h - 70)/(Math.max(...thick) + v.mt + 30), base = h - 30;
+  let minRemain = 1e9, stopLoss = 0, under = 0;
+  pos.forEach((p, i) => { const x = 20 + i*cw + 10, ww = cw - 20, tf = thick[i], etched = Math.min(tf, tNom), over = Math.max(0, tNom - tf), sl = over/v.ss, mr = v.mt - tNom/v.sm;
+    stopLoss = Math.max(stopLoss, sl); minRemain = Math.min(minRemain, mr); if(tf > tNom) under = Math.max(under, tf - tNom);
+    ctx.fillStyle = '#8f98a8'; ctx.fillRect(x, base, ww, 20);
+    ctx.fillStyle = J.c('--red'); ctx.globalAlpha = .7; ctx.fillRect(x, base - 10*sc*3, ww, 10*sc*3); ctx.globalAlpha = 1;
+    ctx.fillStyle = '#a9d4ef'; ctx.fillRect(x, base - 30*sc - tf*sc, ww, tf*sc);
+    const hw = ww*0.35, hx = x + ww/2 - hw/2;
+    ctx.fillStyle = J.c('--paper'); ctx.fillRect(hx, base - 30*sc - tf*sc, hw, etched*sc); if(sl > 0) ctx.fillRect(hx, base - 30*sc, hw, Math.min(30, sl*3)*sc);
+    ctx.fillStyle = '#e7b75a'; const mh = Math.max(0, mr)*sc; ctx.fillRect(x, base - 30*sc - tf*sc - mh, hx - x, mh); ctx.fillRect(hx + hw, base - 30*sc - tf*sc - mh, x + ww - hx - hw, mh);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(`막 ${J.fmt(tf, 0)} nm`, x + ww/2, 16);
+    ctx.fillStyle = J.c(tf > tNom ? '--red' : '--jade'); ctx.fillText(tf > tNom ? '덜 뚫림!' : `정지막 −${J.fmt(sl*3, 1)}`, x + ww/2, 32); });
+  ctx.fillStyle = J.c('--ink3'); ctx.font = '10.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('(정지막 손실은 3배 과장해 표시)', 22, h - 4);
+  J.out(box,'sl', J.fmt(stopLoss, 1) + ' nm', stopLoss < 5 ? 'good' : stopLoss < 10 ? 'warn' : 'bad'); J.out(box,'open', under > 0 ? `${J.fmt(under, 0)} nm 덜 뚫림` : '다 뚫림', under > 0 ? 'bad' : 'good');
+  J.out(box,'mr', J.fmt(minRemain, 0) + ' nm', minRemain > 10 ? 'good' : 'bad');
+  const ok = under === 0 && stopLoss < 10 && minRemain > 10; J.out(box,'j', ok ? '통과' : under > 0 ? '과식각 부족' : stopLoss >= 10 ? '정지막 뚫림' : '마스크 부족', ok ? 'good' : 'bad');
+});
+
+/* 8-3 ARDE */
+J.sim('sim3', (v, box) => {
+  const Ws = [400, 200, 100, 60, 40, 25], dt = 1;
+  const depth = (wd, T) => { let z = 0; for(let t = 0; t < T; t += dt) z += v.r/(1 + z/(wd*v.a))*dt; return z; };
+  const S = Ws.map((wd, i) => { const pts = []; for(let t = 0; t <= 600; t += 10) pts.push([t, depth(wd, t)]); return {pts, color:['--ink3','--indigo','--jade','--gold','--plum','--red'][i], w: 2.2}; });
+  J.plot(document.getElementById('cv3b'), {x:[0, 600], y:[0, 600*v.r*0.75], xlab:'시간 (s)', ylab:'깊이 (nm)', series:S, vlines:[{x:v.t, color:'--ink'}]});
+  const ds = Ws.map(wd => depth(wd, v.t)), {ctx, w, h} = J.fit(document.getElementById('cv3a')); ctx.clearRect(0,0,w,h);
+  const maxD = Math.max(100, 600*v.r*0.6), sc = (h - 50)/maxD, gx = (w - 20)/Ws.length;
+  ctx.fillStyle = '#a9d4ef'; ctx.fillRect(10, 30, w - 20, h - 40);
+  Ws.forEach((wd, i) => { const cx = 10 + gx*(i + .5), hw = Math.max(1.5, Math.min(gx*0.4, wd/400*gx*0.4)); ctx.fillStyle = J.c('--paper'); ctx.fillRect(cx - hw, 30, 2*hw, ds[i]*sc);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '10.5px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.fillText(wd + 'nm', cx, 22); ctx.fillText(J.fmt(ds[i], 0), cx, Math.min(h - 4, 30 + ds[i]*sc + 12)); });
+  J.out(box,'d1', J.fmt(ds[0], 0) + ' nm'); J.out(box,'d2', J.fmt(ds[5], 0) + ' nm (' + J.fmt(ds[5]/ds[0]*100, 0) + ' %)', ds[5]/ds[0] > 0.8 ? 'good' : 'bad'); J.out(box,'ar', J.fmt(ds[5]/25, 1));
+});
+
+/* 8-4 OES */
+J.sim('sim4', (v, box) => {
+  const T0 = 100, sig = T0*v.u/100/2, R = J.rng(3), noise = 0.03;
+  const Phi = x => 0.5*(1 + (x => { const s = Math.sign(x); x = Math.abs(x); const t = 1/(1 + 0.3275911*x); return s*(1 - (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x)); })(x/Math.SQRT2));
+  const sig0 = t => 1 - v.o/100*Phi((t - T0)/Math.max(0.5, sig));
+  const pts = [], raw = []; let ep = null; const base = 1, drop = v.o/100;
+  for(let t = 0; t <= 200; t += 0.5){ const s = sig0(t) + J.gauss(R)*noise; raw.push([t, s]); }
+  // 이동 평균
+  const sm = raw.map((p, i) => { let a = 0, n = 0; for(let k = Math.max(0, i - 6); k <= Math.min(raw.length - 1, i + 6); k++){ a += raw[k][1]; n++; } return [p[0], a/n]; });
+  for(const [t, s] of sm){ if(t > 20 && (base - s) >= drop*v.th/100){ ep = t; break; } }
+  J.plot(document.getElementById('cv4'), {x:[0, 200], y:[1 - drop - 0.06, 1.06], xlab:'시간 (s)', ylab:'OES 신호 (상대)', series:[{pts:raw, color:'--ink3', w:1},{pts:sm, color:'--plum', w:3}],
+    vlines: ep ? [{x:ep, color:'--red', label:'종말점'}] : [], hlines:[{y:base - drop*v.th/100, color:'--gold', label:'문턱'}]});
+  const un = ep ? (1 - Phi((ep - T0)/Math.max(0.5, sig)))*100 : 100, snr = drop/noise;
+  J.out(box,'ep', ep ? J.fmt(ep, 1) + '초' : '못 찾음', ep ? '' : 'bad'); J.out(box,'un', J.fmt(un, 1) + ' %', un < 1 ? 'good' : un < 20 ? 'warn' : 'bad'); J.out(box,'snr', J.fmt(snr, 1), snr > 10 ? 'good' : snr > 3 ? 'warn' : 'bad');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>트랜지스터 집적 공정 · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../../assets/iso3d.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="integration">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 12 <span class="hanja">第十二章 · 集</span></div>
+  <h1>트랜지스터 집적 공정</h1>
+  <p class="lead">지금까지의 단위 공정 — 산화, 주입, 노광, 식각, 증착, CMP — 을 수백 번 엮으면 트랜지스터가 된다. 2000년대 이후 트랜지스터는 단순히 작아지기만 한 것이 아니라 재료와 구조가 통째로 바뀌었다: 게이트 산화막은 하프늄 산화물로(HKMG), 채널은 일부러 늘이거나 눌러서(변형 실리콘), 모양은 평면에서 핀(FinFET)으로, 다시 나노시트(GAA)로. 이 장은 그 변화의 이유를 숫자로 보고, GAA를 만드는 과정을 3D로 따라간다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>게이트 산화막을 얇게 할 때의 터널 누설과, 고유전율 재료로 등가 두께(EOT)를 유지하는 원리를 이해한다.</li>
+  <li>SiGe 소스·드레인이 채널에 압축 응력을 걸어 정공 이동도를 높이는 원리를 계산한다.</li>
+  <li>GAA 나노시트 트랜지스터의 핵심 공정 순서를 3D로 따라간다.</li>
+  <li>게이트 금속의 일함수로 여러 문턱 전압을 만드는 방법을 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>High-k / Metal Gate: 얇게, 그러나 두껍게</h2>
+<p>게이트가 채널을 잘 조절하려면 게이트 용량 C = εA/t를 키워야 하고, 그래서 SiO₂를 계속 얇게 만들었다. 그런데 1.2 nm(원자 5층)쯤 되자 전자가 막을 양자 역학적으로 뚫고 지나가는 <span class="term">터널 누설</span>이 두께 1 Å마다 몇 배씩 늘어났다. 해결책은 유전율이 큰 재료(HfO₂, k ≈ 20)를 쓰는 것이다. 같은 용량을 내면서 물리적으로는 5배 두꺼워 누설이 수천~수만 배 준다. 이때 SiO₂로 환산한 두께가 <span class="term">EOT</span>다. 고유전율 막은 폴리실리콘 게이트와 맞지 않아 금속 게이트를 함께 쓴다(HKMG, 2007년 45 nm부터).</p>
+<div class="eq">$$EOT = t_{IL} + t_{HK}\,\frac{3.9}{k_{HK}},\qquad J_{tunnel} \propto e^{-2\kappa t_{phys}}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-1</span><span class="ttl">EOT와 게이트 누설</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">목표 EOT <output data-o="eot"></output></span><input type="range" data-k="eot" min="0.6" max="2.5" step="0.05" value="1.0" data-d="2" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">고유전율 재료</span><select data-k="k"><option value="7">SiON (k ≈ 7)</option><option value="20" selected>HfO₂ (k ≈ 20)</option><option value="30">HfZrO / La 첨가 (k ≈ 30)</option></select></label>
+      <label class="ctrl"><span class="lab">계면 SiO₂ 층 <output data-o="il"></output></span><input type="range" data-k="il" min="0.3" max="1" step="0.05" value="0.5" data-d="2" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="270"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="270"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">고유전율 막 물리 두께</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">SiO₂만 쓸 때 누설</span><span class="v" data-r="j0"></span></div>
+      <div class="ro"><span class="k">HKMG 누설</span><span class="v" data-r="j1"></span></div>
+      <div class="ro"><span class="k">누설 감소</span><span class="v" data-r="x"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형.</b> J ≈ J₀ e<sup>−t/0.08 nm</sup>(SiO₂), 고유전율 막은 장벽이 낮아 감쇠 길이를 2.2배로 보았다(근사). 왼쪽: 게이트 스택 단면(점선 = 1 nm 눈금). 오른쪽: EOT에 따른 누설(로그). 누설 한계(점선 ~100 A/cm²)를 넘지 않으려면 SiO₂만으로는 EOT 1.2 nm 아래로 갈 수 없다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>변형 실리콘: 결정을 눌러 정공을 빠르게</h2>
+<p>저마늄 원자는 실리콘보다 4 % 크다. 소스·드레인 자리를 파내고 SiGe를 에피 성장시키면 큰 격자가 채널 양쪽에서 밀어 채널에 <b>압축 응력</b>이 걸린다. 압축은 실리콘의 원자가띠 모양을 바꿔 정공의 유효 질량을 줄이고 이동도를 크게 올린다(pMOS). nMOS에는 반대로 인장 응력이 유리하다. 2003년 90 nm부터 쓰인 이 기술은 같은 크기에서 전류를 수십 % 늘리는 "공짜 성능"이었다.</p>
+<div class="eq">$$\frac{\Delta\mu}{\mu} \approx -\pi_{\parallel}\,\sigma_{\parallel},\qquad \pi_{\parallel}^{(p)} \approx 72\times10^{-11}\,\text{Pa}^{-1}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-2</span><span class="ttl">SiGe 소스·드레인과 정공 이동도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">Ge 비율 <output data-o="x"></output></span><input type="range" data-k="x" min="0" max="60" step="1" value="35" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">채널 길이 (짧을수록 응력 전달 ↑) <output data-o="L"></output></span><input type="range" data-k="L" min="10" max="100" step="2" value="20" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">격자 불일치</span><span class="v" data-r="m"></span></div>
+      <div class="ro"><span class="k">채널 압축 응력</span><span class="v" data-r="s"></span></div>
+      <div class="ro"><span class="k">정공 이동도 증가</span><span class="v" data-r="mu"></span></div>
+      <div class="ro"><span class="k">결함 위험</span><span class="v" data-r="d" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형.</b> 격자 상수 a(x) ≈ 5.431 + 0.2x + 0.027x² Å(베가드 법칙 보정). 채널 응력 ≈ −Y·불일치·전달 효율(L₀/(L + L₀), L₀ = 20 nm), Y = 130 GPa. 이동도 증가는 압전 저항 근사에 포화를 넣었다. Ge가 너무 많으면 SiGe 막이 임계 두께를 넘어 전위(결함)가 생겨 응력이 풀린다. 왼쪽: 원자 격자(눌린 정도 과장).</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>GAA 나노시트 만들기</h2>
+<p>GAA는 Si와 SiGe를 번갈아 쌓은 초격자에서 출발한다. 핀 모양으로 깎고, 가짜(더미) 게이트를 세운 뒤, 소스·드레인을 에피로 기르고, 마지막에 SiGe만 골라 녹여 내(채널 해방) 공중에 뜬 실리콘 판 사이사이로 진짜 게이트(HKMG)를 채운다. 핵심 난관은 SiGe만 선택적으로 깎는 식각, 판 사이 좁은 틈(~10 nm)에 산화막과 금속을 고르게 넣는 ALD, 그리고 게이트와 소스·드레인을 갈라놓는 <b>내부 스페이서</b>다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-3</span><span class="ttl">3D: GAA 공정 8단계</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><button class="sbtn" id="b3p">← 이전</button><button class="sbtn pri" id="b3n">다음 단계 →</button><button class="sbtn" id="b3a">자동 재생</button><span class="hint" id="b3s"></span></div>
+    <div class="canvas-box"><canvas id="cv3" data-h="400"></canvas></div>
+    <div class="legend"><span><i style="background:#8f98a8"></i>기판</span><span><i style="background:var(--gold)"></i>SiGe (희생층)</span><span><i style="background:var(--jade)"></i>Si 채널</span><span><i style="background:#c9a36b"></i>더미 게이트</span><span><i style="background:var(--indigo)"></i>스페이서</span><span><i style="background:var(--red)"></i>S/D 에피</span><span><i style="background:#5b6170"></i>HKMG</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">단계</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">핵심 공정</span><span class="v" data-r="ty" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 보기.</b> 드래그로 돌리며 단계마다 살펴보자. 앞쪽 절반을 잘라 낸 단면으로 그렸다. ⑦ 채널 해방 뒤에는 초록 실리콘 판 세 장이 공중에 떠 있고, ⑧에서 그 사이를 회색 게이트가 위·아래·옆 모두 감싼다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>일함수로 문턱 전압 맞추기</h2>
+<p>한 칩 안에도 빠르지만 누설이 큰 트랜지스터(LVT)와 느리지만 누설이 작은 트랜지스터(HVT)를 섞어 쓴다. 예전에는 채널 도핑으로 문턱 전압을 바꿨지만, 나노시트처럼 얇은 채널에서는 도핑이 잘 들어가지 않고 흔들림도 크다. 그래서 게이트 금속의 <span class="term">일함수</span>(전자를 꺼내는 데 드는 에너지)를 바꾼다. TiN·TiAl 층의 두께와 조합을 바꾸면 일함수가 4.1–5.0 eV 사이에서 조절되고, 그만큼 문턱 전압이 이동한다.</p>
+<div class="eq">$$V_{th} \approx \Phi_{M} - \chi_{Si} - \frac{E_g}{2} + \Delta_{QC}\quad(\text{얇은 채널, 도핑 무시, nMOS})$$</div>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-4</span><span class="ttl">다중 문턱 전압 설계</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">nMOS 게이트 일함수 <output data-o="wn"></output></span><input type="range" data-k="wn" min="4.05" max="4.75" step="0.01" value="4.40" data-d="2" data-u="eV"></label>
+      <label class="ctrl"><span class="lab">pMOS 게이트 일함수 <output data-o="wp"></output></span><input type="range" data-k="wp" min="4.45" max="5.15" step="0.01" value="4.80" data-d="2" data-u="eV"></label>
+      <label class="ctrl"><span class="lab">나노시트 두께 (양자 구속) <output data-o="ts"></output></span><input type="range" data-k="ts" min="4" max="10" step="0.5" value="6" data-d="1" data-u="nm"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv4" data-h="260"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">nMOS V<sub>th</sub></span><span class="v" data-r="vn"></span></div>
+      <div class="ro"><span class="k">pMOS |V<sub>th</sub>|</span><span class="v" data-r="vp"></span></div>
+      <div class="ro"><span class="k">등급</span><span class="v" data-r="cls" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">꺼짐 누설 (SVT 대비)</span><span class="v" data-r="lk"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 띠 그림 위에 n·p 게이트 일함수 위치를 표시했다. 초록 띠는 등급별 목표 구간(LVT 0.15–0.25, SVT 0.25–0.35, HVT 0.35–0.45 V). 얇은 나노시트는 양자 구속으로 실효 띠틈이 넓어져 V<sub>th</sub>가 조금 오른다(Δ ∝ 1/t²). 누설은 문턱 아래 기울기 70 mV/dec로 계산했다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">HfO₂(k = 20) 3 nm의 EOT는 (계면층 무시)?</p><ol><li>3 nm</li><li>1.5 nm</li><li>0.585 nm</li><li>15 nm</li></ol>
+<p class="explain">3 × 3.9/20 = 0.585 nm.</p></div>
+<div class="quiz" data-a="0"><p class="q">pMOS 소스·드레인에 SiGe를 쓰는 이유는?</p><ol><li>채널에 압축 응력을 걸어 정공 이동도를 높이려고</li><li>저항을 높이려고</li><li>누설을 늘리려고</li><li>더 투명하게 하려고</li></ol>
+<p class="explain">큰 SiGe 격자가 채널을 눌러 정공이 빨라진다.</p></div>
+<div class="quiz" data-a="3"><p class="q">GAA 공정에서 "채널 해방(release)"은?</p><ol><li>게이트를 제거하는 것</li><li>실리콘 판을 녹이는 것</li><li>소스·드레인을 키우는 것</li><li>SiGe 희생층만 선택적으로 녹여 내는 것</li></ol>
+<p class="explain">Si/SiGe 초격자에서 SiGe를 선택 식각해 실리콘 판을 띄운다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 12-1 */
+J.sim('sim1', (v, box) => {
+  const k = +v.k, thk = Math.max(0, (v.eot - v.il)*k/3.9), Jsio2 = t => 1e3*Math.exp(-(t - 1.0)/0.08);
+  const Jhk = (il, t) => Jsio2(il)*Math.exp(-t/(0.08*2.2));
+  const j0 = Jsio2(v.eot), j1 = Jhk(v.il, thk);
+  const a = [], b = []; for(let e = 0.6; e <= 2.5; e += 0.02){ a.push([e, Jsio2(e)]); b.push([e, Jhk(v.il, Math.max(0, (e - v.il)*k/3.9))]); }
+  J.plot(document.getElementById('cv1b'), {x:[0.6, 2.5], y:[1e-6, 1e6], logy:true, xlab:'EOT (nm)', ylab:'게이트 누설 (A/cm²)', yf:t => J.sci(t, 0), series:[{pts:a, color:'--red', w:3},{pts:b, color:'--jade', w:3}], hlines:[{y:100, color:'--ink3', label:'고성능 칩 누설 한계'}], vlines:[{x:v.eot, color:'--ink'}]});
+  const {ctx, w, h} = J.fit(document.getElementById('cv1a')); ctx.clearRect(0,0,w,h);
+  const sc = (h - 80)/6, base = h - 30, x0 = 40, x1 = w/2 - 10, x2 = w/2 + 10, x3 = w - 40;
+  const stack = (xa, xb, layers, title) => { let y = base; ctx.fillStyle = '#8f98a8'; ctx.fillRect(xa, base, xb - xa, 20);
+    layers.forEach(([t, c, n]) => { const hh = t*sc; ctx.fillStyle = c; ctx.fillRect(xa, y - hh, xb - xa, hh); if(hh > 12){ ctx.fillStyle = '#222'; ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(n + ' ' + J.fmt(t, 2) + ' nm', (xa + xb)/2, y - hh/2 + 4); } y -= hh; });
+    ctx.fillStyle = '#5b6170'; ctx.fillRect(xa, y - 30, xb - xa, 30); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(title[1], (xa + xb)/2, y - 12);
+    ctx.fillStyle = J.c('--ink'); ctx.font = '600 12px "Noto Sans KR"'; ctx.fillText(title[0], (xa + xb)/2, 16); };
+  stack(x0, x1, [[v.eot, '#a9d4ef', 'SiO₂']], ['SiO₂만', '폴리 게이트']);
+  stack(x2, x3, [[v.il, '#a9d4ef', 'IL'], [thk, '#f0d36a', 'HfO₂']], ['HKMG', '금속 게이트']);
+  ctx.strokeStyle = J.c('--ink3'); ctx.setLineDash([2,3]); for(let i=0;i<=6;i++){ ctx.beginPath(); ctx.moveTo(20, base - i*sc); ctx.lineTo(w - 20, base - i*sc); ctx.stroke(); } ctx.setLineDash([]);
+  J.out(box,'t', J.fmt(thk, 2) + ' nm'); J.out(box,'j0', J.sci(j0, 2) + ' A/cm²', j0 < 100 ? 'good' : 'bad'); J.out(box,'j1', J.sci(j1, 2) + ' A/cm²', j1 < 100 ? 'good' : 'bad'); J.out(box,'x', (j0/j1 < 1e4 ? J.fmt(j0/j1, 0) : J.sci(j0/j1, 2)) + '배');
+});
+
+/* 12-2 응력 */
+J.sim('sim2', (v, box) => {
+  const x = v.x/100, a = 5.431 + 0.2*x + 0.027*x*x, mis = (a - 5.431)/5.431, eff = 20/(v.L + 20), Y = 130e9, sig = Y*mis*eff;
+  const crit = x > 0 ? 0.55*Math.pow(1/x, 2)*5 : 999, relax = v.x > 45 ? Math.min(0.7, (v.x - 45)/30) : 0;
+  const sigE = sig*(1 - relax), dmu = Math.min(1.8, 72e-11*sigE*(1 - 0.25*72e-11*sigE));
+  { const {ctx, w, h} = J.fit(document.getElementById('cv2a')); ctx.clearRect(0,0,w,h);
+    const cols = 15, rows = 7, cx = w/2, d0 = (w - 40)/cols, comp = 1 - Math.min(0.3, sigE/1e9*0.12);
+    for(let j=0;j<rows;j++) for(let i=0;i<cols;i++){ const reg = i < 4 ? 'L' : i > 10 ? 'R' : 'C';
+      const dx = reg === 'C' ? d0*comp : d0*(1 + mis*3), xpos = reg === 'L' ? 20 + i*d0*(1 + mis*3) - mis*3*d0*4 : reg === 'R' ? w - 20 - (cols - 1 - i)*d0*(1 + mis*3) + mis*3*d0*4 : cx + (i - 7)*d0*comp;
+      const isGe = reg !== 'C' && ((i*7 + j*3) % 100)/100 < x;
+      ctx.fillStyle = isGe ? J.c('--gold') : J.c(reg === 'C' ? '--jade' : '--indigo'); ctx.beginPath(); ctx.arc(xpos, 40 + j*(h - 70)/rows, isGe ? 7 : 5.5, 0, 7); ctx.fill(); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('SiGe 소스', 60, h - 10); ctx.fillText('Si 채널 (눌림)', cx, h - 10); ctx.fillText('SiGe 드레인', w - 60, h - 10);
+    ctx.fillStyle = J.c('--red'); ctx.font = '700 16px sans-serif'; ctx.fillText('→', cx - (w*0.22), 22); ctx.fillText('←', cx + (w*0.22), 22); }
+  const pts = []; for(let xx = 0; xx <= 60; xx += 1){ const xa = xx/100, aa = 5.431 + 0.2*xa + 0.027*xa*xa, m = (aa - 5.431)/5.431, r = xx > 45 ? Math.min(0.7, (xx - 45)/30) : 0, s = Y*m*eff*(1 - r); pts.push([xx, Math.min(1.8, 72e-11*s*(1 - 0.25*72e-11*s))*100]); }
+  J.plot(document.getElementById('cv2b'), {x:[0, 60], y:[0, 140], xlab:'Ge 비율 (%)', ylab:'정공 이동도 증가 (%)', series:[{pts, color:'--plum', w:3}], points:[{x:v.x, y:dmu*100, color:'--ink', r:6}], bands:[{x0:45, x1:60, color:'--red', alpha:.1}]});
+  J.out(box,'m', J.fmt(mis*100, 2) + ' %'); J.out(box,'s', '−' + J.fmt(sigE/1e9, 2) + ' GPa'); J.out(box,'mu', '+' + J.fmt(dmu*100, 0) + ' %', 'good');
+  J.out(box,'d', relax > 0 ? '높음: 전위 발생, 응력 풀림' : v.x > 35 ? '주의 (에피 두께 관리)' : '낮음', relax > 0 ? 'bad' : v.x > 35 ? 'warn' : 'good');
+});
+
+/* 12-3 GAA 3D */
+(function(){
+  const cv = document.getElementById('cv3'), box = document.getElementById('sim3'), cam = {yaw:-0.75, pitch:0.45, scale:40};
+  const S = [['① Si/SiGe 초격자 에피','에피 성장 (Si 3층 + SiGe 3층)'],['② 핀 패터닝','EUV/SADP + 식각, STI 매립'],['③ 더미 게이트','폴리 증착·식각'],['④ 게이트 스페이서','SiN ALD + 이방성 식각'],['⑤ S/D 홈 식각 + 내부 스페이서','SiGe 옆면만 살짝 파고 절연막 채움'],['⑥ S/D 에피','SiGe:B(p) 또는 Si:P(n) 에피 성장'],['⑦ 더미 제거 + 채널 해방','폴리 제거, SiGe 선택 식각'],['⑧ HKMG 채우기','ALD HfO₂ + 일함수 금속 + 텅스텐']];
+  let k = 0, auto = false, acc = 0;
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h); cam.scale = Math.min(w/10, h/7); cam.oy = h*0.08;
+    const Sc = new J3.Scene(), z0 = 0, D = 1.6, wF = 1.6;
+    Sc.box(-4, -1.2, -1.6, 8, 0.8, 3.2, '#8f98a8', {layer:0});
+    if(k >= 1){ Sc.box(-4, -0.4, -1.6, 8, 0.4, 1.6 - wF/2, '#a9d4ef', {layer:0}); Sc.box(-4, -0.4, wF/2, 8, 0.4, 1.6 - wF/2, '#a9d4ef', {layer:0}); }
+    const layerY = [0, 0.45, 0.9, 1.35, 1.8, 2.25], th = 0.45;
+    const fz0 = k === 0 ? -1.6 : -wF/2, fz1 = 0; // 앞쪽 절반 잘라 냄 → z ∈ [fz0, 0]
+    const inGate = x => Math.abs(x) <= 0.9, inSpacer = x => Math.abs(x) > 0.9 && Math.abs(x) <= 1.25;
+    const segX = [[-4, -1.25], [-1.25, -0.9], [-0.9, 0.9], [0.9, 1.25], [1.25, 4]];
+    if(k <= 6){ segX.forEach(([xa, xb]) => { const mid = (xa + xb)/2, sd = !inGate(mid) && !inSpacer(mid);
+      if(k >= 4 && sd) return; // S/D 자리 파냄
+      layerY.forEach((y, i) => { const isGe = i % 2 === 0; if(k >= 6 && isGe && inGate(mid)) return;
+        let col = isGe ? '--gold' : '--jade'; if(k >= 4 && isGe && inSpacer(mid)) col = '--indigo';
+        Sc.box(xa, y - 0.4 + 0.4, fz0, xb - xa, th, fz1 - fz0, col, {layer:1}); }); }); }
+    else { segX.forEach(([xa, xb]) => { const mid = (xa + xb)/2; if(!inGate(mid) && !inSpacer(mid)) return; layerY.forEach((y, i) => { const isGe = i % 2 === 0; if(isGe && inGate(mid)) return; Sc.box(xa, y, fz0, xb - xa, th, fz1 - fz0, isGe ? '--indigo' : '--jade', {layer:1}); }); }); }
+    const top = 2.7;
+    if(k >= 2 && k <= 5) Sc.box(-0.9, top, -1.3, 1.8, 1.0, 1.3, '#c9a36b', {layer:2});
+    if(k >= 2 && k <= 5) Sc.box(-0.9, 0, fz0 - 0.5, 1.8, top, 0.5, '#c9a36b', {layer:2});
+    if(k >= 3){ [-1.25, 0.9].forEach(xa => Sc.box(xa, top, -1.3, 0.35, 1.0, 1.3, '--indigo', {layer:2})); }
+    if(k >= 5){ [[-4, -1.25], [1.25, 4]].forEach(([xa, xb]) => Sc.box(xa, 0, fz0, xb - xa, 2.7, fz1 - fz0, '--red', {layer:1})); }
+    if(k === 7){ layerY.forEach((y, i) => { if(i % 2 === 0) Sc.box(-0.9, y, fz0, 1.8, th, fz1 - fz0, '#5b6170', {layer:1}); }); Sc.box(-0.9, top, -1.3, 1.8, 1.0, 1.3, '#5b6170', {layer:2}); Sc.box(-0.9, 0, fz0 - 0.5, 1.8, top, 0.5, '#5b6170', {layer:2}); }
+    Sc.render(ctx, cam, w, h);
+    J.out(box,'st', S[k][0]); J.out(box,'ty', S[k][1]); J.$('#b3s').textContent = `${k + 1} / ${S.length}`;
+  }
+  J.$('#b3n').onclick = () => { k = Math.min(S.length - 1, k + 1); draw(); }; J.$('#b3p').onclick = () => { k = Math.max(0, k - 1); draw(); };
+  J.$('#b3a').onclick = e => { auto = !auto; e.target.classList.toggle('on', auto); };
+  J3.drag(cv, cam, draw); J.live(draw);
+  J.loop(cv, dt => { if(!cam.user){ cam.yaw += dt*0.15; } if(auto && (acc += dt) > 1.6){ acc = 0; k = (k + 1) % S.length; } draw(); });
+})();
+
+/* 12-4 일함수 */
+J.sim('sim4', (v, box) => {
+  const chi = 4.05, Eg = 1.12, dqc = 0.25*Math.pow(5/v.ts, 2)*0.4;
+  const vn = v.wn - chi - Eg/2 + 0.35 + dqc/2 - 0.0, vp = (chi + Eg) - v.wp + 0.0 - Eg/2 + 0.35 + dqc/2 - 0.0;
+  const cls = x => x < 0.15 ? '너무 낮음 (누설 과다)' : x < 0.25 ? 'LVT' : x < 0.35 ? 'SVT' : x < 0.45 ? 'HVT' : '너무 높음 (느림)';
+  const {ctx, w, h} = J.fit(document.getElementById('cv4')); ctx.clearRect(0,0,w,h);
+  const E = e => 30 + (e - 3.8)/(5.6 - 3.8)*(w - 60);
+  ctx.fillStyle = J.c('--red-soft'); ctx.fillRect(E(3.8), 40, E(chi) - E(3.8), 160); ctx.fillStyle = J.c('--indigo-soft'); ctx.fillRect(E(chi + Eg), 40, E(5.6) - E(chi + Eg), 160);
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('전도띠 쪽 (n형에 유리)', (E(3.8) + E(chi))/2, 32); ctx.fillText('원자가띠 쪽 (p형에 유리)', (E(chi + Eg) + E(5.6))/2, 32); ctx.fillText('규소 띠틈', E(chi + Eg/2), 120);
+  [[v.wn, '--red', 'nMOS 금속'], [v.wp, '--indigo', 'pMOS 금속']].forEach(([x, c, l], i) => { ctx.strokeStyle = J.c(c); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(E(x), 50); ctx.lineTo(E(x), 190); ctx.stroke(); ctx.fillStyle = J.c(c); ctx.fillText(l + ' ' + J.fmt(x, 2), E(x), 210 + i*16); });
+  for(let e = 4; e <= 5.6; e += 0.2){ ctx.fillStyle = J.c('--ink3'); ctx.font = '10.5px "JetBrains Mono"'; ctx.fillText(J.fmt(e, 1), E(e), h - 6); }
+  const lk = x => Math.pow(10, (0.30 - x)/0.07);
+  J.out(box,'vn', J.fmt(vn, 3) + ' V', vn >= 0.15 && vn < 0.45 ? 'good' : 'bad'); J.out(box,'vp', J.fmt(vp, 3) + ' V', vp >= 0.15 && vp < 0.45 ? 'good' : 'bad');
+  J.out(box,'cls', 'n: ' + cls(vn) + ' / p: ' + cls(vp)); J.out(box,'lk', 'n ×' + J.sci(lk(vn), 2) + ' / p ×' + J.sci(lk(vp), 2));
+});
+</script>
+</body>
+</html>

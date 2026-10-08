@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CMP: 화학 기계 연마 · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="cmp">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 10 <span class="hanja">第十章 · 磨</span></div>
+  <h1>CMP: 화학 기계 연마</h1>
+  <p class="lead">층을 쌓고 깎기를 반복하면 표면이 울퉁불퉁해진다. 그 위에 다시 노광하려면 초점 심도(100 nm 안팎) 안으로 평평해야 하고, 구리 배선은 홈을 채운 뒤 넘친 금속을 걷어 내야 한다. 이 두 가지를 한 번에 해결한 것이 <span class="term">CMP</span>다. 웨이퍼를 뒤집어 회전하는 패드에 누르고, 연마 입자가 든 화학 슬러리를 흘린다. 화학 반응이 표면을 무르게 만들고, 입자가 그것을 문질러 낸다. 단순해 보이지만 "어디가 얼마나 깎이느냐"는 패턴 밀도에 따라 크게 달라진다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>프레스턴 식으로 연마 속도를 계산하고, 웨이퍼 안 압력 분포가 균일도를 정함을 본다.</li>
+  <li>패턴 밀도와 평탄화 길이가 단차 제거와 두께 편차를 결정함을 실험한다.</li>
+  <li>구리 CMP의 디싱과 이로전을 선폭·밀도·과연마의 함수로 이해한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>프레스턴 식과 균일도</h2>
+<p>1927년 유리 연마를 연구한 프레스턴은 제거 속도가 누르는 압력과 상대 속도의 곱에 비례한다는 것을 발견했다. CMP에서도 대체로 성립한다. 프레스턴 계수 K<sub>p</sub>에는 슬러리 화학, 입자 크기, 패드 상태가 모두 담긴다. 웨이퍼 가장자리는 패드가 눌려 튀어 오르는 효과 때문에 압력이 달라지므로, 연마 헤드는 영역을 여러 개로 나눠 압력을 따로 조절한다.</p>
+<div class="eq">$$RR = K_p\,P\,v$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-1</span><span class="ttl">연마 속도와 반지름 방향 균일도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">평균 압력 <output data-o="P"></output></span><input type="range" data-k="P" min="0.5" max="6" step="0.1" value="2.5" data-d="1" data-u="psi"></label>
+      <label class="ctrl"><span class="lab">상대 속도 <output data-o="v"></output></span><input type="range" data-k="v" min="0.3" max="2" step="0.05" value="1" data-d="2" data-u="m/s"></label>
+      <label class="ctrl"><span class="lab">가장자리 영역 압력 보정 <output data-o="e"></output></span><input type="range" data-k="e" min="-30" max="30" step="1" value="0" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">슬러리</span><select data-k="k"><option value="1">산화막용 실리카 (K_p 기준)</option><option value="2.5">세리아 (산화막 고속)</option><option value="0.6">구리용 (산화제 포함)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">평균 제거 속도</span><span class="v" data-r="rr"></span></div>
+      <div class="ro"><span class="k">불균일 (1σ)</span><span class="v" data-r="nu"></span></div>
+      <div class="ro"><span class="k">500 nm 제거 시간</span><span class="v" data-r="t"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형.</b> 압력 분포 = 평균 × (1 + 가장자리 반발 효과 + 보정). 가장자리 5 mm에서 압력이 튀는(edge rebound) 모양을 넣었다. 왼쪽: 웨이퍼 제거량 지도. 오른쪽: 반지름 방향 단면. 가장자리 보정을 조절해 곡선을 가장 평평하게 만들어 보자.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>패턴 밀도와 평탄화 길이</h2>
+<p>패드는 완전히 딱딱하지 않아서, 높이 솟은 부분(UP)을 먼저 누르고 낮은 부분(DOWN)은 덜 누른다. 그 결과 단차가 점점 줄어든다. 그런데 넓은 영역이 모두 솟아 있으면(패턴 밀도가 높으면) 압력이 넓게 나뉘어 느리게 깎이고, 듬성듬성 솟아 있으면 빨리 깎인다. 패드가 "평균 내는" 거리를 <span class="term">평탄화 길이</span>라 하는데(수 mm), 이보다 넓은 범위의 밀도 차이는 결국 두께 차이로 남는다. 그래서 설계 단계에서 빈 곳에 가짜 패턴(<span class="term">더미 필</span>)을 넣어 밀도를 고르게 한다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-2</span><span class="ttl">밀도가 다른 세 영역의 평탄화</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">평탄화 길이 (패드 단단함) <output data-o="L"></output></span><input type="range" data-k="L" min="0.2" max="6" step="0.1" value="2" data-d="1" data-u="mm"></label>
+      <label class="ctrl"><span class="lab">연마 시간 <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="120" step="2" value="20" data-d="0" data-u="초"></label>
+      <label class="ctrl"><span class="lab">더미 필 (밀도 고르게) <output data-o="df"></output></span><input type="checkbox" data-k="df"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">남은 최대 단차</span><span class="v" data-r="sh"></span></div>
+      <div class="ro"><span class="k">영역 간 두께 차</span><span class="v" data-r="dt"></span></div>
+      <div class="ro"><span class="k">판정 (단차 &lt; 30, 두께차 &lt; 50 nm)</span><span class="v" data-r="j" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형.</b> 14 mm 구간에 밀도 20 % / 80 % / 50 % 세 영역, 처음 단차 300 nm. 국소 유효 밀도 = 평탄화 길이 창으로 평균한 밀도. UP 영역은 RR/ρ<sub>eff</sub>로, 단차가 사라지면 블랭킷 속도로 깎인다(스틴 모형 단순화). 위: 단면 높이(진한 선 = UP, 옅은 선 = DOWN). 아래 막대: 패턴 밀도.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>구리 CMP: 디싱과 이로전</h2>
+<p>다마신 공정에서 구리가 산화막 홈을 채우고 넘치면, CMP로 넘친 구리와 장벽막을 걷어 낸다. 구리는 산화막보다 무르게 깎이므로, 넓은 구리선은 가운데가 접시처럼 오목하게 파인다(<span class="term">디싱</span>). 가는 선이 촘촘한 영역은 산화막까지 함께 깎여 전체가 낮아진다(<span class="term">이로전</span>). 둘 다 배선 두께를 줄여 저항을 올리고, 다음 층의 평탄도를 망친다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-3</span><span class="ttl">디싱과 이로전</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">구리 선폭 <output data-o="w"></output></span><input type="range" data-k="w" min="0.05" max="50" step="0.05" value="10" data-d="2" data-u="µm"></label>
+      <label class="ctrl"><span class="lab">구리 패턴 밀도 <output data-o="d"></output></span><input type="range" data-k="d" min="10" max="90" step="5" value="50" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">과연마 시간 <output data-o="op"></output></span><input type="range" data-k="op" min="0" max="60" step="5" value="20" data-d="0" data-u="초"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="260"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="260"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">디싱</span><span class="v" data-r="di"></span></div>
+      <div class="ro"><span class="k">이로전</span><span class="v" data-r="er"></span></div>
+      <div class="ro"><span class="k">구리 두께 손실 (목표 200 nm)</span><span class="v" data-r="loss"></span></div>
+      <div class="ro"><span class="k">저항 증가</span><span class="v" data-r="r"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형(경험식 근사).</b> 디싱 ≈ 과연마 시간 × 구리 속도 × w/(w + 2 µm) × 0.6, 이로전 ≈ 과연마 시간 × 산화막 속도 × ρ/(1 − ρ) × 0.5. 왼쪽: 단면(구리 = 주황). 오른쪽: 선폭에 따른 디싱(빨강)과 밀도에 따른 이로전 경향(파랑, 위 x축은 무시). 넓은 선은 디싱, 촘촘한 영역은 이로전이 문제다. 설계 규칙이 최대 선폭과 밀도 범위를 정하는 이유다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="3"><p class="q">프레스턴 식에서 압력을 2배, 속도를 1.5배로 하면 연마 속도는?</p><ol><li>1.5배</li><li>2배</li><li>2.5배</li><li>3배</li></ol>
+<p class="explain">RR ∝ P·v → 2 × 1.5 = 3배.</p></div>
+<div class="quiz" data-a="0"><p class="q">더미 필을 넣는 이유는?</p><ol><li>패턴 밀도를 고르게 해 CMP 두께 편차를 줄이려고</li><li>전기를 더 잘 흐르게 하려고</li><li>노광 시간을 줄이려고</li><li>열을 식히려고</li></ol>
+<p class="explain">평탄화 길이보다 넓은 밀도 차이는 두께 차이로 남기 때문이다.</p></div>
+<div class="quiz" data-a="1"><p class="q">넓은 구리 패드 가운데가 오목하게 파이는 현상은?</p><ol><li>이로전</li><li>디싱</li><li>언더컷</li><li>보잉</li></ol>
+<p class="explain">구리가 산화막보다 빨리 깎이고 패드가 넓은 선 안으로 휘어 들어가 생긴다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 10-1 */
+J.sim('sim1', (v, box) => {
+  const Kp = 1.2e-13*v.k, Ppa = v.P*6895, prof = r => 1 + 0.18*Math.exp(-(150 - r)/4)*Math.cos((150 - r)/4) - 0.06*Math.exp(-(150 - r)/12) + (r > 135 ? v.e/100*(r - 135)/15 : 0) - 0.03*(r/150)*(r/150);
+  const rr = r => Kp*Ppa*prof(r)*v.v*1e9*60; // nm/min
+  const pts = []; let s = 0, s2 = 0, n = 0; for(let r = 0; r <= 147; r += 1){ const x = rr(r); pts.push([r, x]); const wgt = r; s += x*wgt; s2 += x*x*wgt; n += wgt; }
+  const m = s/n, sd = Math.sqrt(Math.max(0, s2/n - m*m));
+  J.plot(document.getElementById('cv1b'), {x:[0, 150], y:[m*0.7, m*1.3], xlab:'반지름 (mm)', ylab:'제거 속도 (nm/분)', series:[{pts, color:'--red', w:3}], hlines:[{y:m, color:'--ink3'}]});
+  const {ctx, w, h} = J.fit(document.getElementById('cv1a')); ctx.clearRect(0,0,w,h);
+  const R = Math.min(w, h)/2 - 10, cx = w/2, cy = h/2;
+  for(let rr2 = R; rr2 > 0; rr2 -= 1.5){ const r = rr2/R*147, t = J.clamp((rr(r)/m - 1)/0.25, -1, 1); ctx.fillStyle = t >= 0 ? `hsl(5, ${30 + 60*t}%, ${70 - 25*t}%)` : `hsl(215, ${30 - 60*t}%, ${70 + 25*t}%)`; ctx.beginPath(); ctx.arc(cx, cy, rr2, 0, 7); ctx.fill(); }
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('빨강 = 많이 깎임 · 파랑 = 덜 깎임', cx, h - 4);
+  J.out(box,'rr', J.fmt(m, 0) + ' nm/분'); J.out(box,'nu', J.fmt(sd/m*100, 2) + ' %', sd/m < 0.02 ? 'good' : sd/m < 0.04 ? 'warn' : 'bad'); J.out(box,'t', J.fmt(500/m*60, 0) + '초');
+});
+
+/* 10-2 */
+J.sim('sim2', (v, box) => {
+  const X = 14, N = 280, dx = X/N, dens = []; for(let i=0;i<N;i++){ const x = i*dx; let d = x < 4.5 ? 0.2 : x < 9.5 ? 0.8 : 0.5; if(v.df) d = 0.5 + (d - 0.5)*0.2; dens.push(d); }
+  const win = Math.max(1, Math.round(v.L/dx)), eff = dens.map((_, i) => { let s = 0, n = 0; for(let k = -win; k <= win; k++){ const j = J.clamp(i + k, 0, N - 1); const wgt = Math.exp(-k*k/(2*(win/2)*(win/2))); s += dens[j]*wgt; n += wgt; } return s/n; });
+  const K = 8; // nm/s 블랭킷
+  const up = new Float64Array(N).fill(800), dn = new Float64Array(N).fill(500);
+  for(let t = 0; t < v.t; t += 0.5){ for(let i=0;i<N;i++){ const step = up[i] - dn[i];
+      if(step > 1){ up[i] -= K/eff[i]*0.5; } else { up[i] -= K*0.5; dn[i] = up[i]; } if(dn[i] > up[i]) dn[i] = up[i]; } }
+  const pu = [], pd = []; for(let i=0;i<N;i++){ pu.push([i*dx, up[i]]); pd.push([i*dx, dn[i]]); }
+  const P = J.plot(document.getElementById('cv2'), {x:[0, X], y:[0, 900], xlab:'위치 (mm)', ylab:'높이 (nm)', series:[{pts:pd, color:'--indigo', w:1.5, dash:[3,3]},{pts:pu, color:'--indigo', w:3}], pad:{b:60}});
+  const ctx = P.ctx; for(let i=0;i<N;i++){ ctx.fillStyle = J.c('--gold'); ctx.globalAlpha = .6; const bh = dens[i]*22; ctx.fillRect(P.X(i*dx), P.h - 34 - bh + 22, P.X(dx) - P.X(0) + .5, bh); } ctx.globalAlpha = 1;
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '10.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('패턴 밀도', P.P.l + 4, P.h - 40);
+  const steps = Array.from(up, (u, i) => u - dn[i]), maxStep = Math.max(...steps), dT = Math.max(...up) - Math.min(...up);
+  J.out(box,'sh', J.fmt(maxStep, 0) + ' nm', maxStep < 30 ? 'good' : 'bad'); J.out(box,'dt', J.fmt(dT, 0) + ' nm', dT < 50 ? 'good' : 'bad');
+  J.out(box,'j', maxStep < 30 && dT < 50 ? '평탄!' : maxStep >= 30 ? '단차 남음 (시간 더)' : '영역 간 두께 차 (더미 필·패드)', maxStep < 30 && dT < 50 ? 'good' : 'bad');
+});
+
+/* 10-3 */
+J.sim('sim3', (v, box) => {
+  const rCu = 6, rOx = 0.6, rho = v.d/100; // nm/s
+  const dish = w => v.op*rCu*w/(w + 2)*0.6, ero = d => v.op*rOx*d/(1 - d)*0.5;
+  const di = dish(v.w), er = ero(rho), loss = di + er, Rinc = 200/Math.max(20, 200 - loss) - 1;
+  { const {ctx, w, h} = J.fit(document.getElementById('cv3a')); ctx.clearRect(0,0,w,h);
+    const top = 60, sc = 0.55, lw = Math.max(6, Math.min(w*0.18, 6 + Math.log10(v.w*20 + 1)*40)), sp = lw*(1 - rho)/rho, n = Math.max(2, Math.floor((w - 40)/(lw + sp)));
+    ctx.fillStyle = '#a9d4ef'; ctx.fillRect(20, top + er*sc, w - 40, 200*sc - er*sc + 40);
+    ctx.fillStyle = '#8f98a8'; ctx.fillRect(20, top + 200*sc + 40, w - 40, 20);
+    for(let k=0;k<n;k++){ const x = 30 + k*(lw + sp); if(x + lw > w - 20) break; ctx.fillStyle = '#d98b3a'; ctx.beginPath(); ctx.moveTo(x, top + er*sc); ctx.quadraticCurveTo(x + lw/2, top + er*sc + 2*di*sc, x + lw, top + er*sc); ctx.lineTo(x + lw, top + 200*sc); ctx.lineTo(x, top + 200*sc); ctx.fill(); }
+    ctx.strokeStyle = J.c('--red'); ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(20, top); ctx.lineTo(w - 20, top); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('원래 목표 표면 높이', 24, top - 6); }
+  const p1 = [], p2 = []; for(let e = -1.3; e <= 1.7; e += 0.02){ const ww = Math.pow(10, e); p1.push([ww, dish(ww)]); } for(let d = 0.1; d <= 0.9; d += 0.01) p2.push([Math.pow(10, -1.3 + (d - 0.1)/0.8*3), ero(d)]);
+  J.plot(document.getElementById('cv3b'), {x:[0.05, 50], y:[0, Math.max(60, dish(50), ero(0.9))*1.05], logx:true, xlab:'구리 선폭 (µm)', ylab:'두께 손실 (nm)', xf:t => J.fmt(t, 2), series:[{pts:p1, color:'--red', w:3},{pts:p2, color:'--indigo', w:2, dash:[5,4]}], points:[{x:v.w, y:di, color:'--red', r:6}]});
+  J.out(box,'di', J.fmt(di, 1) + ' nm'); J.out(box,'er', J.fmt(er, 1) + ' nm'); J.out(box,'loss', J.fmt(loss, 1) + ' nm', loss < 20 ? 'good' : loss < 40 ? 'warn' : 'bad'); J.out(box,'r', '+' + J.fmt(Rinc*100, 1) + ' %');
+});
+</script>
+</body>
+</html>

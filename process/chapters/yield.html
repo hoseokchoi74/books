@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>계측·공정 관리·수율 · 반도체 공정 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236b4426'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E工%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="yield">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 13 <span class="hanja">第十三章 · 率</span></div>
+  <h1>계측·공정 관리·수율</h1>
+  <p class="lead">천 단계의 공정은 모두 조금씩 흔들린다. 막 두께, 선폭, 오버레이, 결함 수를 끊임없이 재고, 흔들림이 우연인지 고장의 신호인지 가려내는 것이 <span class="term">통계적 공정 관리</span>(SPC)다. 그리고 그 모든 흔들림과 결함의 최종 성적표가 <b>수율</b>이다. 수율 1 %포인트가 대형 팹에서는 한 해 수천억 원이다. 이 장은 관리도, 공정 능력 지수, 그리고 결함이 뭉쳐서 떨어질 때의 수율 모형을 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>관리도와 웨스턴 일렉트릭 규칙으로 공정 이상을 검출한다.</li>
+  <li>공정 능력 지수 C<sub>p</sub>, C<sub>pk</sub>와 불량률(ppm)의 관계를 계산한다.</li>
+  <li>결함이 군집할 때 푸아송 모형이 수율을 과소평가하는 이유와 음이항 모형을 이해한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>관리도: 우연인가, 신호인가</h2>
+<p>매 로트의 측정값을 시간 순서로 찍고, 정상일 때의 평균과 ±3σ 선(관리 한계)을 그린다. 정상 공정에서도 점은 흔들리지만 3σ 밖으로는 거의 나가지 않는다(0.27 %). 한 점이 한계를 넘거나, 한쪽에 8점 연속으로 몰리는 등 "우연으로 보기 어려운 무늬"가 나타나면 장비를 멈추고 원인을 찾는다. 규칙을 많이 쓸수록 이상은 빨리 잡지만 헛경보도 는다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-1</span><span class="ttl">관리도와 이상 검출 규칙</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">50번째 로트부터 생긴 문제</span><select data-k="f"><option value="none">없음 (정상)</option><option value="shift" selected>갑작스런 평균 이동</option><option value="drift">서서히 표류 (부품 마모)</option><option value="var">흔들림 증가</option></select></label>
+      <label class="ctrl"><span class="lab">문제 크기 <output data-o="m"></output></span><input type="range" data-k="m" min="0.5" max="3" step="0.1" value="1.2" data-d="1" data-u="σ"></label>
+      <label class="ctrl"><span class="lab">규칙</span><select data-k="r"><option value="1">규칙 1만 (3σ 넘음)</option><option value="all" selected>웨스턴 일렉트릭 4규칙</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b1n">새 데이터</button></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">처음 검출한 로트</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">문제 뒤 검출까지</span><span class="v" data-r="lag"></span></div>
+      <div class="ro"><span class="k">헛경보 (1–49번)</span><span class="v" data-r="fa"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>규칙.</b> ① 한 점이 ±3σ 밖 ② 연속 3점 중 2점이 같은 쪽 2σ 밖 ③ 연속 5점 중 4점이 같은 쪽 1σ 밖 ④ 연속 8점이 중심선 같은 쪽. 빨간 점이 규칙 위반. 1σ 크기의 평균 이동은 규칙 1만으로는 수십 로트 동안 못 잡는 경우가 많다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>공정 능력: C<sub>p</sub>와 C<sub>pk</sub></h2>
+<p>관리도가 "공정이 안정한가"를 본다면, 공정 능력 지수는 "안정한 공정이 규격을 얼마나 여유 있게 지키는가"를 본다. C<sub>p</sub>는 규격 폭 대비 흔들림 폭, C<sub>pk</sub>는 평균이 치우친 것까지 반영한다. 반도체 핵심 공정은 C<sub>pk</sub> ≥ 1.33(규격 밖 63 ppm 이하), 중요한 것은 1.67 이상을 요구한다.</p>
+<div class="eq">$$C_p = \frac{USL - LSL}{6\sigma},\qquad C_{pk} = \min\!\left(\frac{USL-\mu}{3\sigma},\ \frac{\mu-LSL}{3\sigma}\right)$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-2</span><span class="ttl">게이트 CD 공정 능력 (목표 20 nm ± 1.5 nm)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">평균 μ <output data-o="mu"></output></span><input type="range" data-k="mu" min="18.5" max="21.5" step="0.05" value="20.2" data-d="2" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">표준편차 σ <output data-o="s"></output></span><input type="range" data-k="s" min="0.1" max="1" step="0.01" value="0.35" data-d="2" data-u="nm"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="270"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">C<sub>p</sub></span><span class="v" data-r="cp"></span></div>
+      <div class="ro"><span class="k">C<sub>pk</sub></span><span class="v" data-r="cpk"></span></div>
+      <div class="ro"><span class="k">규격 밖 비율</span><span class="v" data-r="ppm"></span></div>
+      <div class="ro"><span class="k">칩당 트랜지스터 10⁹개 중 규격 밖</span><span class="v" data-r="n"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 정규 분포와 규격(빨간 선). 평균을 목표에 맞추면 C<sub>pk</sub>가 C<sub>p</sub>와 같아진다. 칩 하나에 트랜지스터가 수십억 개이므로 ppm 수준의 꼬리도 큰 문제다 — 그래서 설계는 "6σ"가 아니라 "7σ 이상" 여유를 요구하기도 한다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>결함은 뭉쳐서 온다: 수율 모형</h2>
+<p>결함이 웨이퍼 위에 완전히 무작위로 떨어지면 푸아송 수율 Y = e<sup>−DA</sup>가 맞다. 그런데 실제 결함은 긁힘, 장비에서 떨어진 입자 덩어리, 가장자리 문제처럼 <b>뭉쳐서</b> 온다. 같은 결함 수라도 몇몇 칩에 몰리면 나머지 칩은 멀쩡하므로 수율이 더 높다. 이 군집을 반영한 것이 음이항(Stapper) 모형이다. 군집 매개변수 α가 작을수록 많이 뭉친 것이고, α → ∞이면 푸아송과 같아진다.</p>
+<div class="eq">$$Y_{Poisson} = e^{-DA},\qquad Y_{Murphy} = \left(\frac{1-e^{-DA}}{DA}\right)^2,\qquad Y_{NB} = \left(1 + \frac{DA}{\alpha}\right)^{-\alpha}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-3</span><span class="ttl">군집 결함 웨이퍼 맵과 수율 모형</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">평균 결함 밀도 D <output data-o="d"></output></span><input type="range" data-k="d" min="0.05" max="1" step="0.01" value="0.3" data-d="2" data-u="/cm²"></label>
+      <label class="ctrl"><span class="lab">군집 정도 (α, 작을수록 뭉침) <output data-o="a"></output></span><input type="range" data-k="a" min="-0.7" max="1.5" step="0.05" value="0" data-log="1" data-d="2"></label>
+      <label class="ctrl"><span class="lab">칩 면적 <output data-o="A"></output></span><input type="range" data-k="A" min="0.2" max="6" step="0.1" value="1.5" data-d="1" data-u="cm²"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b3n">새 웨이퍼</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="320"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="320"></canvas></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--red)"></i>푸아송</span><span><i style="background:var(--gold)"></i>머피</span><span><i style="background:var(--jade)"></i>음이항 (α)</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">이 웨이퍼 수율</span><span class="v" data-r="y"></span></div>
+      <div class="ro"><span class="k">푸아송 예측</span><span class="v" data-r="yp"></span></div>
+      <div class="ro"><span class="k">음이항 예측</span><span class="v" data-r="yn"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형.</b> 칩마다 결함 밀도를 감마 분포(형태 α)로 뽑고, 그 밀도로 결함 수를 푸아송으로 뽑았다 — 이것이 정확히 음이항 분포다. 왼쪽: 웨이퍼 맵(빨강 = 불량 칩, 점 = 결함). 오른쪽: 칩 면적에 따른 세 모형의 수율과 이 웨이퍼의 결과(점). 뭉칠수록 푸아송 예측보다 실제 수율이 높다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">정상 공정에서 한 점이 ±3σ 밖으로 나갈 확률은 약?</p><ol><li>5 %</li><li>0.27 %</li><li>32 %</li><li>0 %</li></ol>
+<p class="explain">정규 분포에서 |z| &gt; 3 확률은 약 0.27 %.</p></div>
+<div class="quiz" data-a="3"><p class="q">규격 18.5–21.5 nm, μ = 20.5, σ = 0.25일 때 C<sub>pk</sub>는?</p><ol><li>2.0</li><li>1.0</li><li>1.67</li><li>1.33</li></ol>
+<p class="explain">min((21.5−20.5)/0.75, (20.5−18.5)/0.75) = min(1.33, 2.67) = 1.33.</p></div>
+<div class="quiz" data-a="0"><p class="q">같은 평균 결함 밀도에서 결함이 뭉쳐 있으면 수율은?</p><ol><li>푸아송 예측보다 높다</li><li>푸아송 예측보다 낮다</li><li>같다</li><li>0이 된다</li></ol>
+<p class="explain">결함이 소수 칩에 몰리면 나머지 칩은 결함이 없다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 13-1 관리도 */
+(function(){
+  let seed = 3, V; const box = document.getElementById('sim1');
+  J.sim('sim1', v => draw(v));
+  J.$('#b1n').onclick = () => { seed++; draw(V); };
+  function draw(v){ V = v; const R = J.rng(seed), N = 100, x = [];
+    for(let i=0;i<N;i++){ let m = 0, s = 1; if(i >= 50){ if(v.f === 'shift') m = v.m; if(v.f === 'drift') m = v.m*(i - 50)/25; if(v.f === 'var') s = 1 + v.m*0.6; } x.push(m + s*J.gauss(R)); }
+    const viol = new Array(N).fill(false), all = v.r === 'all';
+    for(let i=0;i<N;i++){ if(Math.abs(x[i]) > 3) viol[i] = true;
+      if(all){ if(i >= 2){ const w = x.slice(i - 2, i + 1); [1, -1].forEach(sd => { if(w.filter(q => q*sd > 2).length >= 2 && x[i]*sd > 2) viol[i] = true; }); }
+        if(i >= 4){ const w = x.slice(i - 4, i + 1); [1, -1].forEach(sd => { if(w.filter(q => q*sd > 1).length >= 4 && x[i]*sd > 1) viol[i] = true; }); }
+        if(i >= 7){ const w = x.slice(i - 7, i + 1); [1, -1].forEach(sd => { if(w.every(q => q*sd > 0)) viol[i] = true; }); } } }
+    const P = J.plot(document.getElementById('cv1'), {x:[0, 100], y:[-5, 5], xlab:'로트 순서', ylab:'측정값 (σ 단위)', series:[{pts:x.map((q, i) => [i, q]), color:'--indigo', w:1.5}],
+      hlines:[{y:3, color:'--red', label:'UCL'},{y:-3, color:'--red', label:'LCL'},{y:2, color:'--gold', dash:[2,3]},{y:-2, color:'--gold', dash:[2,3]},{y:0, color:'--ink3', dash:[1,0]}], vlines:[{x:50, color:'--ink3', label:'문제 시작'}],
+      points:x.map((q, i) => ({x:i, y:Math.max(-5, Math.min(5, q)), color: viol[i] ? '--red' : '--indigo', r: viol[i] ? 5 : 2.5}))});
+    const first = viol.findIndex((q, i) => q && i >= 50), fa = viol.slice(0, 50).filter(q => q).length;
+    J.out(box,'d', first >= 0 ? first + '번' : '못 찾음', first >= 0 ? '' : 'bad'); J.out(box,'lag', v.f === 'none' ? '—' : first >= 0 ? (first - 50) + '로트' : '100로트 넘게', first >= 0 && first - 50 < 10 ? 'good' : 'warn'); J.out(box,'fa', fa + '번', fa ? 'warn' : 'good');
+  }
+})();
+
+/* 13-2 Cpk */
+J.sim('sim2', (v, box) => {
+  const L = 18.5, U = 21.5, cp = (U - L)/(6*v.s), cpk = Math.min((U - v.mu)/(3*v.s), (v.mu - L)/(3*v.s));
+  const erfc = x => { const t = 1/(1 + 0.3275911*Math.abs(x)), y = (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x); return x >= 0 ? y : 2 - y; };
+  const tail = z => 0.5*erfc(z/Math.SQRT2), out = tail((U - v.mu)/v.s) + tail((v.mu - L)/v.s);
+  const pts = []; for(let x = 17; x <= 23; x += 0.02) pts.push([x, Math.exp(-Math.pow((x - v.mu)/v.s, 2)/2)/(v.s*Math.sqrt(2*Math.PI))]);
+  J.plot(document.getElementById('cv2'), {x:[17, 23], y:[0, 1/(v.s*Math.sqrt(2*Math.PI))*1.1], xlab:'게이트 CD (nm)', ylab:'확률 밀도', series:[{pts, color:'--indigo', w:3, fill:.15}], vlines:[{x:L, color:'--red', label:'LSL'},{x:U, color:'--red', label:'USL', align:'right'},{x:20, color:'--jade', dash:[3,3]}]});
+  J.out(box,'cp', J.fmt(cp, 2), cp >= 1.33 ? 'good' : 'bad'); J.out(box,'cpk', J.fmt(cpk, 2), cpk >= 1.33 ? 'good' : cpk >= 1 ? 'warn' : 'bad');
+  J.out(box,'ppm', out*1e6 >= 0.01 ? J.fmt(out*1e6, out*1e6 < 10 ? 2 : 0) + ' ppm' : J.sci(out*1e6, 2) + ' ppm'); J.out(box,'n', J.sci(out*1e9, 2) + '개');
+});
+
+/* 13-3 수율 모형 */
+(function(){
+  let seed = 7, V; const box = document.getElementById('sim3');
+  function gammaR(R, k){ if(k < 1){ const u = R(); return gammaR(R, k + 1)*Math.pow(u, 1/k); } const d = k - 1/3, c = 1/Math.sqrt(9*d); for(;;){ let x, v; do { x = J.gauss(R); v = 1 + c*x; } while(v <= 0); v = v*v*v; const u = R(); if(u < 1 - 0.0331*x*x*x*x) return d*v; if(Math.log(u) < 0.5*x*x + d*(1 - v + Math.log(v))) return d*v; } }
+  function pois(R, m){ if(m > 30) return Math.max(0, Math.round(m + Math.sqrt(m)*J.gauss(R))); let L = Math.exp(-m), k = 0, p = 1; do { k++; p *= R(); } while(p > L); return k - 1; }
+  function draw(){ const v = V, R = J.rng(seed), al = v.a, s = Math.sqrt(v.A)*10, Rw = 147; // mm
+    const {ctx, w, h} = J.fit(document.getElementById('cv3a')); ctx.clearRect(0,0,w,h);
+    const sc = (Math.min(w, h) - 20)/(2*150), cx = w/2, cy = h/2; ctx.fillStyle = '#9aa3b5'; ctx.beginPath(); ctx.arc(cx, cy, 150*sc, 0, 7); ctx.fill();
+    let good = 0, tot = 0; const n = Math.ceil(Rw/s) + 1;
+    for(let i=-n;i<n;i++) for(let j=-n;j<n;j++){ const x0 = i*s, y0 = j*s; if(![[x0,y0],[x0+s,y0],[x0,y0+s],[x0+s,y0+s]].every(([a, b]) => a*a + b*b <= Rw*Rw)) continue; tot++;
+      const Dl = gammaR(R, al)/al*v.d, k = pois(R, Dl*v.A), ok = k === 0; if(ok) good++;
+      ctx.fillStyle = J.c(ok ? '--jade' : '--red'); ctx.globalAlpha = .75; ctx.fillRect(cx + x0*sc + .6, cy + y0*sc + .6, s*sc - 1.2, s*sc - 1.2); ctx.globalAlpha = 1;
+      ctx.fillStyle = '#111'; for(let q=0;q<Math.min(k, 12);q++){ ctx.beginPath(); ctx.arc(cx + (x0 + R()*s)*sc, cy + (y0 + R()*s)*sc, 1.4, 0, 7); ctx.fill(); } }
+    const y = good/tot, yp = Math.exp(-v.d*v.A), yn = Math.pow(1 + v.d*v.A/al, -al), ym = Math.pow((1 - Math.exp(-v.d*v.A))/(v.d*v.A), 2);
+    const S = [[A => Math.exp(-v.d*A), '--red'], [A => Math.pow((1 - Math.exp(-v.d*A))/(v.d*A), 2), '--gold'], [A => Math.pow(1 + v.d*A/al, -al), '--jade']].map(([f, c]) => { const pts = []; for(let A = 0.1; A <= 6; A += 0.05) pts.push([A, f(A)*100]); return {pts, color:c, w:2.5}; });
+    J.plot(document.getElementById('cv3b'), {x:[0, 6], y:[0, 100], xlab:'칩 면적 (cm²)', ylab:'수율 (%)', series:S, points:[{x:v.A, y:y*100, color:'--ink', r:6, label:'이 웨이퍼'}]});
+    J.out(box,'y', J.fmt(y*100, 1) + ' %'); J.out(box,'yp', J.fmt(yp*100, 1) + ' %'); J.out(box,'yn', J.fmt(yn*100, 1) + ' %');
+  }
+  J.sim('sim3', v => { V = v; J.$('[data-o="a"]', box).textContent = J.fmt(v.a, 2); draw(); });
+  J.$('#b3n').onclick = () => { seed++; draw(); };
+})();
+</script>
+</body>
+</html>
