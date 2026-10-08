@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>반도체 기초 書 · 집현전</title>
+<meta name="description" content="집현전 인터랙티브 교과서 — 모래알 속 스위치: 중·고등학생을 위한 반도체 기초 (원리편·소자편·제조편 세 권)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/jade.css">
+<link rel="stylesheet" href="../assets/book.css">
+<script src="book.js"></script>
+<script src="../assets/book.js"></script>
+<script src="../assets/iso3d.js"></script>
+<style>
+  :root{--pine:#3f6b2e}
+  .hero{display:grid; grid-template-columns:1.05fr 1fr; gap:40px; align-items:center; padding:56px 0 40px}
+  .hero h1{font-size:clamp(34px,5.4vw,58px); margin:14px 0 18px; font-weight:900; line-height:1.18}
+  .hero h1 em{font-style:normal; color:var(--jade)}
+  .hero p.lead{font-size:17.5px; color:var(--ink2); max-width:560px}
+  .hero .cta{display:flex; gap:10px; flex-wrap:wrap; margin:24px 0 18px}
+  .hero .chips{display:flex; gap:8px; flex-wrap:wrap}
+  .hero .chips span{font-size:13px; border:1px solid var(--line); border-radius:3px; padding:2px 10px; background:var(--card); color:var(--ink2)}
+  .stage{position:relative; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:10px; box-shadow:inset 0 0 0 5px var(--card), inset 0 0 0 6px var(--line2), var(--shadow)}
+  .stage canvas{display:block; width:100%}
+  .stage .over{position:absolute; left:18px; top:14px; font-size:12px; color:var(--ink3)}
+  .stage .bar{display:flex; gap:8px; align-items:center; padding:4px 8px; font-size:12.5px; color:var(--ink2); flex-wrap:wrap}
+  .titleslip{position:absolute; right:-12px; top:-18px; writing-mode:vertical-rl; background:var(--paper); border:1px solid var(--line); padding:12px 7px; font-family:var(--serif); font-weight:900; letter-spacing:.3em; font-size:17px; box-shadow:var(--shadow)}
+  .titleslip small{display:block; font-weight:400; font-size:11px; letter-spacing:.15em; color:var(--ink3); margin-top:6px}
+  @media (max-width:900px){ .hero{grid-template-columns:1fr; padding-top:32px} .titleslip{right:6px; top:-14px} }
+  section.block{padding:46px 0 10px}
+  section.block > h2{font-size:28px; margin:0 0 8px; font-weight:900}
+  section.block > p.sub{color:var(--ink2); margin:0 0 22px; max-width:760px}
+  .chain svg{width:100%; height:auto; display:block}
+  .chain a:hover rect.blk{stroke:var(--red); stroke-width:2.5}
+  .nums{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px}
+  .num{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px; position:relative; overflow:hidden}
+  .num b{font-family:var(--serif); font-size:30px; font-weight:900; display:block}
+  .num span{font-size:14px; color:var(--ink2)}
+  .num:after{content:attr(data-h); position:absolute; right:10px; bottom:-14px; font-family:var(--serif); font-size:64px; color:var(--ink); opacity:.05; font-weight:900}
+  .vols{display:grid; grid-template-columns:repeat(3,1fr); gap:18px}
+  @media (max-width:980px){ .vols{grid-template-columns:1fr} }
+  .vol{background:var(--card); border:1px solid var(--line); border-radius:4px; position:relative; padding:20px 20px 16px 34px; box-shadow:var(--shadow)}
+  .vol:before{content:''; position:absolute; left:0; top:0; bottom:0; width:16px; background:var(--vc); border-radius:4px 0 0 4px}
+  .vol:after{content:''; position:absolute; left:16px; top:0; bottom:0; width:1px; background:var(--line)}
+  .vol .seal{position:absolute; right:14px; top:14px; writing-mode:vertical-rl; font-family:var(--serif); font-weight:900; font-size:22px; letter-spacing:.2em; color:var(--vc); opacity:.85}
+  .vol .vk{font-family:var(--mono); font-size:11.5px; letter-spacing:.15em; color:var(--vc)}
+  .vol h3{margin:4px 0 6px; font-size:22px; font-family:var(--serif)}
+  .vol p.d{margin:0 0 12px; font-size:14px; color:var(--ink2); max-width:88%}
+  .vol ol{list-style:none; margin:0; padding:0; display:grid; gap:2px}
+  .vol li a{display:flex; gap:10px; padding:7px 8px; border-radius:4px; color:var(--ink); font-size:14.5px; align-items:baseline}
+  .vol li a:hover{background:var(--paper2); text-decoration:none}
+  .vol li b{font-family:var(--mono); font-size:12px; color:var(--vc); min-width:20px}
+  .vol li small{display:block; color:var(--ink3); font-size:12.5px; line-height:1.5}
+  .vol .go{display:inline-block; margin-top:10px; font-size:13.5px; font-weight:700; color:var(--vc)}
+  .paths{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px}
+  .path{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px}
+  .path h3{margin:0 0 4px; font-size:17px}
+  .path p{margin:0 0 10px; font-size:14px; color:var(--ink2)}
+  .path .seq{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .path .seq a{font-family:var(--mono); font-size:13px; border:1px solid var(--jade); color:var(--jade); border-radius:3px; padding:1px 8px}
+  .path .seq i{color:var(--ink3); font-style:normal; font-size:12px}
+  .howto{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px}
+  .how{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px; text-align:center}
+  .how .hj{font-family:var(--serif); font-size:32px; font-weight:900; color:var(--red)}
+  .how b{display:block; font-family:var(--serif); margin:2px 0 4px}
+  .how span{font-size:13.5px; color:var(--ink2)}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<div class="wrap">
+
+<section class="hero">
+  <div>
+    <div class="kicker">Interactive Semiconductor Basics · 集賢殿 器部 入門</div>
+    <h1>모래알 속<br><em>스위치</em> 이야기</h1>
+    <p class="lead">반도체는 어렵다고요? 출발은 원자 하나, 전자 네 개입니다. 왜 규소일까, 불순물 한 방울이 어떻게 전기를 바꿀까, 트랜지스터는 어떻게 켜지고 꺼질까, 그리고 그것을 어떻게 모래에서 만들어 낼까. 중·고등학생을 위해 세 권으로 나눠, 슬라이더를 밀고 3D 모형을 돌리고 게임을 하며 배우는 반도체 기초 교과서입니다.</p>
+    <div class="cta">
+      <a class="btn red" href="chapters/atom.html">上卷 1장부터 펼치기 →</a>
+      <a class="btn ghost" href="#chapters">세 권 둘러보기</a>
+    </div>
+    <div class="chips"><span>3권 · 19개 장</span><span>57개 실험</span><span>3D 모형 4종</span><span>중·고등학생 눈높이</span></div>
+  </div>
+  <div class="stage">
+    <div class="titleslip">半導體<small>基礎 三卷</small></div>
+    <div class="over" id="hOver">드래그해서 돌려 보세요</div>
+    <canvas id="hero3d" data-h="400" aria-label="반도체 3D 모형"></canvas>
+    <div class="bar" id="modeBtns">
+      <button class="sbtn on" data-m="1">上 원리 · 규소 결정</button>
+      <button class="sbtn" data-m="2">中 소자 · 트랜지스터</button>
+      <button class="sbtn" data-m="3">下 제조 · 웨이퍼</button>
+    </div>
+  </div>
+</section>
+
+<section class="block chain">
+  <div class="kicker">The whole story in one line</div>
+  <h2>한 줄로 보는 반도체</h2>
+  <p class="sub"><b>원자 → 띠틈 → 도핑 → PN 접합 → 트랜지스터 → 논리와 기억 → 웨이퍼 → 공정 → 칩.</b> 이 책의 순서이자 반도체가 만들어지는 이야기의 순서입니다. 칸을 누르면 해당 장으로 갑니다.</p>
+  <figure class="fig" style="margin:0">
+    <svg viewBox="0 0 980 250" role="img" aria-label="반도체 기초 흐름"><g id="chainG"></g></svg>
+    <figcaption><b>그림 0-1.</b> 세 권의 흐름. 上卷은 "왜 반도체인가", 中卷은 "무엇을 만드는가", 下卷은 "어떻게 만드는가"에 답한다.</figcaption>
+  </figure>
+</section>
+
+<section class="block" id="chapters">
+  <div class="kicker">Three volumes · 三卷</div>
+  <h2>세 권으로 나눈 반도체 기초</h2>
+  <p class="sub">내용이 많아 옛 책처럼 상·중·하 세 권으로 나눴습니다. 차례대로 읽어도 좋고, 궁금한 권부터 펼쳐도 됩니다. 각 장은 <b>개념 → 그림 → 식 → 실험 → 문제</b> 순서입니다.</p>
+  <div class="vols" id="volList"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">Numbers to remember</div>
+  <h2>숫자로 보는 반도체</h2>
+  <p class="sub">책을 덮을 즈음이면 아래 숫자가 왜 그 값인지 설명할 수 있게 됩니다.</p>
+  <div class="nums">
+    <div class="num" data-h="四"><b>4개</b><span>규소의 원자가 전자. 모든 이야기의 시작 → 1장</span></div>
+    <div class="num" data-h="隙"><b>1.12 eV</b><span>규소의 띠틈. 1100 nm보다 짧은 빛을 먹는다 → 3장</span></div>
+    <div class="num" data-h="摻"><b>1억분의 1</b><span>이만큼의 불순물로 전도도가 수만 배 → 5장</span></div>
+    <div class="num" data-h="門"><b>0.7 V</b><span>규소 다이오드가 열리는 문턱 → 8장</span></div>
+    <div class="num" data-h="純"><b>99.999999999 %</b><span>반도체용 규소의 순도, 일레븐 나인 → 13장</span></div>
+    <div class="num" data-h="光"><b>13.5 nm</b><span>최첨단 노광 장비가 쓰는 극자외선 파장 → 14장</span></div>
+    <div class="num" data-h="億"><b>2,000억 개</b><span>최신 AI 칩 하나의 트랜지스터 수 → 16장</span></div>
+    <div class="num" data-h="塵"><b>1,000개</b><span>첨단 클린룸 공기 1 m³ 속 먼지 수 → 17장</span></div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="kicker">Reading paths</div>
+  <h2>추천 읽기 경로</h2>
+  <p class="sub">목적에 따라 이렇게 골라 읽어도 좋습니다.</p>
+  <div class="paths" id="paths"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">How to read</div>
+  <h2>이 책 읽는 법</h2>
+  <div class="howto">
+    <div class="how"><div class="hj">讀</div><b>읽기</b><span>비유와 그림으로 먼저 감을 잡아요. 어려운 식은 건너뛰어도 괜찮아요.</span></div>
+    <div class="how"><div class="hj">觀</div><b>보기</b><span>원자·트랜지스터·웨이퍼를 3D로 돌려 보세요.</span></div>
+    <div class="how"><div class="hj">觸</div><b>만지기</b><span>슬라이더를 끝까지 밀어 보세요. 극단에서 배웁니다.</span></div>
+    <div class="how"><div class="hj">思</div><b>생각하기</b><span>"생각해 보기" 상자에 스스로 답해 보세요.</span></div>
+    <div class="how"><div class="hj">問</div><b>확인하기</b><span>장마다 문제, 마지막 장에서 20문제 종합 퀴즈!</span></div>
+  </div>
+</section>
+
+</div>
+<footer class="site">반도체 기초 書 「모래알 속 스위치」 — 집현전 인터랙티브 교과서 시리즈 · 수치는 교육용 근사 모델입니다.<br>콘텐츠 CC BY 4.0 · 코드 MIT</footer>
+
+<script>
+(function(){
+  const B = window.BOOK, col = {'1':'#2b4a7c', '2':'#2c7a68', '3':'#8a5a33'};
+  document.getElementById('volList').innerHTML = B.vols.map(v => {
+    const chs = B.chapters.filter(c => c.vol === v.id);
+    return `<div class="vol" style="--vc:${col[v.id]}"><span class="seal">${v.hj}</span><div class="vk">VOLUME ${v.id} · ${v.key}</div><h3>${v.name}</h3><p class="d">${v.desc}</p>
+      <ol>${chs.map(c => `<li><a href="chapters/${c.slug}.html"><b>${c.n}</b><span>${c.title}<small>${c.desc}</small></span></a></li>`).join('')}</ol>
+      <a class="go" href="chapters/${chs[0].slug}.html">${v.hj} 펼치기 →</a></div>`; }).join('');
+  const P = [
+    ['처음 읽는 중학생','그림과 실험 위주로 큰 흐름 잡기.',['01','02','05','08','10','13','18']],
+    ['고1 통합과학 · 물리 연계','원자·에너지·전기 단원과 이어 읽기.',['01','03','04','05','07','09']],
+    ['화학 · 공정에 관심','물질과 제조 공정 중심.',['01','04','05','13','14','15','17']],
+    ['컴퓨터 · 코딩에 관심','스위치에서 계산과 기억까지.',['08','10','11','12','16']],
+    ['진로 탐색','반도체 산업과 직업 알아보기.',['16','17','18','19']],
+    ['과학 탐구 보고서','실험 데이터를 바꿔 가며 가설 검증.',['02','06','09','14','17']]
+  ];
+  const slug = n => B.chapters.find(c => c.n === n).slug;
+  document.getElementById('paths').innerHTML = P.map(p => `<div class="path"><h3>${p[0]}</h3><p>${p[1]}</p><div class="seq">${p[2].map(n => `<a href="chapters/${slug(n)}.html">${n}</a>`).join('<i>→</i>')}</div></div>`).join('');
+})();
+
+(function(){
+  const g = document.getElementById('chainG');
+  const items = [['원자','전자 4개','atom','--indigo'],['띠틈','1.12 eV','band','--indigo'],['도핑','n형·p형','doping','--indigo'],['PN 접합','공핍층','pn','--jade'],['트랜지스터','스위치','mosfet','--jade'],['논리·기억','0과 1','logic','--jade'],['웨이퍼','단결정','wafer','--gold'],['공정','빛·식각·주입','litho','--gold'],['칩','수율','fab','--gold']];
+  const w = 96, gap = 12;
+  items.forEach(([t, s, ch, c], i) => { const x = 10 + i*(w + gap), y = 70;
+    const a = J.svg('a', {href:'chapters/' + ch + '.html'}, g);
+    J.svg('rect', {class:'blk', x, y, width:w, height:70, rx:6, fill:'var(--card)', stroke:`var(${c})`, 'stroke-width':2}, a);
+    J.svg('rect', {x, y, width:w, height:6, fill:`var(${c})`}, a);
+    J.svg('text', {x:x + w/2, y:y + 34, 'text-anchor':'middle', class:'t-m', text:t, style:'font-weight:700'}, a);
+    J.svg('text', {x:x + w/2, y:y + 54, 'text-anchor':'middle', class:'t-s', text:s}, a);
+    if(i < items.length - 1) J.svg('path', {d:`M${x + w + 1} ${y + 35} l${gap - 2} 0`, stroke:'var(--ink3)', 'stroke-width':2}, g); });
+  [['上卷 원리편 · 전자의 길', 0, 3, '--indigo'], ['中卷 소자편 · 스위치의 탄생', 3, 6, '--jade'], ['下卷 제조편 · 모래에서 칩까지', 6, 9, '--gold']].forEach(([t, a, b, c]) => {
+    const x0 = 10 + a*(w + gap), x1 = 10 + b*(w + gap) - gap;
+    J.svg('path', {d:`M${x0} 52 L${x0} 44 L${x1} 44 L${x1} 52`, fill:'none', stroke:`var(${c})`, 'stroke-width':2}, g);
+    J.svg('text', {x:(x0 + x1)/2, y:34, 'text-anchor':'middle', class:'t-m', text:t, style:`fill:var(${c});font-weight:700`}, g);
+    J.svg('path', {d:`M${x0} 158 L${x0} 166 L${x1} 166 L${x1} 158`, fill:'none', stroke:`var(${c})`, 'stroke-width':1, opacity:.5}, g); });
+  J.svg('text', {x:490, y:200, 'text-anchor':'middle', class:'t-s', text:'왜 반도체인가?  →  무엇을 만드는가?  →  어떻게 만드는가?'}, g);
+  J.svg('text', {x:490, y:225, 'text-anchor':'middle', class:'t-s', text:'+ 18장 반도체와 세상 (산업·진로) · 19장 용어집 & 종합 퀴즈', style:'fill:var(--ink3)'}, g);
+})();
+
+/* 히어로 3D: 세 권의 대표 모형 */
+(function(){
+  const cv = document.getElementById('hero3d'), cam = {yaw:-0.6, pitch:0.5, scale:60};
+  let mode = '1', t = 0;
+  // 다이아몬드 격자 원자
+  const fcc = [[0,0,0],[0,.5,.5],[.5,0,.5],[.5,.5,0]], A = [];
+  for(let i=0;i<=1;i++) for(let j=0;j<=1;j++) for(let k=0;k<=1;k++) [0,1].forEach(sub => fcc.forEach(f => { const p = [i + f[0] + sub*.25, j + f[1] + sub*.25, k + f[2] + sub*.25]; if(p.every(c => c <= 1 + 1e-6)) A.push(p); }));
+  const key = new Set(), U = []; A.forEach(p => { const kk = p.map(c => c.toFixed(3)).join(); if(!key.has(kk)){ key.add(kk); U.push(p); } });
+  const BD = []; for(let a=0;a<U.length;a++) for(let b=a+1;b<U.length;b++){ if(Math.abs(Math.hypot(...U[a].map((c,i) => c - U[b][i])) - 0.433) < 0.02) BD.push([a,b]); }
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    if(mode === '1'){
+      cam.scale = Math.min(w, h)*0.5; cam.oy = 0;
+      const P = U.map(p => { const r = J3.rot(p.map(x => x - 0.5), cam); return [w/2 + r[0]*cam.scale, h/2 - r[1]*cam.scale, r[2]]; });
+      const items = BD.map(b => ({z:(P[b[0]][2] + P[b[1]][2])/2 + 0.01, b})).concat(P.map((p, i) => ({z:p[2], i})));
+      items.sort((a, b) => b.z - a.z);
+      items.forEach(it => { if(it.b){ ctx.strokeStyle = J.c('--ink3'); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(P[it.b[0]][0], P[it.b[0]][1]); ctx.lineTo(P[it.b[1]][0], P[it.b[1]][1]); ctx.stroke(); return; }
+        const p = P[it.i], r = cam.scale*0.075*(1 - p[2]*0.08); const g = ctx.createRadialGradient(p[0] - r*.35, p[1] - r*.35, r*.1, p[0], p[1], r);
+        g.addColorStop(0, '#fff'); g.addColorStop(.35, J.c('--indigo')); g.addColorStop(1, J.c('--indigo')); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 7); ctx.fill(); });
+      // 떠다니는 전자
+      for(let k=0;k<4;k++){ const a = t*0.8 + k*1.6, r = J3.rot([0.5 + 0.55*Math.cos(a), 0.5 + 0.3*Math.sin(a*1.3), 0.5 + 0.55*Math.sin(a)].map(x => x - 0.5), cam);
+        ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(w/2 + r[0]*cam.scale, h/2 - r[1]*cam.scale, 5, 0, 7); ctx.fill(); }
+    } else if(mode === '2'){
+      cam.scale = Math.min(w/8.5, h/5.6); cam.oy = h*0.05;
+      const on = Math.sin(t*1.2) > 0, S = new J3.Scene();
+      S.box(-3.5, -2, -1.6, 7, 1.5, 3.2, '--indigo', {layer:0});
+      S.box(-3.5, -0.5, -1.6, 2, 0.5, 3.2, '--red', {layer:1}); S.box(1.5, -0.5, -1.6, 2, 0.5, 3.2, '--red', {layer:1});
+      S.box(-1.5, -0.5, -1.6, 3, 0.4, 3.2, '--indigo', {layer:1}); S.box(-1.5, -0.1, -1.6, 3, 0.1, 3.2, on ? '--jade' : '--indigo', {layer:1});
+      S.box(-1.5, 0, -1.6, 3, 0.14, 3.2, '--gold', {layer:2}); S.box(-1.4, 0.14, -1.6, 2.8, 0.75, 3.2, '#5b6170', {layer:3});
+      S.render(ctx, cam, w, h);
+      if(on){ ctx.fillStyle = J.c('--red'); for(let k=0;k<10;k++){ const x = -2.8 + ((k/10 + t*0.3) % 1)*5.6, q = J3.project([x, Math.abs(x) < 1.5 ? -0.05 : -0.25, 1.6], cam, w, h); ctx.beginPath(); ctx.arc(q[0], q[1], 3.5, 0, 7); ctx.fill(); } }
+      ctx.fillStyle = J.c('--ink'); ctx.font = '600 13px "Noto Sans KR"'; ctx.textAlign = 'center'; const q = J3.project([0, 1.4, 0], cam, w, h); ctx.fillText(on ? '게이트 ON → 채널 열림' : '게이트 OFF → 닫힘', q[0], q[1]);
+    } else {
+      cam.scale = Math.min(w, h)/9; cam.oy = h*0.08;
+      const S = new J3.Scene();
+      S.prism(0, -0.3, 0, 3.6, 0.3, '#9aa3b5', {n:48, layer:0, top:'#b9c0cc'});
+      const s = 0.62;
+      for(let i=-6;i<6;i++) for(let j=-6;j<6;j++){ const x = i*s, z = j*s; if([[x,z],[x+s,z],[x,z+s],[x+s,z+s]].every(([a,b]) => a*a + b*b < 3.3*3.3)){
+        const hh = 0.04 + 0.25*Math.max(0, Math.sin(t*1.5 - Math.hypot(x, z)*0.9)); S.box(x + 0.03, 0, z + 0.03, s - 0.06, hh, s - 0.06, (i + j) % 7 === 0 ? '--red' : '--jade', {layer:1}); } }
+      S.render(ctx, cam, w, h);
+    }
+  }
+  J3.drag(cv, cam, draw); J.live(draw);
+  J.loop(cv, dt => { t += dt; if(!cam.user) cam.yaw += dt*0.18; draw(); });
+  const over = {'1':'上卷 · 규소 결정 (다이아몬드 구조)', '2':'中卷 · MOSFET: 게이트가 채널을 여닫는다', '3':'下卷 · 웨이퍼 위의 칩들 (빨강 = 불량)'};
+  J.$$('#modeBtns [data-m]').forEach(bt => bt.onclick = () => { J.$$('#modeBtns [data-m]').forEach(x => x.classList.remove('on')); bt.classList.add('on'); mode = bt.dataset.m; J.$('#hOver').textContent = over[mode] + ' · 드래그해서 돌려 보세요'; draw(); });
+  J.$('#hOver').textContent = over['1'] + ' · 드래그해서 돌려 보세요';
+})();
+</script>
+</body>
+</html>

@@ -46,6 +46,13 @@
     return x.toExponential(2) + ' ' + unit;
   };
 
+  /* 과학 표기: 8.6×10⁹ */
+  J.sci = function(x, d=2, unit=''){
+    if(!isFinite(x)) return '—'; if(x === 0) return '0' + (unit ? ' ' + unit : '');
+    const e = Math.floor(Math.log10(Math.abs(x))), m = x/Math.pow(10, e);
+    const sup = String(e).replace('-', '⁻').replace(/\d/g, c => '⁰¹²³⁴⁵⁶⁷⁸⁹'[c]);
+    return (e >= -2 && e <= 3 ? J.fmt(x, d) : (+m.toFixed(d-1)) + '×10' + sup) + (unit ? ' ' + unit : '');
+  };
   /* ── 실험 바인딩: data-k 슬라이더 → 값 객체 → update(v) ── */
   J.sim = function(id, update){
     const box = document.getElementById(id);
@@ -61,7 +68,7 @@
         const out = J.$(`[data-o="${i.dataset.k}"]`, box);
         if(out){
           const d = i.dataset.d !== undefined ? +i.dataset.d : 2;
-          out.textContent = i.dataset.si !== undefined ? J.si(x, i.dataset.si) : ((i.dataset.raw !== undefined ? String(x) : J.fmt(x, d)) + (i.dataset.u ? ' ' + i.dataset.u : ''));
+          out.textContent = typeof x === 'boolean' ? (x ? '켬' : '끔') : typeof x !== 'number' ? String(x) : i.dataset.si !== undefined ? J.si(x, i.dataset.si) : ((i.dataset.raw !== undefined ? String(x) : J.fmt(x, d)) + (i.dataset.u ? ' ' + i.dataset.u : ''));
         }
       });
       return v;
@@ -187,7 +194,9 @@
     const toc = document.getElementById('toc');
     if(toc){
       let html = `<h4>目次 · 목차</h4><a href="${base}index.html"><b>00</b>책 머리 · 로드맵</a>`;
+      let pv = null;
       B.chapters.forEach(c => {
+        if(c.vol && c.vol !== pv && B.vols){ const V = B.vols.find(x => x.id === c.vol); if(V) html += `<div class="vol"><span>${V.hj}</span>${V.name}</div>`; pv = c.vol; }
         html += `<a href="${base}chapters/${c.slug}.html" class="${c.slug===slug?'on':''}"><b>${c.n}</b>${c.title}</a>`;
         if(c.slug === slug){
           const hs = J.$$('main.chapter h2[id]');

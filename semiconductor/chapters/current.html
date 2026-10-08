@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>전류의 두 얼굴: 표류와 확산 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="current">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 06 <span class="hanja">上卷 原理 · 第六章 · 流</span></div>
+  <h1>전류의 두 얼굴: 표류와 확산</h1>
+  <p class="lead">반도체 속 전자와 정공이 움직이는 이유는 두 가지다. 전기장이 밀어서 움직이는 <span class="term">표류</span>(drift), 그리고 많은 곳에서 적은 곳으로 저절로 퍼지는 <span class="term">확산</span>(diffusion). 금속에서는 표류만 신경 쓰면 되지만, 반도체 소자에서는 확산이 주인공이 되는 경우가 많다. 이 두 흐름이 맞서 균형을 이루는 장면이 다음 권(소자편)의 출발점이다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>전자는 빠르게 무작위로 움직이면서 전기장 방향으로 천천히 떠밀려 간다는 것을 본다.</li>
+  <li>표류 속도 v = μE와 이동도 μ의 뜻을 안다.</li>
+  <li>농도 차이만으로 운반자가 퍼지는 확산을 관찰하고, 확산 거리 √(Dt)를 계산한다.</li>
+  <li>표류와 확산이 서로 반대 방향으로 균형을 이루는 상태를 만든다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>표류: 바람에 떠밀리는 꿀벌 떼</h2>
+<p>상온의 전자는 열 때문에 초속 100 km 정도로 아주 빠르게 움직인다. 하지만 원자의 떨림이나 불순물과 1조분의 1초마다 부딪혀 방향이 마구 바뀌므로, 평균적으로는 제자리다. 여기에 전기장을 걸면 부딪힘과 부딪힘 사이에 조금씩 한쪽으로 끌려가서, 전체가 천천히 이동한다. 이 평균 속도가 <span class="term">표류 속도</span>이고, 전기장에 얼마나 잘 반응하는지를 <span class="term">이동도</span>(μ)라 한다.</p>
+<div class="eq">$$v_d = \mu E \qquad (\mu_n \approx 1400,\ \ \mu_p \approx 450\ \ \text{cm}^2/\text{V·s, 규소})$$<div class="note">1 V/cm의 전기장에서 규소 속 전자는 초속 14 m로 떠밀린다. 열 속도(10만 m/s)에 비하면 아주 느리지만, 수십억 개가 함께 움직이니 전류가 된다.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-1</span><span class="ttl">지그재그 속의 표류</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">전기장 (← 방향으로 전자를 밂) <output data-o="e"></output></span><input type="range" data-k="e" min="0" max="10" step="0.5" value="3" data-d="1"></label>
+      <label class="ctrl"><span class="lab">운반자</span><select data-k="c"><option value="n">전자 (μ 큼)</option><option value="p">정공 (μ 작음)</option></select></label>
+      <label class="ctrl"><span class="lab">충돌 빈도 (불순물·온도) <output data-o="s"></output></span><input type="range" data-k="s" min="1" max="10" step="1" value="4" data-d="0"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b1r">처음 위치로</button></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">평균 이동 (화면)</span><span class="v" data-r="dx"></span></div>
+      <div class="ro"><span class="k">표류 속도 (화면 단위)</span><span class="v" data-r="vd"></span></div>
+      <div class="ro"><span class="k">실제 규소에서 (E = 1 kV/cm)</span><span class="v" data-r="real" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>관찰.</b> 노란 점선 세로선은 출발 위치, 빨간 세로선은 운반자들의 평균 위치다. 하나만 따라가면(굵은 꼬리) 이리저리 헤매지만, 무리 전체의 평균은 꾸준히 이동한다. 충돌이 잦을수록(불순물이 많거나 뜨거울수록) 표류는 느려진다 — 진하게 도핑하면 이동도가 떨어지는 이유다. 정공은 같은 전기장에서 전자와 반대로, 더 느리게 움직인다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>확산: 잉크 한 방울</h2>
+<p>물에 잉크를 한 방울 떨어뜨리면 아무도 젓지 않아도 퍼져 나간다. 잉크 분자가 일부러 퍼지려는 것이 아니라, 모두가 무작위로 움직이다 보면 <b>많은 곳에서 적은 곳으로 가는 수가 반대보다 많아질 뿐</b>이다. 전자와 정공도 똑같다. 한쪽에 몰려 있으면 전기장이 없어도 퍼져 나가며 전류를 만든다. 퍼지는 거리는 시간의 제곱근에 비례한다 — 4배 멀리 가려면 16배 오래 걸린다.</p>
+<div class="eq">$$L = \sqrt{D\,t}\qquad (D_n \approx 36\ \text{cm}^2/\text{s},\ \ D_p \approx 12\ \text{cm}^2/\text{s, 규소})$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-2</span><span class="ttl">퍼져 나가는 전자 구름</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">확산 계수 D (온도·이동도) <output data-o="d"></output></span><input type="range" data-k="d" min="0.2" max="3" step="0.1" value="1" data-d="1" data-u="×"></label>
+      <label class="ctrl"><span class="lab">처음 모양</span><select data-k="sh"><option value="c">가운데 한 덩어리</option><option value="l">왼쪽 절반에 가득</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b2g">떨어뜨리기 (다시 시작)</button></div>
+    <div class="canvas-box"><canvas id="cv2" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">흐른 시간</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">퍼진 폭 (측정)</span><span class="v" data-r="w"></span></div>
+      <div class="ro"><span class="k">√(2Dt) 예측</span><span class="v" data-r="p"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 위: 운반자 알갱이들. 아래: 위치별 농도 막대그래프. 처음에는 뾰족하던 분포가 시간이 지나며 낮고 넓은 종 모양(가우스 분포)이 된다. 측정한 폭(표준편차)이 √(2Dt) 예측과 거의 같게 자라는지 확인하자. 실제 규소에서 전자는 1 µs 동안 약 √(36×10⁻⁶) cm ≈ 60 µm 퍼진다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>밀고 당기기: 표류와 확산의 균형</h2>
+<p>확산은 운반자를 "적은 쪽"으로 밀고, 전기장은 운반자를 한쪽으로 끌어당긴다. 둘이 반대 방향이면 어느 순간 정확히 균형을 이뤄 <b>알짜 전류가 0</b>이 된다. 이때 농도는 지수 함수 모양으로 쌓이고, 양 끝의 농도 비는 걸린 전압으로 정해진다. 상온에서 전압 0.06 V마다 농도가 10배씩 차이 난다.</p>
+<div class="eq">$$\frac{n_{\text{많은 쪽}}}{n_{\text{적은 쪽}}} = e^{\,qV/kT}\quad\Longrightarrow\quad V \approx 0.06\ \text{V} \times \log_{10}\!\frac{n_{\text{많은 쪽}}}{n_{\text{적은 쪽}}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-3</span><span class="ttl">줄다리기: 확산 vs 전기장</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">전기장 세기 (전자를 ← 로) <output data-o="e"></output></span><input type="range" data-k="e" min="0" max="8" step="0.25" value="2" data-d="2"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b3r">고르게 다시 섞기</button></div>
+    <div class="canvas-box"><canvas id="cv3" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">왼쪽 끝 / 오른쪽 끝 농도</span><span class="v" data-r="ratio"></span></div>
+      <div class="ro"><span class="k">이 비율에 해당하는 전압 (상온)</span><span class="v" data-r="v"></span></div>
+      <div class="ro"><span class="k">상태</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>관찰.</b> 전기장이 0이면 고르게 퍼진다. 전기장을 세게 할수록 전자가 왼쪽에 쌓여 가파른 지수 곡선(빨간 점선)이 된다. 쌓이면 쌓일수록 확산이 오른쪽으로 되밀어 결국 균형이 잡힌다. 다음 장의 PN 접합에서는 이 장면이 반대로 일어난다: 농도 차이가 먼저 있고, 확산이 만든 전기장이 균형을 잡는다 — 그 전압이 <b>내부 전위</b>다.</p>
+</div>
+
+<div class="note-box hist" data-h="上卷 정리"><div class="h">원리편을 마치며</div>
+<p style="margin:0">원자가 전자 4개인 규소 → 공유 결합 결정 → 띠틈 1.12 eV → 열과 빛으로 전자-정공 쌍 → 도핑으로 n형·p형 → 표류와 확산으로 전류. 이제 재료는 모두 준비됐다. 중권 「소자편」에서는 n형과 p형을 붙여 다이오드, LED, 트랜지스터를 만든다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">이동도 1400 cm²/V·s인 전자에 100 V/cm의 전기장을 걸면 표류 속도는?</p><ol><li>14 cm/s</li><li>1.4×10⁵ cm/s</li><li>1400 cm/s</li><li>14 m/s</li></ol>
+<p class="explain">v = μE = 1400 × 100 = 1.4×10⁵ cm/s = 1.4 km/s.</p></div>
+<div class="quiz" data-a="3"><p class="q">확산으로 퍼지는 거리를 2배로 늘리려면 시간은?</p><ol><li>같은 시간</li><li>2배</li><li>√2배</li><li>4배</li></ol>
+<p class="explain">L ∝ √t 이므로 L이 2배가 되려면 t는 4배.</p></div>
+<div class="quiz" data-a="0"><p class="q">전기장이 없어도 전류가 흐를 수 있는 경우는?</p><ol><li>운반자 농도에 차이가 있을 때 (확산)</li><li>온도가 0 K일 때</li><li>금속일 때만</li><li>불가능하다</li></ol>
+<p class="explain">농도 기울기만 있어도 확산 전류가 흐른다. 빛을 받은 태양전지 속에서도 일어난다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 6-1 표류 */
+(function(){
+  const cv = document.getElementById('cv1'), box = document.getElementById('sim1'), N = 60;
+  let V = {e:3, c:'n', s:4}, P = [], t = 0, trail = [];
+  function reset(){ const R = J.rng(3); P = Array.from({length:N}, () => ({x:0.5 + (R() - .5)*0.1, y:0.08 + R()*0.84, a:R()*6.28})); t = 0; trail = []; }
+  reset();
+  function step(dt){
+    const mu = V.c === 'n' ? 1 : 0.32, sgn = V.c === 'n' ? -1 : 1, vth = 0.35, tau = 0.25/V.s;
+    P.forEach((p, k) => { if(Math.random() < dt/tau) p.a = Math.random()*6.28;
+      p.vx = vth*Math.cos(p.a) + sgn*mu*V.e*0.02; p.vy = vth*Math.sin(p.a);
+      p.x += p.vx*dt; p.y += p.vy*dt; if(p.y < 0.03){ p.y = 0.03; p.a = -p.a; } if(p.y > 0.97){ p.y = 0.97; p.a = -p.a; } });
+    trail.push([P[0].x, P[0].y]); if(trail.length > 400) trail.shift();
+    t += dt;
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const mx = P.reduce((a, p) => a + p.x, 0)/N, s = Math.max(1, Math.abs(mx - 0.5)*2.5 + 1);
+    const X = x => w/2 + (x - 0.5)*w*0.9/s*1, Y = y => 10 + y*(h - 30);
+    ctx.strokeStyle = J.c('--gold'); ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(X(0.5), 6); ctx.lineTo(X(0.5), h - 20); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(mx), 6); ctx.lineTo(X(mx), h - 20); ctx.stroke();
+    ctx.strokeStyle = J.c('--ink'); ctx.lineWidth = 1.6; ctx.globalAlpha = .7; ctx.beginPath(); trail.forEach((q, i) => i ? ctx.lineTo(X(q[0]), Y(q[1])) : ctx.moveTo(X(q[0]), Y(q[1]))); ctx.stroke(); ctx.globalAlpha = 1;
+    P.forEach((p, k) => { ctx.fillStyle = V.c === 'n' ? J.c('--red') : J.c('--card'); ctx.strokeStyle = J.c('--indigo'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), k === 0 ? 6 : 4, 0, 7); ctx.fill(); if(V.c === 'p') ctx.stroke(); });
+    ctx.fillStyle = J.c('--ink3'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText(s > 1.05 ? `화면 축소 ×${J.fmt(1/s, 2)}` : '', 8, h - 6);
+    if(V.e > 0){ ctx.fillStyle = J.c('--gold'); ctx.textAlign = 'right'; ctx.fillText('전기장 E → (전자는 ←, 정공은 →)', w - 8, h - 6); }
+    J.out(box,'dx', J.fmt((mx - 0.5)*100, 1) + ' 칸');
+    const mu = V.c === 'n' ? 1 : 0.32; J.out(box,'vd', J.fmt(mu*V.e*0.02*100, 2) + ' 칸/초');
+    const real = (V.c === 'n' ? 1400 : 450)*1000/100; J.out(box,'real', `${J.fmt(real, 0)} m/s (${V.c === 'n' ? '전자' : '정공'})`);
+  }
+  J.sim('sim1', v => { V = v; draw(); });
+  J.$('#b1r').onclick = () => { reset(); draw(); };
+  J.loop(cv, dt => { step(dt); draw(); });
+})();
+
+/* 6-2 확산 */
+(function(){
+  const cv = document.getElementById('cv2'), box = document.getElementById('sim2'), N = 600;
+  let V = {d:1, sh:'c'}, P = [], t = 0, x0 = [];
+  function reset(){ const R = J.rng(17); P = Array.from({length:N}, () => ({x: V.sh === 'c' ? 0.5 + (R() - .5)*0.02 : R()*0.5, y:R()})); x0 = P.map(p => p.x); t = 0; }
+  function step(dt){
+    const D = 0.0012*V.d, s = Math.sqrt(2*D*dt);
+    P.forEach(p => { p.x += J.gauss()*s; p.y += J.gauss()*s*2; if(p.x < 0) p.x = -p.x; if(p.x > 1) p.x = 2 - p.x; if(p.y < 0) p.y = -p.y; if(p.y > 1) p.y = 2 - p.y; });
+    t += dt;
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const top = 120, X = x => 20 + x*(w - 40);
+    ctx.fillStyle = J.c('--paper2'); ctx.fillRect(20, 6, w - 40, top - 10);
+    ctx.fillStyle = J.c('--red'); ctx.globalAlpha = .7;
+    P.forEach(p => { ctx.beginPath(); ctx.arc(X(p.x), 8 + p.y*(top - 14), 2.2, 0, 7); ctx.fill(); }); ctx.globalAlpha = 1;
+    const B = 40, hist = new Array(B).fill(0); P.forEach(p => hist[Math.min(B - 1, Math.floor(p.x*B))]++);
+    const mxh = V.sh === 'c' ? Math.max(40, ...hist) : N/B*2.2, bw = (w - 40)/B, base = h - 22;
+    hist.forEach((c, i) => { const bh = c/mxh*(base - top - 10); ctx.fillStyle = J.c('--red'); ctx.globalAlpha = .55; ctx.fillRect(20 + i*bw + 1, base - bh, bw - 2, bh); ctx.globalAlpha = 1; });
+    // 이론 곡선
+    const D = 0.0012*V.d; ctx.strokeStyle = J.c('--ink'); ctx.lineWidth = 2; ctx.setLineDash([4,3]); ctx.beginPath();
+    for(let i=0;i<=200;i++){ const x = i/200; let c;
+      if(V.sh === 'c'){ const sg = Math.sqrt(2*D*t + 0.00003); c = N/B*Math.exp(-(x - .5)*(x - .5)/(2*sg*sg))/(sg*Math.sqrt(2*Math.PI)); }
+      else c = N/B*(1 - erf((x - 0.5)/(Math.sqrt(4*D*t) + 1e-9)));
+      const y = base - c/mxh*(base - top - 10); i ? ctx.lineTo(X(x), Math.max(top, y)) : ctx.moveTo(X(x), Math.max(top, y)); }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('농도 (막대) · 이론 (점선)', 24, top + 12);
+    const m = P.reduce((a, p) => a + p.x, 0)/N, sd = Math.sqrt(P.reduce((a, p) => a + (p.x - m)*(p.x - m), 0)/N);
+    J.out(box,'t', J.fmt(t, 1) + ' 초'); J.out(box,'w', V.sh === 'c' ? J.fmt(sd*100, 1) + ' 칸' : '—'); J.out(box,'p', V.sh === 'c' ? J.fmt(Math.sqrt(2*D*t)*100, 1) + ' 칸' : '—');
+  }
+  function erf(x){ const s = Math.sign(x); x = Math.abs(x); const t = 1/(1 + 0.3275911*x); const y = 1 - (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x); return s*y; }
+  J.sim('sim2', v => { const re = v.sh !== V.sh || !P.length; V = v; if(re) reset(); draw(); });
+  J.$('#b2g').onclick = () => { reset(); draw(); };
+  J.loop(cv, dt => { step(dt); draw(); });
+})();
+
+/* 6-3 줄다리기 */
+(function(){
+  const cv = document.getElementById('cv3'), box = document.getElementById('sim3'), N = 700;
+  let E = 2, P = [];
+  function reset(){ const R = J.rng(5); P = Array.from({length:N}, () => ({x:R(), y:R()})); }
+  reset();
+  function step(dt){
+    const D = 0.004, v = -E*0.006, s = Math.sqrt(2*D*dt);
+    P.forEach(p => { p.x += v*dt + J.gauss()*s; p.y += J.gauss()*s*1.5; if(p.x < 0) p.x = -p.x; if(p.x > 1) p.x = 2 - p.x; if(p.y < 0) p.y = -p.y; if(p.y > 1) p.y = 2 - p.y; });
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const top = 110, X = x => 20 + x*(w - 40);
+    ctx.fillStyle = J.c('--paper2'); ctx.fillRect(20, 6, w - 40, top - 10);
+    ctx.fillStyle = J.c('--red'); ctx.globalAlpha = .65; P.forEach(p => { ctx.beginPath(); ctx.arc(X(p.x), 8 + p.y*(top - 14), 2, 0, 7); ctx.fill(); }); ctx.globalAlpha = 1;
+    const B = 30, hist = new Array(B).fill(0); P.forEach(p => hist[Math.min(B - 1, Math.floor(p.x*B))]++);
+    const L = E > 0 ? 0.004/(E*0.006) : 1e9, th = x => E > 0 ? N/B*Math.exp(-x/L)/(L*(1 - Math.exp(-1/L))) : N/B;
+    const mx = Math.max(th(0), ...hist)*1.1, base = h - 22, bw = (w - 40)/B, Yc = c => base - c/mx*(base - top - 10);
+    hist.forEach((c, i) => { ctx.fillStyle = J.c('--red'); ctx.globalAlpha = .55; ctx.fillRect(20 + i*bw + 1, Yc(c), bw - 2, base - Yc(c)); ctx.globalAlpha = 1; });
+    ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2; ctx.setLineDash([5,4]); ctx.beginPath(); for(let i=0;i<=100;i++){ const x = i/100; i ? ctx.lineTo(X(x), Yc(th(x))) : ctx.moveTo(X(x), Yc(th(x))); } ctx.stroke(); ctx.setLineDash([]);
+    // 화살표
+    const arrow = (x1, x2, y, col, lab) => { ctx.strokeStyle = J.c(col); ctx.fillStyle = J.c(col); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke(); const d = Math.sign(x2 - x1); ctx.beginPath(); ctx.moveTo(x2 + d*8, y); ctx.lineTo(x2 - d*2, y - 6); ctx.lineTo(x2 - d*2, y + 6); ctx.fill(); ctx.font = '600 12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(lab, (x1 + x2)/2, y - 8); };
+    if(E > 0) arrow(w*0.62, w*0.62 - 30 - E*10, top + 26, '--gold', '전기장이 끄는 힘');
+    arrow(w*0.68, w*0.68 + 30 + E*10, top + 26, '--jade', '확산이 미는 힘');
+    const l = hist.slice(0, 3).reduce((a, b) => a + b, 0) + 0.5, r = hist.slice(-3).reduce((a, b) => a + b, 0) + 0.5, ratio = E > 0 ? Math.exp(1/L) : 1;
+    J.out(box,'ratio', J.fmt(ratio, ratio > 100 ? 0 : 1) + ' : 1');
+    J.out(box,'v', J.fmt(0.0257*Math.log(ratio), 3) + ' V');
+    J.out(box,'st', E === 0 ? '전기장 없음 → 고르게' : '균형 (알짜 전류 0)', 'good');
+  }
+  J.sim('sim3', v => { E = v.e; draw(); });
+  J.$('#b3r').onclick = () => { reset(); draw(); };
+  J.loop(cv, dt => { for(let k=0;k<3;k++) step(dt); draw(); });
+})();
+</script>
+</body>
+</html>

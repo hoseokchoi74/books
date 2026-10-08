@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>클린룸과 수율 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="fab">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 17 <span class="hanja">下卷 製造 · 第十七章 · 收率</span></div>
+  <h1>클린룸과 수율</h1>
+  <p class="lead">트랜지스터가 바이러스보다 작다면, 먼지 한 톨은 칩 위의 거대한 바위다. 그래서 반도체 공장(<span class="term">팹</span>)은 수술실보다 수천 배 깨끗한 <span class="term">클린룸</span> 속에 있고, 사람들은 방진복으로 온몸을 감싼다. 그래도 결함은 생긴다. 웨이퍼 위 칩 중 제대로 동작하는 칩의 비율을 <span class="term">수율</span>이라 한다. 수율이 반도체 회사의 이익을 결정한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>클린룸의 청정도 등급과 먼지 수를 일상 공간과 비교한다.</li>
+  <li>결함이 무작위로 떨어질 때 칩 크기에 따라 수율이 어떻게 바뀌는지 실험한다.</li>
+  <li>수율 공식 Y = e<sup>−DA</sup>를 이해한다.</li>
+  <li>웨이퍼 값·칩 크기·수율로 칩 한 개의 원가를 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>세상에서 가장 깨끗한 방</h2>
+<p>클린룸은 천장의 고성능 필터로 걸러 낸 공기를 위에서 아래로 끊임없이 흘려보내, 생긴 먼지를 곧바로 바닥으로 쓸어 낸다. 청정도는 공기 1 m³ 속 일정 크기 이상 먼지 수로 등급을 매긴다(ISO 1–9). 바깥 공기에는 0.1 µm보다 큰 먼지가 1 m³에 수억~수십억 개 있지만, 첨단 클린룸(ISO 3)은 1,000개 정도, 웨이퍼가 실제로 지나가는 장비 속은 그보다 더 깨끗하다. 가장 큰 먼지 공장은 사람이다 — 가만히 서 있어도 1분에 10만 개 넘는 먼지를 내뿜는다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 17-1</span><span class="ttl">먼지 세기: 1 m³ 속 0.1 µm 이상 먼지</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">장소</span><select data-k="p"><option value="0">도시의 바깥 공기</option><option value="1">교실</option><option value="2">병원 수술실</option><option value="3">반도체 클린룸 ISO 5</option><option value="4" selected>첨단 클린룸 ISO 3</option><option value="5">장비 내부 (ISO 1 수준)</option></select></label>
+      <label class="ctrl"><span class="lab">방 안 작업자 수 <output data-o="n"></output></span><input type="range" data-k="n" min="0" max="20" step="1" value="0" data-d="0" data-u="명"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">먼지 수 (1 m³)</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">ISO 등급</span><span class="v" data-r="iso"></span></div>
+      <div class="ro"><span class="k">교실보다</span><span class="v" data-r="x"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 상자 하나를 1 m³라 할 때의 먼지 모습(점 하나 = 표시된 개수). 오른쪽: 장소별 먼지 수(로그 눈금). 방진복을 입은 작업자도 먼지를 낸다고 가정했다(1명당 1분에 약 1만 개 → 공기 순환으로 대부분 제거). 그래서 첨단 팹은 사람 대신 천장 레일 위 로봇이 웨이퍼 상자를 나른다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>결함과 수율</h2>
+<p>아무리 깨끗해도 웨이퍼 위에는 먼지나 공정 불량으로 생긴 <span class="term">결함</span>이 무작위로 떨어진다. 결함이 칩 위에 하나라도 떨어지면 그 칩은 불량이다. 결함 밀도가 D(개/cm²), 칩 면적이 A(cm²)일 때, 칩에 결함이 하나도 없을 확률은 다음과 같다. 칩이 클수록 수율이 <b>지수적으로</b> 떨어진다는 것이 핵심이다.</p>
+<div class="eq">$$Y = e^{-D\,A}\qquad(\text{푸아송 수율 모형})$$<div class="note">D = 0.1 /cm², A = 1 cm²이면 Y = e<sup>−0.1</sup> ≈ 90 %. 같은 D에서 A = 8 cm²(큰 AI 칩)이면 Y ≈ 45 %.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 17-2</span><span class="ttl">웨이퍼 결함 지도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">결함 밀도 D <output data-o="d"></output></span><input type="range" data-k="d" min="0.02" max="1" step="0.01" value="0.2" data-d="2" data-u="개/cm²"></label>
+      <label class="ctrl"><span class="lab">칩 한 변 <output data-o="s"></output></span><input type="range" data-k="s" min="4" max="28" step="1" value="10" data-d="0" data-u="mm"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b2n">새 웨이퍼 굽기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="330"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="330"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">온전한 칩 / 전체</span><span class="v" data-r="g"></span></div>
+      <div class="ro"><span class="k">이 웨이퍼의 수율</span><span class="v" data-r="y"></span></div>
+      <div class="ro"><span class="k">공식 예측 e<sup>−DA</sup></span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">떨어진 결함 수</span><span class="v" data-r="n"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 보기.</b> 왼쪽: 300 mm 웨이퍼 위 칩(초록 = 양품, 빨강 = 불량)과 결함(검은 점). "새 웨이퍼 굽기"를 여러 번 눌러 수율이 공식 근처에서 오르내리는 것을 확인하자. 칩 한 변을 28 mm로 키우면(큰 AI 칩) 결함 밀도가 같아도 양품이 확 줄어든다. 오른쪽: 칩 면적별 수율 곡선.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>칩 한 개의 값</h2>
+<p>첨단 공정 300 mm 웨이퍼 한 장을 가공하는 값은 수천만 원(2만 달러 안팎)에 이른다. 이것을 양품 칩 수로 나누면 칩 하나의 원가가 나온다. 칩이 커지면 한 장에서 나오는 칩 수도 줄고 수율도 떨어지니, 원가는 면적보다 훨씬 빠르게 오른다. 그래서 최근에는 큰 칩을 여러 개의 작은 칩(칩렛)으로 나눠 만든 뒤 하나의 패키지에 모으기도 한다.</p>
+<div class="eq">$$\text{양품 칩 원가} = \frac{\text{웨이퍼 값}}{\text{웨이퍼당 칩 수}\times\text{수율}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 17-3</span><span class="ttl">칩 원가 계산기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">웨이퍼 가공비 <output data-o="wc"></output></span><input type="range" data-k="wc" min="3000" max="25000" step="500" value="17000" data-d="0" data-u="달러"></label>
+      <label class="ctrl"><span class="lab">칩 면적 <output data-o="a"></output></span><input type="range" data-k="a" min="10" max="800" step="5" value="100" data-d="0" data-u="mm²"></label>
+      <label class="ctrl"><span class="lab">결함 밀도 <output data-o="d"></output></span><input type="range" data-k="d" min="0.02" max="0.5" step="0.01" value="0.1" data-d="2" data-u="/cm²"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">웨이퍼당 칩</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">수율</span><span class="v" data-r="y"></span></div>
+      <div class="ro"><span class="k">양품 칩 원가</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">원화로 (1달러 = 1,350원)</span><span class="v" data-r="k"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 칩 면적에 따른 양품 칩 원가(로그 눈금). 점선은 수율이 100 %일 때. 면적이 8배(100 → 800 mm²)가 되면 원가는 8배가 아니라 15배 넘게 뛴다. 여기에 패키징·테스트 비용, 설계비, 이익이 더해져 판매 가격이 된다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>마지막 단계: 자르고, 담고, 시험하기</h2>
+<p>웨이퍼가 완성되면 먼저 웨이퍼 상태에서 칩마다 바늘로 전기를 대어 시험하고(<span class="term">웨이퍼 테스트</span>), 다이아몬드 톱이나 레이저로 칩을 낱개로 자른다. 양품 칩을 기판에 붙이고 가는 금선이나 작은 납땜 공(범프)으로 연결한 뒤 플라스틱이나 금속으로 감싸 보호한다(<span class="term">패키징</span>). 마지막으로 온도를 바꿔 가며 다시 시험한 뒤에야 우리 손에 오는 부품이 된다. 이 뒷부분을 <b>후공정</b>이라 부른다.</p>
+<figure class="fig">
+<svg viewBox="0 0 900 190" role="img" aria-label="후공정 흐름" id="fig4"></svg>
+<figcaption><b>그림 17-1.</b> 후공정의 흐름. 최근에는 칩 여러 개를 쌓거나 나란히 붙이는 첨단 패키징(HBM, 칩렛)이 성능의 핵심이 되어 "후"공정이라는 이름이 무색해졌다.</figcaption>
+</figure>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">결함 밀도 0.2 /cm², 칩 면적 1 cm²일 때 푸아송 수율은 약?</p><ol><li>20 %</li><li>82 %</li><li>98 %</li><li>50 %</li></ol>
+<p class="explain">e<sup>−0.2</sup> ≈ 0.82.</p></div>
+<div class="quiz" data-a="3"><p class="q">클린룸에서 가장 큰 먼지 발생원은?</p><ol><li>웨이퍼</li><li>필터</li><li>전기</li><li>사람</li></ol>
+<p class="explain">사람은 피부·옷·숨에서 끊임없이 먼지를 낸다. 그래서 방진복과 자동화를 쓴다.</p></div>
+<div class="quiz" data-a="0"><p class="q">칩 면적을 2배로 키우면 양품 칩 원가는?</p><ol><li>2배보다 많이 오른다</li><li>정확히 2배</li><li>그대로</li><li>절반</li></ol>
+<p class="explain">칩 수가 절반 이하로 줄고 수율까지 떨어지므로 2배보다 크게 오른다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 17-1 */
+(function(){
+  const PL = [['바깥 공기', 3e9], ['교실', 1e9], ['수술실', 1e7], ['클린룸 ISO 5', 1e5], ['첨단 ISO 3', 1e3], ['장비 내부', 10]];
+  J.sim('sim1', (v, box) => {
+    const base = PL[+v.p][1], c = base + v.n*(+v.p >= 3 ? base*0.3 + 200 : 0);
+    const iso = Math.log10(c) - 1 + 0.0;
+    { const {ctx, w, h} = J.fit(document.getElementById('cv1a')); ctx.clearRect(0,0,w,h);
+      const s = Math.min(w, h) - 70, x0 = (w - s)/2, y0 = 30;
+      ctx.strokeStyle = J.c('--ink3'); ctx.lineWidth = 2; ctx.strokeRect(x0, y0, s, s);
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + 25, y0 - 18); ctx.lineTo(x0 + s + 25, y0 - 18); ctx.lineTo(x0 + s, y0); ctx.moveTo(x0 + s + 25, y0 - 18); ctx.lineTo(x0 + s + 25, y0 + s - 18); ctx.lineTo(x0 + s, y0 + s); ctx.stroke();
+      const dots = Math.min(1500, Math.max(1, Math.round(c > 1500 ? 1500 : c))), per = c/dots;
+      const R = J.rng(7 + +v.p); ctx.fillStyle = J.c('--ink'); for(let i=0;i<dots;i++){ ctx.globalAlpha = .6; ctx.fillRect(x0 + R()*s, y0 + R()*s, 2, 2); } ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(`1 m³ · 점 하나 = ${per > 1.5 ? J.sci(per, 2) + '개' : '1개'}`, w/2, h - 12); }
+    const {ctx, w, h} = J.fit(document.getElementById('cv1b')); ctx.clearRect(0,0,w,h);
+    const L = 110, X = c => L + (Math.log10(c))/10*(w - L - 20), bh = (h - 30)/PL.length;
+    PL.forEach(([n, cc], i) => { const y = 10 + i*bh, me = i === +v.p; ctx.fillStyle = J.c(me ? '--red' : '--indigo'); ctx.globalAlpha = me ? .9 : .5; ctx.fillRect(L, y + 4, X(me ? c : cc) - L, bh - 10); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c('--ink'); ctx.font = (me ? '700 ' : '') + '12px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.fillText(n, L - 6, y + bh/2 + 3); });
+    ctx.fillStyle = J.c('--ink3'); ctx.font = '10.5px "JetBrains Mono"'; ctx.textAlign = 'center'; [0, 2, 4, 6, 8, 10].forEach(e => ctx.fillText('10' + String(e).replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]), X(Math.pow(10, e)), h - 4));
+    J.out(box,'c', J.sci(c, 2) + '개'); const isoN = Math.max(1, Math.ceil(Math.log10(c) - 1e-9)); J.out(box,'iso', isoN > 9 ? 'ISO 9 초과' : 'ISO ' + isoN, c <= 1e5 ? 'good' : '');
+    J.out(box,'x', c < 1e9 ? J.sci(1e9/c, 2) + '배 깨끗' : J.fmt(c/1e9, 1) + '배');
+  });
+})();
+
+/* 17-2 결함 지도 */
+(function(){
+  let seed = 5; const box = document.getElementById('sim2');
+  let V = null;
+  J.sim('sim2', v => draw(v));
+  function draw(v){ V = v || V; v = V;
+    const D = v.d, s = v.s, Rw = 150, edge = 3, R = Rw - edge, A = s*s/100; // cm²
+    const rnd = J.rng(seed), nDef = Math.round(D*Math.PI*15*15*(0.9 + 0.2*rnd())), defs = [];
+    for(let i=0;i<nDef;i++){ let x, y; do { x = (rnd()*2 - 1)*Rw; y = (rnd()*2 - 1)*Rw; } while(x*x + y*y > Rw*Rw); defs.push([x, y]); }
+    const {ctx, w, h} = J.fit(document.getElementById('cv2a')); ctx.clearRect(0,0,w,h);
+    const sc = (Math.min(w, h) - 20)/(2*Rw), cx = w/2, cy = h/2;
+    ctx.fillStyle = '#9aa3b5'; ctx.beginPath(); ctx.arc(cx, cy, Rw*sc, 0, 7); ctx.fill();
+    let good = 0, tot = 0; const n = Math.ceil(Rw/s) + 1;
+    for(let i=-n;i<n;i++) for(let j=-n;j<n;j++){ const x0 = i*s, y0 = j*s; if(![[x0,y0],[x0+s,y0],[x0,y0+s],[x0+s,y0+s]].every(([x, y]) => x*x + y*y <= R*R)) continue;
+      tot++; const bad = defs.some(([x, y]) => x >= x0 && x < x0 + s && y >= y0 && y < y0 + s); if(!bad) good++;
+      ctx.fillStyle = J.c(bad ? '--red' : '--jade'); ctx.globalAlpha = .8; ctx.fillRect(cx + x0*sc + 0.6, cy + y0*sc + 0.6, s*sc - 1.2, s*sc - 1.2); ctx.globalAlpha = 1; }
+    ctx.fillStyle = '#111'; defs.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(cx + x*sc, cy + y*sc, 1.8, 0, 7); ctx.fill(); });
+    const pts = []; for(let a = 0.1; a <= 8; a += 0.05) pts.push([a, Math.exp(-D*a)*100]);
+    J.plot(document.getElementById('cv2b'), {x:[0, 8], y:[0, 100], xlab:'칩 면적 (cm²)', ylab:'수율 (%)', series:[{pts, color:'--jade', w:3}], points:[{x:A, y:tot ? good/tot*100 : 0, color:'--red', r:6, label:'이 웨이퍼'}, {x:A, y:Math.exp(-D*A)*100, color:'--ink', r:4}]});
+    J.out(box,'g', good + ' / ' + tot); J.out(box,'y', J.fmt(tot ? good/tot*100 : 0, 1) + ' %', good/tot > 0.8 ? 'good' : good/tot > 0.5 ? 'warn' : 'bad');
+    J.out(box,'f', J.fmt(Math.exp(-D*A)*100, 1) + ' %'); J.out(box,'n', nDef + '개');
+  }
+  J.$('#b2n').onclick = () => { seed = Math.floor(Math.random()*1e6); draw(); };
+})();
+
+/* 17-3 원가 */
+J.sim('sim3', (v, box) => {
+  const D = 300, dpw = a => Math.max(1, Math.PI*(D/2)*(D/2)/a - Math.PI*D/Math.sqrt(2*a)), Y = a => Math.exp(-v.d*a/100);
+  const cost = a => v.wc/(dpw(a)*Y(a)), ideal = a => v.wc/dpw(a);
+  const p1 = [], p2 = []; for(let a = 10; a <= 800; a += 5){ p1.push([a, cost(a)]); p2.push([a, ideal(a)]); }
+  J.plot(document.getElementById('cv3'), {x:[0, 800], y:[1, 2000], logy:true, xlab:'칩 면적 (mm²)', ylab:'양품 칩 원가 (달러)', yf:t => '$' + J.fmt(t, 0),
+    series:[{pts:p2, color:'--ink3', w:1.5, dash:[5,4]},{pts:p1, color:'--red', w:3}], points:[{x:v.a, y:cost(v.a), color:'--ink', r:6, label:'$' + J.fmt(cost(v.a), 1)}]});
+  J.out(box,'n', J.fmt(dpw(v.a), 0) + '개'); J.out(box,'y', J.fmt(Y(v.a)*100, 1) + ' %'); J.out(box,'c', '$' + J.fmt(cost(v.a), 2)); J.out(box,'k', J.fmt(cost(v.a)*1350, 0) + '원');
+});
+
+/* 그림 17-1 */
+(function(){
+  const s = document.getElementById('fig4'), st = [['웨이퍼 테스트','바늘로 칩마다 검사'],['자르기','다이아몬드 톱·레이저'],['붙이기·연결','금선 / 범프'],['감싸기','몰딩·패키지'],['최종 테스트','온도·속도 검사'],['출하','휴대폰·PC로']];
+  st.forEach(([a, b], i) => { const x = 10 + i*148;
+    J.svg('rect', {x, y:50, width:128, height:80, rx:6, fill:'var(--card)', stroke: i === 5 ? 'var(--jade)' : 'var(--gold)', 'stroke-width':2}, s);
+    J.svg('text', {x:x + 64, y:84, 'text-anchor':'middle', class:'t-m', text:a, style:'font-weight:700'}, s);
+    J.svg('text', {x:x + 64, y:106, 'text-anchor':'middle', class:'t-s', text:b}, s);
+    J.svg('text', {x:x + 64, y:36, 'text-anchor':'middle', class:'t-s', text:'0' + (i + 1), style:'fill:var(--red);font-family:var(--mono)'}, s);
+    if(i < 5) J.svg('path', {d:`M${x + 130} 90 l14 0 m-6 -6 l6 6 l-6 6`, fill:'none', stroke:'var(--ink3)', 'stroke-width':2}, s); });
+  J.svg('text', {x:450, y:170, 'text-anchor':'middle', class:'t-s', text:'불량 칩은 1단계에서 표시해 두었다가 붙이지 않는다 → 패키징 비용 절약'}, s);
+})();
+</script>
+</body>
+</html>

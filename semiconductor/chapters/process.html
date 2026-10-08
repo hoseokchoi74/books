@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>쌓고 깎고 심기: 증착·식각·이온 주입 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="process">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 15 <span class="hanja">下卷 製造 · 第十五章 · 工程</span></div>
+  <h1>쌓고 깎고 심기: 증착·식각·이온 주입</h1>
+  <p class="lead">포토리소그래피가 "어디에" 할지를 정한다면, 나머지 공정은 "무엇을" 한다. 얇은 막을 <b>쌓고</b>(증착·산화), 필요 없는 곳을 <b>깎고</b>(식각), 원하는 곳에 불순물을 <b>심는다</b>(이온 주입). 이 세 가지 동작을 사진 공정과 함께 수백 번 되풀이하면 웨이퍼 위에 트랜지스터와 배선이 완성된다. 마지막 실험에서 트랜지스터 하나를 처음부터 끝까지 직접 만들어 본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>열산화로 규소 위에 산화막을 기르고, 시간·온도에 따른 두께를 계산한다.</li>
+  <li>등방성(습식)·이방성(건식) 식각의 차이를 단면으로 비교한다.</li>
+  <li>이온 주입의 에너지가 불순물 깊이를 정한다는 것을 실험한다.</li>
+  <li>MOSFET 제조의 주요 단계를 순서대로 따라간다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>쌓기: 산화와 증착</h2>
+<p>규소를 산소 속에서 1000 °C 안팎으로 가열하면 표면에 이산화규소(SiO₂) 유리막이 자란다(<span class="term">열산화</span>). 아주 깨끗하고 단단한 절연막이라 트랜지스터 게이트 아래 절연체로 쓰여 왔다. 막이 두꺼워질수록 산소가 막을 뚫고 들어가기 어려워져 자라는 속도가 느려진다. 다른 물질(금속, 질화막 등)은 기체를 반응시켜 내려앉히거나(<span class="term">CVD</span>), 원자 한 층씩 차곡차곡 쌓는다(<span class="term">ALD</span>).</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 15-1</span><span class="ttl">열산화로 유리막 기르기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="800" max="1200" step="10" value="1000" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">시간 <output data-o="t"></output></span><input type="range" data-k="t" min="5" max="240" step="5" value="60" data-d="0" data-u="분"></label>
+      <label class="ctrl"><span class="lab">산화 방식</span><select data-k="m"><option value="dry">건식 (산소 O₂) — 얇고 치밀</option><option value="wet">습식 (수증기 H₂O) — 빠름</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="270"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="270"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">산화막 두께</span><span class="v" data-r="x"></span></div>
+      <div class="ro"><span class="k">먹어 들어간 규소</span><span class="v" data-r="si"></span></div>
+      <div class="ro"><span class="k">원자 층으로 치면</span><span class="v" data-r="lay"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 단면. 산화막의 약 44 %는 원래 규소 표면 아래로 파고들어 생긴다(규소가 산소와 합쳐지므로). 오른쪽: 시간에 따른 두께(딜–그로브 모형). 처음엔 시간에 비례해 빨리 자라다가 두꺼워지면 √시간에 비례해 느려진다. 온도 100 °C 차이가 두께를 몇 배나 바꾼다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>깎기: 습식 식각과 건식 식각</h2>
+<p>감광액이 덮지 않은 곳을 깎아 내는 것이 <span class="term">식각</span>이다. 약품 용액에 담그는 <b>습식 식각</b>은 모든 방향으로 똑같이 녹여서(등방성) 감광액 아래까지 파고든다(<span class="term">언더컷</span>). 선이 굵던 시절엔 괜찮았지만, 선폭이 수십 nm가 되면 옆으로 파고든 만큼 무늬가 망가진다. 그래서 오늘날은 플라스마 속 이온을 전기장으로 아래로 쏘아 내리는 <b>건식 식각</b>(이방성)을 주로 쓴다. 벽이 수직으로 깎인다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 15-2</span><span class="ttl">식각 단면 비교</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">이방성 (0 = 습식, 1 = 완전 건식) <output data-o="a"></output></span><input type="range" data-k="a" min="0" max="1" step="0.05" value="0" data-d="2"></label>
+      <label class="ctrl"><span class="lab">식각 시간 <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="100" step="1" value="60" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">감광액 구멍 폭 <output data-o="w"></output></span><input type="range" data-k="w" min="20" max="200" step="5" value="100" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">깊이</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">옆으로 파고든 언더컷</span><span class="v" data-r="u"></span></div>
+      <div class="ro"><span class="k">완성된 구멍 폭</span><span class="v" data-r="cw"></span></div>
+      <div class="ro"><span class="k">무늬 정확도</span><span class="v" data-r="acc"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 보기.</b> 막 두께 100 nm를 다 깎을 때까지(100 %) 시간을 올려 보자. 습식(0)이면 구멍이 그릇 모양으로 넓어지고, 건식(1)에 가까울수록 감광액 구멍 그대로 수직 벽이 된다. 구멍 폭을 20 nm로 줄이면 습식 식각으로는 이웃 무늬와 합쳐질 만큼 넓어진다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>심기: 이온 주입</h2>
+<p>5장의 도핑을 실제로 하는 방법이 <span class="term">이온 주입</span>이다. 붕소나 인을 이온(전하를 띤 원자)으로 만든 뒤 수만~수십만 볼트의 전압으로 가속해 웨이퍼에 총알처럼 쏜다. 이온은 규소 원자들과 부딪히며 속도를 잃다가 일정한 깊이에 멈춘다. 에너지가 클수록 깊이, 많이 쏠수록(도즈) 진하게 들어간다. 부딪힘으로 망가진 결정은 뜨겁게 가열해(<span class="term">어닐링</span>) 복구하고, 그때 불순물이 결정 속 제자리에 들어가 전자·정공을 내놓게 된다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 15-3</span><span class="ttl">이온 총 쏘기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">이온</span><select data-k="ion"><option value="B">붕소 B (가벼움 → p형)</option><option value="P" selected>인 P (→ n형)</option><option value="As">비소 As (무거움 → n형)</option></select></label>
+      <label class="ctrl"><span class="lab">가속 에너지 <output data-o="e"></output></span><input type="range" data-k="e" min="5" max="200" step="5" value="40" data-d="0" data-u="keV"></label>
+      <label class="ctrl"><span class="lab">어닐링 (열처리) <output data-o="an"></output></span><input type="checkbox" data-k="an"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">평균 깊이 R<sub>p</sub></span><span class="v" data-r="rp"></span></div>
+      <div class="ro"><span class="k">퍼짐 ΔR<sub>p</sub></span><span class="v" data-r="dr"></span></div>
+      <div class="ro"><span class="k">이온 속도 (대략)</span><span class="v" data-r="sp"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 이온(점)이 규소 속으로 들어가며 지그재그로 부딪히다 멈추는 모습. 오른쪽: 깊이에 따른 불순물 농도(종 모양). 가벼운 붕소는 같은 에너지에서 더 깊이, 무거운 비소는 얕게 멈춘다. 어닐링을 켜면 열 때문에 불순물이 조금 퍼진다(확산) — 첨단 공정은 이 퍼짐을 줄이려 1초도 안 되게 순간 가열한다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>트랜지스터 하나 만들기</h2>
+<p>이제 모든 동작을 엮어 보자. 실제 첨단 공정은 1,000단계가 넘지만, 핵심 흐름은 아래 10단계로 요약된다. 단계마다 사진(어디에) + 쌓기·깎기·심기(무엇을)의 조합임을 확인하자.</p>
+
+<div class="sim" id="sim4">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 15-4</span><span class="ttl">MOSFET 제조 10단계 단면도</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><button class="sbtn" id="b4p">← 이전</button><button class="sbtn pri" id="b4n">다음 단계 →</button><button class="sbtn" id="b4a">자동 재생</button><span class="hint" id="b4s"></span></div>
+    <div class="canvas-box"><canvas id="cv4" data-h="340"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">단계</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">공정 종류</span><span class="v" data-r="ty" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">사진(마스크) 사용</span><span class="v" data-r="mk"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 회색 = p형 규소 기판, 하늘색 = 산화막(절연), 노랑 = 얇은 게이트 산화막, 진회색 = 게이트(폴리실리콘), 빨강 = n⁺ 소스·드레인, 연청 = 층간 절연막, 주황 = 텅스텐 콘택, 구릿빛 = 구리 배선. 마지막 단계 위로는 이런 배선층이 10층 넘게 더 쌓인다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">선폭이 아주 가는 첨단 공정에서 주로 건식 식각을 쓰는 이유는?</p><ol><li>값이 싸서</li><li>더 빨라서</li><li>수직으로 깎여 옆으로 파고드는 언더컷이 작아서</li><li>감광액이 필요 없어서</li></ol>
+<p class="explain">이방성 식각은 무늬 폭을 그대로 유지한다.</p></div>
+<div class="quiz" data-a="0"><p class="q">이온 주입에서 가속 에너지를 높이면?</p><ol><li>불순물이 더 깊이 들어간다</li><li>불순물이 더 많이 들어간다</li><li>p형이 n형으로 바뀐다</li><li>변화 없음</li></ol>
+<p class="explain">에너지는 깊이, 도즈(이온 수)는 농도를 정한다.</p></div>
+<div class="quiz" data-a="1"><p class="q">산화막 100 nm를 기르면 원래 규소 표면 아래로 약 몇 nm가 파고드는가?</p><ol><li>0 nm</li><li>44 nm</li><li>100 nm</li><li>200 nm</li></ol>
+<p class="explain">산화막 두께의 약 44 %만큼 규소가 소모된다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 15-1 딜-그로브 */
+J.sim('sim1', (v, box) => {
+  const k = 8.617e-5, T = v.T + 273;
+  const P = v.m === 'dry' ? {B0:772, EB:1.23, BA0:6.23e6, EBA:2.0, tau:0.37} : {B0:386, EB:0.71, BA0:9.7e7, EBA:2.05, tau:0};
+  const B = P.B0*Math.exp(-P.EB/(k*T)), BA = P.BA0*Math.exp(-P.EBA/(k*T)), A = B/BA; // µm²/h, µm/h
+  const xo = th => { const t = th + P.tau*(v.m === 'dry' ? 0.2 : 0); return (-A + Math.sqrt(A*A + 4*B*t))/2; };
+  const x = xo(v.t/60)*1000; // nm
+  const pts = []; for(let m = 0; m <= 240; m += 2) pts.push([m, xo(m/60)*1000]);
+  J.plot(document.getElementById('cv1b'), {x:[0, 240], y:[0, Math.max(50, xo(4)*1000*1.1)], xlab:'시간 (분)', ylab:'두께 (nm)', series:[{pts, color:'--indigo', w:3}], points:[{x:v.t, y:x, color:'--red', r:6}]});
+  const {ctx, w, h} = J.fit(document.getElementById('cv1a')); ctx.clearRect(0,0,w,h);
+  const surf = h*0.45, sc = Math.min((h*0.4)/Math.max(x, 50), 1.2), xs = x*sc;
+  ctx.fillStyle = '#8f98a8'; ctx.fillRect(20, surf + 0.44*xs, w - 40, h - 20 - surf - 0.44*xs);
+  ctx.fillStyle = '#a9d4ef'; ctx.fillRect(20, surf - 0.56*xs, w - 40, xs);
+  ctx.strokeStyle = J.c('--red'); ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(10, surf); ctx.lineTo(w - 10, surf); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = J.c('--red'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.fillText('원래 규소 표면', w - 24, surf - 4);
+  ctx.fillStyle = J.c('--ink'); ctx.textAlign = 'center'; ctx.font = '600 12.5px "Noto Sans KR"'; ctx.fillText('SiO₂ ' + J.fmt(x, 0) + ' nm', w/2, surf - 0.56*xs + Math.max(14, xs/2));
+  ctx.fillStyle = '#fff'; ctx.fillText('규소 (Si)', w/2, h - 30);
+  ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText(v.m === 'dry' ? 'O₂ 기체 ↓' : 'H₂O 수증기 ↓', w/2, 18);
+  J.out(box,'x', J.fmt(x, 1) + ' nm'); J.out(box,'si', J.fmt(x*0.44, 1) + ' nm'); J.out(box,'lay', '약 ' + J.fmt(x/0.36, 0) + '층');
+});
+
+/* 15-2 식각 */
+J.sim('sim2', (v, box) => {
+  const {ctx, w, h} = J.fit(document.getElementById('cv2')); ctx.clearRect(0,0,w,h);
+  const film = 100, d = Math.min(film, v.t), lat = d*(1 - v.a), sc = Math.min((w - 80)/(v.w + 2*film + 200), 2.2), cx = w/2, top = 80;
+  const X = nm => cx + nm*sc, Y = nm => top + nm*sc;
+  ctx.fillStyle = '#8f98a8'; ctx.fillRect(20, Y(film), w - 40, h - 20 - Y(film));
+  ctx.fillStyle = J.c('--jade'); ctx.fillRect(20, Y(0), w - 40, Y(film) - Y(0));
+  // 식각된 영역 (흰색으로 지움)
+  ctx.fillStyle = J.c('--paper'); ctx.beginPath();
+  const hw = v.w/2;
+  ctx.moveTo(X(-hw - lat), Y(0));
+  if(lat > 0.1){ ctx.ellipse(X(-hw), Y(0), lat*sc, d*sc, 0, Math.PI, Math.PI/2, true); ctx.lineTo(X(hw), Y(d)); ctx.ellipse(X(hw), Y(0), lat*sc, d*sc, 0, Math.PI/2, 0, true); }
+  else { ctx.lineTo(X(-hw), Y(d)); ctx.lineTo(X(hw), Y(d)); ctx.lineTo(X(hw), Y(0)); }
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#e7b75a'; ctx.fillRect(20, Y(-30), X(-hw) - 20, 30*sc); ctx.fillRect(X(hw), Y(-30), w - 20 - X(hw), 30*sc);
+  if(v.a > 0.5){ ctx.strokeStyle = J.c('--plum'); ctx.lineWidth = 1.5; for(let k=0;k<6;k++){ const x = X(-hw + (k + 0.5)*v.w/6); ctx.beginPath(); ctx.moveTo(x, 20); ctx.lineTo(x, Y(-34)); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, Y(-34)); ctx.lineTo(x - 4, Y(-34) - 7); ctx.lineTo(x + 4, Y(-34) - 7); ctx.fillStyle = J.c('--plum'); ctx.fill(); } }
+  else { ctx.fillStyle = J.c('--indigo'); ctx.globalAlpha = .35; ctx.fillRect(20, 10, w - 40, Y(-30) - 10); ctx.globalAlpha = 1; }
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText(v.a > 0.5 ? '플라스마 이온이 아래로 ↓ (건식)' : '식각 용액에 잠김 (습식)', 26, 16);
+  ctx.fillStyle = J.c('--ink'); ctx.fillText('감광액', 26, Y(-12)); ctx.fillStyle = '#fff'; ctx.fillText('막 (100 nm)', 26, Y(60)); ctx.fillText('규소', 26, Y(film) + 20);
+  const cw = v.w + 2*lat;
+  J.out(box,'d', J.fmt(d, 0) + ' nm'); J.out(box,'u', J.fmt(lat, 0) + ' nm', lat < 5 ? 'good' : lat < 30 ? 'warn' : 'bad'); J.out(box,'cw', J.fmt(cw, 0) + ' nm');
+  J.out(box,'acc', J.fmt(v.w/cw*100, 0) + ' %', v.w/cw > 0.9 ? 'good' : 'bad');
+});
+
+/* 15-3 이온 주입 */
+(function(){
+  const box = document.getElementById('sim3');
+  const ION = {B:{m:11, k:3.3, s:0.45, c:'--red'}, P:{m:31, k:1.25, s:0.38, c:'--jade'}, As:{m:75, k:0.62, s:0.35, c:'--plum'}};
+  let V = {ion:'P', e:40, an:false}, P = [], t = 0;
+  const rp = () => ION[V.ion].k*Math.pow(V.e, 0.97), dr = () => rp()*ION[V.ion].s;
+  function spawn(){ const R = Math.random; const tgt = rp() + J.gauss()*dr(); P.push({x:0.1 + R()*0.8, y:-10, tgt:Math.max(1, tgt), path:[], vx:0}); if(P.length > 140) P.shift(); }
+  function draw(dt){
+    const {ctx, w, h} = J.fit(document.getElementById('cv3a')); ctx.clearRect(0,0,w,h);
+    const maxD = 500, surf = 30, Y = d => surf + d/maxD*(h - surf - 10);
+    ctx.fillStyle = '#8f98a8'; ctx.fillRect(10, surf, w - 20, h - surf - 10);
+    ctx.fillStyle = 'rgba(255,255,255,.18)'; for(let i=0;i<20;i++) for(let j=0;j<12;j++) { ctx.beginPath(); ctx.arc(14 + i*(w - 28)/19, surf + 10 + j*(h - surf - 20)/11, 2, 0, 7); ctx.fill(); }
+    if(dt > 0){ t += dt; if(Math.random() < dt*25) spawn(); }
+    const col = J.c(ION[V.ion].c);
+    P.forEach(p => { if(p.y < p.tgt){ p.y += dt*maxD*1.4; p.vx += (Math.random() - .5)*0.02; p.x = J.clamp(p.x + p.vx*dt*4, 0.02, 0.98); if(p.y > p.tgt) p.y = p.tgt; }
+      const ay = V.an ? p.tgt + J.gauss()*0 : p.y;
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(10 + p.x*(w - 20), Y(Math.max(-8, p.y)), p.y < p.tgt ? 3.5 : 2.6, 0, 7); ctx.fill(); });
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText(`${V.ion} 이온 ↓ ${V.e} keV`, 14, 18);
+    ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.fillText('깊이 500 nm', w - 14, h - 16);
+  }
+  J.sim('sim3', (v, b) => { const ch = v.ion !== V.ion || v.e !== V.e; V = v; if(ch) P = [];
+    const R = rp(), D = dr(), Dan = v.an ? Math.sqrt(D*D + 25*25) : D;
+    const pts = []; for(let x = 0; x <= 500; x += 2) pts.push([x, Math.exp(-(x - R)*(x - R)/(2*Dan*Dan))*(D/Dan)]);
+    const raw = []; if(v.an) for(let x = 0; x <= 500; x += 2) raw.push([x, Math.exp(-(x - R)*(x - R)/(2*D*D))]);
+    J.plot(document.getElementById('cv3b'), {x:[0, 500], y:[0, 1.1], xlab:'깊이 (nm)', ylab:'농도 (최대 = 1)', series:[...(v.an ? [{pts:raw, color:'--ink3', w:1.5, dash:[4,4]}] : []), {pts, color:ION[v.ion].c, w:3, fill:.15}], vlines:[{x:R, color:'--ink3', label:'R_p'}]});
+    J.out(b,'rp', J.fmt(R, 0) + ' nm'); J.out(b,'dr', J.fmt(Dan, 0) + ' nm');
+    const vel = Math.sqrt(2*v.e*1000*1.6e-19/(ION[v.ion].m*1.66e-27)); J.out(b,'sp', J.fmt(vel/1000, 0) + ' km/s');
+    draw(0); });
+  J.loop(document.getElementById('cv3a'), dt => draw(dt));
+})();
+
+/* 15-4 MOSFET 10단계 */
+(function(){
+  const box = document.getElementById('sim4');
+  const S = [
+    ['① p형 웨이퍼 준비', '출발', '—'], ['② 소자 분리 (STI)', '사진 + 식각 + 산화막 증착 + 연마', '1장'], ['③ 게이트 산화막', '쌓기 (열산화 / ALD)', '—'],
+    ['④ 게이트 재료 증착', '쌓기 (CVD 폴리실리콘)', '—'], ['⑤ 게이트 패터닝', '사진 + 건식 식각', '1장'], ['⑥ 소스·드레인 이온 주입', '심기 (인·비소) — 게이트가 마스크 역할', '1장'],
+    ['⑦ 어닐링', '열처리 (불순물 활성화)', '—'], ['⑧ 층간 절연막', '쌓기 + 평탄화 연마 (CMP)', '—'], ['⑨ 콘택 구멍과 텅스텐', '사진 + 식각 + 금속 채우기', '1장'], ['⑩ 구리 배선', '사진 + 식각 + 구리 도금 + 연마', '1장']
+  ];
+  let k = 0, auto = false, acc = 0;
+  function draw(){
+    const {ctx, w, h} = J.fit(document.getElementById('cv4')); ctx.clearRect(0,0,w,h);
+    const L = 30, Rr = w - 30, W = Rr - L, sub = h*0.55, X = f => L + f*W;
+    ctx.fillStyle = '#8f98a8'; ctx.fillRect(L, sub, W, h - 20 - sub);
+    ctx.fillStyle = '#fff'; ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('p형 규소 기판', L + 6, h - 28);
+    if(k >= 1){ ctx.fillStyle = '#a9d4ef'; ctx.fillRect(X(0), sub, X(0.12) - X(0), 60); ctx.fillRect(X(0.88), sub, X(1) - X(0.88), 60); }
+    const g0 = 0.42, g1 = 0.58;
+    if(k >= 6){ ctx.fillStyle = k >= 7 ? '#e05a4a' : '#ef9a8f'; const sp = k >= 7 ? 0.015 : 0;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(X(0.12), sub, X(g0 + sp) - X(0.12), k >= 7 ? 34 : 26, [0,0,12,12]) : ctx.rect(X(0.12), sub, X(g0 + sp) - X(0.12), 30); ctx.fill();
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(X(g1 - sp), sub, X(0.88) - X(g1 - sp), k >= 7 ? 34 : 26, [0,0,12,12]) : ctx.rect(X(g1 - sp), sub, X(0.88) - X(g1 - sp), 30); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('n⁺ 소스', (X(0.12) + X(g0))/2, sub + 18); ctx.fillText('n⁺ 드레인', (X(g1) + X(0.88))/2, sub + 18); }
+    if(k === 2 || k === 3 || k === 4){ ctx.fillStyle = '#f0d36a'; ctx.fillRect(X(0.12), sub - 5, X(0.88) - X(0.12), 5); }
+    else if(k >= 5){ ctx.fillStyle = '#f0d36a'; ctx.fillRect(X(g0), sub - 5, X(g1) - X(g0), 5); }
+    const gh = 46;
+    if(k === 3 || k === 4){ ctx.fillStyle = '#5b6170'; ctx.fillRect(X(0.12), sub - 5 - gh, X(0.88) - X(0.12), gh); }
+    if(k === 4){ ctx.fillStyle = '#e7b75a'; ctx.fillRect(X(g0), sub - 5 - gh - 18, X(g1) - X(g0), 18); ctx.fillStyle = J.c('--plum'); ctx.textAlign = 'center'; ctx.fillText('감광액 무늬 → 나머지는 식각', w/2, sub - gh - 30); }
+    if(k >= 5){ ctx.fillStyle = '#5b6170'; ctx.fillRect(X(g0), sub - 5 - gh, X(g1) - X(g0), gh); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('게이트', w/2, sub - 24); }
+    if(k === 5){ ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2; for(let i=0;i<14;i++){ const x = X(0.14 + i*0.052); if(x > X(g0) - 4 && x < X(g1) + 4) continue; ctx.beginPath(); ctx.moveTo(x, 20); ctx.lineTo(x, sub - 8); ctx.stroke(); }
+      ctx.fillStyle = J.c('--red'); ctx.fillText('이온 ↓↓↓ (게이트가 가린 곳엔 안 들어감)', w/2, 16); }
+    if(k === 1){ ctx.fillStyle = J.c('--ink2'); ctx.textAlign = 'center'; ctx.fillText('옆 트랜지스터와 전기적으로 갈라놓는 산화막 도랑', w/2, sub - 14); }
+    if(k === 6){ ctx.fillStyle = J.c('--gold'); ctx.textAlign = 'center'; ctx.fillText('🔥 1000 °C 순간 가열', w/2, 30); }
+    const ild = sub - 5 - gh - 40;
+    if(k >= 7){ ctx.fillStyle = '#cfe3ef'; ctx.globalAlpha = .9; ctx.fillRect(X(0), ild, W, sub - ild); ctx.globalAlpha = 1;
+      ctx.fillStyle = '#5b6170'; ctx.fillRect(X(g0), sub - 5 - gh, X(g1) - X(g0), gh); ctx.fillStyle = '#f0d36a'; ctx.fillRect(X(g0), sub - 5, X(g1) - X(g0), 5);
+      ctx.fillStyle = J.c('--ink2'); ctx.textAlign = 'left'; ctx.fillText('층간 절연막', X(0.01), ild + 14); }
+    if(k >= 8){ ctx.fillStyle = '#d98b3a'; [[0.24, sub], [0.76, sub], [0.5, sub - 5 - gh]].forEach(([f, bottom]) => ctx.fillRect(X(f) - 7, ild, 14, bottom - ild)); }
+    if(k >= 9){ ctx.fillStyle = '#b87333'; [[0.17, 0.31], [0.43, 0.57], [0.69, 0.83]].forEach(([a, b]) => ctx.fillRect(X(a), ild - 26, X(b) - X(a), 26));
+      ctx.fillStyle = '#cfe3ef'; ctx.globalAlpha = .6; ctx.fillRect(X(0), ild - 26, X(0.17) - X(0), 26); ctx.fillRect(X(0.31), ild - 26, X(0.43) - X(0.31), 26); ctx.fillRect(X(0.57), ild - 26, X(0.69) - X(0.57), 26); ctx.fillRect(X(0.83), ild - 26, X(1) - X(0.83), 26); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c('--ink'); ctx.textAlign = 'center'; ctx.fillText('S', (X(0.17) + X(0.31))/2, ild - 9); ctx.fillText('G', w/2, ild - 9); ctx.fillText('D', (X(0.69) + X(0.83))/2, ild - 9);
+      ctx.fillStyle = J.c('--ink3'); ctx.fillText('↑ 이 위로 배선 10여 층이 더 쌓인다', w/2, ild - 36); }
+    J.out(box,'st', S[k][0]); J.out(box,'ty', S[k][1]); J.out(box,'mk', S[k][2]);
+    J.$('#b4s').textContent = `${k + 1} / ${S.length}`;
+  }
+  J.$('#b4n').onclick = () => { k = Math.min(S.length - 1, k + 1); draw(); };
+  J.$('#b4p').onclick = () => { k = Math.max(0, k - 1); draw(); };
+  J.$('#b4a').onclick = e => { auto = !auto; e.target.classList.toggle('on', auto); };
+  J.loop(document.getElementById('cv4'), dt => { if(auto && (acc += dt) > 1.6){ acc = 0; k = (k + 1) % S.length; draw(); } });
+  J.live(draw);
+})();
+</script>
+</body>
+</html>

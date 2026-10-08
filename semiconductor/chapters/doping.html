@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>도핑: n형과 p형 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="doping">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 05 <span class="hanja">上卷 原理 · 第五章 · 摻雜</span></div>
+  <h1>도핑: n형과 p형</h1>
+  <p class="lead">순수한 규소는 전기가 잘 통하지 않는다. 그런데 규소 원자 1억 개 가운데 단 하나를 인(P)으로 바꾸면 전기 전도도가 수만 배로 뛴다. 일부러 불순물을 넣는 이 기술이 <span class="term">도핑</span>이다. 넣는 원소에 따라 전자가 넘치는 <b>n형</b>, 정공이 넘치는 <b>p형</b> 반도체가 된다 — 모든 반도체 소자는 이 둘을 조합해 만든다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>15족 원소(인)를 넣으면 n형, 13족 원소(붕소)를 넣으면 p형이 되는 이유를 설명한다.</li>
+  <li><b>다수 운반자</b>와 <b>소수 운반자</b>를 구분한다.</li>
+  <li>n × p = n<sub>i</sub>² 관계로 운반자 수를 계산한다.</li>
+  <li>도핑 농도로 저항을 10억 배 넘게 조절할 수 있음을 실험으로 확인한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>손이 하나 남는 원자, 하나 모자란 원자</h2>
+<p>규소 결정에 <b>인(P, 원자가 전자 5개)</b>을 넣으면, 인은 이웃 규소 4개와 결합하고도 전자가 하나 남는다. 이 남는 전자는 아주 약하게(약 0.045 eV) 붙어 있어 상온의 열만으로 쉽게 떨어져 자유 전자가 된다. 전자를 내주는 불순물을 <span class="term">주개</span>(donor, 도너)라 하고, 전자가 넘치는 반도체를 <span class="term">n형</span>(negative)이라 부른다. 전자를 내준 인 원자는 (+) 이온이 되어 제자리에 고정된다.</p>
+<p>반대로 <b>붕소(B, 원자가 전자 3개)</b>를 넣으면 결합 하나에 전자가 모자라 빈자리, 곧 정공이 생긴다. 전자를 받아들이는 불순물을 <span class="term">받개</span>(acceptor, 억셉터)라 하고, 정공이 넘치는 반도체를 <span class="term">p형</span>(positive)이라 부른다. 붕소는 전자를 하나 받아 (−) 이온이 된다.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 880 300" role="img" aria-label="n형과 p형 도핑" id="fig1"></svg>
+<figcaption><b>그림 5-1.</b> 왼쪽 n형: 인(P)의 다섯 번째 전자가 자유 전자가 된다. 오른쪽 p형: 붕소(B) 주변 결합 하나가 비어 정공이 생긴다. 고정된 이온(⊕, ⊖)은 움직이지 못하지만, 전자와 정공은 결정 속을 돌아다니며 전류를 나른다.</figcaption>
+</figure>
+
+<div class="analogy"><span class="ic">🧂</span><b>얼마나 조금 넣을까?</b><span>보통 칩에는 규소 원자 10만~1억 개당 불순물 1개 정도를 넣는다. 수영장(2,500 톤)에 소금 한 숟가락을 녹인 정도의 비율이다. 그 한 숟가락이 물의 전기 전도도를 완전히 바꾸는 셈이다. 반대로 원하지 않는 불순물도 그만큼 조금만 있어도 문제가 되기 때문에, 반도체용 규소는 99.999999999 %(일레븐 나인) 순도로 만든다.</span></div>
+
+<h2 id="s2"><span class="n">02</span>결정 속을 들여다보기</h2>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-1</span><span class="ttl">불순물을 심어 보자</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">불순물</span><select data-k="d"><option value="0">없음 (순수)</option><option value="1" selected>인 P → n형</option><option value="2">붕소 B → p형</option></select></label>
+      <label class="ctrl"><span class="lab">불순물 개수 <output data-o="c"></output></span><input type="range" data-k="c" min="0" max="12" step="1" value="5" data-d="0" data-u="개"></label>
+      <label class="ctrl"><span class="lab">전기장 걸기 <output data-o="e"></output></span><input type="checkbox" data-k="e"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">자유 전자</span><span class="v" data-r="ne"></span></div>
+      <div class="ro"><span class="k">정공</span><span class="v" data-r="nh"></span></div>
+      <div class="ro"><span class="k">다수 운반자</span><span class="v" data-r="maj"></span></div>
+      <div class="ro"><span class="k">전체 전하</span><span class="v" data-r="q"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>관찰.</b> 노란 원이 불순물 원자다. 인을 넣으면 그 수만큼 자유 전자(빨강)가 생기고 인은 ⊕ 이온으로 남는다. 붕소를 넣으면 정공(흰 원)이 생기고 붕소는 ⊖ 이온이 된다. 전자와 이온의 전하가 상쇄되어 결정 전체는 여전히 <b>전기적으로 중성</b>이다. (열로 생기는 전자-정공 쌍은 이 그림에서 생략했다 — 도핑으로 생긴 운반자가 훨씬 많기 때문이다.)</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>n × p = n<sub>i</sub>²: 시소의 법칙</h2>
+<p>n형 반도체에도 정공은 조금 있다. 열로 생기는 전자-정공 쌍은 계속 생기니까. 하지만 전자가 아주 많으니 정공이 금방 전자를 만나 재결합해 버려서, 정공은 오히려 순수할 때보다 훨씬 적어진다. 그 결과 전자 수 n과 정공 수 p의 곱은 늘 일정하다. 많은 쪽을 <span class="term">다수 운반자</span>, 적은 쪽을 <span class="term">소수 운반자</span>라 한다.</p>
+<div class="eq">$$n\times p = n_i^2 \approx (10^{10}\,\text{cm}^{-3})^2 = 10^{20}\,\text{cm}^{-6}\quad(\text{규소, 상온})$$
+<div class="note">n형에서 주개 농도가 N<sub>D</sub>이면 n ≈ N<sub>D</sub>, p ≈ n<sub>i</sub>²/N<sub>D</sub>. 예: N<sub>D</sub> = 10<sup>16</sup>이면 p = 10<sup>4</sup> — 전자가 정공보다 1조 배 많다.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-2</span><span class="ttl">도핑 농도 다이얼</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">종류</span><select data-k="t"><option value="n">n형 (인)</option><option value="p">p형 (붕소)</option></select></label>
+      <label class="ctrl"><span class="lab">불순물 농도 <output data-o="N"></output></span><input type="range" data-k="N" min="10" max="20" step="0.1" value="16" data-log="1" data-d="0"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="270"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="270"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">전자 n (개/cm³)</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">정공 p (개/cm³)</span><span class="v" data-r="p"></span></div>
+      <div class="ro"><span class="k">불순물 비율</span><span class="v" data-r="ratio" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">비저항</span><span class="v" data-r="rho"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽 막대(로그 눈금)에서 전자와 정공은 시소처럼 움직인다 — 한쪽이 10배 늘면 다른 쪽은 10배 준다. 가운데 점선이 순수한 규소(n = p = n<sub>i</sub>). 오른쪽은 농도에 따른 비저항: 10<sup>14</sup>부터 10<sup>20</sup>까지 바꾸면 비저항이 약 10만 배 바뀐다. 농도가 높으면 불순물에 부딪혀 운반자가 느려지는 효과(이동도 감소)도 넣었다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>띠 그림으로 보는 도핑과 온도</h2>
+<p>띠 그림에서 주개의 남는 전자는 전도띠 바로 아래(0.045 eV)에 있는 <span class="term">주개 준위</span>에 있다. 경사로가 아주 낮아 상온에서는 거의 모두 전도띠로 올라간다. 아주 추우면(−200 °C 아래) 전자들이 주개에 다시 붙잡혀 <b>얼어붙고</b>, 아주 뜨거우면(수백 °C) 원자가띠에서 올라오는 전자가 도핑보다 많아져 순수한 반도체처럼 된다. 반도체 칩이 대략 −40 °C에서 125 °C 사이에서만 제대로 동작하도록 설계되는 이유 중 하나다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-3</span><span class="ttl">온도에 따른 전자 수: 세 개의 구간</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab"><span>주개 농도 N<sub>D</sub></span> <output data-o="N"></output></span><input type="range" data-k="N" min="13" max="18" step="0.1" value="15" data-log="1" data-d="0"></label>
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="20" max="900" step="5" value="300" data-d="0" data-u="K"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">섭씨 온도</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">이온화된 주개</span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">전자 n / N<sub>D</sub></span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">구간</span><span class="v" data-r="z" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 띠 그림. 주개 준위(점선)의 전자가 전도띠로 올라간 비율과, 원자가띠에서 올라온 전자(열 생성)를 함께 그렸다. 오른쪽: 온도에 따른 전자 수(로그). <b>얼어붙음</b> → <b>도핑이 지배</b>(평평한 구간, 칩이 쓰는 곳) → <b>순수 반도체처럼</b>. 도핑이 진할수록 평평한 구간이 더 높은 온도까지 이어진다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="0"><p class="q">규소에 비소(As, 15족)를 넣으면?</p><ol><li>n형, 다수 운반자는 전자</li><li>p형, 다수 운반자는 정공</li><li>절연체가 된다</li><li>변화 없음</li></ol>
+<p class="explain">15족은 원자가 전자가 5개라 전자 하나가 남는다 → 주개 → n형.</p></div>
+<div class="quiz" data-a="2"><p class="q">n형 규소의 전자 농도가 10<sup>17</sup> cm⁻³이면 정공 농도는? (n<sub>i</sub> = 10<sup>10</sup>)</p><ol><li>10<sup>17</sup></li><li>10<sup>10</sup></li><li>10<sup>3</sup></li><li>0</li></ol>
+<p class="explain">p = n<sub>i</sub>²/n = 10<sup>20</sup>/10<sup>17</sup> = 10<sup>3</sup> cm⁻³.</p></div>
+<div class="quiz" data-a="1"><p class="q">도핑한 반도체 전체의 전하는?</p><ol><li>n형은 (−), p형은 (+)</li><li>어느 쪽이든 중성</li><li>n형은 (+), p형은 (−)</li><li>온도에 따라 바뀐다</li></ol>
+<p class="explain">자유 전자(−)만큼 고정된 주개 이온(+)이 있어 전체는 중성이다. "n형"은 전하가 아니라 다수 운반자의 종류를 말한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 5-1 */
+(function(){
+  const s = document.getElementById('fig1');
+  const grid = (x0, dop, lab) => {
+    const d = 82, y0 = 50;
+    for(let i=0;i<5;i++) for(let j=0;j<3;j++){ const x = x0 + i*d, y = y0 + j*d;
+      [[1,0],[0,1]].forEach(([a,b]) => { if(i + a > 4 || j + b > 2) return; const x2 = x + a*d, y2 = y + b*d;
+        const missing = dop === 'B' && i === 2 && j === 1 && a === 1;
+        J.svg('line', {x1:x, y1:y, x2, y2, stroke:'var(--line)', 'stroke-width':8, opacity:.5}, s);
+        const mx = (x + x2)/2, my = (y + y2)/2, nx = b*6, ny = a*6;
+        J.svg('circle', {cx:mx - nx, cy:my - ny, r:3.5, class:'s-indigo'}, s);
+        if(missing) J.svg('circle', {cx:mx + nx, cy:my + ny, r:6, fill:'var(--card)', stroke:'var(--indigo)', 'stroke-width':2}, s);
+        else J.svg('circle', {cx:mx + nx, cy:my + ny, r:3.5, class:'s-indigo'}, s); }); }
+    for(let i=0;i<5;i++) for(let j=0;j<3;j++){ const x = x0 + i*d, y = y0 + j*d, D = i === 2 && j === 1;
+      J.svg('circle', {cx:x, cy:y, r:20, fill: D ? 'var(--gold)' : 'var(--paper2)', stroke:'var(--ink3)'}, s);
+      J.svg('text', {x, y:y+5, 'text-anchor':'middle', class:'t-m', text: D ? dop : 'Si', style:'font-weight:700' + (D ? ';fill:#fff' : '')}, s); }
+    const cx = x0 + 2*d, cy = y0 + d;
+    if(dop === 'P'){ J.svg('path', {d:`M${cx+14} ${cy-14} q 30 -50 70 -38`, fill:'none', stroke:'var(--red)', 'stroke-width':1.5, 'stroke-dasharray':'4 3'}, s);
+      J.svg('circle', {cx:cx + 88, cy:cy - 52, r:7, class:'s-red'}, s); J.svg('text', {x:cx + 100, y:cy - 48, class:'t-s', text:'남는 전자 → 자유 전자', style:'fill:var(--red);font-weight:700'}, s);
+      J.svg('text', {x:cx - 30, y:cy - 22, class:'t-s', text:'⊕', style:'font-size:16px;fill:var(--red)'}, s); }
+    else { J.svg('text', {x:cx + 30, y:cy - 18, class:'t-s', text:'빈자리 = 정공', style:'fill:var(--indigo);font-weight:700'}, s);
+      J.svg('text', {x:cx - 32, y:cy - 22, class:'t-s', text:'⊖', style:'font-size:16px;fill:var(--indigo)'}, s); }
+    J.svg('text', {x:x0 + 2*d, y:22, 'text-anchor':'middle', class:'t-l', text:lab}, s);
+  };
+  grid(30, 'P', 'n형: 인(P) 도핑'); grid(470, 'B', 'p형: 붕소(B) 도핑');
+})();
+
+/* 5-1 */
+(function(){
+  const cv = document.getElementById('cv1'), box = document.getElementById('sim1');
+  const COLS = 11, ROWS = 6;
+  let V = {d:'1', c:5, e:false}, sites = [], car = [], t = 0;
+  function setup(){
+    const R = J.rng(9); sites = []; car = [];
+    const all = []; for(let i=1;i<COLS-1;i++) for(let j=0;j<ROWS;j++) all.push([i,j]);
+    for(let k=0;k<V.c && all.length;k++){ const q = Math.floor(R()*all.length); sites.push(all.splice(q,1)[0]); }
+    if(V.d === '0') return;
+    sites.forEach(([i,j]) => car.push({x:i + (R() - .5)*0.8, y:j + (R() - .5)*0.6, vx:(R() - .5), vy:(R() - .5), ph:R()*6}));
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const dx = (w - 50)/(COLS - 1), dy = (h - 50)/(ROWS - 1), X = i => 25 + i*dx, Y = j => 25 + j*dy;
+    ctx.strokeStyle = J.c('--line'); ctx.lineWidth = 5; ctx.globalAlpha = .45;
+    for(let i=0;i<COLS;i++) for(let j=0;j<ROWS;j++){ if(i < COLS - 1){ ctx.beginPath(); ctx.moveTo(X(i), Y(j)); ctx.lineTo(X(i+1), Y(j)); ctx.stroke(); } if(j < ROWS - 1){ ctx.beginPath(); ctx.moveTo(X(i), Y(j)); ctx.lineTo(X(i), Y(j+1)); ctx.stroke(); } }
+    ctx.globalAlpha = 1;
+    const isD = (i,j) => V.d !== '0' && sites.some(s => s[0] === i && s[1] === j);
+    for(let i=0;i<COLS;i++) for(let j=0;j<ROWS;j++){ const D = isD(i,j);
+      ctx.fillStyle = J.c(D ? '--gold' : '--paper2'); ctx.strokeStyle = J.c('--ink3'); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(X(i), Y(j), D ? 13 : 10, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = D ? '#fff' : J.c('--ink3'); ctx.font = (D ? '700 11px' : '9px') + ' "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(D ? (V.d === '1' ? 'P⁺' : 'B⁻') : 'Si', X(i), Y(j) + .5); }
+    ctx.textBaseline = 'alphabetic';
+    car.forEach(c => { const x = X(c.x), y = Y(c.y);
+      if(V.d === '1'){ ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(x, y, 6, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = '700 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('−', x, y + .5); }
+      else { ctx.fillStyle = J.c('--card'); ctx.strokeStyle = J.c('--indigo'); ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(x, y, 6.5, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = J.c('--indigo'); ctx.font = '700 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('+', x, y + .5); }
+      ctx.textBaseline = 'alphabetic'; });
+    if(V.e){ ctx.fillStyle = J.c('--gold'); ctx.font = '600 12px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.fillText('전기장 E →', w - 10, h - 6); }
+  }
+  function step(dt){
+    const R = Math.random;
+    car.forEach(c => { c.vx += (R() - .5)*4*dt; c.vy += (R() - .5)*4*dt;
+      if(V.e) c.vx += (V.d === '1' ? -1 : 1)*1.2*dt;
+      c.vx *= 0.97; c.vy *= 0.97; const sp = Math.hypot(c.vx, c.vy), mx = V.d === '1' ? 1.4 : 0.8; if(sp > mx){ c.vx *= mx/sp; c.vy *= mx/sp; }
+      c.x += c.vx*dt; c.y += c.vy*dt;
+      if(c.x < 0) c.x += COLS - 1; if(c.x > COLS - 1) c.x -= COLS - 1; if(c.y < -0.3){ c.y = -0.3; c.vy *= -1; } if(c.y > ROWS - 0.7){ c.y = ROWS - 0.7; c.vy *= -1; } });
+  }
+  J.sim('sim1', (v) => {
+    const re = v.d !== V.d || v.c !== V.c || !sites.length; V = v; if(re) setup();
+    const n = v.d === '1' ? v.c : 0, p = v.d === '2' ? v.c : 0;
+    J.out(box,'ne', n + '개'); J.out(box,'nh', p + '개');
+    J.out(box,'maj', v.d === '0' ? '— (거의 없음)' : v.d === '1' ? '전자 (n형)' : '정공 (p형)', v.d === '0' ? '' : 'good');
+    J.out(box,'q', '0 (중성)'); draw();
+  });
+  J.loop(cv, dt => { t += dt; step(dt); draw(); });
+})();
+
+/* 5-2 */
+const NI = 1e10;
+const mob = (N, e) => e ? 68.5 + (1414 - 68.5)/(1 + Math.pow(N/9.2e16, 0.711)) : 44.9 + (470.5 - 44.9)/(1 + Math.pow(N/2.23e17, 0.719));
+J.sim('sim2', (v, box) => {
+  const N = v.N, maj = N/2 + Math.sqrt(N*N/4 + NI*NI), min = NI*NI/maj;
+  const n = v.t === 'n' ? maj : min, p = v.t === 'n' ? min : maj;
+  J.$('[data-o="N"]', box).textContent = J.sci(N, 2);
+  const {ctx, w, h} = J.fit(document.getElementById('cv2a')); ctx.clearRect(0,0,w,h);
+  const lo = 0, hi = 21, Y = e => h - 34 - (e - lo)/(hi - lo)*(h - 60);
+  ctx.font = '10.5px "JetBrains Mono"'; ctx.fillStyle = J.c('--ink3'); ctx.textAlign = 'right';
+  for(let e = 0; e <= 21; e += 3){ ctx.fillText('10' + String(e).replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]), 46, Y(e) + 4); ctx.strokeStyle = J.c('--line2'); ctx.beginPath(); ctx.moveTo(50, Y(e)); ctx.lineTo(w - 10, Y(e)); ctx.stroke(); }
+  const bw = (w - 90)/3;
+  [['전자 n', n, '--red'], ['정공 p', p, '--indigo'], ['불순물', N, '--gold']].forEach(([lab, val, col], k) => {
+    const x = 64 + k*(bw + 8), e = Math.log10(Math.max(1, val));
+    ctx.fillStyle = J.c(col); ctx.globalAlpha = .8; ctx.fillRect(x, Y(e), bw, Y(0) - Y(e)); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(lab, x + bw/2, h - 14);
+    ctx.font = '11px "JetBrains Mono"'; ctx.fillText(J.sci(val, 2), x + bw/2, Y(e) - 5); });
+  ctx.strokeStyle = J.c('--jade'); ctx.setLineDash([5,4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(50, Y(10)); ctx.lineTo(w - 10, Y(10)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = J.c('--jade'); ctx.textAlign = 'right'; ctx.font = '11px "Noto Sans KR"'; ctx.fillText('nᵢ (순수)', w - 12, Y(10) - 4);
+  const rho = N2 => { const mj = N2/2 + Math.sqrt(N2*N2/4 + NI*NI), mn = NI*NI/mj; const nn = v.t === 'n' ? mj : mn, pp = v.t === 'n' ? mn : mj; return 1/(1.6e-19*(nn*mob(N2, 1) + pp*mob(N2, 0))); };
+  const pts = []; for(let e = 10; e <= 20; e += 0.05) pts.push([Math.pow(10, e), rho(Math.pow(10, e))]);
+  J.plot(document.getElementById('cv2b'), {x:[1e10, 1e20], y:[1e-4, 1e6], logx:true, logy:true, xlab:'불순물 농도 (개/cm³)', ylab:'비저항 (Ω·cm)', xf:t => '10' + String(Math.round(Math.log10(t))).replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]), yf:t => J.sci(t, 1),
+    series:[{pts, color: v.t === 'n' ? '--red' : '--indigo', w:3}], points:[{x:N, y:rho(N), color:'--ink', r:6}]});
+  J.out(box,'n', J.sci(n, 2)); J.out(box,'p', J.sci(p, 2));
+  J.out(box,'ratio', `규소 원자 ${J.sci(5e22/N, 1)}개당 1개`);
+  J.out(box,'rho', J.sci(rho(N), 2) + ' Ω·cm');
+});
+
+/* 5-3 */
+(function(){
+  const nI = T => 1e10*Math.pow(T/300, 1.5)*Math.exp(-6499*(1/T - 1/300));
+  const Nc = T => 2.8e19*Math.pow(T/300, 1.5);
+  const ion = (N, T) => { const x = 2*N/Nc(T)*Math.exp(0.045/(8.617e-5*T)); return x > 1e8 ? 1/Math.sqrt(x) : x < 1e-8 ? 1 : (Math.sqrt(1 + 4*x) - 1)/(2*x); };
+  const nT = (N, T) => { const Nd = N*ion(N, T), ni = nI(T); return Nd/2 + Math.sqrt(Nd*Nd/4 + ni*ni); };
+  J.sim('sim3', (v, box) => {
+    J.$('[data-o="N"]', box).textContent = J.sci(v.N, 2);
+    const f = ion(v.N, v.T), n = nT(v.N, v.T), ni = nI(v.T);
+    const pts = [], pi = []; for(let T = 20; T <= 900; T += 5){ pts.push([T, nT(v.N, T)]); pi.push([T, Math.max(1, nI(T))]); }
+    J.plot(document.getElementById('cv3b'), {x:[0, 900], y:[1e8, 1e19], logy:true, xlab:'온도 (K)', ylab:'전자 수 (개/cm³)', yf:t => J.sci(t, 1),
+      series:[{pts:pi, color:'--ink3', w:1.5, dash:[4,4]},{pts, color:'--red', w:3}], vlines:[{x:233, color:'--jade', dash:[3,3]},{x:398, color:'--jade', dash:[3,3], label:'칩 동작 범위', align:'right'}],
+      hlines:[{y:v.N, color:'--gold', label:'N_D'}], points:[{x:v.T, y:n, color:'--ink', r:6}]});
+    // 띠 그림
+    const {ctx, w, h} = J.fit(document.getElementById('cv3a')); ctx.clearRect(0,0,w,h);
+    const cbY = 60, vbY = h - 60, dY = cbY + 18;
+    ctx.fillStyle = J.c('--red-soft'); ctx.fillRect(20, 14, w - 40, cbY - 14);
+    ctx.fillStyle = J.c('--indigo-soft'); ctx.fillRect(20, vbY, w - 40, h - 14 - vbY);
+    ctx.strokeStyle = J.c('--gold'); ctx.setLineDash([5,4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(20, dY); ctx.lineTo(w - 20, dY); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('전도띠', 24, 30); ctx.fillText('원자가띠', 24, h - 20); ctx.fillStyle = J.c('--gold'); ctx.fillText('주개 준위 (0.045 eV 아래)', 24, dY + 14);
+    const K = 16, up = Math.round(f*K), xs = i => 40 + i*(w - 80)/(K - 1);
+    for(let i=0;i<K;i++){ if(i < up){ ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(xs(i), 38 + (i % 2)*8, 4.5, 0, 7); ctx.fill();
+        ctx.fillStyle = J.c('--gold'); ctx.font = '700 11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('+', xs(i), dY + 4); }
+      else { ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(xs(i), dY, 4.5, 0, 7); ctx.fill(); } }
+    const th = J.clamp(Math.round(Math.log10(Math.max(1, ni/v.N*K))*1.6 + (ni > v.N*0.05 ? 3 : 0)), 0, 14);
+    for(let i=0;i<th;i++){ const x = 50 + i*(w - 100)/14; ctx.fillStyle = J.c('--plum'); ctx.beginPath(); ctx.arc(x, 24, 4, 0, 7); ctx.fill();
+      ctx.fillStyle = J.c('--card'); ctx.strokeStyle = J.c('--indigo'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, vbY + 12, 4, 0, 7); ctx.fill(); ctx.stroke(); }
+    ctx.fillStyle = J.c('--ink3'); ctx.textAlign = 'right'; ctx.font = '11px "Noto Sans KR"'; ctx.fillText(th ? '보라: 열로 올라온 전자' : '', w - 22, vbY - 8);
+    J.out(box,'c', J.fmt(v.T - 273, 0) + ' °C'); J.out(box,'f', J.fmt(f*100, 1) + ' %'); J.out(box,'r', J.fmt(n/v.N, 3));
+    const z = f < 0.5 ? '얼어붙음 (주개가 전자를 붙잡음)' : ni > v.N*0.5 ? '순수 반도체처럼 (열 생성 지배)' : '도핑 지배 (n ≈ N_D)';
+    J.out(box,'z', z, z.startsWith('도핑') ? 'good' : 'bad');
+  });
+})();
+</script>
+</body>
+</html>

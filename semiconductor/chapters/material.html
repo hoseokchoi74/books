@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>도체·부도체·반도체 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="material">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 02 <span class="hanja">上卷 原理 · 第二章 · 導體</span></div>
+  <h1>도체·부도체·반도체</h1>
+  <p class="lead">구리 전선은 전기를 잘 통하고, 전선을 감싼 고무는 전기를 막는다. 반도체(半導體)는 이름 그대로 그 "반쯤" 어딘가에 있다. 그런데 반도체가 정말 특별한 이유는 어중간해서가 아니라, 온도·빛·불순물에 따라 전기가 통하는 정도를 <b>마음대로 바꿀 수 있기</b> 때문이다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>전류가 "움직이는 전하"의 흐름임을 안다.</li>
+  <li>옴의 법칙(V = IR)과 비저항으로 저항을 계산할 수 있다.</li>
+  <li>물질의 비저항이 10<sup>24</sup>배 넘게 차이 난다는 것을 그래프로 본다.</li>
+  <li>온도와 빛에 대해 금속과 반도체가 <b>반대로</b> 반응하는 이유를 설명한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>전기가 흐른다는 것</h2>
+<p>전류는 전하를 띤 알갱이가 한쪽으로 움직이는 것이다. 금속 안에는 원자에서 떨어져 나와 자유롭게 돌아다니는 <span class="term">자유 전자</span>가 엄청나게 많다(구리 1 cm³에 약 8×10<sup>22</sup>개). 전지를 연결하면 이 전자들이 한쪽으로 흘러 전류가 된다. 반면 유리나 고무 속 전자는 모두 원자에 꽉 묶여 있어 전지를 연결해도 거의 움직이지 못한다.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 900 250" role="img" aria-label="도체 부도체 반도체 비교" id="fig1"></svg>
+<figcaption><b>그림 2-1.</b> 세 종류 물질 속 전자의 모습. 회색 원은 원자, 파란 점은 원자에 묶인 전자, 빨간 점은 자유롭게 움직이는 전자다. 반도체에는 자유 전자가 <b>조금</b> 있고, 그 수를 바깥에서 조절할 수 있다.</figcaption>
+</figure>
+
+<h2 id="s2"><span class="n">02</span>옴의 법칙과 비저항</h2>
+<p>전압(V)은 전하를 미는 힘, 전류(I)는 1초에 지나가는 전하의 양, 저항(R)은 흐름을 방해하는 정도다. 이 셋은 <span class="term">옴의 법칙</span>으로 묶인다. 저항은 물질의 종류(<span class="term">비저항</span> ρ)와 모양(길이 L, 단면적 A)에 따라 정해진다. 길수록, 가늘수록 저항이 크다 — 좁고 긴 복도일수록 사람이 지나가기 어려운 것과 같다.</p>
+<div class="eq">$$V = I\,R,\qquad R = \rho\,\frac{L}{A}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-1</span><span class="ttl">전구 회로: 재료를 바꿔 끼워 보자</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">막대 재료</span><select data-k="m">
+        <option value="0">구리 (전선)</option><option value="1">니크롬 (전열선)</option><option value="2">흑연 (연필심)</option><option value="3" selected>도핑한 규소</option><option value="4">순수한 규소</option><option value="5">유리</option><option value="6">고무</option>
+      </select></label>
+      <label class="ctrl"><span class="lab">전지 전압 <output data-o="v"></output></span><input type="range" data-k="v" min="1.5" max="9" step="1.5" value="3" data-d="1" data-u="V"></label>
+      <label class="ctrl"><span class="lab">막대 길이 <output data-o="L"></output></span><input type="range" data-k="L" min="1" max="20" step="1" value="5" data-d="0" data-u="cm"></label>
+      <label class="ctrl"><span class="lab">막대 단면적 <output data-o="A"></output></span><input type="range" data-k="A" min="0.1" max="10" step="0.1" value="1" data-d="1" data-u="mm²"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="260"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">비저항 ρ</span><span class="v" data-r="rho"></span></div>
+      <div class="ro"><span class="k">막대 저항 R</span><span class="v" data-r="R"></span></div>
+      <div class="ro"><span class="k">전류 I</span><span class="v" data-r="I"></span></div>
+      <div class="ro"><span class="k">전구</span><span class="v" data-r="bulb"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>가정.</b> 전구 저항 10 Ω, 전지 내부 저항 0.5 Ω. 전구는 0.1 A 이상에서 밝게 켜진다. 빨간 점의 속도는 전류의 크기를 로그 눈금으로 나타낸 것이다(실제 전자는 1초에 1 mm도 못 갈 만큼 느리게 떠밀려 간다!). 순수한 규소와 도핑한 규소를 번갈아 끼워 보자. 같은 규소인데 저항이 1천만 배 차이 난다 — 5장의 주제다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>비저항 지도: 10<sup>24</sup>배의 세계</h2>
+<p>물질마다 비저항을 늘어놓으면 그 범위가 어마어마하다. 가장 잘 통하는 은과 가장 안 통하는 테플론 사이는 10<sup>24</sup>배 — 모래 한 알과 지구 전체 모래알 수의 비율보다 크다. 반도체는 그 한가운데 넓은 영역을 차지하고, 도핑으로 그 안을 자유롭게 오르내린다.</p>
+<figure class="fig">
+<div class="canvas-box"><canvas id="cvMap" data-h="230"></canvas></div>
+<figcaption><b>그림 2-2.</b> 여러 물질의 비저항(Ω·m, 로그 눈금). 눈금 하나가 10배다. 초록 띠가 반도체 영역이며, 화살표는 규소에 불순물을 넣었을 때 움직이는 범위다.</figcaption>
+</figure>
+
+<h2 id="s4"><span class="n">04</span>뜨거워지면 반대로 움직인다</h2>
+<p>금속을 데우면 원자들이 더 세게 떨리면서 흘러가는 전자와 자주 부딪힌다. 그래서 <b>저항이 조금 커진다</b>. 반도체는 정반대다. 열에너지를 받아 원자에서 풀려나는 전자가 <b>기하급수적으로</b> 늘어나서 저항이 뚝 떨어진다. 이 성질로 온도를 재는 부품이 <span class="term">서미스터</span>다. 체온계, 전기밥솥, 배터리 과열 보호 회로에 들어 있다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-2</span><span class="ttl">온도를 올려라: 금속 vs 반도체</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 <output data-o="t"></output></span><input type="range" data-k="t" min="-50" max="200" step="1" value="25" data-d="0" data-u="°C"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="250"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="250"></canvas></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--gold)"></i>구리 저항</span><span><i style="background:var(--jade)"></i>순수한 규소 저항</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">구리 저항 (25 °C 대비)</span><span class="v" data-r="cu"></span></div>
+      <div class="ro"><span class="k">규소 저항 (25 °C 대비)</span><span class="v" data-r="si"></span></div>
+      <div class="ro"><span class="k">규소 자유 전자 (1 cm³)</span><span class="v" data-r="n"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽 그림의 위쪽은 금속(원자가 떨수록 전자가 부딪힘), 아래쪽은 반도체(온도가 오르면 빨간 자유 전자가 늘어남)다. 오른쪽은 25 °C 기준 저항의 비(로그 눈금). 규소는 10 °C 오를 때마다 저항이 대략 60 %로 줄어든다 — 100 °C 오르면 200분의 1! (자유 전자 점의 개수는 화면에 맞게 줄인 것이다.)</p>
+</div>
+
+<h2 id="s5"><span class="n">05</span>빛을 비추면 전기가 통한다</h2>
+<p>빛도 에너지다. 반도체에 빛을 비추면 빛 알갱이(<span class="term">광자</span>)가 묶여 있던 전자를 풀어 주어 저항이 줄어든다. 황화카드뮴(CdS)으로 만든 <span class="term">조도 센서</span>(광저항, CdS 셀)는 어두울 때 수 MΩ, 밝을 때 수 kΩ이 된다. 해가 지면 저절로 켜지는 가로등, 주변 밝기에 따라 바뀌는 화면 밝기가 모두 이 원리를 쓴다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-3</span><span class="ttl">자동 가로등 만들기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">주변 밝기 <output data-o="lx"></output></span><input type="range" data-k="lx" min="-1" max="5" step="0.05" value="2.5" data-log="1" data-si="lx"></label>
+      <label class="ctrl"><span class="lab">켜지는 기준 저항 <output data-o="th"></output></span><input type="range" data-k="th" min="4" max="6" step="0.05" value="5" data-log="1" data-si="Ω"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="250"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="250"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">CdS 저항</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">가로등</span><span class="v" data-r="lamp"></span></div>
+      <div class="ro"><span class="k">이 밝기는</span><span class="v" data-r="sc" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모델.</b> R ≈ 500 kΩ × (밝기/1 lx)<sup>−0.7</sup>, 최대 10 MΩ. 저항이 기준보다 커지면(어두워지면) 가로등이 켜진다. 기준을 바꿔 "언제 켜질지"를 정해 보자. 보름달 밤은 약 0.2 lx, 해 질 녘은 약 10 lx, 사무실은 500 lx, 한낮 햇빛은 10만 lx 정도다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 금속의 저항은 온도·빛에 따라 조금밖에 변하지 않는다. 반도체는 크게 변한다. "전기가 통하는 정도를 바깥에서 조절할 수 있다"는 성질이 왜 스위치(트랜지스터)를 만드는 데 꼭 필요할까?</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">길이를 2배, 단면적을 2배로 하면 막대의 저항은?</p><ol><li>2배</li><li>그대로</li><li>4배</li><li>절반</li></ol>
+<p class="explain">R = ρL/A에서 L과 A가 같이 2배가 되면 비율은 그대로다.</p></div>
+<div class="quiz" data-a="2"><p class="q">온도를 올렸을 때 순수한 반도체의 저항은?</p><ol><li>조금 커진다</li><li>변하지 않는다</li><li>크게 작아진다</li><li>0이 된다</li></ol>
+<p class="explain">열에너지로 풀려나는 자유 전자가 급격히 늘어나 저항이 크게 줄어든다.</p></div>
+<div class="quiz" data-a="0"><p class="q">9 V 전지에 저항 3 kΩ을 연결하면 흐르는 전류는?</p><ol><li>3 mA</li><li>27 A</li><li>0.3 A</li><li>3 A</li></ol>
+<p class="explain">I = V/R = 9/3000 = 0.003 A = 3 mA.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 2-1 */
+(function(){
+  const s = document.getElementById('fig1');
+  const R = J.rng(5);
+  [['도체 (구리)', 0, 30, '전자의 바다 — 자유 전자 아주 많음'],['반도체 (규소)', 300, 3, '자유 전자 조금 — 조절 가능'],['부도체 (유리)', 600, 0, '모든 전자가 묶여 있음']].forEach(([t, x0, nf, sub]) => {
+    J.svg('rect', {x:x0+10, y:30, width:280, height:170, rx:6, class:'s-paper2', stroke:'var(--line)'}, s);
+    for(let i=0;i<5;i++) for(let j=0;j<3;j++){ const cx = x0 + 45 + i*52, cy = 65 + j*52;
+      J.svg('circle', {cx, cy, r:13, fill:'var(--ink3)', opacity:.35}, s);
+      if(nf < 10){ [[-18,0],[18,0]].forEach(([dx,dy]) => J.svg('circle', {cx:cx+dx, cy:cy+dy, r:3.5, class:'s-indigo'}, s)); } }
+    for(let k=0;k<(nf === 30 ? 30 : nf);k++) J.svg('circle', {cx:x0 + 25 + R()*250, cy:45 + R()*145, r:4.5, class:'s-red'}, s);
+    J.svg('text', {x:x0+150, y:20, 'text-anchor':'middle', class:'t-l', text:t}, s);
+    J.svg('text', {x:x0+150, y:222, 'text-anchor':'middle', class:'t-s', text:sub}, s);
+  });
+})();
+
+/* 2-1 회로 */
+const MAT = [['구리',1.7e-8],['니크롬',1.1e-6],['흑연',3.5e-5],['도핑한 규소',1e-4],['순수한 규소',2.3e3],['유리',1e11],['고무',1e13]];
+(function(){
+  let I = 0, ph = 0, V = null;
+  const cv = document.getElementById('cv1');
+  function draw(){
+    if(!V) return;
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const L = 60, Rt = w - 60, T = 50, B = h - 60;
+    ctx.strokeStyle = J.c('--ink2'); ctx.lineWidth = 3;
+    ctx.strokeRect(L, T, Rt - L, B - T);
+    // 전지
+    ctx.fillStyle = J.c('--card'); ctx.fillRect(L - 14, (T+B)/2 - 30, 28, 60);
+    ctx.fillStyle = J.c('--ink'); ctx.fillRect(L - 16, (T+B)/2 - 8, 32, 4); ctx.fillRect(L - 9, (T+B)/2 + 4, 18, 4);
+    ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.fillText(V.v + ' V', L - 20, (T+B)/2 + 4);
+    // 막대(재료)
+    const mx = w*0.38, mw = Math.min(w*0.32, 60 + V.L*10), mh = 10 + Math.sqrt(V.A)*10;
+    ctx.fillStyle = J.c(['--gold','--plum','--ink2','--jade','--jade','--indigo','--ink'][+V.m]); ctx.globalAlpha = +V.m === 4 ? .45 : .85;
+    ctx.fillRect(mx, T - mh/2, mw, mh); ctx.globalAlpha = 1;
+    ctx.fillStyle = J.c('--ink'); ctx.textAlign = 'center'; ctx.font = '600 12.5px "Noto Sans KR"'; ctx.fillText(MAT[+V.m][0] + ' 막대', mx + mw/2, T - mh/2 - 8);
+    // 전구
+    const bx = Rt, by = (T+B)/2, on = J.clamp(I/0.1, 0, 1);
+    if(on > 0.02){ const g = ctx.createRadialGradient(bx, by, 4, bx, by, 60); g.addColorStop(0, `rgba(255,210,90,${0.9*on})`); g.addColorStop(1, 'rgba(255,210,90,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx, by, 60, 0, 7); ctx.fill(); }
+    ctx.fillStyle = on > 0.02 ? `rgb(${255},${200 + 40*on|0},${90})` : J.c('--card'); ctx.strokeStyle = J.c('--ink2'); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(bx, by, 18, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = J.c('--ink'); ctx.textAlign = 'right'; ctx.font = '12px "Noto Sans KR"'; ctx.fillText('전구', bx - 24, by + 34);
+    // 전자 흐름 (전자는 - 극에서 나와 반대 방향으로)
+    const per = 2*(Rt - L) + 2*(B - T), n = 26;
+    ctx.fillStyle = J.c('--red');
+    if(I > 1e-15) for(let k=0;k<n;k++){ let s = ((k/n)*per + ph) % per; let x, y;
+      if(s < Rt - L){ x = Rt - s; y = B; } else if((s -= Rt - L) < B - T){ x = L; y = B - s; } else if((s -= B - T) < Rt - L){ x = L + s; y = T; } else { s -= Rt - L; x = Rt; y = T + s; }
+      ctx.beginPath(); ctx.arc(x, y, 3.5, 0, 7); ctx.fill(); }
+    ctx.fillStyle = J.c('--ink3'); ctx.textAlign = 'left'; ctx.font = '11.5px "Noto Sans KR"'; ctx.fillText('● 전자 흐름 (속도 = 전류의 로그)', L, h - 16);
+  }
+  J.sim('sim1', (v, box) => {
+    V = v; const rho = MAT[+v.m][1], R = rho*(v.L/100)/(v.A*1e-6);
+    I = v.v/(R + 10 + 0.5);
+    J.out(box,'rho', J.sci(rho, 2, 'Ω·m'));
+    J.out(box,'R', R < 1e12 ? J.si(R, 'Ω') : J.sci(R, 2, 'Ω'));
+    J.out(box,'I', I > 1e-15 ? J.si(I, 'A') : J.sci(I, 2, 'A'), I > 0.1 ? 'good' : I > 1e-4 ? 'warn' : 'bad');
+    J.out(box,'bulb', I > 0.1 ? '밝게 켜짐' : I > 0.02 ? '희미함' : '꺼짐', I > 0.1 ? 'good' : I > 0.02 ? 'warn' : 'bad');
+    draw();
+  });
+  J.loop(cv, dt => { const sp = I > 1e-15 ? J.clamp(14 + 8*Math.log10(I), 0, 120) : 0; ph += sp*dt*2; draw(); });
+})();
+
+/* 그림 2-2 비저항 지도 */
+J.live(() => {
+  const cv = document.getElementById('cvMap'), {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+  const lo = -9, hi = 17, X = e => 30 + (e - lo)/(hi - lo)*(w - 60), Y0 = 120;
+  ctx.fillStyle = J.c('--gold-soft'); ctx.fillRect(X(-9), Y0 - 14, X(-5) - X(-9), 28);
+  ctx.fillStyle = J.c('--jade-soft'); ctx.fillRect(X(-5), Y0 - 14, X(7) - X(-5), 28);
+  ctx.fillStyle = J.c('--indigo-soft'); ctx.fillRect(X(7), Y0 - 14, X(17) - X(7), 28);
+  ctx.font = '600 12.5px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillStyle = J.c('--ink');
+  ctx.fillText('도체', (X(-9)+X(-5))/2, Y0 + 5); ctx.fillText('반도체', (X(-5)+X(7))/2, Y0 + 5); ctx.fillText('부도체(절연체)', (X(7)+X(17))/2, Y0 + 5);
+  ctx.font = '10.5px "JetBrains Mono"'; ctx.fillStyle = J.c('--ink3');
+  for(let e = lo; e <= hi; e += 2){ ctx.fillText('10' + String(e).replace('-','⁻').replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]), X(e), Y0 + 32); ctx.fillRect(X(e) - .5, Y0 + 14, 1, 5); }
+  const P = [['은',-7.8,1],['구리',-7.8,-1],['니크롬',-6,1],['흑연',-4.5,-1],['도핑 규소',-4,1],['저마늄',-0.3,-1],['순수 규소',3.4,1],['나무',10,-1],['유리',11,1],['고무',13,-1],['테플론',16,1]];
+  P.forEach(([t, e, s]) => { const x = X(e), y = Y0 + s*(s > 0 ? -38 : 56);
+    ctx.strokeStyle = J.c('--ink3'); ctx.beginPath(); ctx.moveTo(x, Y0 + (s > 0 ? -14 : 14)); ctx.lineTo(x, y + (s > 0 ? 6 : -14)); ctx.stroke();
+    ctx.fillStyle = J.c('--ink'); ctx.font = '12px "Noto Sans KR"'; ctx.fillText(t, x, y); });
+  ctx.strokeStyle = J.c('--red'); ctx.fillStyle = J.c('--red'); ctx.lineWidth = 2.5;
+  const ya = 26; ctx.beginPath(); ctx.moveTo(X(3.4), ya); ctx.lineTo(X(-4.6), ya); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X(-4.8), ya); ctx.lineTo(X(-4.4), ya - 6); ctx.lineTo(X(-4.4), ya + 6); ctx.fill();
+  ctx.font = '600 12px "Noto Sans KR"'; ctx.fillText('도핑으로 1천만 배 이상 조절', (X(3.4) + X(-4.6))/2, ya - 8);
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.fillText('비저항 (Ω·m)', w - 30, h - 10);
+});
+
+/* 2-2 온도 */
+const ni = T => 1e10*Math.pow(T/300, 1.5)*Math.exp(-6499*(1/T - 1/300));
+const rSi = T => { const mu = 1850*Math.pow(T/300, -2.2); return 1/(1.6e-19*ni(T)*mu); };
+const rCu = T => 1 + 0.0039*(T - 298);
+(function(){
+  let tc = 25, t = 0;
+  const cvA = document.getElementById('cv2a');
+  const R = J.rng(11), pts = Array.from({length:60}, () => [R(), R(), R()*6.28, R()]);
+  function drawA(){
+    const {ctx, w, h} = J.fit(cvA); ctx.clearRect(0,0,w,h);
+    const T = tc + 273, amp = 1 + (T - 223)/80*2.6;
+    [[0, '금속 (구리)'], [h/2, '반도체 (규소)']].forEach(([y0, lab], k) => {
+      ctx.fillStyle = J.c('--paper2'); ctx.fillRect(6, y0 + 20, w - 12, h/2 - 26);
+      ctx.fillStyle = J.c('--ink2'); ctx.font = '600 12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText(lab, 10, y0 + 14);
+      const cols = 9, rows = 3, dx = (w - 40)/cols, dy = (h/2 - 30)/rows;
+      for(let i=0;i<cols;i++) for(let j=0;j<rows;j++){ const a = Math.sin(t*20 + i*1.7 + j*2.3)*amp, b = Math.cos(t*23 + i*2.1 + j)*amp;
+        ctx.fillStyle = J.c('--ink3'); ctx.globalAlpha = .45; ctx.beginPath(); ctx.arc(26 + i*dx + a, y0 + 22 + dy/2 + j*dy + b, 8, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+      const nfree = k === 0 ? 40 : J.clamp(Math.round(4*Math.pow(ni(T)/ni(300), 0.35)), 0, 60);
+      ctx.fillStyle = J.c('--red');
+      for(let q=0;q<nfree;q++){ const p = pts[q], x = 10 + ((p[0]*(w - 20) + t*(k === 0 ? 40/(1 + (T - 223)/300) : 30)) % (w - 20)), y = y0 + 24 + p[1]*(h/2 - 34) + Math.sin(t*6 + p[2])*3;
+        ctx.beginPath(); ctx.arc(x, y, 3.2, 0, 7); ctx.fill(); }
+      if(k === 1){ ctx.fillStyle = J.c('--ink'); ctx.textAlign = 'right'; ctx.font = '11.5px "Noto Sans KR"'; ctx.fillText(`자유 전자 ×${nfree}`, w - 12, y0 + 14); }
+    });
+  }
+  J.sim('sim2', (v, box) => {
+    tc = v.t; const T = v.t + 273;
+    const cu = [], si = []; for(let x = -50; x <= 200; x += 2){ cu.push([x, rCu(x + 273)/rCu(298)]); si.push([x, rSi(x + 273)/rSi(298)]); }
+    J.plot(document.getElementById('cv2b'), {x:[-50,200], y:[1e-4, 1e4], logy:true, xlab:'온도 (°C)', ylab:'저항 (25 °C = 1)', yf:t => t >= 1 ? J.fmt(t,0) : t.toExponential(0),
+      series:[{pts:cu, color:'--gold', w:3},{pts:si, color:'--jade', w:3}], vlines:[{x:v.t, color:'--ink3'}],
+      points:[{x:v.t, y:rCu(T)/rCu(298), color:'--gold'},{x:v.t, y:rSi(T)/rSi(298), color:'--jade'}]});
+    J.out(box,'cu', '×' + J.fmt(rCu(T)/rCu(298), 2));
+    const r = rSi(T)/rSi(298); J.out(box,'si', '×' + J.sci(r, 2), r < 1 ? 'good' : '');
+    J.out(box,'n', J.sci(ni(T), 2) + ' 개');
+    drawA();
+  });
+  J.loop(cvA, dt => { t += dt; drawA(); });
+})();
+
+/* 2-3 가로등 */
+(function(){
+  let V = null;
+  J.sim('sim3', (v, box) => {
+    V = v; const R = Math.min(1e7, 5e5*Math.pow(v.lx, -0.7)), on = R > v.th;
+    J.out(box,'r', J.si(R, 'Ω'));
+    J.out(box,'lamp', on ? '켜짐' : '꺼짐', on ? 'warn' : '');
+    J.out(box,'sc', v.lx < 0.5 ? '달빛 밤' : v.lx < 20 ? '해 질 녘' : v.lx < 1000 ? '실내·흐린 날' : v.lx < 2e4 ? '맑은 날 그늘' : '한낮 햇빛');
+    const pts = []; for(let e = -1; e <= 5; e += 0.05) pts.push([Math.pow(10, e), Math.min(1e7, 5e5*Math.pow(10, -0.7*e))]);
+    J.plot(document.getElementById('cv3b'), {x:[0.1, 1e5], y:[1e2, 1e7], logx:true, logy:true, xlab:'밝기 (lx)', ylab:'CdS 저항 (Ω)', xf:t => J.si(t,''), yf:t => J.si(t,''),
+      series:[{pts, color:'--plum', w:3}], hlines:[{y:v.th, color:'--red', label:'켜짐 기준'}], points:[{x:v.lx, y:R, color:'--ink', r:6}],
+      bands:[{y0:v.th, y1:1e7, color:'--gold', alpha:.12}]});
+    const {ctx, w, h} = J.fit(document.getElementById('cv3a')); ctx.clearRect(0,0,w,h);
+    const k = J.clamp((Math.log10(v.lx) + 1)/6, 0, 1);
+    const sky = ctx.createLinearGradient(0,0,0,h); sky.addColorStop(0, `hsl(215, ${40 + 30*k}%, ${8 + 62*k}%)`); sky.addColorStop(1, `hsl(${30 + 170*k}, ${50}%, ${15 + 60*k}%)`);
+    ctx.fillStyle = sky; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle = k > .5 ? '#ffd65a' : '#e8e4d0'; ctx.beginPath(); ctx.arc(w*0.8, 30 + (1 - k)*60, 16, 0, 7); ctx.fill();
+    ctx.fillStyle = '#3d3a33'; ctx.fillRect(0, h - 40, w, 40);
+    const px = w*0.35; ctx.fillStyle = '#555'; ctx.fillRect(px - 3, 60, 6, h - 100); ctx.fillRect(px - 3, 60, 50, 6);
+    if(on){ const g = ctx.createRadialGradient(px + 44, 74, 4, px + 44, 140, 110); g.addColorStop(0, 'rgba(255,220,120,.85)'); g.addColorStop(1, 'rgba(255,220,120,0)'); ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(px + 34, 70); ctx.lineTo(px - 30, h - 40); ctx.lineTo(px + 130, h - 40); ctx.lineTo(px + 54, 70); ctx.fill(); }
+    ctx.fillStyle = on ? '#ffe08a' : '#888'; ctx.fillRect(px + 32, 66, 24, 10);
+    ctx.fillStyle = '#c33'; ctx.fillRect(px - 8, h - 120, 16, 10); ctx.fillStyle = '#fff'; ctx.font = '10px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('CdS', px + 12, h - 112);
+  });
+})();
+</script>
+</body>
+</html>

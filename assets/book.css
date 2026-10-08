@@ -8,6 +8,8 @@
 .toc a:hover{background:var(--card); text-decoration:none}
 .toc a.on{background:var(--card); color:var(--ink); box-shadow:inset 3px 0 0 var(--red)}
 .toc a.on b{color:var(--red)}
+.toc .vol{margin:16px 8px 4px; padding-top:10px; border-top:1px dashed var(--line); font-size:12.5px; color:var(--ink2); font-family:var(--serif); font-weight:700; display:flex; gap:8px; align-items:center}
+.toc .vol span{font-size:11px; border:1px solid var(--red); color:var(--red); border-radius:2px; padding:0 5px}
 .toc .sub{margin:2px 0 8px 36px; border-left:1px dashed var(--line); padding-left:8px}
 .toc .sub a{font-size:12.5px; padding:3px 6px}
 

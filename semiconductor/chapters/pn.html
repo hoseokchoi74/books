@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PN 접합 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="pn">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 07 <span class="hanja">中卷 素子 · 第七章 · 接合</span></div>
+  <h1>PN 접합</h1>
+  <p class="lead">p형 반도체와 n형 반도체를 맞붙이면 무슨 일이 생길까? 경계에서 전자와 정공이 서로 건너가 만나 사라지고, 그 자리에 운반자가 하나도 없는 얇은 층 — <span class="term">공핍층</span> — 과 저절로 생긴 전압이 남는다. 다이오드, LED, 태양전지, 트랜지스터 모두 이 경계 하나에서 출발한다. 중권 「소자편」의 첫 장이다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>p형과 n형이 만날 때 확산 → 재결합 → 공핍층 형성 과정을 설명한다.</li>
+  <li>공핍층의 고정 이온이 만드는 전기장과 <b>내부 전위</b>를 이해한다.</li>
+  <li>도핑 농도와 바깥 전압에 따라 공핍층 폭이 달라지는 것을 계산한다.</li>
+  <li>에너지 띠 그림에서 PN 접합을 "전자가 넘어야 할 언덕"으로 본다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>맞붙이는 순간</h2>
+<p>왼쪽 p형에는 정공이, 오른쪽 n형에는 자유 전자가 가득하다. 붙이는 순간 6장에서 배운 <b>확산</b>이 시작된다. 전자는 전자가 적은 p형 쪽으로, 정공은 정공이 적은 n형 쪽으로 건너가 서로 만나 재결합해 사라진다. 그러면 경계 근처에는 운반자는 없고 <b>움직이지 못하는 이온</b>만 남는다: n형 쪽엔 (+) 주개 이온, p형 쪽엔 (−) 받개 이온. 이 이온들이 만든 전기장이 더 이상의 확산을 막아서면 균형이 잡힌다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-1</span><span class="ttl">공핍층이 저절로 생기는 순간</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">이온이 만드는 전기장 <output data-o="k"></output></span><select data-k="k"><option value="1" selected>켬 (실제)</option><option value="0">끔 (확산만 있다면?)</option></select></label>
+      <label class="ctrl"><span class="lab">재생 속도 <output data-o="sp"></output></span><input type="range" data-k="sp" min="0.5" max="4" step="0.5" value="2" data-d="1" data-u="×"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b1g">맞붙이기 (다시 시작)</button></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="380"></canvas></div>
+    <div class="legend"><span><i style="background:var(--red)"></i>자유 전자</span><span><i style="background:var(--indigo)"></i>정공</span><span><i style="background:var(--gold)"></i>공핍층 (운반자 거의 없음)</span><span><i style="background:var(--plum)"></i>전기장 세기</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">사라진 쌍 (재결합)</span><span class="v" data-r="rc"></span></div>
+      <div class="ro"><span class="k">공핍층 폭 (화면)</span><span class="v" data-r="w"></span></div>
+      <div class="ro"><span class="k">경계의 전기장</span><span class="v" data-r="e"></span></div>
+      <div class="ro"><span class="k">상태</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>관찰.</b> 위: p형(왼쪽)과 n형(오른쪽)의 운반자와 고정 이온(⊖, ⊕ 작은 기호). 아래: 위치별 운반자 수와 이온이 만드는 전기장(보라). 처음에는 재결합이 빠르게 일어나지만 경계에 이온이 드러날수록 전기장이 강해져 건너오려는 운반자를 되돌려 보낸다. "끔"을 고르면 전기장 없이 확산만 일어나 결국 전자와 정공이 거의 모두 사라진다 — 실제로는 전기장 덕분에 얇은 공핍층만 생기고 멈춘다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>공핍층과 내부 전위</h2>
+<p>공핍층 안의 이온들은 n형 쪽(+)에서 p형 쪽(−)으로 향하는 전기장을 만들고, 그만큼의 전압 차가 생긴다. 이를 <span class="term">내부 전위</span>(built-in potential, V<sub>bi</sub>)라 한다. 규소에서는 보통 0.6~0.9 V다. 하지만 전지처럼 꺼내 쓸 수는 없다 — 금속 전선을 연결하는 곳에서도 비슷한 전압이 생겨 상쇄되기 때문이다. 바깥에서 전압을 걸면 공핍층의 폭이 바뀐다: p쪽에 (+)를 걸면(<b>순방향</b>) 얇아지고, 반대로 걸면(<b>역방향</b>) 두꺼워진다.</p>
+<div class="eq">$$V_{bi} = \frac{kT}{q}\ln\frac{N_A N_D}{n_i^2},\qquad W = \sqrt{\frac{2\varepsilon\,(V_{bi} - V)}{q}\left(\frac{1}{N_A}+\frac{1}{N_D}\right)}$$<div class="note">N<sub>A</sub>, N<sub>D</sub>: p쪽·n쪽 도핑 농도, V: 바깥에서 건 전압(순방향 +). 도핑이 진할수록 공핍층은 얇아지고, 도핑이 연한 쪽으로 더 깊이 파고든다.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-2</span><span class="ttl">PN 접합 해부도: 전하·전기장·전위·에너지 띠</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab"><span>p쪽 도핑 N<sub>A</sub></span> <output data-o="na"></output></span><input type="range" data-k="na" min="14" max="18" step="0.1" value="16" data-log="1"></label>
+      <label class="ctrl"><span class="lab"><span>n쪽 도핑 N<sub>D</sub></span> <output data-o="nd"></output></span><input type="range" data-k="nd" min="14" max="18" step="0.1" value="16" data-log="1"></label>
+      <label class="ctrl"><span class="lab">바깥 전압 V <output data-o="v"></output></span><input type="range" data-k="v" min="-5" max="0.6" step="0.05" value="0" data-d="2" data-u="V"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="460"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">내부 전위 V<sub>bi</sub></span><span class="v" data-r="vbi"></span></div>
+      <div class="ro"><span class="k">공핍층 폭 W</span><span class="v" data-r="w"></span></div>
+      <div class="ro"><span class="k">p쪽 / n쪽으로 파고든 깊이</span><span class="v" data-r="xpn"></span></div>
+      <div class="ro"><span class="k">최대 전기장</span><span class="v" data-r="em"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 위에서부터 ① 공핍층의 이온 전하(p쪽 −, n쪽 +), ② 전기장(가운데서 가장 강한 삼각형), ③ 전위(계단을 부드럽게 이은 S자), ④ 에너지 띠(전자에게는 n쪽에서 p쪽으로 오르막 언덕). N<sub>A</sub>와 N<sub>D</sub>를 다르게 해 보면 공핍층이 도핑이 연한 쪽으로 치우친다. 바깥 전압을 −5 V로 걸면(역방향) 공핍층이 넓어지고 언덕이 높아진다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>언덕을 넘는 전자들</h2>
+<p>띠 그림에서 n쪽 전자가 p쪽으로 가려면 높이 q(V<sub>bi</sub> − V)인 언덕을 넘어야 한다. 전자들은 열 때문에 저마다 다른 에너지를 갖는데, 언덕보다 큰 에너지를 가진 극소수만 넘어간다. 그 비율은 언덕이 kT(0.026 eV)만큼 낮아질 때마다 e(≈2.7)배씩 늘어난다. 순방향 전압 0.06 V마다 넘는 전자가 10배! 이것이 다음 장에서 다이오드 전류가 전압에 따라 폭발적으로 늘어나는 이유다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-3</span><span class="ttl">언덕 넘기 경주</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">바깥 전압 (순방향 +) <output data-o="v"></output></span><input type="range" data-k="v" min="-0.3" max="0.7" step="0.02" value="0.3" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">온도 <output data-o="t"></output></span><input type="range" data-k="t" min="-40" max="150" step="5" value="25" data-d="0" data-u="°C"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">언덕 높이</span><span class="v" data-r="h"></span></div>
+      <div class="ro"><span class="k">넘을 수 있는 비율</span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">0 V 대비</span><span class="v" data-r="x"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 언덕 그림. n쪽(오른쪽) 전자들이 열에너지로 튀어 오르다가 언덕 꼭대기보다 높이 뛴 전자만 p쪽으로 넘어간다. 오른쪽: 전자의 에너지 분포(볼츠만 분포, 로그)와 언덕 높이. 색칠한 꼬리 부분이 넘어갈 수 있는 전자다. 내부 전위는 0.75 V로 가정했다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">공핍층에 남아 있는 것은?</p><ol><li>자유 전자만</li><li>정공만</li><li>움직이지 못하는 이온</li><li>아무것도 없다</li></ol>
+<p class="explain">운반자는 재결합으로 사라지고, 결정에 고정된 주개(+)·받개(−) 이온만 남는다.</p></div>
+<div class="quiz" data-a="0"><p class="q">역방향 전압을 크게 걸면 공핍층은?</p><ol><li>넓어진다</li><li>좁아진다</li><li>사라진다</li><li>변하지 않는다</li></ol>
+<p class="explain">W ∝ √(V<sub>bi</sub> − V). V가 음수로 커지면 W가 커진다.</p></div>
+<div class="quiz" data-a="3"><p class="q">N<sub>A</sub> = 10¹⁸, N<sub>D</sub> = 10¹⁵인 접합에서 공핍층은 주로 어디에 생기는가?</p><ol><li>p쪽</li><li>양쪽에 똑같이</li><li>접합면 밖</li><li>n쪽 (도핑이 연한 쪽)</li></ol>
+<p class="explain">양쪽 전하량이 같아야 하므로(N<sub>A</sub>x<sub>p</sub> = N<sub>D</sub>x<sub>n</sub>) 농도가 낮은 쪽으로 깊게 파고든다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 7-1 입자 모형 */
+(function(){
+  const cv = document.getElementById('cv1'), box = document.getElementById('sim1');
+  const N = 160, B = 40;
+  let V = {k:'1', sp:2}, S;
+  function reset(){
+    const R = J.rng(21); S = {e:[], h:[], ionD:[], ionA:[], rc:0, t:0, E:new Float64Array(B + 1), log:[]};
+    for(let i=0;i<N;i++){ const xd = 0.5 + (i + R())/N*0.5, xa = (i + R())/N*0.5;
+      S.ionD.push(xd); S.ionA.push(xa); S.e.push({x:xd, y:R()}); S.h.push({x:xa, y:R()}); }
+  }
+  reset();
+  function field(){
+    // 1D 가우스 법칙: E(x) = k * (x 왼쪽 알짜 전하 누적)
+    const q = new Float64Array(B);
+    const add = (x, s) => { q[Math.min(B - 1, Math.max(0, Math.floor(x*B)))] += s; };
+    S.ionD.forEach(x => add(x, 1)); S.ionA.forEach(x => add(x, -1)); S.e.forEach(p => add(p.x, -1)); S.h.forEach(p => add(p.x, 1));
+    let c = 0; S.E[0] = 0; for(let i=0;i<B;i++){ c += q[i]; S.E[i+1] = c; }
+  }
+  const Eat = x => { const f = x*B, i = Math.max(0, Math.min(B - 1, Math.floor(f))); return J.lerp(S.E[i], S.E[i+1], f - i); };
+  function step(dt){
+    field();
+    const D = 0.0022, kf = V.k === '1' ? 0.0032 : 0, s = Math.sqrt(2*D*dt);
+    const mv = (p, sg) => { p.x += sg*kf*Eat(p.x)*dt + J.gauss()*s; p.y += J.gauss()*s*2;
+      if(p.x < 0) p.x = -p.x; if(p.x > 1) p.x = 2 - p.x; if(p.y < 0) p.y = -p.y; if(p.y > 1) p.y = 2 - p.y; };
+    S.e.forEach(p => mv(p, -1)); S.h.forEach(p => mv(p, 1));
+    // 재결합: 같은 칸에서 가까우면 확률적으로
+    for(let a = S.e.length - 1; a >= 0; a--){ const e = S.e[a];
+      for(let b = S.h.length - 1; b >= 0; b--){ const h = S.h[b]; if(Math.abs(h.x - e.x) < 0.012 && Math.abs(h.y - e.y) < 0.06){ S.e.splice(a, 1); S.h.splice(b, 1); S.rc++; break; } } }
+    S.t += dt;
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const L = 20, Rr = w - 20, X = x => L + x*(Rr - L), top = 20, bot = 200;
+    // 공핍층 추정: 운반자 밀도가 낮은 구간
+    const he = new Array(B).fill(0), hh = new Array(B).fill(0);
+    S.e.forEach(p => he[Math.min(B - 1, Math.floor(p.x*B))]++); S.h.forEach(p => hh[Math.min(B - 1, Math.floor(p.x*B))]++);
+    const full = N/(B/2), dep = []; for(let i=0;i<B;i++) dep.push(he[i] + hh[i] < full*0.35);
+    let l = B/2, r = B/2; while(l > 0 && dep[l - 1]) l--; while(r < B && dep[r]) r++;
+    const wd = (r - l)/B;
+    ctx.fillStyle = J.c('--indigo-soft'); ctx.fillRect(X(0), top, X(0.5) - X(0), bot - top);
+    ctx.fillStyle = J.c('--red-soft'); ctx.fillRect(X(0.5), top, X(1) - X(0.5), bot - top);
+    if(r > l){ ctx.fillStyle = J.c('--gold'); ctx.globalAlpha = .28; ctx.fillRect(X(l/B), top, X(r/B) - X(l/B), bot - top); ctx.globalAlpha = 1; }
+    ctx.strokeStyle = J.c('--ink3'); ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(X(.5), top - 6); ctx.lineTo(X(.5), bot + 4); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = '700 13px "Noto Serif KR"'; ctx.fillStyle = J.c('--indigo'); ctx.textAlign = 'left'; ctx.fillText('p형', X(0) + 4, 14); ctx.fillStyle = J.c('--red'); ctx.textAlign = 'right'; ctx.fillText('n형', X(1) - 4, 14);
+    ctx.font = '9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    S.ionA.forEach((x, i) => { ctx.fillStyle = J.c('--indigo'); ctx.globalAlpha = .5; ctx.fillText('⊖', X(x), top + 8 + ((i*0.618034 + 0.13) % 1)*(bot - top - 16)); });
+    S.ionD.forEach((x, i) => { ctx.fillStyle = J.c('--red'); ctx.globalAlpha = .5; ctx.fillText('⊕', X(x), top + 8 + ((i*0.754877 + 0.41) % 1)*(bot - top - 16)); });
+    ctx.globalAlpha = 1; ctx.textBaseline = 'alphabetic';
+    S.e.forEach(p => { ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(X(p.x), top + 4 + p.y*(bot - top - 8), 3.4, 0, 7); ctx.fill(); });
+    S.h.forEach(p => { ctx.strokeStyle = J.c('--indigo'); ctx.fillStyle = J.c('--card'); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(X(p.x), top + 4 + p.y*(bot - top - 8), 3.4, 0, 7); ctx.fill(); ctx.stroke(); });
+    // 아래 그래프
+    const gT = bot + 26, gB = h - 22, bw = (Rr - L)/B, mxc = full*1.6;
+    for(let i=0;i<B;i++){ const ye = he[i]/mxc*(gB - gT), yh = hh[i]/mxc*(gB - gT);
+      ctx.fillStyle = J.c('--red'); ctx.globalAlpha = .5; ctx.fillRect(L + i*bw + 1, gB - ye, bw - 2, ye);
+      ctx.fillStyle = J.c('--indigo'); ctx.fillRect(L + i*bw + 1, gB - ye - yh, bw - 2, yh); ctx.globalAlpha = 1; }
+    const mE = Math.max(8, ...Array.from(S.E).map(Math.abs));
+    ctx.strokeStyle = J.c('--plum'); ctx.lineWidth = 2.5; ctx.beginPath();
+    for(let i=0;i<=B;i++){ const y = gB - Math.abs(S.E[i])/mE*(gB - gT)*0.95; i ? ctx.lineTo(L + i*bw, y) : ctx.moveTo(L + i*bw, y); } ctx.stroke();
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('위치별 운반자 수 (막대) · 전기장 (보라 선)', L, gT - 8);
+    const Em = Math.max(...Array.from(S.E).map(Math.abs));
+    J.out(box,'rc', S.rc + '쌍'); J.out(box,'w', J.fmt(wd*100, 0) + ' %'); J.out(box,'e', J.fmt(Em, 0) + ' (상대값)');
+    S.log.push([S.t, S.rc]); while(S.log.length > 2 && S.log[0][0] < S.t - 3) S.log.shift();
+    const rate = S.log.length > 1 ? (S.rc - S.log[0][1])/(S.t - S.log[0][0] + 1e-9) : 99;
+    const done = S.t > 3 && rate < 0.7;
+    J.out(box,'st', done ? (V.k === '1' ? '균형: 공핍층 완성' : '운반자가 거의 사라짐') : '확산·재결합 중…', done && V.k === '1' ? 'good' : '');
+  }
+  J.sim('sim1', v => { V = v; J.$('[data-o="k"]', box).textContent = ''; draw(); });
+  J.$('#b1g').onclick = () => { reset(); draw(); };
+  J.loop(cv, dt => { const n = Math.round(V.sp*2); for(let k=0;k<n;k++) step(dt*0.5); draw(); });
+})();
+
+/* 7-2 해부도 */
+J.sim('sim2', (v, box) => {
+  const q = 1.6e-19, eps = 11.7*8.854e-14, kT = 0.02585, ni = 1e10;
+  const NA = v.na, ND = v.nd, vbi = kT*Math.log(NA*ND/(ni*ni)), Vt = Math.max(0.02, vbi - v.v);
+  const W = Math.sqrt(2*eps*Vt/q*(1/NA + 1/ND)), xp = W*ND/(NA + ND), xn = W*NA/(NA + ND), Em = q*NA*xp/eps;
+  J.$('[data-o="na"]', box).textContent = J.sci(NA, 2); J.$('[data-o="nd"]', box).textContent = J.sci(ND, 2);
+  const {ctx, w, h} = J.fit(document.getElementById('cv2')); ctx.clearRect(0,0,w,h);
+  const span = 6e-4; // 화면 폭 = 6 µm
+  const L = 60, Rr = w - 20, X = x => (L + Rr)/2 + x/span*(Rr - L), rows = 4, rh = (h - 20)/rows;
+  const lab = (i, t) => { ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText(t, 4, 10 + i*rh + 14); };
+  for(let i=0;i<rows;i++){ ctx.strokeStyle = J.c('--line2'); ctx.beginPath(); ctx.moveTo(L, 10 + (i + 1)*rh); ctx.lineTo(Rr, 10 + (i + 1)*rh); ctx.stroke(); }
+  ctx.fillStyle = J.c('--gold'); ctx.globalAlpha = .13; ctx.fillRect(X(-xp), 10, X(xn) - X(-xp), h - 20); ctx.globalAlpha = 1;
+  ctx.strokeStyle = J.c('--ink3'); ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(X(0), 10); ctx.lineTo(X(0), h - 10); ctx.stroke(); ctx.setLineDash([]);
+  // ① 전하
+  lab(0, '① 전하'); const y0 = 10 + rh/2, mq = Math.max(NA, ND);
+  ctx.fillStyle = J.c('--indigo'); const ha = NA/mq*rh*0.4; ctx.fillRect(X(-xp), y0, X(0) - X(-xp), ha);
+  ctx.fillStyle = J.c('--red'); const hd = ND/mq*rh*0.4; ctx.fillRect(X(0), y0 - hd, X(xn) - X(0), hd);
+  ctx.font = '11px "Noto Sans KR"'; ctx.fillStyle = J.c('--ink2'); ctx.textAlign = 'center'; ctx.fillText('p형 (−이온)', (L + X(-xp))/2 > L + 30 ? (L + X(-xp))/2 : L + 40, y0 + 4); ctx.fillText('n형 (+이온)', (Rr + X(xn))/2, y0 + 4);
+  // ② 전기장
+  lab(1, '② 전기장'); const y1 = 10 + 2*rh - 8;
+  ctx.fillStyle = J.c('--plum'); ctx.globalAlpha = .7; ctx.beginPath(); ctx.moveTo(X(-xp), y1); ctx.lineTo(X(0), y1 - rh*0.75); ctx.lineTo(X(xn), y1); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+  ctx.fillStyle = J.c('--ink'); ctx.textAlign = 'left'; ctx.fillText(J.sci(Em/1000, 2) + ' kV/cm', X(0) + 6, y1 - rh*0.7);
+  // ③ 전위 & ④ 띠
+  const phi = x => x <= -xp ? 0 : x < 0 ? q*NA*(x + xp)*(x + xp)/(2*eps) : x < xn ? Vt - q*ND*(xn - x)*(xn - x)/(2*eps) : Vt;
+  lab(2, '③ 전위'); const y2T = 10 + 2*rh + 14, y2B = 10 + 3*rh - 10, Vmax = 6;
+  ctx.strokeStyle = J.c('--jade'); ctx.lineWidth = 2.5; ctx.beginPath(); for(let i=0;i<=300;i++){ const x = -span/2 + i/300*span, y = y2B - phi(x)/Vmax*(y2B - y2T); i ? ctx.lineTo(X(x), y) : ctx.moveTo(X(x), y); } ctx.stroke();
+  ctx.fillStyle = J.c('--ink'); ctx.textAlign = 'right'; ctx.fillText(J.fmt(Vt, 2) + ' V', Rr - 4, y2B - Vt/Vmax*(y2B - y2T) - 5);
+  lab(3, '④ 에너지 띠'); const y3T = 10 + 3*rh + 10, y3B = h - 14, Es = (y3B - y3T)/(Vmax + 1.3);
+  const Ec = x => y3T + 4 + phi(x)*Es, Ev = x => Ec(x) + 1.12*Es;
+  [[Ec, '--red', '전도띠'], [Ev, '--indigo', '원자가띠']].forEach(([f, c, t]) => { ctx.strokeStyle = J.c(c); ctx.lineWidth = 2.5; ctx.beginPath(); for(let i=0;i<=300;i++){ const x = -span/2 + i/300*span; i ? ctx.lineTo(X(x), f(x)) : ctx.moveTo(X(x), f(x)); } ctx.stroke();
+    ctx.fillStyle = J.c(c); ctx.textAlign = 'left'; ctx.fillText(t, L + 2, f(-span/2) - 4); });
+  ctx.fillStyle = J.c('--red'); [0.3, 0.38, 0.45].forEach(f => { ctx.beginPath(); ctx.arc(X(span*f), Ec(span*f) + 6, 3.5, 0, 7); ctx.fill(); });
+  ctx.fillStyle = J.c('--ink2'); ctx.textAlign = 'center'; ctx.fillText('전자에게는 오르막 언덕 ↖', X(0), Ec(0) - 6 > y3T + 10 ? Ec(0) - 8 : y3T + 12);
+  ctx.fillStyle = J.c('--ink3'); ctx.textAlign = 'right'; ctx.fillText('가로 폭 6 µm', Rr, h - 2);
+  J.out(box,'vbi', J.fmt(vbi, 3) + ' V'); J.out(box,'w', J.fmt(W*1e4, 3) + ' µm', v.v < 0 ? 'warn' : v.v > 0 ? 'good' : '');
+  J.out(box,'xpn', J.fmt(xp*1e4, 3) + ' / ' + J.fmt(xn*1e4, 3) + ' µm'); J.out(box,'em', J.sci(Em, 2) + ' V/cm');
+});
+
+/* 7-3 언덕 넘기 */
+(function(){
+  const cv = document.getElementById('cv3'), box = document.getElementById('sim3'), VBI = 0.75;
+  let st = {v:0.3, T:298}, P = [];
+  const R = J.rng(8); for(let i=0;i<40;i++) P.push({x:0.62 + R()*0.36, ph:R()*6, e:0, cross:0});
+  function draw(dt){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const hw = w*0.55, base = h - 40, kT = 8.617e-5*st.T, H = Math.max(0.02, VBI - st.v), sc = (base - 40)/0.9;
+    const hill = x => x < 0.4 ? base - H*sc : x > 0.6 ? base : base - H*sc*(1 - (1 - Math.cos((0.6 - x)/0.2*Math.PI))/2);
+    ctx.fillStyle = J.c('--red-soft'); ctx.beginPath(); ctx.moveTo(10, h - 10); for(let i=0;i<=100;i++){ const x = i/100; ctx.lineTo(10 + x*(hw - 20), hill(x)); } ctx.lineTo(hw - 10, h - 10); ctx.fill();
+    ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2.5; ctx.beginPath(); for(let i=0;i<=100;i++){ const x = i/100; i ? ctx.lineTo(10 + x*(hw - 20), hill(x)) : ctx.moveTo(10, hill(0)); } ctx.stroke();
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('p쪽', 14, base - H*sc - 8); ctx.textAlign = 'right'; ctx.fillText('n쪽', hw - 14, base + 18);
+    ctx.textAlign = 'center'; ctx.fillStyle = J.c('--gold'); ctx.fillText('언덕 ' + J.fmt(H, 2) + ' eV', 10 + 0.5*(hw - 20), base - H*sc - 10);
+    P.forEach(p => { p.ph += dt*(3 + st.T/300);
+      if(p.cross > 0){ p.cross -= dt; p.x -= dt*0.5; if(p.cross <= 0 || p.x < 0.02){ p.x = 0.62 + Math.random()*0.36; p.cross = 0; } }
+      else { const jump = -Math.log(Math.random() + 1e-12)*kT*6; p.e = Math.max(p.e*0.92, Math.abs(Math.sin(p.ph))*kT*3); if(Math.random() < dt*2 && jump > H) { p.cross = 2; } }
+      const x = 10 + p.x*(hw - 20), y = (p.cross > 0 ? hill(p.x) : base) - 5 - (p.cross > 0 ? 0 : p.e*sc*3);
+      ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(x, y, 4, 0, 7); ctx.fill(); });
+    // 분포 그래프
+    const gx = hw + 20, gw = w - gx - 14, gT = 20, gB = base, Ys = e => gB - e/0.9*(gB - gT);
+    ctx.strokeStyle = J.c('--ink3'); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(gx, gT); ctx.lineTo(gx, gB); ctx.lineTo(gx + gw, gB); ctx.stroke();
+    const F = e => Math.exp(-e/kT), lx = f => gx + J.clamp((Math.log10(f) + 16)/16, 0, 1)*gw;
+    ctx.fillStyle = J.c('--red'); ctx.globalAlpha = .25; ctx.beginPath(); ctx.moveTo(gx, Ys(H)); for(let e = H; e <= 0.9; e += 0.005) ctx.lineTo(lx(F(e)), Ys(e)); ctx.lineTo(gx, Ys(0.9)); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2.5; ctx.beginPath(); for(let e = 0; e <= 0.9; e += 0.005){ const x = lx(F(e)); e ? ctx.lineTo(x, Ys(e)) : ctx.moveTo(x, Ys(e)); } ctx.stroke();
+    ctx.strokeStyle = J.c('--gold'); ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(gx, Ys(H)); ctx.lineTo(gx + gw, Ys(H)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('그 에너지를 가진 전자 비율 (로그) →', gx + gw/2, gB + 16);
+    ctx.textAlign = 'left'; ctx.fillText('↑ 에너지', gx + 4, gT - 6);
+  }
+  J.sim('sim3', (v, b) => { st = {v:v.v, T:v.t + 273};
+    const kT = 8.617e-5*st.T, H = Math.max(0.02, VBI - v.v), f = Math.exp(-H/kT), f0 = Math.exp(-VBI/kT);
+    J.out(b,'h', J.fmt(H, 2) + ' eV'); J.out(b,'f', J.sci(f, 2)); J.out(b,'x', '×' + J.sci(f/f0, 2), v.v > 0 ? 'good' : v.v < 0 ? 'bad' : '');
+    draw(0); });
+  J.loop(cv, dt => draw(dt));
+})();
+</script>
+</body>
+</html>

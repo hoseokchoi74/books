@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>반도체와 세상 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="world">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 18 <span class="hanja">下卷 製造 · 第十八章 · 世上</span></div>
+  <h1>반도체와 세상</h1>
+  <p class="lead">지금까지 원자 하나에서 출발해 칩 하나를 완성했다. 이 마지막 장에서는 시야를 넓혀, 그 칩들이 우리 주변 어디에 있는지, 칩 하나를 만들기 위해 세계의 어떤 회사들이 손을 맞잡는지, 그리고 반도체 분야에서 일하는 사람들이 어떤 일을 하는지 살펴본다. 어쩌면 이 책을 읽은 여러분 중 누군가의 미래 이야기다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>스마트폰 속 주요 반도체와 각각의 역할을 안다.</li>
+  <li>메모리 반도체와 시스템 반도체의 차이를 구분한다.</li>
+  <li>설계·제조·장비·소재·후공정으로 나뉜 반도체 산업의 분업 구조를 이해한다.</li>
+  <li>반도체 분야의 다양한 직업과 필요한 공부를 알아본다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>스마트폰 속 반도체 지도</h2>
+<p>스마트폰 하나에는 크고 작은 반도체가 수십 개 들어 있다. 계산하는 칩, 기억하는 칩, 전파를 주고받는 칩, 빛을 잡는 칩, 전력을 나눠 주는 칩… 이 책의 거의 모든 장이 이 작은 기판 위에 모여 있다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 18-1</span><span class="ttl">스마트폰 분해도: 칩을 눌러 보세요</span></div>
+  <div class="sim-b">
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1" data-h="400"></canvas></div>
+      <div class="canvas-box" style="padding:14px 16px" id="info1"></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">살펴본 칩</span><span class="v" data-r="seen"></span></div>
+      <div class="ro"><span class="k">종류</span><span class="v" data-r="kind" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 보기.</b> 기판 위의 칩을 하나씩 눌러 역할과 관련된 장을 확인하자. 12개를 모두 찾아보자. (배치와 크기는 실제 제품을 단순화한 그림이다.)</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>메모리 반도체와 시스템 반도체</h2>
+<p>반도체는 크게 두 가지로 나눈다. 정보를 저장하는 <span class="term">메모리 반도체</span>(DRAM, 낸드 플래시)는 같은 구조를 엄청나게 많이 반복해 만들기 때문에 대량 생산과 공정 기술이 경쟁력이다. 계산·제어·감지 같은 일을 하는 <span class="term">시스템 반도체</span>(비메모리: CPU, AP, 이미지 센서, 전력 반도체, 통신 칩 등)는 종류가 다양하고 설계 능력이 중요하다. 한국은 메모리 반도체에서 세계 1, 2위 회사를 가진 나라다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 18-2</span><span class="ttl">분류 게임: 메모리일까, 시스템 반도체일까?</span></div>
+  <div class="sim-b">
+    <div class="canvas-box" style="padding:22px; text-align:center"><div style="font-size:13px;color:var(--ink3)">이 반도체는?</div><div id="q2" style="font-family:var(--serif);font-size:26px;font-weight:900;margin:8px 0 4px"></div><div id="h2" style="font-size:14px;color:var(--ink2);min-height:22px"></div></div>
+    <div class="btnrow" style="margin-top:12px;justify-content:center"><button class="sbtn pri" id="a2m" style="min-width:140px">메모리 반도체</button><button class="sbtn pri" id="a2s" style="min-width:140px;background:var(--plum);border-color:var(--plum)">시스템 반도체</button><button class="sbtn" id="a2n">다음 문제 →</button></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">맞힌 수</span><span class="v" data-r="ok">0</span></div>
+      <div class="ro"><span class="k">푼 문제</span><span class="v" data-r="n">0</span></div>
+      <div class="ro"><span class="k">정답률</span><span class="v" data-r="p">—</span></div>
+    </div>
+  </div>
+  <p class="cap"><b>힌트.</b> "기억하는가, 일을 하는가?" 이미지 센서·전력 반도체·LED 같은 소자도 넓게는 시스템 반도체(비메모리)로 묶는다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>칩 하나를 만드는 세계 지도</h2>
+<p>오늘날 칩 하나를 만들려면 여러 나라의 수많은 회사가 손을 맞잡는다. 칩을 설계만 하는 회사(<span class="term">팹리스</span>), 설계를 받아 만들어 주는 회사(<span class="term">파운드리</span>), 설계부터 생산까지 다 하는 회사(<span class="term">종합 반도체 회사</span>, IDM), 설계 도구(EDA)와 설계 블록(IP)을 파는 회사, 노광·식각·증착 장비 회사, 웨이퍼·가스·감광액 소재 회사, 그리고 패키징과 테스트를 맡는 후공정 회사(OSAT). 어느 하나가 멈추면 전 세계 칩 생산이 흔들린다 — 2021년 자동차용 칩 부족 사태가 그 예다.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 900 290" role="img" aria-label="반도체 가치 사슬" id="fig3"></svg>
+<figcaption><b>그림 18-1.</b> 반도체 산업의 분업 구조(가치 사슬). 위 줄은 칩이 만들어지는 순서, 아래 줄은 그 과정을 받치는 장비·소재·도구. 각 칸 아래 숫자는 이 책에서 관련된 장이다.</figcaption>
+</figure>
+
+<h2 id="s4"><span class="n">04</span>반도체 분야에서 일하는 사람들</h2>
+<p>반도체는 물리·화학·수학·컴퓨터·기계·재료가 모두 모이는 분야다. 원자 단위의 물리를 연구하는 사람도, 수십억 개의 트랜지스터를 코드로 설계하는 사람도, 거대한 공장을 24시간 돌리는 사람도, 장비를 만드는 사람도 있다. 내가 좋아하는 것을 골라 어떤 일과 가까운지 알아보자.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 18-3</span><span class="ttl">나와 맞는 반도체 직업 찾기</span></div>
+  <div class="sim-b">
+    <div class="ctrls" id="likes"></div>
+    <div class="canvas-box"><canvas id="cv3" data-h="330"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">가장 잘 맞는 직업</span><span class="v" data-r="top" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">더 알아볼 장</span><span class="v" data-r="ch" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>안내.</b> 좋아하거나 잘하는 것을 체크하면 직업별 어울림 점수(막대)가 바뀐다. 재미로 보는 간단한 안내일 뿐이며, 실제로는 한 사람이 여러 분야를 오가며 일하는 경우도 많다. 막대 아래 설명을 읽고 관심 가는 장을 다시 펼쳐 보자.</p>
+</div>
+
+<div class="note-box hist" data-h="下卷 정리"><div class="h">제조편을 마치며 — 그리고 책을 덮으며</div>
+<p style="margin:0">모래 → 일레븐 나인 규소 → 단결정 잉곳 → 웨이퍼 → 사진·쌓기·깎기·심기 수백 번 → 클린룸 속 수율과의 싸움 → 자르고 담고 시험해 세상으로. 上卷의 원자 하나, 中卷의 스위치 하나가 下卷에서 수백억 개의 칩이 되었다. 더 깊이 알고 싶다면 집현전의 다음 책들 — <a href="../../dram/index.html">DRAM 書</a>, <a href="../../nand/index.html">NAND 書</a>, <a href="../../memory/index.html">메모리 書</a>, <a href="../../soc/index.html">SoC 書</a> — 을 펼쳐 보자.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">설계만 하고 생산은 다른 회사에 맡기는 반도체 회사를 무엇이라 하는가?</p><ol><li>파운드리</li><li>OSAT</li><li>팹리스</li><li>IDM</li></ol>
+<p class="explain">팹(공장)이 없다(less)는 뜻의 팹리스. 생산을 맡는 쪽이 파운드리다.</p></div>
+<div class="quiz" data-a="0"><p class="q">다음 중 메모리 반도체는?</p><ol><li>DRAM</li><li>이미지 센서</li><li>AP (모바일 프로세서)</li><li>전력 관리 칩</li></ol>
+<p class="explain">DRAM과 낸드 플래시가 대표적인 메모리 반도체다.</p></div>
+<div class="quiz" data-a="3"><p class="q">스마트폰의 카메라 이미지 센서가 빛을 전기로 바꾸는 원리와 가장 가까운 장은?</p><ol><li>11장 논리 게이트</li><li>13장 웨이퍼</li><li>17장 수율</li><li>9장 빛을 먹는 반도체</li></ol>
+<p class="explain">이미지 센서의 화소는 태양전지처럼 빛으로 전자-정공 쌍을 만들어 모은다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 18-1 스마트폰 */
+(function(){
+  const CH = [
+    ['AP (모바일 프로세서)', 0.30, 0.18, 0.40, 0.17, '--red', '시스템', 'CPU·GPU·NPU를 한 칩에 담은 두뇌. 트랜지스터 수백억 개.', '10·11·16장 · SoC 書'],
+    ['DRAM (LPDDR)', 0.30, 0.36, 0.40, 0.09, '--indigo', '메모리', 'AP 위에 겹쳐 쌓기도 하는 메인 메모리. 앱을 실행하는 작업대.', '12장 · DRAM 書'],
+    ['낸드 플래시 (저장)', 0.30, 0.48, 0.40, 0.12, '--indigo', '메모리', '사진·앱을 저장하는 창고. 전원을 꺼도 기억한다.', '12장 · NAND 書'],
+    ['모뎀 (통신 칩)', 0.08, 0.64, 0.30, 0.10, '--plum', '시스템', '5G·LTE 신호를 디지털 데이터로 바꾼다.', '11장'],
+    ['RF 칩 (전파 증폭)', 0.42, 0.64, 0.26, 0.08, '--plum', '시스템', 'GaAs·GaN 같은 화합물 반도체로 약한 전파를 키운다.', '1·10장'],
+    ['PMIC (전력 관리)', 0.72, 0.64, 0.20, 0.10, '--gold', '시스템', '배터리 전기를 칩마다 필요한 전압으로 나눠 준다.', '8·10장'],
+    ['카메라 이미지 센서', 0.66, 0.05, 0.26, 0.10, '--jade', '시스템', '수천만 화소의 포토다이오드가 빛을 전기로 바꾼다.', '9장'],
+    ['디스플레이 구동 칩', 0.08, 0.80, 0.34, 0.07, '--gold', '시스템', '화면의 수백만 화소(LED/OLED)를 하나하나 켜고 끈다.', '9·10장'],
+    ['와이파이·블루투스', 0.46, 0.80, 0.24, 0.07, '--plum', '시스템', '가까운 거리 무선 통신 칩.', '11장'],
+    ['오디오 칩', 0.74, 0.80, 0.18, 0.07, '--plum', '시스템', '소리 신호를 디지털로, 디지털을 소리로 바꾸고 증폭.', '10장'],
+    ['움직임 센서 (자이로)', 0.08, 0.20, 0.16, 0.08, '--jade', '시스템', '반도체 공정으로 만든 아주 작은 기계 구조가 기울기를 감지.', '15장'],
+    ['충전 칩·보호 다이오드', 0.08, 0.36, 0.16, 0.10, '--gold', '시스템', '충전을 조절하고 역전압·정전기로부터 회로를 지킨다.', '8장']
+  ];
+  const cv = document.getElementById('cv1'), box = document.getElementById('sim1'), seen = new Set(); let sel = 0, rects = [];
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const pw = Math.min(w - 30, (h - 20)*0.62), px = (w - pw)/2, py = 10, ph = h - 20;
+    ctx.fillStyle = '#1d3b2c'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(px, py, pw, ph, 22) : ctx.rect(px, py, pw, ph); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,215,120,.25)'; ctx.lineWidth = 1; for(let i=0;i<14;i++){ ctx.beginPath(); ctx.moveTo(px + 10, py + 30 + i*ph/14); ctx.lineTo(px + pw - 10, py + 30 + i*ph/14 + (i % 3 - 1)*8); ctx.stroke(); }
+    rects = [];
+    CH.forEach((c, i) => { const x = px + c[1]*pw, y = py + c[2]*ph, ww = c[3]*pw, hh = c[4]*ph, on = i === sel;
+      ctx.fillStyle = on ? J.c(c[5]) : '#2b2b2b'; ctx.fillRect(x, y, ww, hh); ctx.strokeStyle = on ? '#fff' : J.c(c[5]); ctx.lineWidth = on ? 2.5 : 1.5; ctx.strokeRect(x, y, ww, hh);
+      if(seen.has(i) && !on){ ctx.fillStyle = J.c(c[5]); ctx.globalAlpha = .35; ctx.fillRect(x, y, ww, hh); ctx.globalAlpha = 1; }
+      ctx.fillStyle = '#eee'; ctx.font = '10.5px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(c[0].split(' (')[0].split('·')[0].slice(0, Math.max(3, Math.floor(ww/11))), x + ww/2, y + hh/2); ctx.textBaseline = 'alphabetic';
+      rects.push({x, y, w:ww, h:hh, i}); });
+    const c = CH[sel];
+    document.getElementById('info1').innerHTML = `<div style="font-size:12px;color:var(--ink3)">${sel + 1} / ${CH.length}</div><h3 style="margin:4px 0 6px;font-size:19px">${c[0]}</h3>
+      <span class="tag ${c[6] === '메모리' ? 'd3' : 'sim'}">${c[6]} 반도체</span><p style="margin:12px 0 10px;font-size:15px">${c[7]}</p><p style="margin:0;font-size:13.5px;color:var(--ink2)">관련: ${c[8]}</p>`;
+    J.out(box,'seen', seen.size + ' / ' + CH.length, seen.size === CH.length ? 'good' : ''); J.out(box,'kind', c[6] + ' 반도체');
+  }
+  cv.addEventListener('click', e => { const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; const hh = rects.find(q => x > q.x && x < q.x + q.w && y > q.y && y < q.y + q.h); if(hh){ sel = hh.i; seen.add(sel); draw(); } });
+  cv.style.cursor = 'pointer'; seen.add(0);
+  J.live(draw);
+})();
+
+/* 18-2 분류 게임 */
+(function(){
+  const Q = [['DRAM','m','앱이 실행되는 동안 데이터를 잠깐 기억'],['낸드 플래시','m','전원을 꺼도 사진을 기억'],['CPU','s','계산하고 명령을 처리'],['이미지 센서','s','빛을 전기 신호로'],['SRAM 캐시 칩','m','아주 빠른 임시 기억'],['GPU','s','그래픽·AI 계산'],['전력 반도체 (SiC)','s','전기차 모터 전력 조절'],['HBM','m','AI 칩 옆에 쌓은 고대역폭 메모리'],['모뎀 칩','s','통신 신호 처리'],['SSD 속 저장 칩','m','데이터 저장'],['자동차 MCU','s','엔진·브레이크 제어용 작은 컴퓨터'],['LED','s','빛을 내는 소자'],['NPU','s','인공지능 계산 전용'],['USB 메모리 속 칩','m','파일 저장']];
+  let order = Q.map((_, i) => i).sort(() => Math.random() - .5), k = 0, ok = 0, n = 0, done = false;
+  const box = document.getElementById('sim2');
+  function show(){ const q = Q[order[k % Q.length]]; J.$('#q2').textContent = q[0]; J.$('#h2').textContent = ''; done = false; }
+  function ans(a){ if(done) return; done = true; const q = Q[order[k % Q.length]]; n++; const right = a === q[1]; if(right) ok++;
+    J.$('#h2').innerHTML = (right ? '<b style="color:var(--jade)">정답!</b> ' : '<b style="color:var(--red)">아쉬워요.</b> ') + (q[1] === 'm' ? '메모리' : '시스템') + ' 반도체 — ' + q[2];
+    J.out(box,'ok', ok); J.out(box,'n', n); J.out(box,'p', J.fmt(ok/n*100, 0) + ' %', ok/n > 0.8 ? 'good' : ''); }
+  J.$('#a2m').onclick = () => ans('m'); J.$('#a2s').onclick = () => ans('s'); J.$('#a2n').onclick = () => { k++; show(); };
+  show();
+})();
+
+/* 그림 18-1 */
+(function(){
+  const s = document.getElementById('fig3');
+  const top = [['설계','팹리스 · IDM','10·11장','--red'],['설계 블록·도구','IP · EDA','11장','--plum'],['제조 (전공정)','파운드리 · IDM','13–17장','--indigo'],['후공정','패키징 · 테스트 (OSAT)','17장','--gold'],['제품','스마트폰 · 자동차 · 서버','18장','--jade']];
+  const bot = [['장비','노광 · 식각 · 증착 · 이온 주입','14·15장'],['소재','웨이퍼 · 가스 · 감광액 · 화학약품','13·14장'],['인프라','클린룸 · 물 · 전기','17장']];
+  top.forEach(([a, b, c, col], i) => { const x = 10 + i*178;
+    J.svg('rect', {x, y:30, width:160, height:90, rx:6, fill:'var(--card)', stroke:`var(${col})`, 'stroke-width':2.5}, s);
+    J.svg('rect', {x, y:30, width:160, height:8, fill:`var(${col})`}, s);
+    J.svg('text', {x:x + 80, y:66, 'text-anchor':'middle', class:'t-m', text:a, style:'font-weight:700'}, s);
+    J.svg('text', {x:x + 80, y:88, 'text-anchor':'middle', class:'t-s', text:b}, s);
+    J.svg('text', {x:x + 80, y:108, 'text-anchor':'middle', class:'t-s', text:c, style:'fill:var(--ink3);font-family:var(--mono)'}, s);
+    if(i < 4) J.svg('path', {d:`M${x + 162} 75 l14 0 m-6 -6 l6 6 l-6 6`, fill:'none', stroke:'var(--ink3)', 'stroke-width':2}, s); });
+  bot.forEach(([a, b, c], i) => { const x = 120 + i*230;
+    J.svg('rect', {x, y:180, width:200, height:80, rx:6, fill:'var(--paper2)', stroke:'var(--line)', 'stroke-width':1.5}, s);
+    J.svg('text', {x:x + 100, y:212, 'text-anchor':'middle', class:'t-m', text:a, style:'font-weight:700'}, s);
+    J.svg('text', {x:x + 100, y:234, 'text-anchor':'middle', class:'t-s', text:b}, s);
+    J.svg('text', {x:x + 100, y:252, 'text-anchor':'middle', class:'t-s', text:c, style:'fill:var(--ink3);font-family:var(--mono)'}, s);
+    J.svg('line', {x1:x + 100, y1:178, x2:x + 100 < 450 ? 446 : 446, y2:124, stroke:'var(--line)', 'stroke-dasharray':'4 4'}, s); });
+  J.svg('text', {x:450, y:160, 'text-anchor':'middle', class:'t-s', text:'↑ 제조를 받치는 산업'}, s);
+})();
+
+/* 18-3 진로 */
+(function(){
+  const LIKES = [['phy','물리가 재미있다'],['chem','화학 실험이 좋다'],['math','수학 문제 풀기'],['code','코딩·프로그래밍'],['mech','기계·장치 만지기'],['data','데이터 분석'],['team','여럿이 함께 문제 해결'],['draw','꼼꼼하게 설계하기']];
+  const JOBS = [
+    ['소자 연구원', {phy:3, math:2, chem:1, data:1}, '새로운 트랜지스터 구조와 재료를 연구한다.', '3–7·10·16장'],
+    ['공정 엔지니어', {chem:3, phy:1, data:2, team:2}, '증착·식각·노광 조건을 맞춰 수율을 올린다.', '13–15·17장'],
+    ['회로 설계 엔지니어', {math:2, draw:3, phy:1, code:1}, '트랜지스터 수준에서 아날로그·메모리 회로를 설계한다.', '8·10–12장'],
+    ['디지털 설계 엔지니어', {code:3, math:2, draw:2}, '코드(하드웨어 기술 언어)로 CPU·AI 칩을 설계한다.', '11장 · SoC 書'],
+    ['장비 엔지니어', {mech:3, phy:2, team:1}, '노광기·식각기 같은 거대한 장비를 만들고 고친다.', '14·15장'],
+    ['소재 연구원', {chem:3, phy:1, draw:1}, '감광액·가스·웨이퍼 같은 재료를 개발한다.', '13·14장'],
+    ['수율·데이터 엔지니어', {data:3, code:2, math:1, team:1}, '수많은 측정 데이터로 불량 원인을 찾는다.', '17장'],
+    ['패키징·테스트 엔지니어', {mech:2, draw:2, phy:1, team:1}, '칩을 쌓고 연결하고 시험하는 방법을 개발한다.', '17장']
+  ];
+  const el = document.getElementById('likes');
+  el.innerHTML = LIKES.map(([k, t], i) => `<label class="ctrl" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-k="${k}" ${i === 0 || i === 3 ? 'checked' : ''}> ${t}</label>`).join('');
+  J.sim('sim3', (v, box) => {
+    const sc = JOBS.map(([n, wt, d, ch]) => ({n, d, ch, s:Object.keys(wt).reduce((a, k) => a + (v[k] ? wt[k] : 0), 0)/Object.values(wt).reduce((a, b) => a + b, 0)}));
+    const sorted = sc.slice().sort((a, b) => b.s - a.s);
+    const {ctx, w, h} = J.fit(document.getElementById('cv3')); ctx.clearRect(0,0,w,h);
+    const L = 150, bh = (h - 20)/sc.length;
+    sorted.forEach((j, i) => { const y = 10 + i*bh; ctx.fillStyle = J.c(i === 0 ? '--red' : '--jade'); ctx.globalAlpha = i === 0 ? .9 : .55; ctx.fillRect(L, y + 4, Math.max(2, j.s*(w - L - 20)), bh*0.45); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c('--ink'); ctx.font = (i === 0 ? '700 ' : '') + '12.5px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.fillText(j.n, L - 8, y + bh*0.4);
+      ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText(j.d, L, y + bh*0.86); });
+    const t = sorted[0];
+    J.out(box,'top', t.s > 0 ? t.n : '항목을 골라 보세요', t.s > 0 ? 'good' : ''); J.out(box,'ch', t.s > 0 ? t.ch : '—');
+  });
+})();
+</script>
+</body>
+</html>

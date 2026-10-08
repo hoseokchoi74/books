@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>기억하는 반도체 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="memory">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 12 <span class="hanja">中卷 素子 · 第十二章 · 記憶</span></div>
+  <h1>기억하는 반도체</h1>
+  <p class="lead">계산을 하려면 숫자를 어딘가에 적어 두어야 한다. 반도체는 0과 1을 붙잡아 두는 방법을 세 가지 찾아냈다. 인버터 두 개가 서로를 붙잡는 <b>래치</b>(SRAM), 작은 그릇에 전하를 담는 <b>축전기</b>(DRAM), 절연체 속 섬에 전자를 가두는 <b>플로팅 게이트</b>(플래시). 스마트폰에는 이 셋이 모두 들어 있다. 중권의 마지막 장이다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>SRAM·DRAM·플래시 메모리가 1비트를 저장하는 방법을 비교한다.</li>
+  <li>교차 연결된 인버터가 스스로 상태를 유지하는 원리를 실험한다.</li>
+  <li>DRAM이 주기적으로 <b>리프레시</b>해야 하는 이유를 계산한다.</li>
+  <li>플래시가 전원 없이도 10년 넘게 기억하는 원리와 여러 비트를 저장하는 방법을 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>세 가지 기억 방식</h2>
+<div class="tbwrap"><table class="tb">
+<tr><th></th><th>SRAM</th><th>DRAM</th><th>플래시 (NAND)</th></tr>
+<tr><td>1비트를 붙잡는 법</td><td>인버터 2개가 서로 붙잡음 (트랜지스터 6개)</td><td>축전기 1개에 전하 (트랜지스터 1개 + 축전기 1개)</td><td>떠 있는 게이트에 전자 가둠 (트랜지스터 1개)</td></tr>
+<tr><td>속도</td><td>가장 빠름 (~1 ns)</td><td>빠름 (~50 ns)</td><td>느림 (읽기 ~50 µs)</td></tr>
+<tr><td>전원을 끄면</td><td>사라짐</td><td>사라짐 (켜 있어도 새어 나감)</td><td><b>남아 있음</b> (10년 이상)</td></tr>
+<tr><td>스마트폰 속 위치</td><td>CPU 안 캐시 (수십 MB)</td><td>메인 메모리 (8–16 GB)</td><td>저장 공간 (128 GB–1 TB)</td></tr>
+</table></div>
+
+<h2 id="s2"><span class="n">02</span>래치: 서로를 붙잡는 두 인버터</h2>
+<p>인버터 두 개를 고리처럼 이어 보자. 첫째 인버터의 출력이 둘째의 입력이 되고, 둘째의 출력이 다시 첫째의 입력이 된다. 첫째 출력이 1이면 둘째 출력은 0, 그 0이 첫째로 들어가 출력 1을 유지한다 — 스스로 상태를 붙잡는다! 반대 상태(0, 1)도 똑같이 안정하다. 두 안정 상태 중 하나가 0, 다른 하나가 1이다. 여기에 쓰기용 트랜지스터 2개를 붙이면 6개짜리 <span class="term">SRAM</span> 셀이 된다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-1</span><span class="ttl">교차 인버터 래치</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><button class="sbtn pri" id="b1s">1 쓰기 (SET)</button><button class="sbtn pri" id="b1r">0 쓰기 (RESET)</button><button class="sbtn" id="b1n">살짝 흔들기 (잡음)</button><button class="sbtn warn" id="b1p">전원 끄기/켜기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="260"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="260"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">저장된 값 Q</span><span class="v" data-r="q"></span></div>
+      <div class="ro"><span class="k">노드 전압 Q / Q̄</span><span class="v" data-r="v"></span></div>
+      <div class="ro"><span class="k">전원</span><span class="v" data-r="p"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>관찰.</b> 왼쪽: 두 인버터의 고리. 오른쪽: 두 인버터의 특성 곡선을 겹친 "나비 그림" — 두 곡선이 만나는 세 점 중 양 끝 두 점이 안정한 상태(0과 1)이고, 가운데는 공이 언덕 꼭대기에 선 것처럼 불안정하다. 잡음으로 살짝 흔들어도 제자리로 돌아오지만, 전원을 끄면 기억이 사라지고 다시 켜면 0인지 1인지 운에 맡겨진다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>DRAM: 새는 물동이</h2>
+<p><span class="term">DRAM</span>은 트랜지스터 하나와 아주 작은 축전기 하나로 1비트를 만든다. 축전기에 전하가 차 있으면 1, 비어 있으면 0. 부품이 적어 싸고 빽빽하게 만들 수 있지만, 축전기의 전하가 조금씩 새어 나간다는 문제가 있다. 그래서 수십 밀리초마다 모든 칸을 읽어서 다시 채워 넣는 <span class="term">리프레시</span>를 한다. 바닥에 구멍 난 물동이에 계속 물을 다시 붓는 것과 같다. 뜨거워지면 더 빨리 샌다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-2</span><span class="ttl">새는 물동이 지키기: 리프레시 주기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">리프레시 주기 <output data-o="tr"></output></span><input type="range" data-k="tr" min="16" max="512" step="16" value="64" data-d="0" data-u="ms"></label>
+      <label class="ctrl"><span class="lab">칩 온도 <output data-o="t"></output></span><input type="range" data-k="t" min="25" max="105" step="5" value="45" data-d="0" data-u="°C"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="270"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="270"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">가장 약한 칸의 유지 시간</span><span class="v" data-r="ret"></span></div>
+      <div class="ro"><span class="k">잃어버린 칸 (32개 중)</span><span class="v" data-r="lost"></span></div>
+      <div class="ro"><span class="k">리프레시에 쓰는 시간</span><span class="v" data-r="busy"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 1을 저장한 DRAM 32칸의 물높이(전하). 칸마다 새는 속도가 조금씩 다르다. 점선 아래로 내려가면 0으로 잘못 읽힌다(빨강). 오른쪽: 가장 약한 칸의 전압 변화 — 리프레시(톱니)마다 다시 채워진다. 표준은 64 ms마다 리프레시, 85 °C가 넘으면 두 배로 자주(32 ms). 온도가 10 °C 오르면 새는 속도가 약 2배가 된다고 가정했다. 더 자세한 이야기는 <a href="../../dram/index.html">DRAM 書</a>에 있다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>플래시: 섬에 가둔 전자</h2>
+<p><span class="term">플래시 메모리</span>의 트랜지스터는 게이트가 두 겹이다. 위는 보통의 게이트(제어 게이트), 그 아래에 절연체로 사방이 둘러싸인 "섬" — <span class="term">플로팅 게이트</span> — 가 있다. 높은 전압(약 20 V)을 걸면 전자가 얇은 절연막을 뚫고(터널링) 섬으로 들어가 갇힌다. 갇힌 전자는 (−) 전하로 채널을 막아서 문턱 전압을 높인다. 전원을 꺼도 전자가 빠져나갈 길이 없어 10년 넘게 기억한다. 문턱 전압 높이를 여러 단계로 나누면 한 칸에 2비트(MLC), 3비트(TLC), 4비트(QLC)를 저장할 수도 있다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-3</span><span class="ttl">플로팅 게이트에 전자 넣고 읽기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">한 칸에 저장할 비트</span><select data-k="b"><option value="1">1비트 (SLC: 단계 2개)</option><option value="2" selected>2비트 (MLC: 단계 4개)</option><option value="3">3비트 (TLC: 단계 8개)</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b3p">프로그램 펄스 (+전자)</button><button class="sbtn warn" id="b3e">지우기 (전자 모두 빼기)</button><button class="sbtn" id="b3y">10년 흐르기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">갇힌 전자 수</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">문턱 전압</span><span class="v" data-r="vt"></span></div>
+      <div class="ro"><span class="k">읽은 값</span><span class="v" data-r="val"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 보기.</b> 펄스를 누를 때마다 전자가 섬(노란 층)으로 들어가 문턱 전압이 오른다. 오른쪽 그림의 색 구간(단계)과 읽기 기준 전압(점선)으로 값이 정해진다. 비트 수를 늘리면 같은 전압 범위를 더 잘게 나누어야 해서, 전자 몇 개만 새어 나가도("10년 흐르기") 다른 값으로 잘못 읽히기 쉽다 — QLC가 싸지만 수명이 짧은 이유다. 더 자세한 이야기는 <a href="../../nand/index.html">NAND 書</a>에.</p>
+</div>
+
+<div class="note-box hist" data-h="中卷 정리"><div class="h">소자편을 마치며</div>
+<p style="margin:0">PN 접합 → 다이오드(정류) → LED·태양전지(빛) → MOSFET(스위치·증폭) → CMOS 게이트(논리·덧셈) → 래치·DRAM·플래시(기억). 계산과 기억이 모두 트랜지스터로 만들어진다. 그렇다면 이 트랜지스터 수백억 개를 손톱만 한 칩 위에 어떻게 새길까? 하권 「제조편」에서 모래부터 시작한다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">전원을 꺼도 데이터가 남아 있는 메모리는?</p><ol><li>SRAM</li><li>DRAM</li><li>플래시</li><li>셋 다</li></ol>
+<p class="explain">플래시는 절연체로 둘러싸인 플로팅 게이트에 전자를 가두므로 전원 없이도 유지된다.</p></div>
+<div class="quiz" data-a="0"><p class="q">DRAM에 리프레시가 필요한 이유는?</p><ol><li>축전기의 전하가 조금씩 새기 때문에</li><li>속도를 높이려고</li><li>전력을 아끼려고</li><li>플래시와 맞추려고</li></ol>
+<p class="explain">전하가 새어 1이 0으로 바뀌기 전에 주기적으로 다시 채운다.</p></div>
+<div class="quiz" data-a="3"><p class="q">한 칸에 3비트를 저장하려면 구분해야 할 문턱 전압 단계는?</p><ol><li>3개</li><li>4개</li><li>6개</li><li>8개</li></ol>
+<p class="explain">2³ = 8단계.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 12-1 래치 */
+(function(){
+  const box = document.getElementById('sim1');
+  let q = 1, qb = 0, power = true, t = 0, kick = 0;
+  const inv = x => 1/(1 + Math.exp((x - 0.5)*14));
+  function step(dt){
+    if(!power){ q += (0 - q)*dt*4; qb += (0 - qb)*dt*4; return; }
+    if(kick > 0){ kick -= dt; }
+    const tq = inv(qb), tqb = inv(q); q += (tq - q)*dt*6; qb += (tqb - qb)*dt*6;
+  }
+  function draw(){
+    { const {ctx, w, h} = J.fit(document.getElementById('cv1a')); ctx.clearRect(0,0,w,h);
+      const cx = w/2, cy = h/2, tri = (x, y, dir, lab) => { ctx.fillStyle = J.c('--card'); ctx.strokeStyle = J.c('--ink'); ctx.lineWidth = 2.5; ctx.beginPath();
+        ctx.moveTo(x - dir*28, y - 24); ctx.lineTo(x + dir*22, y); ctx.lineTo(x - dir*28, y + 24); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x + dir*28, y, 5, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(lab, x - dir*6, y + 4); };
+      const c = v => J.c(v > 0.5 ? '--red' : '--indigo');
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = c(q); ctx.beginPath(); ctx.moveTo(cx + 40, cy - 50); ctx.lineTo(cx + 90, cy - 50); ctx.lineTo(cx + 90, cy + 50); ctx.lineTo(cx + 50, cy + 50); ctx.stroke();
+      ctx.strokeStyle = c(qb); ctx.beginPath(); ctx.moveTo(cx - 40, cy + 50); ctx.lineTo(cx - 90, cy + 50); ctx.lineTo(cx - 90, cy - 50); ctx.lineTo(cx - 50, cy - 50); ctx.stroke();
+      tri(cx, cy - 50, 1, '인버터1'); tri(cx, cy + 50, -1, '인버터2');
+      ctx.font = '700 15px "JetBrains Mono"'; ctx.textAlign = 'left'; ctx.fillStyle = c(q); ctx.fillText('Q = ' + (power ? (q > 0.5 ? 1 : 0) : '?'), cx + 100, cy + 4);
+      ctx.textAlign = 'right'; ctx.fillStyle = c(qb); ctx.fillText('Q̄ = ' + (power ? (qb > 0.5 ? 1 : 0) : '?'), cx - 100, cy + 4);
+      if(!power){ ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0,0,w,h); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = '700 16px "Noto Sans KR"'; ctx.fillText('전원 꺼짐', cx, 24); } }
+    { const pts1 = [], pts2 = []; for(let x = 0; x <= 1.0001; x += 0.01){ pts1.push([x, inv(x)]); pts2.push([inv(x), x]); }
+      J.plot(document.getElementById('cv1b'), {x:[0, 1], y:[0, 1], xlab:'Q', ylab:'Q̄', series:[{pts:pts1, color:'--red', w:2.5},{pts:pts2, color:'--indigo', w:2.5}],
+        points:[{x:1, y:0, color:'--jade', r:5, label:'안정 (1)', align:'right'},{x:0, y:1, color:'--jade', r:5, label:'안정 (0)'},{x:0.5, y:0.5, color:'--gold', r:5, label:'불안정'},{x:q, y:qb, color:'--ink', r:7}]}); }
+    J.out(box,'q', power ? (q > 0.5 ? '1' : '0') : '— (사라짐)', power ? 'good' : 'bad'); J.out(box,'v', q.toFixed(2) + ' / ' + qb.toFixed(2) + ' V'); J.out(box,'p', power ? '켜짐' : '꺼짐', power ? '' : 'bad');
+  }
+  J.$('#b1s').onclick = () => { if(power){ q = 1; qb = 0; draw(); } };
+  J.$('#b1r').onclick = () => { if(power){ q = 0; qb = 1; draw(); } };
+  J.$('#b1n').onclick = () => { if(power){ q = J.clamp(q + (q > 0.5 ? -0.3 : 0.3), 0, 1); qb = J.clamp(qb + (qb > 0.5 ? -0.3 : 0.3), 0, 1); kick = 1; draw(); } };
+  J.$('#b1p').onclick = () => { power = !power; if(power){ q = 0.5 + (Math.random() - .5)*0.1; qb = 0.5 + (Math.random() - .5)*0.1; } draw(); };
+  J.loop(document.getElementById('cv1a'), dt => { step(dt); draw(); });
+  J.live(draw);
+})();
+
+/* 12-2 DRAM */
+J.sim('sim2', (v, box) => {
+  const R = J.rng(12), N = 32, acc = Math.pow(2, (v.t - 45)/10);
+  const taus = Array.from({length:N}, () => (400 + 2600*Math.pow(R(), 0.35))/acc); // ms (가장 약한 칸 ~ 수백 ms)
+  const weakest = Math.min(...taus), th = 0.5;
+  const ret = weakest*Math.log(1/th);
+  { const {ctx, w, h} = J.fit(document.getElementById('cv2a')); ctx.clearRect(0,0,w,h);
+    const bw = (w - 30)/N, base = h - 30, top = 20, Tshow = v.tr; let lost = 0;
+    taus.forEach((tau, i) => { const lvl = Math.exp(-Tshow/tau), bad = lvl < th; if(bad) lost++;
+      ctx.strokeStyle = J.c('--line'); ctx.strokeRect(15 + i*bw + 2, top, bw - 4, base - top);
+      ctx.fillStyle = J.c(bad ? '--red' : '--indigo'); ctx.globalAlpha = .75; ctx.fillRect(15 + i*bw + 3, base - lvl*(base - top), bw - 6, lvl*(base - top)); ctx.globalAlpha = 1; });
+    ctx.strokeStyle = J.c('--red'); ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(10, base - th*(base - top)); ctx.lineTo(w - 10, base - th*(base - top)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText(`리프레시 직전 (${v.tr} ms 뒤) 전하`, 15, 14);
+    J.out(box,'lost', lost + '칸', lost ? 'bad' : 'good'); }
+  const pts = []; let lvl = 1; const Tend = Math.max(600, v.tr*3.2);
+  for(let t = 0; t <= Tend; t += Tend/600){ const ph = t % v.tr; pts.push([t, Math.exp(-ph/weakest)]); }
+  J.plot(document.getElementById('cv2b'), {x:[0, Tend], y:[0, 1.05], xlab:'시간 (ms)', ylab:'가장 약한 칸 전하', series:[{pts, color:'--indigo', w:2.5}], hlines:[{y:th, color:'--red', label:'읽기 한계'}]});
+  J.out(box,'ret', J.fmt(ret, 0) + ' ms', ret > v.tr ? 'good' : 'bad');
+  J.out(box,'busy', J.fmt(8192*350e-6/v.tr*100, 1) + ' %');
+});
+
+/* 12-3 플래시 */
+(function(){
+  const box = document.getElementById('sim3');
+  let ne = 0, bits = 2, t = 0, flash = 0;
+  const vth = n => -1 + n*0.04; // 전자 25개당 1 V
+  const levels = b => { const L = 1 << b, lo = -1, hi = 5; return Array.from({length:L}, (_, i) => lo + (hi - lo)*i/L); };
+  const code = (b, i) => { const g = i ^ (i >> 1); return g.toString(2).padStart(b, '0'); };
+  function draw(){
+    { const {ctx, w, h} = J.fit(document.getElementById('cv3a')); ctx.clearRect(0,0,w,h);
+      const cx = w/2, L = cx - 100, Rr = cx + 100;
+      ctx.fillStyle = J.c('--indigo-soft'); ctx.fillRect(20, 200, w - 40, h - 210);
+      ctx.fillStyle = J.c('--red-soft'); ctx.fillRect(20, 200, L - 20, 30); ctx.fillRect(Rr, 200, w - 20 - Rr, 30);
+      ctx.fillStyle = J.c('--ink3'); ctx.globalAlpha = .25; ctx.fillRect(L, 150, Rr - L, 50); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c('--gold'); ctx.fillRect(L + 6, 162, Rr - L - 12, 22);
+      ctx.fillStyle = J.c('--ink3'); ctx.fillRect(L, 100, Rr - L, 38);
+      ctx.fillStyle = '#fff'; ctx.font = '600 12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('제어 게이트', cx, 124);
+      ctx.fillStyle = J.c('--ink'); ctx.fillText('플로팅 게이트 (섬)', cx, 158); ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('얇은 절연막 (터널 산화막)', cx, 196);
+      ctx.fillText('소스', (20 + L)/2, 220); ctx.fillText('드레인', (Rr + w - 20)/2, 220); ctx.fillText('기판', cx, h - 14);
+      const R = J.rng(31); ctx.fillStyle = J.c('--red');
+      for(let k=0;k<Math.min(ne, 120);k++){ ctx.beginPath(); ctx.arc(L + 10 + R()*(Rr - L - 20), 165 + R()*16, 2.6, 0, 7); ctx.fill(); }
+      if(flash > 0){ ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2; for(let k=0;k<5;k++){ const x = L + 30 + k*(Rr - L - 60)/4; ctx.beginPath(); ctx.moveTo(x, 236); ctx.lineTo(x, 186); ctx.stroke(); }
+        ctx.fillStyle = J.c('--red'); ctx.font = '600 12px "Noto Sans KR"'; ctx.fillText('터널링! ↑', cx, 250); }
+      ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.fillText(`갇힌 전자 ${ne}개 (그림은 최대 120개)`, cx, 20); }
+    { const {ctx, w, h} = J.fit(document.getElementById('cv3b')); ctx.clearRect(0,0,w,h);
+      const lv = levels(bits), lo = -1, hi = 5, X = v => 30 + (v - lo)/(hi - lo)*(w - 60), cur = vth(ne);
+      lv.forEach((a, i) => { const b = i + 1 < lv.length ? lv[i+1] : hi; ctx.fillStyle = `hsl(${200 - i*170/lv.length}, 45%, ${J.isDark() ? 30 : 82}%)`; ctx.fillRect(X(a), 40, X(b) - X(a), 140);
+        ctx.fillStyle = J.c('--ink'); ctx.font = '700 13px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.fillText(code(bits, i), (X(a) + X(b))/2, 115);
+        if(i){ ctx.strokeStyle = J.c('--ink2'); ctx.setLineDash([4,3]); ctx.beginPath(); ctx.moveTo(X(a), 30); ctx.lineTo(X(a), 190); ctx.stroke(); ctx.setLineDash([]); } });
+      ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.moveTo(X(J.clamp(cur, lo, hi)), 186); ctx.lineTo(X(J.clamp(cur, lo, hi)) - 8, 204); ctx.lineTo(X(J.clamp(cur, lo, hi)) + 8, 204); ctx.fill();
+      ctx.font = '600 12px "Noto Sans KR"'; ctx.fillText('지금 문턱 전압', X(J.clamp(cur, lo, hi)), 222);
+      ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('문턱 전압 (V) → 단계별 저장 값', w/2, 22);
+      [-1, 0, 1, 2, 3, 4, 5].forEach(v => { ctx.fillStyle = J.c('--ink3'); ctx.fillText(v, X(v), h - 30); });
+      const idx = J.clamp(lv.findIndex((a, i) => cur >= a && (i + 1 >= lv.length || cur < lv[i+1])), 0, lv.length - 1);
+      J.out(box,'n', ne + '개'); J.out(box,'vt', J.fmt(cur, 2) + ' V'); J.out(box,'val', code(bits, idx === -1 ? 0 : idx), 'good'); }
+  }
+  J.sim('sim3', v => { bits = +v.b; draw(); });
+  J.$('#b3p').onclick = () => { ne = Math.min(150, ne + Math.round(10 + Math.random()*6)); flash = 0.6; draw(); };
+  J.$('#b3e').onclick = () => { ne = 0; draw(); };
+  J.$('#b3y').onclick = () => { ne = Math.max(0, ne - Math.round(ne*0.06 + Math.random()*2)); draw(); };
+  J.loop(document.getElementById('cv3a'), dt => { if(flash > 0){ flash -= dt; draw(); } });
+})();
+</script>
+</body>
+</html>

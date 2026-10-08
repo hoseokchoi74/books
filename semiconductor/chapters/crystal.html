@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>실리콘 결정과 정공 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../../assets/iso3d.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="crystal">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 04 <span class="hanja">上卷 原理 · 第四章 · 結晶</span></div>
+  <h1>실리콘 결정과 정공</h1>
+  <p class="lead">규소 원자들은 이웃 넷과 전자를 나눠 가지며 다이아몬드와 똑같은 모양의 결정을 이룬다. 열을 받아 결합 하나가 끊어지면 자유 전자가 생기고, 동시에 전자가 떠난 자리에 <b>빈자리</b>가 남는다. 이 빈자리 — <span class="term">정공</span>(hole) — 는 마치 (+) 전하를 띤 알갱이처럼 움직이며 전류를 나른다. 반도체에는 전기를 나르는 선수가 둘이다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>규소 원자가 이웃 4개와 <b>공유 결합</b>하는 모습을 그린다.</li>
+  <li>규소 결정(다이아몬드 구조)을 3D로 돌려 보고, 원자 밀도를 계산한다.</li>
+  <li>열에 의해 <b>전자-정공 쌍</b>이 생기고 사라지는 과정을 관찰한다.</li>
+  <li>정공이 전자와 반대 방향으로 움직이는 이유를 설명한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>손잡기: 공유 결합</h2>
+<p>1장에서 규소의 원자가 전자는 4개였다. 규소 원자는 이웃 원자 4개와 전자를 하나씩 내놓아 <b>전자 쌍</b>을 함께 쓴다. 이렇게 하면 모든 원자가 바깥 껍질에 8개의 전자를 가진 것처럼 안정해진다. 전자 쌍을 함께 쓰는 결합이 <span class="term">공유 결합</span>이다. 공유 결합의 전자들은 두 원자 사이에 붙잡혀 있어 마음대로 돌아다니지 못한다 — 순수한 규소가 차가울 때 전기가 거의 안 통하는 이유다.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 860 280" role="img" aria-label="공유 결합" id="fig1"></svg>
+<figcaption><b>그림 4-1.</b> 왼쪽: 규소 원자 하나(가운데)가 이웃 넷과 전자 쌍(파란 점 두 개)을 나눠 갖는다. 오른쪽: 평면에 펼쳐 그린 규소 결정. 실제로는 아래 실험처럼 3차원 사면체 모양으로 연결된다.</figcaption>
+</figure>
+
+<h2 id="s2"><span class="n">02</span>다이아몬드 구조</h2>
+<p>네 개의 손을 가장 고르게 뻗는 방법은 정사면체의 네 꼭짓점 방향이다(결합 각 109.5°). 이 사면체를 끝없이 이어 붙이면 <span class="term">다이아몬드 구조</span>가 된다. 탄소로 만들면 다이아몬드, 규소로 만들면 실리콘 결정이다. 한 변이 0.543 nm인 정육면체(<span class="term">단위 격자</span>) 안에 원자가 8개 들어 있다.</p>
+<div class="eq">$$\text{원자 밀도} = \frac{8}{(0.543\times10^{-7}\,\text{cm})^3} \approx 5.0\times10^{22}\ \text{개/cm}^3$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-1</span><span class="ttl">3D 규소 결정 돌려 보기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">단위 격자 수 (한 변) <output data-o="n"></output></span><input type="range" data-k="n" min="1" max="3" step="1" value="1" data-d="0"></label>
+      <label class="ctrl"><span class="lab">보기</span><select data-k="mode"><option value="all">모든 원자</option><option value="tet" selected>사면체 하나 강조</option><option value="sub">두 겹의 면심 격자 색 구분</option></select></label>
+      <label class="ctrl"><span class="lab">결합 막대 <output data-o="b"></output></span><input type="checkbox" data-k="b" checked></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="380"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">그린 원자 수</span><span class="v" data-r="na"></span></div>
+      <div class="ro"><span class="k">결합 수</span><span class="v" data-r="nb"></span></div>
+      <div class="ro"><span class="k">결정 한 변</span><span class="v" data-r="len"></span></div>
+      <div class="ro"><span class="k">원자 간 거리</span><span class="v" data-r="d">0.235 nm</span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 보기.</b> 그림을 드래그해서 돌려 보자. "사면체 하나 강조"에서는 가운데 원자 하나(빨강)가 이웃 넷(주황)과 정사면체를 이룬다. "두 겹의 면심 격자"를 고르면 다이아몬드 구조가 정육면체의 꼭짓점과 면 가운데에 원자가 있는 격자(면심 입방, 파랑) 두 개를 대각선으로 1/4만큼 어긋나게 겹친 것(초록)임을 알 수 있다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>열이 결합을 끊으면: 전자-정공 쌍</h2>
+<p>상온에서 원자들은 끊임없이 떨린다. 아주 가끔 공유 결합의 전자 하나가 띠틈만큼의 에너지(1.12 eV)를 얻어 결합을 뿌리치고 자유 전자가 된다. 그 자리에는 전자 하나가 빠진 빈자리, <span class="term">정공</span>이 남는다. 전자와 정공은 항상 <b>쌍으로</b> 생긴다(<span class="term">생성</span>). 돌아다니던 전자가 정공을 만나면 빈자리를 채우며 둘 다 사라진다(<span class="term">재결합</span>). 생성과 재결합이 균형을 이루는 곳에서 전자·정공의 수가 정해진다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-2</span><span class="ttl">전자-정공 쌍의 탄생과 소멸</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 (생성 빈도) <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="100" step="1" value="40" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">전기장 (→ 방향) <output data-o="e"></output></span><input type="range" data-k="e" min="0" max="10" step="1" value="0" data-d="0"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b2r">초기화</button><button class="sbtn" id="b2p">일시정지</button></div>
+    <div class="canvas-box"><canvas id="cv2" data-h="330"></canvas></div>
+    <div class="legend"><span><i style="background:var(--red)"></i>자유 전자 (−)</span><span><i style="background:var(--card);border:2px solid var(--indigo);height:8px;width:8px;border-radius:50%"></i>정공 (+, 빈자리)</span><span><i style="background:var(--indigo)"></i>결합 전자</span></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">자유 전자</span><span class="v" data-r="ne">0</span></div>
+      <div class="ro"><span class="k">정공</span><span class="v" data-r="nh">0</span></div>
+      <div class="ro"><span class="k">누적 생성</span><span class="v" data-r="g">0</span></div>
+      <div class="ro"><span class="k">누적 재결합</span><span class="v" data-r="r">0</span></div>
+    </div>
+  </div>
+  <p class="cap"><b>관찰.</b> 자유 전자 수와 정공 수는 언제나 같다. 온도를 올리면 생성이 늘지만 재결합도 늘어 결국 새로운 균형에 이른다. 전기장을 걸면 전자(빨강)는 왼쪽(−방향 반대쪽)으로, 정공(흰 원)은 오른쪽으로 움직인다. 둘은 반대로 움직이지만 전하도 반대이므로 <b>전류는 같은 방향</b>으로 더해진다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>정공은 어떻게 움직일까?</h2>
+<p>정공은 진짜 알갱이가 아니라 "전자가 없는 자리"다. 그런데 옆 결합의 전자가 그 빈자리로 건너뛰면, 빈자리는 반대쪽으로 한 칸 옮겨 간다. 전자들이 하나씩 왼쪽으로 건너뛰면, 빈자리는 오른쪽으로 쭉 이동한다. 극장에서 앞자리가 하나 비었을 때 사람들이 한 칸씩 당겨 앉으면 빈자리가 뒤로 이동하는 것과 같다. 그래서 정공은 <b>(+) 전하를 가진 입자</b>처럼 행동한다고 생각하면 편하다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-3</span><span class="ttl">빈자리 옮기기: 정공의 이동</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><button class="sbtn pri" id="b3s">전자 한 번 건너뛰기 ←</button><button class="sbtn" id="b3a">자동 재생</button><button class="sbtn" id="b3r">처음으로</button></div>
+    <div class="canvas-box"><canvas id="cv3" data-h="200"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">전자가 건너뛴 횟수</span><span class="v" data-r="s">0</span></div>
+      <div class="ro"><span class="k">전자 하나가 움직인 거리</span><span class="v" data-r="de">0 칸</span></div>
+      <div class="ro"><span class="k">정공이 움직인 거리</span><span class="v" data-r="dh">0 칸 →</span></div>
+    </div>
+  </div>
+  <p class="cap"><b>핵심.</b> 전자는 각자 한 칸씩만 왼쪽으로 움직였는데, 빈자리(정공)는 오른쪽으로 여러 칸을 이동한다. 전자 여러 개의 작은 움직임이 정공 하나의 큰 움직임으로 보이는 것이다. 정공은 결합 전자가 건너뛰어야 움직이므로 자유 전자보다 2–3배 느리다(규소에서 이동도 약 450 대 1400 cm²/V·s).</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 순수한 규소 1 cm³에는 상온에서 자유 전자가 약 10<sup>10</sup>개 있다. 원자 수(5×10<sup>22</sup>)와 비교하면 원자 몇 개당 자유 전자 하나일까? 이렇게 적은 자유 전자를 원하는 만큼 늘리는 방법이 다음 장의 <b>도핑</b>이다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">규소 원자 하나가 공유 결합하는 이웃 원자의 수는?</p><ol><li>2</li><li>4</li><li>6</li><li>8</li></ol>
+<p class="explain">원자가 전자 4개로 이웃 넷과 전자 쌍을 하나씩 나눈다.</p></div>
+<div class="quiz" data-a="2"><p class="q">순수한 반도체에서 항상 성립하는 것은?</p><ol><li>자유 전자가 정공보다 많다</li><li>정공이 자유 전자보다 많다</li><li>자유 전자 수 = 정공 수</li><li>정공은 없다</li></ol>
+<p class="explain">열로 생기는 전자와 정공은 언제나 쌍으로 생기고 쌍으로 사라진다.</p></div>
+<div class="quiz" data-a="0"><p class="q">전기장을 오른쪽으로 걸면 정공은 어느 쪽으로 움직이는가?</p><ol><li>오른쪽 (전기장 방향)</li><li>왼쪽</li><li>움직이지 않는다</li><li>위쪽</li></ol>
+<p class="explain">정공은 (+) 전하처럼 행동하므로 전기장 방향으로 움직인다. 전자는 반대 방향.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 4-1 */
+(function(){
+  const s = document.getElementById('fig1');
+  const atom = (x, y, r, lab, hi) => { J.svg('circle', {cx:x, cy:y, r, fill: hi ? 'var(--gold)' : 'var(--paper2)', stroke:'var(--ink3)', 'stroke-width':1.5}, s); J.svg('text', {x, y:y+5, 'text-anchor':'middle', class:'t-m', text:lab, style:'font-weight:700' + (hi ? ';fill:#fff' : '')}, s); };
+  const pair = (x1, y1, x2, y2) => { const mx = (x1+x2)/2, my = (y1+y2)/2, dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), nx = -dy/L*6, ny = dx/L*6;
+    J.svg('line', {x1, y1, x2, y2, stroke:'var(--line)', 'stroke-width':10, 'stroke-linecap':'round', opacity:.5}, s);
+    J.svg('circle', {cx:mx+nx, cy:my+ny, r:4.5, class:'s-indigo'}, s); J.svg('circle', {cx:mx-nx, cy:my-ny, r:4.5, class:'s-indigo'}, s); };
+  const C = [190, 140], N = [[190, 40],[290, 140],[190, 240],[90, 140]];
+  N.forEach(p => pair(C[0], C[1], p[0], p[1])); N.forEach(p => atom(p[0], p[1], 24, 'Si')); atom(C[0], C[1], 28, 'Si', 1);
+  J.svg('text', {x:330, y:60, class:'t-s', text:'전자 쌍 = 공유 결합'}, s);
+  J.svg('line', {x1:328, y1:64, x2:244, y2:88, stroke:'var(--ink3)'}, s);
+  // 격자
+  const x0 = 440, y0 = 30, d = 70;
+  for(let i=0;i<6;i++) for(let j=0;j<4;j++){ const x = x0 + i*d, y = y0 + j*d;
+    if(i < 5) pair(x, y, x + d, y); if(j < 3) pair(x, y, x, y + d); }
+  for(let i=0;i<6;i++) for(let j=0;j<4;j++) atom(x0 + i*d, y0 + j*d, 17, 'Si');
+})();
+
+/* 4-1 3D 다이아몬드 */
+(function(){
+  const cv = document.getElementById('cv1'), cam = {yaw:-0.6, pitch:0.45, scale:100};
+  let V = {n:1, mode:'tet', b:true}, atoms = [], bonds = [];
+  function build(n){
+    const fcc = [[0,0,0],[0,.5,.5],[.5,0,.5],[.5,.5,0]], A = [];
+    for(let i=0;i<=n;i++) for(let j=0;j<=n;j++) for(let k=0;k<=n;k++) [0,1].forEach(sub => fcc.forEach(f => {
+      const p = [i + f[0] + sub*.25, j + f[1] + sub*.25, k + f[2] + sub*.25];
+      if(p.every(c => c <= n + 1e-6)) A.push({p, sub}); }));
+    const key = new Set(), U = []; A.forEach(a => { const kk = a.p.map(c => c.toFixed(3)).join(); if(!key.has(kk)){ key.add(kk); U.push(a); } });
+    const B = []; for(let a=0;a<U.length;a++) for(let b=a+1;b<U.length;b++){ const d = Math.hypot(...U[a].p.map((c,i) => c - U[b].p[i])); if(Math.abs(d - 0.433) < 0.02) B.push([a,b]); }
+    atoms = U; bonds = B;
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const n = V.n; cam.scale = Math.min(w, h)*0.46/n;
+    const c = n/2, P = atoms.map(a => { const r = J3.rot(a.p.map(x => x - c), cam); return {x: w/2 + r[0]*cam.scale, y: h/2 - r[1]*cam.scale, z:r[2], a}; });
+    const tetC = atoms.findIndex(a => Math.abs(a.p[0] - .25) + Math.abs(a.p[1] - .25) + Math.abs(a.p[2] - .25) < 1e-3);
+    const nb = new Set(bonds.filter(b => b.includes(tetC)).map(b => b[0] === tetC ? b[1] : b[0]));
+    // 단위 격자 테두리
+    ctx.strokeStyle = J.c('--line'); ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+    for(let i=0;i<=n;i++) for(let j=0;j<=n;j++){ [[[i,j,0],[i,j,n]],[[i,0,j],[i,n,j]],[[0,i,j],[n,i,j]]].forEach(([a,b]) => {
+      const p1 = J3.rot(a.map(x => x - c), cam), p2 = J3.rot(b.map(x => x - c), cam);
+      ctx.beginPath(); ctx.moveTo(w/2 + p1[0]*cam.scale, h/2 - p1[1]*cam.scale); ctx.lineTo(w/2 + p2[0]*cam.scale, h/2 - p2[1]*cam.scale); ctx.stroke(); }); }
+    ctx.setLineDash([]);
+    const items = [];
+    if(V.b) bonds.forEach(b => items.push({z:(P[b[0]].z + P[b[1]].z)/2 + 0.01, bond:b}));
+    P.forEach((p, i) => items.push({z:p.z, atom:i}));
+    items.sort((a, b) => b.z - a.z);
+    const R0 = Math.max(5, cam.scale*0.075);
+    items.forEach(it => {
+      if(it.bond){ const [a, b] = it.bond, hi = V.mode === 'tet' && (a === tetC || b === tetC);
+        ctx.strokeStyle = J.c(hi ? '--red' : '--ink3'); ctx.lineWidth = hi ? 4 : 2.5; ctx.globalAlpha = V.mode === 'tet' && !hi ? .35 : .8;
+        ctx.beginPath(); ctx.moveTo(P[a].x, P[a].y); ctx.lineTo(P[b].x, P[b].y); ctx.stroke(); ctx.globalAlpha = 1; return; }
+      const i = it.atom, p = P[i];
+      let col = '--gold', al = 1;
+      if(V.mode === 'tet'){ col = i === tetC ? '--red' : nb.has(i) ? '--gold' : '--ink3'; al = i === tetC || nb.has(i) ? 1 : .45; }
+      if(V.mode === 'sub') col = p.a.sub ? '--jade' : '--indigo';
+      const s = 1 + (-p.z)*0.08/n, r = R0*s;
+      const g = ctx.createRadialGradient(p.x - r*0.35, p.y - r*0.35, r*0.1, p.x, p.y, r);
+      g.addColorStop(0, '#fff'); g.addColorStop(0.35, J.c(col)); g.addColorStop(1, J.c(col));
+      ctx.globalAlpha = al; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    });
+    ctx.fillStyle = J.c('--ink3'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('드래그해서 돌려 보세요', 10, 18);
+  }
+  J.sim('sim1', (v, box) => {
+    if(v.n !== V.n || !atoms.length) build(v.n);
+    V = v; J.$('[data-o="b"]', box).textContent = v.b ? '보임' : '숨김';
+    J.out(box,'na', atoms.length + '개'); J.out(box,'nb', bonds.length + '개'); J.out(box,'len', J.fmt(0.543*v.n, 3) + ' nm');
+    draw();
+  });
+  J3.drag(cv, cam, draw);
+  J.loop(cv, dt => { if(!cam.user){ cam.yaw += dt*0.25; draw(); } });
+})();
+
+/* 4-2 전자-정공 쌍 */
+(function(){
+  const cv = document.getElementById('cv2'), box = document.getElementById('sim2');
+  const COLS = 12, ROWS = 6;
+  let S, V = {t:40, e:0}, paused = false;
+  function reset(){ S = {el:[], holes:[], g:0, r:0, rng:J.rng(42)}; }
+  reset();
+  // 정공은 결합 위치(가로 결합 i,j)에 존재: 결합 인덱스 [i,j]
+  function step(dt){
+    const R = S.rng;
+    if(R() < V.t/100*dt*2.2){ const i = Math.floor(R()*(COLS-1)), j = Math.floor(R()*ROWS);
+      if(!S.holes.some(h => h.i === i && h.j === j)){ S.holes.push({i, j, t:0}); S.el.push({x:i + 0.5, y:j, vx:(R() - .5)*2, vy:(R() - .5)*2, born:0.6}); S.g++; } }
+    S.el.forEach(e => { e.born = Math.max(0, e.born - dt);
+      e.vx += (R() - .5)*6*dt - V.e*0.25*dt; e.vy += (R() - .5)*6*dt; e.vx *= 0.98; e.vy *= 0.98;
+      const sp = Math.hypot(e.vx, e.vy), mx = 1.6 + V.e*0.15; if(sp > mx){ e.vx *= mx/sp; e.vy *= mx/sp; }
+      e.x += e.vx*dt; e.y += e.vy*dt;
+      if(e.x < 0) e.x += COLS - 1; if(e.x > COLS - 1) e.x -= COLS - 1; if(e.y < -0.4){ e.y = -0.4; e.vy = Math.abs(e.vy); } if(e.y > ROWS - 0.6){ e.y = ROWS - 0.6; e.vy = -Math.abs(e.vy); } });
+    S.holes.forEach(h => { h.t += dt; const p = dt*(0.5 + V.e*0.35);
+      if(R() < p){ let di = 0, dj = 0; const q = R(); if(q < 0.25 + V.e*0.06) di = 1; else if(q < 0.5) di = -1; else if(q < 0.75) dj = 1; else dj = -1;
+        const ni = (h.i + di + COLS - 1) % (COLS - 1), nj = J.clamp(h.j + dj, 0, ROWS - 1);
+        if(!S.holes.some(o => o !== h && o.i === ni && o.j === nj)){ h.i = ni; h.j = nj; } } });
+    // 재결합
+    for(let a = S.el.length - 1; a >= 0; a--){ const e = S.el[a]; if(e.born > 0) continue;
+      const k = S.holes.findIndex(h => Math.hypot(h.i + 0.5 - e.x, h.j - e.y) < 0.35);
+      if(k >= 0){ S.holes.splice(k, 1); S.el.splice(a, 1); S.r++; } }
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const dx = (w - 60)/(COLS - 1), dy = (h - 50)/(ROWS - 1), X = i => 30 + i*dx, Y = j => 25 + j*dy;
+    for(let i=0;i<COLS;i++) for(let j=0;j<ROWS;j++){
+      if(i < COLS - 1){ const hole = S.holes.some(o => o.i === i && o.j === j);
+        ctx.strokeStyle = J.c('--line'); ctx.lineWidth = 6; ctx.globalAlpha = .5; ctx.beginPath(); ctx.moveTo(X(i), Y(j)); ctx.lineTo(X(i+1), Y(j)); ctx.stroke(); ctx.globalAlpha = 1;
+        const mx = (X(i) + X(i+1))/2;
+        ctx.fillStyle = J.c('--indigo'); ctx.beginPath(); ctx.arc(mx - 6, Y(j), 3, 0, 7); ctx.fill();
+        if(hole){ ctx.fillStyle = J.c('--card'); ctx.strokeStyle = J.c('--indigo'); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(mx + 6, Y(j), 5.5, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = J.c('--indigo'); ctx.font = '700 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('+', mx + 6, Y(j) + .5); ctx.textBaseline = 'alphabetic'; }
+        else { ctx.fillStyle = J.c('--indigo'); ctx.beginPath(); ctx.arc(mx + 6, Y(j), 3, 0, 7); ctx.fill(); } }
+      if(j < ROWS - 1){ ctx.strokeStyle = J.c('--line'); ctx.lineWidth = 6; ctx.globalAlpha = .3; ctx.beginPath(); ctx.moveTo(X(i), Y(j)); ctx.lineTo(X(i), Y(j+1)); ctx.stroke(); ctx.globalAlpha = 1; }
+    }
+    for(let i=0;i<COLS;i++) for(let j=0;j<ROWS;j++){ ctx.fillStyle = J.c('--paper2'); ctx.strokeStyle = J.c('--ink3'); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(X(i), Y(j), 10, 0, 7); ctx.fill(); ctx.stroke(); }
+    S.el.forEach(e => { const x = X(e.x), y = Y(e.y); ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(x, y, 5.5, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = '700 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('−', x, y + .5); ctx.textBaseline = 'alphabetic'; });
+    if(V.e > 0){ ctx.strokeStyle = J.c('--gold'); ctx.fillStyle = J.c('--gold'); ctx.lineWidth = 2; const y = h - 8; ctx.beginPath(); ctx.moveTo(w/2 - 60, y); ctx.lineTo(w/2 + 60, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(w/2 + 66, y); ctx.lineTo(w/2 + 56, y - 5); ctx.lineTo(w/2 + 56, y + 5); ctx.fill();
+      ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.fillText('전기장 E', w/2 - 66, y + 4); }
+    J.out(box,'ne', S.el.length); J.out(box,'nh', S.holes.length); J.out(box,'g', S.g); J.out(box,'r', S.r);
+  }
+  J.sim('sim2', v => { V = v; draw(); });
+  J.$('#b2r').onclick = () => { reset(); draw(); };
+  J.$('#b2p').onclick = e => { paused = !paused; e.target.textContent = paused ? '계속' : '일시정지'; };
+  J.loop(cv, dt => { if(!paused){ step(dt); draw(); } });
+})();
+
+/* 4-3 정공 이동 */
+(function(){
+  const cv = document.getElementById('cv3'), box = document.getElementById('sim3'), N = 10;
+  let hole, steps, anim = null, auto = false, seats;
+  function reset(){ hole = 0; steps = 0; seats = Array.from({length:N}, (_, i) => i === 0 ? null : i); anim = null; draw(); out(); }
+  function out(){ J.out(box,'s', steps); J.out(box,'de', steps ? '각 1칸 ←' : '0 칸'); J.out(box,'dh', steps + ' 칸 →'); }
+  function go(){ if(anim || hole >= N - 1) return; anim = {from:hole + 1, to:hole, t:0}; }
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const dx = (w - 60)/(N - 1), X = i => 30 + i*dx, y = 90;
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center';
+    for(let i=0;i<N;i++){ ctx.fillStyle = J.c('--paper2'); ctx.strokeStyle = J.c('--line'); ctx.fillRect(X(i) - dx*0.4, y - 26, dx*0.8, 52); ctx.strokeRect(X(i) - dx*0.4, y - 26, dx*0.8, 52);
+      ctx.fillStyle = J.c('--ink3'); ctx.fillText('결합 ' + (i + 1), X(i), y + 44); }
+    for(let i=0;i<N;i++){ const e = seats[i];
+      if(e === null){ if(!(anim && anim.to === i)){ ctx.strokeStyle = J.c('--indigo'); ctx.lineWidth = 2.5; ctx.fillStyle = J.c('--card'); ctx.beginPath(); ctx.arc(X(i), y, 13, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = J.c('--indigo'); ctx.font = '700 16px sans-serif'; ctx.textBaseline = 'middle'; ctx.fillText('+', X(i), y + 1); ctx.textBaseline = 'alphabetic'; } continue; }
+      let x = X(i); if(anim && anim.from === i) x = J.lerp(X(anim.from), X(anim.to), anim.t);
+      ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(x, y, 12, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = '600 10px "JetBrains Mono"'; ctx.textBaseline = 'middle'; ctx.fillText('e' + e, x, y + 1); ctx.textBaseline = 'alphabetic'; }
+    ctx.fillStyle = J.c('--gold'); ctx.font = '600 12.5px "Noto Sans KR"'; ctx.textAlign = 'left';
+    ctx.fillText('전기장 →   전자는 ← 로 한 칸씩, 빈자리(정공)는 → 로 이동', 30, 26);
+    if(hole >= N - 1){ ctx.fillStyle = J.c('--jade'); ctx.textAlign = 'center'; ctx.fillText('정공이 오른쪽 끝에 도착! (처음으로를 눌러 다시)', w/2, h - 12); }
+  }
+  J.$('#b3s').onclick = go; J.$('#b3r').onclick = reset;
+  J.$('#b3a').onclick = e => { auto = !auto; e.target.classList.toggle('on', auto); };
+  let acc = 0;
+  J.loop(cv, dt => {
+    if(anim){ anim.t += dt*2.5; if(anim.t >= 1){ seats[anim.to] = seats[anim.from]; seats[anim.from] = null; hole = anim.from; steps++; anim = null; out(); } draw(); }
+    else if(auto){ acc += dt; if(acc > 0.35){ acc = 0; if(hole >= N - 1) reset(); else go(); } }
+  });
+  reset(); J.live(draw);
+})();
+</script>
+</body>
+</html>

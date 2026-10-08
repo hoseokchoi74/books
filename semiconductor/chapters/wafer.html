@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>모래에서 웨이퍼로 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="wafer">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 13 <span class="hanja">下卷 製造 · 第十三章 · 晶圓</span></div>
+  <h1>모래에서 웨이퍼로</h1>
+  <p class="lead">반도체의 재료 규소는 지구 껍질에서 산소 다음으로 흔한 원소다. 바닷가 모래(이산화규소)가 바로 그것이다. 하지만 칩을 만들려면 모래를 99.999999999 %까지 깨끗하게 만들고, 원자들이 한 방향으로 줄 선 하나의 거대한 결정으로 길러, 거울보다 매끈한 원판으로 잘라 내야 한다. 하권 「제조편」은 이 <span class="term">웨이퍼</span>에서 시작한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>모래에서 반도체용 규소가 되기까지의 정제 단계를 순서대로 말할 수 있다.</li>
+  <li>초크랄스키 법으로 단결정 잉곳을 기르는 원리를 실험한다.</li>
+  <li>웨이퍼 크기와 칩 크기로 웨이퍼 한 장의 칩 개수를 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>모래를 깨끗하게: 일레븐 나인</h2>
+<p>모래를 숯과 함께 2000 °C 가까이 가열하면 산소가 떨어져 나가 98 % 순도의 <b>금속급 규소</b>가 된다. 이것을 염산 기체와 반응시켜 액체(트라이클로로실레인)로 바꾸고, 증류로 불순물을 걸러 낸 뒤 다시 규소로 되돌리면 99.999999999 %(9가 11개, <b>일레븐 나인</b>)의 <b>폴리실리콘</b>이 된다. 불순물이 규소 원자 1천억 개 중 하나도 안 되는 수준이다. 5장에서 불순물 1억분의 1이 전도도를 수만 배 바꾼다고 했으니, 이 정도로 깨끗해야 도핑을 마음대로 할 수 있다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-1</span><span class="ttl">모래에서 웨이퍼까지 7단계</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><button class="sbtn" id="b1p">← 이전</button><button class="sbtn pri" id="b1n">다음 단계 →</button><span class="hint" id="b1s"></span></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">단계</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">순도</span><span class="v" data-r="pu"></span></div>
+      <div class="ro"><span class="k">규소 원자 10억 개 중 불순물</span><span class="v" data-r="im"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 위쪽 띠는 전체 공정의 흐름이고 지금 단계가 강조된다. 가운데 그림은 그 단계의 모습, 아래 막대는 순도의 "9의 개수"다. 결정 구조를 갖춘 다음에야 웨이퍼가 되므로, 순도만큼이나 <b>모든 원자가 같은 방향으로 줄 서는 것</b>(단결정)이 중요하다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>단결정 기르기: 초크랄스키 법</h2>
+<p>폴리실리콘을 석영 도가니에 넣고 1420 °C 이상으로 녹인다. 연필만 한 단결정 <b>씨앗</b>(seed)을 녹은 규소 표면에 살짝 담갔다가, 천천히 돌리며 끌어올린다. 녹은 규소가 씨앗에 붙어 굳으면서 씨앗과 똑같은 방향으로 원자가 줄을 선다. 이렇게 며칠 동안 끌어올리면 지름 300 mm, 길이 2 m, 무게 수백 kg의 원기둥 단결정, <span class="term">잉곳</span>이 된다. 끌어올리는 속도와 온도를 정밀하게 맞춰야 지름이 일정하다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-2</span><span class="ttl">잉곳 기르기 게임: 지름 300 mm를 지켜라</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">끌어올리는 속도 <output data-o="v"></output></span><input type="range" data-k="v" min="0.5" max="2" step="0.05" value="1.3" data-d="2" data-u="mm/분"></label>
+      <label class="ctrl"><span class="lab">녹은 규소 온도 <output data-o="T"></output></span><input type="range" data-k="T" min="1415" max="1440" step="0.5" value="1425" data-d="1" data-u="°C"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b2g">성장 시작 / 다시</button><span class="hint">(시간은 1초 = 30분으로 빠르게)</span></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="340"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="340"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">지금 지름</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">잉곳 길이</span><span class="v" data-r="L"></span></div>
+      <div class="ro"><span class="k">쓸 수 있는 부분 (300±5 mm)</span><span class="v" data-r="ok"></span></div>
+      <div class="ro"><span class="k">무게</span><span class="v" data-r="m"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>모형.</b> 빨리 당기거나 온도가 높으면 굳는 양보다 끌려 올라가는 양이 많아 지름이 가늘어지고, 천천히 당기거나 온도가 낮으면 굵어진다(지름은 서서히 따라 변함). 오른쪽은 길이에 따른 지름 기록 — 초록 띠 안에 든 길이만 웨이퍼로 쓸 수 있다. 처음 상태는 지름이 가늘어지고 있으니 속도와 온도를 맞춰 보자. (규소 밀도 2.33 g/cm³)</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>자르고 갈고 닦고: 웨이퍼</h2>
+<p>잉곳의 머리와 꼬리를 자르고 바깥을 깎아 지름을 맞춘 뒤, 다이아몬드 와이어 톱으로 약 0.8 mm 두께로 얇게 썬다. 썬 원판의 표면을 갈고, 화학 약품과 함께 기계로 문질러(화학 기계 연마) 원자 몇 개 높이의 굴곡만 남은 거울면을 만든다. 이것이 <span class="term">웨이퍼</span>다. 지름이 클수록 한 장에 칩을 많이 담을 수 있어 웨이퍼는 계속 커져 왔다: 100 → 150 → 200 → 300 mm. 현재 첨단 공장은 300 mm(12인치)를 쓴다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-3</span><span class="ttl">웨이퍼 한 장에 칩이 몇 개?</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">웨이퍼 지름</span><select data-k="d"><option value="150">150 mm (6인치)</option><option value="200">200 mm (8인치)</option><option value="300" selected>300 mm (12인치)</option><option value="450">450 mm (18인치, 미래)</option></select></label>
+      <label class="ctrl"><span class="lab">칩 가로 <output data-o="w"></output></span><input type="range" data-k="w" min="3" max="30" step="0.5" value="10" data-d="1" data-u="mm"></label>
+      <label class="ctrl"><span class="lab">칩 세로 <output data-o="h"></output></span><input type="range" data-k="h" min="3" max="30" step="0.5" value="10" data-d="1" data-u="mm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3" data-h="340"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="340"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">온전한 칩</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">어림식 결과</span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">가장자리 낭비</span><span class="v" data-r="waste"></span></div>
+      <div class="ro"><span class="k">칩 면적</span><span class="v" data-r="a"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 웨이퍼 위에 칩을 바둑판처럼 배치(가장자리 3 mm 제외). 초록은 온전한 칩, 회색은 가장자리에 걸려 버리는 칩. 오른쪽: 칩 면적에 따른 칩 수(로그 눈금). 칩이 클수록 버려지는 가장자리 비율이 커진다. 어림식: N ≈ π(d/2)²/S − πd/√(2S). 스마트폰 SoC(약 100 mm²)는 300 mm 웨이퍼 한 장에서 600개 남짓 나온다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">반도체용 폴리실리콘의 순도 "일레븐 나인"은?</p><ol><li>99 %</li><li>99.999999999 %</li><li>11 %</li><li>99.9 %</li></ol>
+<p class="explain">9가 11개. 불순물이 1천억분의 1 수준이다.</p></div>
+<div class="quiz" data-a="2"><p class="q">초크랄스키 법에서 씨앗 결정이 하는 일은?</p><ol><li>규소를 녹인다</li><li>불순물을 흡수한다</li><li>원자들이 줄 설 방향(결정 방향)을 정해 준다</li><li>잉곳을 자른다</li></ol>
+<p class="explain">녹은 규소가 씨앗에 붙어 굳으며 씨앗과 같은 방향의 단결정이 된다.</p></div>
+<div class="quiz" data-a="0"><p class="q">같은 칩을 200 mm 대신 300 mm 웨이퍼에 만들면 한 장의 칩 수는 대략?</p><ol><li>2배 이상</li><li>1.5배</li><li>같다</li><li>줄어든다</li></ol>
+<p class="explain">면적이 (300/200)² = 2.25배이고 가장자리 낭비 비율은 줄어 2.2배 이상이 된다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 13-1 7단계 */
+(function(){
+  const box = document.getElementById('sim1');
+  const S = [
+    ['모래 (규사)', 'SiO₂ ~95 %', 1.3, '바닷가 모래·규석. 규소와 산소가 결합한 이산화규소'],
+    ['금속급 규소', '98 %', 1.7, '숯(탄소)과 함께 아크로에서 ~2000 °C로 가열: SiO₂ + 2C → Si + 2CO'],
+    ['트라이클로로실레인', '증류', 6, '염화수소와 반응시켜 액체로 → 끓는점 차이로 불순물 제거 (여러 번 증류)'],
+    ['폴리실리콘', '11N', 11, '고순도 기체를 뜨거운 규소 막대 위에서 분해·증착. 결정 방향은 제각각'],
+    ['단결정 잉곳', '11N + 단결정', 11, '초크랄스키 법: 녹여서 씨앗으로 끌어올림. 원하는 도핑(붕소 등)을 이때 섞음'],
+    ['얇게 자르기', '두께 0.78 mm', 11, '다이아몬드 와이어 톱으로 수백 장씩 동시에 자름'],
+    ['연마된 웨이퍼', '거울면', 11, '갈고 화학 기계 연마 → 표면 굴곡 원자 몇 개 수준. 반도체 공장(팹)으로 출발!']
+  ];
+  let k = 0;
+  function draw(){
+    const {ctx, w, h} = J.fit(document.getElementById('cv1')); ctx.clearRect(0,0,w,h);
+    const sw = (w - 20)/S.length;
+    S.forEach((s, i) => { ctx.fillStyle = J.c(i === k ? '--gold' : i < k ? '--jade-soft' : '--paper2'); ctx.fillRect(10 + i*sw + 2, 8, sw - 4, 30);
+      ctx.fillStyle = i === k ? '#fff' : J.c('--ink2'); ctx.font = (i === k ? '700 ' : '') + '11px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText((i + 1) + '. ' + s[0], 10 + i*sw + sw/2, 27); });
+    const cx = w/2, cy = 150, R = J.rng(k + 3);
+    ctx.save();
+    if(k === 0){ for(let i=0;i<260;i++){ ctx.fillStyle = `hsl(${35 + R()*15}, ${40 + R()*30}%, ${55 + R()*25}%)`; ctx.beginPath(); ctx.arc(cx - 120 + R()*240, cy + 40 - Math.sqrt(R())*90*(1 - Math.abs(R() - .5)), 3 + R()*3, 0, 7); ctx.fill(); } }
+    else if(k === 1){ for(let i=0;i<14;i++){ ctx.fillStyle = `hsl(220, 6%, ${35 + R()*25}%)`; ctx.beginPath(); const x = cx - 110 + R()*220, y = cy - 30 + R()*80; ctx.moveTo(x, y); for(let j=0;j<6;j++) ctx.lineTo(x + Math.cos(j)*18*(0.6 + R()), y + Math.sin(j)*14*(0.6 + R())); ctx.fill(); } }
+    else if(k === 2){ ctx.strokeStyle = J.c('--ink3'); ctx.lineWidth = 2; ctx.strokeRect(cx - 30, cy - 80, 60, 150); for(let j=0;j<6;j++){ ctx.beginPath(); ctx.moveTo(cx - 30, cy - 60 + j*24); ctx.lineTo(cx + 30, cy - 60 + j*24); ctx.stroke(); }
+      ctx.fillStyle = J.c('--indigo-soft'); ctx.fillRect(cx - 28, cy + 30, 56, 38); ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('← 증류탑: 가벼운 불순물은 위로, 무거운 것은 아래로', cx + 40, cy - 20); }
+    else if(k === 3){ for(let i=0;i<5;i++){ ctx.fillStyle = `hsl(220, 5%, ${45 + i*4}%)`; ctx.fillRect(cx - 120 + i*50, cy - 80 + (i % 2)*10, 30, 150); for(let j=0;j<20;j++){ ctx.fillStyle = `hsla(220, 5%, ${60 + R()*25}%, .6)`; ctx.beginPath(); ctx.arc(cx - 120 + i*50 + R()*30, cy - 75 + R()*140, 3 + R()*4, 0, 7); ctx.fill(); } } }
+    else if(k === 4){ const g = ctx.createLinearGradient(cx - 40, 0, cx + 40, 0); g.addColorStop(0, '#6a6f78'); g.addColorStop(.5, '#c9ced8'); g.addColorStop(1, '#5d626b'); ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(cx - 4, cy - 100); ctx.lineTo(cx + 4, cy - 100); ctx.lineTo(cx + 40, cy - 70); ctx.lineTo(cx + 40, cy + 70); ctx.quadraticCurveTo(cx, cy + 100, cx - 40, cy + 70); ctx.lineTo(cx - 40, cy - 70); ctx.closePath(); ctx.fill(); }
+    else if(k === 5){ for(let i=0;i<9;i++){ ctx.fillStyle = '#9aa0aa'; ctx.beginPath(); ctx.ellipse(cx - 100 + i*25, cy, 10, 70, 0, 0, 7); ctx.fill(); ctx.strokeStyle = '#666'; ctx.stroke(); } }
+    else { const g = ctx.createRadialGradient(cx - 30, cy - 30, 10, cx, cy, 90); g.addColorStop(0, '#f2f4f8'); g.addColorStop(.6, '#9aa3b5'); g.addColorStop(1, '#5c6578'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 85, 0, 7); ctx.fill();
+      ctx.fillStyle = J.c('--paper'); ctx.fillRect(cx - 6, cy + 80, 12, 8); }
+    ctx.restore();
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12.5px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(S[k][3], w/2, h - 46);
+    // 순도 막대
+    const n9 = S[k][2], bw = (w - 80)/11;
+    for(let i=0;i<11;i++){ ctx.fillStyle = J.c(i < Math.floor(n9) ? '--jade' : '--line2'); ctx.fillRect(40 + i*bw + 2, h - 30, bw - 4, 16); ctx.fillStyle = i < Math.floor(n9) ? '#fff' : J.c('--ink3'); ctx.font = '10px "JetBrains Mono"'; ctx.fillText('9', 40 + i*bw + bw/2, h - 18); }
+    J.out(box,'st', (k + 1) + '. ' + S[k][0]); J.out(box,'pu', S[k][1]);
+    const imp = 1e9*Math.pow(10, -n9)*(n9 < 2 ? 1 : 1); J.out(box,'im', imp >= 1 ? J.sci(imp, 2) + '개' : '< 1개 (0.01개)', n9 >= 11 ? 'good' : '');
+    J.$('#b1s').textContent = `${k + 1} / ${S.length}`;
+  }
+  J.$('#b1n').onclick = () => { k = Math.min(S.length - 1, k + 1); draw(); };
+  J.$('#b1p').onclick = () => { k = Math.max(0, k - 1); draw(); };
+  J.live(draw);
+})();
+
+/* 13-2 잉곳 */
+(function(){
+  const box = document.getElementById('sim2');
+  let V = {v:1.3, T:1425}, d = 300, L = 0, prof = [], run = true, ph = 0;
+  const target = () => 300*Math.sqrt(1/V.v)*(1 - (V.T - 1425)/40);
+  function reset(){ d = 300; L = 0; prof = []; run = true; }
+  function step(dt){
+    if(!run) return;
+    const mins = dt*30; // 1초 = 30분
+    d += (target() - d)*Math.min(1, mins/90);
+    d = J.clamp(d, 150, 420);
+    L += V.v*mins; prof.push([L, d]); if(L > 2000) run = false;
+    ph += dt;
+  }
+  function draw(){
+    const {ctx, w, h} = J.fit(document.getElementById('cv2a')); ctx.clearRect(0,0,w,h);
+    const cx = w/2, melt = h - 70, sc = (melt - 30)/2000*0.9, ds = Math.min(0.5, (w - 60)/420);
+    // 도가니
+    ctx.fillStyle = J.c('--paper2'); ctx.strokeStyle = J.c('--ink3'); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx - 140*ds*1.6, melt - 30); ctx.lineTo(cx - 140*ds*1.6, h - 16); ctx.lineTo(cx + 140*ds*1.6, h - 16); ctx.lineTo(cx + 140*ds*1.6, melt - 30); ctx.stroke();
+    const glow = ctx.createLinearGradient(0, melt, 0, h - 16); glow.addColorStop(0, '#ffb347'); glow.addColorStop(1, '#ff5e2b'); ctx.fillStyle = glow; ctx.fillRect(cx - 140*ds*1.6 + 3, melt, 280*ds*1.6 - 6, h - 19 - melt);
+    // 잉곳 (아래가 최근)
+    const top = melt - L*sc;
+    ctx.fillStyle = '#9aa3b5';
+    ctx.beginPath(); ctx.moveTo(cx, 20); ctx.lineTo(cx, top);
+    for(let i=0;i<prof.length;i++){ const [l, dd] = prof[i]; ctx.lineTo(cx + dd/2*ds, melt - (L - l)*sc); }
+    for(let i=prof.length - 1;i>=0;i--){ const [l, dd] = prof[i]; ctx.lineTo(cx - dd/2*ds, melt - (L - l)*sc); }
+    ctx.closePath(); ctx.fill();
+    const g = ctx.createLinearGradient(cx - 150*ds, 0, cx + 150*ds, 0); g.addColorStop(0, 'rgba(0,0,0,.25)'); g.addColorStop(.45, 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(0,0,0,.3)'); ctx.fillStyle = g; ctx.fill();
+    ctx.strokeStyle = J.c('--ink2'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, Math.max(20, top)); ctx.stroke();
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('↻ 회전하며 끌어올림', cx + 8, 14);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('녹은 규소 ' + V.T + ' °C', cx, h - 26);
+  }
+  function out(){
+    const {ctx, w, h} = J.fit(document.getElementById('cv2b'));
+    J.plot(document.getElementById('cv2b'), {x:[0, 2000], y:[200, 400], xlab:'잉곳 길이 (mm)', ylab:'지름 (mm)', bands:[{y0:295, y1:305, color:'--jade', alpha:.2}], series:[{pts:prof, color:'--indigo', w:2.5}], hlines:[{y:300, color:'--jade', dash:[4,3]}]});
+    let good = 0; for(let i=1;i<prof.length;i++) if(Math.abs(prof[i][1] - 300) <= 5) good += prof[i][0] - prof[i-1][0];
+    let mass = 0; for(let i=1;i<prof.length;i++){ const r = prof[i][1]/20; mass += Math.PI*r*r*(prof[i][0] - prof[i-1][0])/10*2.33/1000; }
+    J.out(box,'d', J.fmt(d, 1) + ' mm', Math.abs(d - 300) <= 5 ? 'good' : 'bad'); J.out(box,'L', J.fmt(L, 0) + ' mm' + (run ? '' : ' (완료)'));
+    J.out(box,'ok', J.fmt(good, 0) + ' mm' + (L > 0 ? ` (${J.fmt(good/L*100, 0)} %)` : ''), L > 0 && good/L > 0.7 ? 'good' : 'warn'); J.out(box,'m', J.fmt(mass, 0) + ' kg');
+  }
+  J.sim('sim2', v => { V = v; draw(); out(); });
+  J.$('#b2g').onclick = () => { reset(); draw(); out(); };
+  let acc = 0;
+  J.loop(document.getElementById('cv2a'), dt => { step(dt); draw(); if((acc += dt) > 0.2){ acc = 0; out(); } });
+})();
+
+/* 13-3 웨이퍼 다이 */
+J.sim('sim3', (v, box) => {
+  const D = +v.d, edge = 3, R = D/2 - edge, S = v.w*v.h;
+  const {ctx, w, h} = J.fit(document.getElementById('cv3')); ctx.clearRect(0,0,w,h);
+  const sc = (Math.min(w, h) - 20)/450, cx = w/2, cy = h/2;
+  ctx.fillStyle = '#9aa3b5'; ctx.beginPath(); ctx.arc(cx, cy, D/2*sc, 0, 7); ctx.fill();
+  ctx.fillStyle = J.c('--paper'); ctx.fillRect(cx - 4, cy + D/2*sc - 3, 8, 4);
+  let full = 0, part = 0;
+  // 가운데 정렬 격자 (짝수 칸 기준)
+  const nx = Math.ceil(D/v.w) + 2, ny = Math.ceil(D/v.h) + 2;
+  for(let i = -nx; i <= nx; i++) for(let j = -ny; j <= ny; j++){
+    const x0 = i*v.w - v.w/2*0, y0 = j*v.h, x1 = x0 + v.w, y1 = y0 + v.h;
+    const corners = [[x0,y0],[x1,y0],[x0,y1],[x1,y1]], inside = corners.filter(([x, y]) => x*x + y*y <= R*R).length;
+    if(inside === 0){ const nxp = J.clamp(0, x0, x1), nyp = J.clamp(0, y0, y1); if(nxp*nxp + nyp*nyp > (D/2)*(D/2)) continue; }
+    const ok = inside === 4; if(ok) full++; else part++;
+    ctx.fillStyle = J.c(ok ? '--jade' : '--ink3'); ctx.globalAlpha = ok ? .8 : .35;
+    ctx.fillRect(cx + x0*sc + 0.5, cy + y0*sc + 0.5, v.w*sc - 1, v.h*sc - 1); ctx.globalAlpha = 1;
+  }
+  ctx.strokeStyle = J.c('--red'); ctx.setLineDash([3,3]); ctx.beginPath(); ctx.arc(cx, cy, R*sc, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+  const est = Math.PI*(D/2)*(D/2)/S - Math.PI*D/Math.sqrt(2*S);
+  const curve = s => Math.max(1, Math.PI*(D/2)*(D/2)/s - Math.PI*D/Math.sqrt(2*s));
+  const p1 = [], p2 = []; for(let a = 10; a <= 900; a *= 1.05){ p1.push([a, curve(a)]); p2.push([a, Math.max(1, Math.PI*150*150/a - Math.PI*300/Math.sqrt(2*a))]); }
+  J.plot(document.getElementById('cv3b'), {x:[10, 900], y:[10, 2e4], logx:true, logy:true, xlab:'칩 면적 (mm²)', ylab:'칩 수', xf:t => J.fmt(t, 0), yf:t => J.fmt(t, 0),
+    series:[{pts:p1, color:'--jade', w:3}], points:[{x:S, y:Math.max(1, full), color:'--red', r:6, label:full + '개'}], vlines:[{x:100, color:'--ink3', label:'폰 SoC', dash:[3,3]},{x:800, color:'--ink3', label:'AI 칩', dash:[3,3], align:'right'}]});
+  J.out(box,'n', full + '개', 'good'); J.out(box,'f', J.fmt(Math.max(0, est), 0) + '개');
+  J.out(box,'waste', J.fmt((1 - full*S/(Math.PI*(D/2)*(D/2)))*100, 0) + ' %'); J.out(box,'a', J.fmt(S, 0) + ' mm²');
+});
+</script>
+</body>
+</html>

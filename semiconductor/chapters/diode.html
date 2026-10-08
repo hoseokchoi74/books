@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>다이오드: 한쪽으로만 열리는 문 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="diode">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 08 <span class="hanja">中卷 素子 · 第八章 · 二極</span></div>
+  <h1>다이오드: 한쪽으로만 열리는 문</h1>
+  <p class="lead">PN 접합에 전선을 달면 <span class="term">다이오드</span>가 된다. 한쪽 방향으로는 전류가 콸콸 흐르고, 반대 방향으로는 거의 흐르지 않는다. 마치 물이 한쪽으로만 흐르게 하는 체크 밸브 같다. 이 단순한 성질 덕분에 콘센트의 교류를 휴대폰이 먹는 직류로 바꾸고, 회로를 역전압으로부터 지키며, 빛을 내고 빛을 잡는다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>순방향·역방향 전압에서 다이오드가 어떻게 행동하는지 설명한다.</li>
+  <li>다이오드 전류-전압(I–V) 곡선과 문턱 전압(약 0.6–0.7 V)을 읽는다.</li>
+  <li>저항과 함께 연결한 회로에서 실제 전류를 부하선으로 구한다.</li>
+  <li>다이오드로 교류를 직류로 바꾸는 <b>정류</b> 회로를 만든다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>순방향과 역방향</h2>
+<p>p쪽(<span class="term">애노드</span>)에 (+), n쪽(<span class="term">캐소드</span>)에 (−)를 걸면 <b>순방향</b>이다. 7장의 언덕이 낮아져 전자와 정공이 경계를 넘쳐 흐른다. 반대로 걸면 <b>역방향</b>으로, 언덕이 높아지고 공핍층이 넓어져 아주 작은 누설 전류만 흐른다. 회로 기호의 삼각형 화살표가 전류가 흐르는 방향이고, 막대가 "막힌 쪽"이다.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 900 230" role="img" aria-label="다이오드 순방향 역방향" id="fig1"></svg>
+<figcaption><b>그림 8-1.</b> 다이오드 기호와 두 가지 연결. 왼쪽: 순방향 — 전구가 켜진다. 오른쪽: 역방향 — 전구가 꺼진다. 아래는 물길의 체크 밸브 비유: 한쪽으로 미는 물은 판을 밀어 열고, 반대로 미는 물은 판을 닫는다.</figcaption>
+</figure>
+
+<h2 id="s2"><span class="n">02</span>다이오드의 I–V 곡선</h2>
+<p>순방향 전류는 전압에 따라 지수 함수로 늘어난다(7장의 "언덕 넘기"). 그래서 0.5 V까지는 거의 흐르지 않는 듯하다가 0.6~0.7 V 부근에서 갑자기 치솟는다. 이 부근을 흔히 <span class="term">문턱 전압</span>이라 부른다. 역방향에서는 아주 작은 포화 전류 I<sub>S</sub>만 흐르다가, 너무 큰 역전압에서는 공핍층의 강한 전기장이 전자를 마구 떼어 내며 갑자기 큰 전류가 흐른다(<span class="term">항복</span>).</p>
+<div class="eq">$$I = I_S\left(e^{V/(n V_T)} - 1\right),\qquad V_T = \frac{kT}{q} \approx 26\ \text{mV (상온)}$$<div class="note">I<sub>S</sub>: 포화 전류(규소 소형 다이오드 약 10⁻¹² A 이하), n: 이상 계수(1–2). 전압이 60 mV 오를 때마다 전류가 약 10배.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-1</span><span class="ttl">I–V 곡선 측정기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">걸어 준 전압 V <output data-o="v"></output></span><input type="range" data-k="v" min="-8" max="0.85" step="0.01" value="0.65" data-d="2" data-u="V"></label>
+      <label class="ctrl"><span class="lab">온도 <output data-o="t"></output></span><input type="range" data-k="t" min="-40" max="125" step="5" value="25" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">세로축</span><select data-k="sc"><option value="lin">보통 눈금 (mA)</option><option value="log">로그 눈금 (|I|)</option></select></label>
+      <label class="ctrl"><span class="lab">다이오드 종류</span><select data-k="ty"><option value="si">규소 정류 다이오드</option><option value="ge">저마늄 다이오드</option><option value="z5">제너 다이오드 (5.1 V)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">전류 I</span><span class="v" data-r="i"></span></div>
+      <div class="ro"><span class="k">상태</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">1 mA가 흐르는 전압</span><span class="v" data-r="vf"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 보기.</b> ① 0 → 0.5 → 0.7 V로 올리며 전류를 보자. ② 로그 눈금으로 바꾸면 순방향 곡선이 곧은 직선(지수 함수)이 된다. ③ 온도를 올리면 같은 전류를 내는 전압이 1 °C당 약 2 mV씩 낮아진다 — 이것으로 온도계를 만들 수 있다. ④ 저마늄은 띠틈이 작아 문턱이 0.3 V 정도로 낮다. ⑤ 제너 다이오드는 역방향 5.1 V에서 일부러 항복하게 만든 다이오드로, 전압을 일정하게 붙잡는 데 쓴다. 오른쪽 그림은 그 순간 PN 접합 내부의 언덕(에너지 띠) 모습이다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>회로 속의 다이오드: 부하선</h2>
+<p>다이오드를 전지와 저항(또는 LED와 저항)에 직렬로 연결하면 실제로 얼마의 전류가 흐를까? 다이오드는 전압과 전류가 비례하지 않아서 V = IR만으로는 풀 수 없다. 대신 저항 쪽의 직선 I = (V<sub>전지</sub> − V)/R(<span class="term">부하선</span>)과 다이오드 곡선이 만나는 점을 찾으면 된다. 이 점을 <span class="term">동작점</span>이라 한다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-2</span><span class="ttl">부하선으로 동작점 찾기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">전지 전압 <output data-o="vs"></output></span><input type="range" data-k="vs" min="0" max="9" step="0.1" value="5" data-d="1" data-u="V"></label>
+      <label class="ctrl"><span class="lab">직렬 저항 R <output data-o="r"></output></span><input type="range" data-k="r" min="1" max="4" step="0.05" value="2.7" data-log="1" data-si="Ω"></label>
+      <label class="ctrl"><span class="lab">다이오드 방향</span><select data-k="dir"><option value="1">순방향</option><option value="-1">역방향 (뒤집기)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="270"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="270"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">다이오드 전압</span><span class="v" data-r="vd"></span></div>
+      <div class="ro"><span class="k">전류</span><span class="v" data-r="i"></span></div>
+      <div class="ro"><span class="k">저항 전압</span><span class="v" data-r="vr"></span></div>
+      <div class="ro"><span class="k">다이오드 소비 전력</span><span class="v" data-r="p"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>관찰.</b> 전지 전압을 바꾸면 부하선이 평행 이동하지만 동작점의 다이오드 전압은 0.6–0.75 V 근처에서 거의 그대로다. 그래서 회로를 대충 계산할 때는 "다이오드 = 0.7 V짜리 전압 강하"로 생각해도 된다: I ≈ (5 − 0.7)/500 ≈ 8.6 mA. 방향을 뒤집으면 전류가 거의 0이 되고 전지 전압이 고스란히 다이오드에 걸린다.</p>
+</div>
+
+<h2 id="s4"><span class="n">04</span>정류: 교류를 직류로</h2>
+<p>콘센트의 전기는 1초에 60번 방향이 바뀌는 <span class="term">교류</span>다. 하지만 휴대폰과 컴퓨터의 칩은 한 방향의 <span class="term">직류</span>가 필요하다. 다이오드 하나로 (+) 반쪽만 통과시키면 <b>반파 정류</b>, 다이오드 4개를 다리(브리지) 모양으로 연결하면 (−) 반쪽도 뒤집어 쓰는 <b>전파 정류</b>가 된다. 여기에 축전기(커패시터)를 붙이면 출렁임(<span class="term">리플</span>)이 메워져 거의 평평한 직류가 된다. 모든 충전기·어댑터 안에 이 회로가 들어 있다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-3</span><span class="ttl">충전기 속 정류 회로 오실로스코프</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">회로</span><select data-k="m"><option value="0">정류 없음 (교류 그대로)</option><option value="1">반파 정류 (다이오드 1개)</option><option value="2" selected>전파 정류 (브리지, 다이오드 4개)</option></select></label>
+      <label class="ctrl"><span class="lab">평활 축전기 <output data-o="c"></output></span><input type="range" data-k="c" min="0" max="2000" step="50" value="1000" data-d="0" data-u="µF"></label>
+      <label class="ctrl"><span class="lab">부하 전류 <output data-o="il"></output></span><input type="range" data-k="il" min="10" max="1000" step="10" value="200" data-d="0" data-u="mA"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">출력 최댓값</span><span class="v" data-r="pk"></span></div>
+      <div class="ro"><span class="k">출력 평균 (직류)</span><span class="v" data-r="avg"></span></div>
+      <div class="ro"><span class="k">리플 (출렁임)</span><span class="v" data-r="rp"></span></div>
+      <div class="ro"><span class="k">평가</span><span class="v" data-r="ev" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>가정.</b> 변압기를 거친 12 V(최댓값) 60 Hz 교류. 다이오드 하나당 0.7 V가 떨어진다(브리지는 두 개를 지나므로 1.4 V). 회색 점선이 입력, 빨간 선이 출력이다. 축전기가 클수록, 부하 전류가 작을수록, 반파보다 전파일수록 리플이 작아진다. 실제 충전기는 이 뒤에 전압 조정 회로를 더 붙여 5 V를 깨끗하게 만든다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">다이오드에 순방향 전압을 거는 방법은?</p><ol><li>n쪽에 (+), p쪽에 (−)</li><li>p쪽(애노드)에 (+), n쪽(캐소드)에 (−)</li><li>양쪽에 (+)</li><li>방향은 상관없다</li></ol>
+<p class="explain">p쪽에 (+)를 걸면 PN 접합의 언덕이 낮아져 전류가 흐른다.</p></div>
+<div class="quiz" data-a="2"><p class="q">5 V 전지, 470 Ω 저항, 규소 다이오드를 순방향 직렬 연결했다. 전류는 약?</p><ol><li>10.6 mA</li><li>0 mA</li><li>9.1 mA</li><li>1 A</li></ol>
+<p class="explain">I ≈ (5 − 0.7)/470 ≈ 9.1 mA.</p></div>
+<div class="quiz" data-a="0"><p class="q">브리지 정류 뒤에 큰 축전기를 다는 이유는?</p><ol><li>출렁이는 전압을 평평하게 메우려고</li><li>전압을 높이려고</li><li>교류로 되돌리려고</li><li>다이오드를 식히려고</li></ol>
+<p class="explain">축전기가 전압이 높을 때 충전되고 낮을 때 방전하며 리플을 줄인다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 8-1 */
+(function(){
+  const s = document.getElementById('fig1');
+  const diode = (x, y, dir) => { const g = J.svg('g', {transform:`translate(${x},${y}) scale(${dir},1)`}, s);
+    J.svg('path', {d:'M-14 -14 L14 0 L-14 14 Z', fill:'var(--ink)'}, g); J.svg('line', {x1:15, y1:-15, x2:15, y2:15, stroke:'var(--ink)', 'stroke-width':4}, g); };
+  const circuit = (x0, dir, on, title) => {
+    J.svg('text', {x:x0 + 150, y:20, 'text-anchor':'middle', class:'t-l', text:title}, s);
+    J.svg('rect', {x:x0 + 30, y:40, width:240, height:110, fill:'none', stroke:'var(--ink2)', 'stroke-width':2.5}, s);
+    J.svg('rect', {x:x0 + 20, y:78, width:20, height:34, fill:'var(--card)'}, s);
+    J.svg('line', {x1:x0 + 14, y1:88, x2:x0 + 46, y2:88, stroke:'var(--ink)', 'stroke-width':3}, s); J.svg('line', {x1:x0 + 22, y1:100, x2:x0 + 38, y2:100, stroke:'var(--ink)', 'stroke-width':5}, s);
+    J.svg('text', {x:x0 + 8, y:84, class:'t-s', text:'+'}, s);
+    J.svg('rect', {x:x0 + 130, y:30, width:40, height:20, fill:'var(--card)'}, s); diode(x0 + 150, 40, dir);
+    J.svg('circle', {cx:x0 + 270, cy:95, r:18, fill: on ? '#ffd65a' : 'var(--card)', stroke:'var(--ink2)', 'stroke-width':2}, s);
+    if(on) J.svg('circle', {cx:x0 + 270, cy:95, r:30, fill:'#ffd65a', opacity:.3}, s);
+    J.svg('text', {x:x0 + 150, y:72, 'text-anchor':'middle', class:'t-s', text: on ? '전류 흐름 →' : '막힘 ✕', style:`fill:var(${on ? '--jade' : '--red'});font-weight:700`}, s);
+    // 밸브
+    const vy = 185; J.svg('rect', {x:x0 + 60, y:vy - 15, width:180, height:30, fill:'var(--indigo-soft)', stroke:'var(--indigo)'}, s);
+    J.svg('line', {x1:x0 + 150, y1:vy - 15, x2: on ? x0 + 170 : x0 + 150, y2: on ? vy + 2 : vy + 15, stroke:'var(--ink)', 'stroke-width':4}, s);
+    J.svg('text', {x:x0 + 150, y:vy + 34, 'text-anchor':'middle', class:'t-s', text: on ? '물이 판을 밀어 열고 지나감' : '물이 판을 눌러 닫음'}, s);
+    J.svg('text', {x: on ? x0 + 80 : x0 + 220, y:vy + 5, 'text-anchor':'middle', class:'t-s', text: on ? '물 →' : '← 물', style:'fill:var(--indigo);font-weight:700'}, s);
+  };
+  circuit(20, 1, true, '순방향: 켜짐'); circuit(470, -1, false, '역방향: 꺼짐');
+})();
+
+/* 공통 다이오드 모형 */
+const DI = {si:{is:1e-12, n:1.2, bv:60, eg:1.12}, ge:{is:1e-7, n:1.2, bv:40, eg:0.66}, z5:{is:1e-12, n:1.2, bv:5.1, eg:1.12}};
+function dI(V, ty, T){
+  const p = DI[ty], VT = 8.617e-5*T, isT = p.is*Math.pow(T/298, 3/p.n)*Math.exp(p.eg/8.617e-5*(1/298 - 1/T)/p.n);
+  // 직렬 저항 1 Ω: V = Vj + I·Rs 를 이분법으로 풀기
+  const Ij = Vj => isT*(Math.exp(Math.min(60, Vj/(p.n*VT))) - 1);
+  let I; if(V <= 0.2) I = Ij(V); else { let a = 0, b = V; for(let k=0;k<45;k++){ const m = (a + b)/2; if(m + Ij(m)*1 > V) b = m; else a = m; } I = Ij(a); }
+  if(V < -p.bv) I -= (-V - p.bv)/2; // 항복: 2 Ω
+  return I;
+}
+/* 8-1 */
+J.sim('sim1', (v, box) => {
+  const T = v.t + 273, I = dI(v.v, v.ty, T), bv = DI[v.ty].bv;
+  const lo = v.ty === 'z5' ? -8 : -8;
+  const pts = []; for(let x = lo; x <= 0.9; x += 0.005) pts.push([x, v.sc === 'lin' ? dI(x, v.ty, T)*1000 : Math.max(1e-14, Math.abs(dI(x, v.ty, T)))]);
+  if(v.sc === 'lin') J.plot(document.getElementById('cv1'), {x:[lo, 1], y:[-20, 100], xlab:'전압 V (V)', ylab:'전류 (mA)', series:[{pts, color:'--red', w:3}], points:[{x:v.v, y:J.clamp(I*1000, -20, 100), color:'--ink', r:6}], hlines:[{y:0, color:'--ink3', dash:[1,0]}]});
+  else J.plot(document.getElementById('cv1'), {x:[lo, 1], y:[1e-14, 1], logy:true, xlab:'전압 V (V)', ylab:'|전류| (A)', yf:t => J.sci(t, 1), series:[{pts, color:'--red', w:3}], points:[{x:v.v, y:J.clamp(Math.abs(I), 1e-14, 1), color:'--ink', r:6}]});
+  // 오른쪽: 접합 내부 언덕
+  const {ctx, w, h} = J.fit(document.getElementById('cv1b')); ctx.clearRect(0,0,w,h);
+  const vbi = 0.75, H = Math.max(0.05, vbi - v.v), sc = (h - 80)/(vbi + 8.5), base = 40, W = 30*Math.sqrt(H/vbi);
+  const Ec = x => { const c = w/2, a = c - W, b = c + W; return x < a ? base + H*sc*0 : x > b ? base + H*sc : base + H*sc*(x < c ? ((x - a)/(c - a))**2/2 : 1 - ((b - x)/(b - c))**2/2); };
+  const yC = x => h - 40 - (H*sc) + (Ec(x) - base) - 0, yC2 = x => (h - 40) - (H*sc) + (Ec(x) - base);
+  const Y = x => 30 + (H*sc) - (Ec(x) - base);
+  ctx.fillStyle = J.c('--gold'); ctx.globalAlpha = .15; ctx.fillRect(w/2 - W, 20, 2*W, h - 60); ctx.globalAlpha = 1;
+  ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 3; ctx.beginPath(); for(let x = 10; x <= w - 10; x += 2){ const y = Y(x); x === 10 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke();
+  ctx.strokeStyle = J.c('--indigo'); ctx.beginPath(); for(let x = 10; x <= w - 10; x += 2){ const y = Y(x) + 1.12*sc; x === 10 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke();
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('p쪽', 14, h - 10); ctx.textAlign = 'right'; ctx.fillText('n쪽', w - 14, h - 10);
+  ctx.textAlign = 'center'; ctx.fillStyle = J.c('--gold'); ctx.fillText(`언덕 ${J.fmt(H, 2)} eV · 공핍층 폭 ×${J.fmt(Math.sqrt(H/vbi), 2)}`, w/2, h - 26);
+  const nflow = J.clamp(Math.round(Math.log10(Math.max(1e-14, Math.abs(I)) /1e-13)*1.4), 0, 14);
+  ctx.fillStyle = J.c('--red'); const t = performance.now()/1000;
+  for(let k=0;k<nflow;k++){ const x = w - 20 - ((t*60 + k*37) % (w - 40)); const y = Y(x) + 6; if(v.v > 0){ ctx.beginPath(); ctx.arc(x, y, 3.5, 0, 7); ctx.fill(); } }
+  J.out(box,'i', Math.abs(I) >= 1e-6 ? J.si(I, 'A') : J.sci(I, 2, 'A'), I > 1e-3 ? 'good' : I < -1e-3 ? 'bad' : '');
+  let st = v.v > 0 ? (I > 1e-3 ? '순방향: 활짝 열림' : '순방향: 아직 문턱 아래') : v.v < -bv ? '역방향 항복!' : '역방향: 막힘 (누설만)';
+  J.out(box,'st', st, st.includes('열림') ? 'good' : st.includes('항복') ? 'bad' : '');
+  let a = 0, b = 1; for(let k=0;k<50;k++){ const m = (a + b)/2; if(dI(m, v.ty, T) > 1e-3) b = m; else a = m; }
+  J.out(box,'vf', J.fmt(b, 3) + ' V');
+});
+J.loop(document.getElementById('cv1b'), () => { const b = document.getElementById('sim1'); if(b._t === undefined) b._t = 0; if(++b._t % 3 === 0) J.$$('input[data-k="v"]', b)[0].dispatchEvent(new Event('input')); });
+
+/* 8-2 부하선 */
+J.sim('sim2', (v, box) => {
+  const T = 298, f = V => v.dir === '1' ? dI(V, 'si', T) : -dI(-V, 'si', T);
+  // 회로: Vs = Vd + I R, 이분법
+  let a = -10, b = 10; for(let k=0;k<80;k++){ const m = (a + b)/2; if(f(m) - (v.vs - m)/v.r > 0) b = m; else a = m; }
+  const Vd = (a + b)/2, I = f(Vd);
+  const pts = []; for(let x = -1; x <= 1.2; x += 0.005) pts.push([x, f(x)*1000]);
+  const ymax = Math.max(5, v.vs/v.r*1000*1.15);
+  J.plot(document.getElementById('cv2a'), {x:[-0.2, Math.max(1.2, Math.min(9.5, v.vs + 0.3))], y:[-ymax*0.05, ymax], xlab:'다이오드 전압 (V)', ylab:'전류 (mA)',
+    series:[{pts, color:'--red', w:3},{pts:[[0, v.vs/v.r*1000],[v.vs, 0]], color:'--jade', w:2.5, dash:[6,4]}], points:[{x:Vd, y:I*1000, color:'--ink', r:7, label:'동작점'}]});
+  const {ctx, w, h} = J.fit(document.getElementById('cv2b')); ctx.clearRect(0,0,w,h);
+  const L = 50, Rr = w - 40, T0 = 40, B = h - 50;
+  ctx.strokeStyle = J.c('--ink2'); ctx.lineWidth = 2.5; ctx.strokeRect(L, T0, Rr - L, B - T0);
+  ctx.fillStyle = J.c('--card'); ctx.fillRect(L - 14, (T0 + B)/2 - 24, 28, 48); ctx.fillStyle = J.c('--ink'); ctx.fillRect(L - 16, (T0 + B)/2 - 7, 32, 3); ctx.fillRect(L - 9, (T0 + B)/2 + 4, 18, 5);
+  ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.fillText(J.fmt(v.vs, 1) + ' V', L - 18, (T0 + B)/2 - 10);
+  // 저항 지그재그
+  const rx = (L + Rr)/2 - 50; ctx.fillStyle = J.c('--card'); ctx.fillRect(rx - 4, T0 - 10, 108, 20); ctx.strokeStyle = J.c('--ink'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(rx - 4, T0);
+  for(let k=0;k<8;k++) ctx.lineTo(rx + 6 + k*12, T0 + (k % 2 ? 8 : -8)); ctx.lineTo(rx + 104, T0); ctx.stroke();
+  ctx.fillStyle = J.c('--ink'); ctx.textAlign = 'center'; ctx.fillText('R = ' + J.si(v.r, 'Ω'), rx + 50, T0 - 16);
+  // 다이오드 (오른쪽 세로)
+  const dx = Rr, dy = (T0 + B)/2; ctx.fillStyle = J.c('--card'); ctx.fillRect(dx - 16, dy - 20, 32, 40);
+  ctx.save(); ctx.translate(dx, dy); if(v.dir === '-1') ctx.rotate(Math.PI); ctx.fillStyle = J.c('--ink'); ctx.beginPath(); ctx.moveTo(-12, -12); ctx.lineTo(12, -12); ctx.lineTo(0, 10); ctx.fill(); ctx.fillRect(-13, 11, 26, 4); ctx.restore();
+  ctx.textAlign = 'left'; ctx.fillText(J.fmt(Vd, 2) + ' V', dx + 20, dy + 4);
+  ctx.fillStyle = J.c(I > 1e-3 ? '--jade' : '--red'); ctx.textAlign = 'center'; ctx.font = '600 13px "Noto Sans KR"'; ctx.fillText(I > 1e-3 ? `전류 ${J.si(I, 'A')} →` : '전류 거의 0', (L + Rr)/2, (T0 + B)/2 + 5);
+  J.out(box,'vd', J.fmt(Vd, 3) + ' V'); J.out(box,'i', Math.abs(I) > 1e-6 ? J.si(I, 'A') : J.sci(I, 2, 'A'), I > 1e-3 ? 'good' : '');
+  J.out(box,'vr', Math.abs(I*v.r) > 1e-3 ? J.fmt(I*v.r, 3) + ' V' : J.sci(I*v.r, 2, 'V')); J.out(box,'p', J.si(Math.abs(Vd*I), 'W'));
+});
+
+/* 8-3 정류 */
+J.sim('sim3', (v, box) => {
+  const Vp = 12, f = 60, C = v.c*1e-6, IL = v.il/1000, dt = 1e-5, Tend = 3/f;
+  const vin = [], vout = []; let vc = 0, mx = -1e9, mn = 1e9, sum = 0, cnt = 0;
+  for(let t = 0; t <= Tend; t += dt){
+    const s = Vp*Math.sin(2*Math.PI*f*t);
+    let src = v.m === '0' ? s : v.m === '1' ? Math.max(0, s - 0.7) : Math.max(0, Math.abs(s) - 1.4);
+    if(v.m === '0'){ vc = s; }
+    else if(C <= 0){ vc = src; }
+    else { if(src > vc) vc = src; else vc = Math.max(0, vc - IL/C*dt); }
+    if(Math.round(t/dt) % 20 === 0){ vin.push([t*1000, s]); vout.push([t*1000, vc]); }
+    if(t > 1/f){ mx = Math.max(mx, vc); mn = Math.min(mn, vc); sum += vc; cnt++; }
+  }
+  J.plot(document.getElementById('cv3'), {x:[0, Tend*1000], y:[-13, 13], xlab:'시간 (ms)', ylab:'전압 (V)', series:[{pts:vin, color:'--ink3', w:1.5, dash:[5,4]},{pts:vout, color:'--red', w:3}], hlines:[{y:0, color:'--ink3', dash:[1,0]}]});
+  const avg = sum/cnt, rp = mx - mn;
+  J.out(box,'pk', J.fmt(mx, 2) + ' V'); J.out(box,'avg', J.fmt(avg, 2) + ' V'); J.out(box,'rp', J.fmt(rp, 2) + ' V', v.m === '0' ? 'bad' : rp < 1 ? 'good' : rp < 4 ? 'warn' : 'bad');
+  J.out(box,'ev', v.m === '0' ? '방향이 바뀜: 칩에 못 씀' : rp < 1 ? '거의 평평한 직류!' : rp < 4 ? '조금 출렁임' : '많이 출렁임', v.m === '0' ? 'bad' : rp < 1 ? 'good' : '');
+});
+</script>
+</body>
+</html>

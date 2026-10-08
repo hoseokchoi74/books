@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>빛으로 그리는 회로: 포토리소그래피 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="litho">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 14 <span class="hanja">下卷 製造 · 第十四章 · 寫眞</span></div>
+  <h1>빛으로 그리는 회로: 포토리소그래피</h1>
+  <p class="lead">수백억 개의 트랜지스터를 하나하나 깎을 수는 없다. 대신 회로 무늬를 그린 유리판(<span class="term">마스크</span>)에 빛을 비춰, 웨이퍼 위 빛에 반응하는 막(<span class="term">감광액</span>)에 한꺼번에 찍어 낸다. 필름 사진을 인화하는 것과 비슷해서 <b>포토리소그래피</b>(빛으로 돌에 새기기)라 부른다. 이 장의 핵심 질문: 빛으로 얼마나 가는 선까지 그릴 수 있을까?</p>
+</header>
+
+<div class="learn"><ul>
+  <li>감광액 도포 → 노광 → 현상 → 식각 → 제거의 순서를 직접 따라 한다.</li>
+  <li>양성·음성 감광액의 차이를 안다.</li>
+  <li>빛의 회절 때문에 해상도에 한계가 있고, 파장이 짧을수록 가는 선을 그린다는 것을 실험한다.</li>
+  <li>여러 층을 정확히 겹쳐 찍는 <b>정렬</b>의 어려움을 체험한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>사진을 찍듯 회로를 찍는다</h2>
+<p>순서는 이렇다. ① 웨이퍼 위에 무늬를 새길 막(예: 산화막)을 깐다. ② 감광액을 떨어뜨리고 빠르게 돌려 얇고 고르게 바른다. ③ 마스크를 통해 빛을 비춘다(<span class="term">노광</span>). ④ 현상액에 담그면 빛을 받은 부분(양성 감광액)이 녹아 없어진다. ⑤ 감광액이 없는 곳의 막을 깎는다(<span class="term">식각</span>). ⑥ 남은 감광액을 벗겨 내면 마스크 무늬가 막에 새겨진다. 칩 하나를 만들려면 이 과정을 서로 다른 마스크로 수십 번 되풀이한다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-1</span><span class="ttl">나만의 마스크로 무늬 새기기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">감광액 종류</span><select data-k="pr"><option value="pos">양성 (빛 받은 곳이 녹음)</option><option value="neg">음성 (빛 받은 곳이 남음)</option></select></label>
+    </div>
+    <div class="btnrow"><span class="hint">마스크 칸을 눌러 빛 가림(검정)/통과(투명)를 바꾸세요 →</span><button class="sbtn" id="b1p">← 이전 단계</button><button class="sbtn pri" id="b1n">다음 단계 →</button><button class="sbtn" id="b1r">처음부터</button></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="360"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">단계</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">새겨질 무늬 (막이 남는 칸)</span><span class="v" data-r="pat"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 보기.</b> 맨 위 줄이 마스크(12칸)다. 칸을 눌러 무늬를 만든 뒤 "다음 단계"를 눌러 ①–⑥을 따라가 보자. 양성 감광액은 마스크의 투명한 칸 아래 막이 깎이고, 음성 감광액은 반대로 검은 칸 아래 막이 깎인다. 결과 줄의 ■(막 남음)과 □(깎임)를 예측한 뒤 확인해 보자.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>빛의 한계: 회절과 해상도</h2>
+<p>빛은 파동이라서 아주 좁은 틈을 지나면 퍼진다(<span class="term">회절</span>). 마스크의 선 간격이 빛의 파장과 비슷해지면 무늬 정보가 퍼진 빛에 실려 렌즈 밖으로 새어 나가, 웨이퍼 위에는 흐릿한 빛만 남는다. 렌즈가 받아들이는 빛의 각도(개구수 NA)가 클수록, 파장 λ가 짧을수록 더 가는 선을 찍을 수 있다. 이것이 <span class="term">레일리 식</span>이다.</p>
+<div class="eq">$$\text{가장 가는 선폭} \;=\; k_1\,\frac{\lambda}{NA}\qquad (k_1 \ge 0.25)$$<div class="note">파장은 수은등 g선 436 nm → i선 365 nm → KrF 레이저 248 nm → ArF 193 nm → 물속 ArF(NA 1.35) → 극자외선 EUV 13.5 nm로 짧아져 왔다. EUV 노광 장비 한 대는 수천억 원이고, 세계에서 한 회사만 만든다.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-2</span><span class="ttl">빛으로 찍을 수 있는 가장 가는 선</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">빛</span><select data-k="l"><option value="436">g선 436 nm (1980년대)</option><option value="365">i선 365 nm</option><option value="248">KrF 248 nm (1990년대)</option><option value="193" selected>ArF 193 nm (2000년대)</option><option value="134">ArF 액침 193 nm (물 속, 실효 134 nm)</option><option value="13.5">EUV 13.5 nm (2019~)</option></select></label>
+      <label class="ctrl"><span class="lab">렌즈 개구수 NA <output data-o="na"></output></span><input type="range" data-k="na" min="0.3" max="0.95" step="0.01" value="0.85" data-d="2"></label>
+      <label class="ctrl"><span class="lab">찍으려는 선 간격 (반주기) <output data-o="hp"></output></span><input type="range" data-k="hp" min="0.8" max="2.7" step="0.01" value="2" data-log="1" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="330"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">찍을 수 있는 최소 반주기</span><span class="v" data-r="min"></span></div>
+      <div class="ro"><span class="k">빛 세기 대비 (명암)</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">결과</span><span class="v" data-r="res" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 맨 위: 마스크(검정 = 빛 막음). 가운데: 렌즈를 지나 웨이퍼에 도착한 빛의 세기(빨간 곡선)와 감광액이 반응하는 기준(점선). 아래: 현상 후 남은 감광액 무늬. 선 간격을 줄여 가면 1차 회절 빛이 렌즈 밖으로 벗어나는 순간 빛이 평평해져 무늬가 사라진다. 빛을 바꾸고 NA를 키워 10 nm대 선을 찍어 보자. (EUV는 거울 광학으로 실제 NA 0.33–0.55)</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>층층이 겹쳐 찍기: 정렬</h2>
+<p>칩은 수십 층의 무늬가 위아래로 정확히 이어져야 동작한다. 예를 들어 아래층 금속선 위에 구멍(비아)을 뚫어 위층과 연결하려면, 두 층이 몇 nm 이내로 맞아야 한다. 노광 장비는 웨이퍼의 정렬 표시를 읽어 이 위치를 맞춘다. 축구장 크기의 판 위에서 머리카락 굵기의 1/10만큼도 어긋나지 않게 도장을 찍는 정도의 정밀도다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-3</span><span class="ttl">정렬 게임: 비아를 금속선 위에</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">X 위치 조정 <output data-o="x"></output></span><input type="range" data-k="x" min="-30" max="30" step="0.5" value="0" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">Y 위치 조정 <output data-o="y"></output></span><input type="range" data-k="y" min="-30" max="30" step="0.5" value="0" data-d="1" data-u="nm"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b3n">새 웨이퍼 (무작위로 어긋남)</button></div>
+    <div class="canvas-box"><canvas id="cv3" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">남은 어긋남</span><span class="v" data-r="e"></span></div>
+      <div class="ro"><span class="k">연결된 비아</span><span class="v" data-r="ok"></span></div>
+      <div class="ro"><span class="k">판정 (허용 ±3 nm)</span><span class="v" data-r="j" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>규칙.</b> 아래층 금속선(파랑)은 폭 20 nm. 위층 비아(빨간 네모, 12 nm)가 금속선 위에 완전히 올라가야 연결된다. 웨이퍼마다 처음 어긋난 정도가 다르다. 슬라이더로 X·Y를 조정해 어긋남을 3 nm 이내로 줄여 보자. 실제 장비는 이 일을 1초에 수십 번, 웨이퍼 위 수백 곳에서 해낸다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">양성 감광액에서 현상 후 녹아 없어지는 곳은?</p><ol><li>빛을 받지 않은 곳</li><li>빛을 받은 곳</li><li>모두</li><li>아무 곳도 아님</li></ol>
+<p class="explain">양성 감광액은 빛을 받으면 현상액에 잘 녹게 변한다.</p></div>
+<div class="quiz" data-a="3"><p class="q">더 가는 선을 찍는 방법이 아닌 것은?</p><ol><li>더 짧은 파장의 빛</li><li>더 큰 NA의 렌즈</li><li>렌즈와 웨이퍼 사이에 물 채우기</li><li>더 밝은 빛</li></ol>
+<p class="explain">해상도는 λ/NA로 정해진다. 밝기는 노광 시간을 줄일 뿐 해상도를 높이지 않는다.</p></div>
+<div class="quiz" data-a="0"><p class="q">ArF(193 nm), NA 1.35, k₁ = 0.28일 때 최소 선폭은 약?</p><ol><li>40 nm</li><li>140 nm</li><li>193 nm</li><li>10 nm</li></ol>
+<p class="explain">0.28 × 193/1.35 ≈ 40 nm. 이보다 가는 선은 여러 번 나눠 찍거나(다중 패터닝) EUV를 쓴다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 14-1 */
+(function(){
+  const box = document.getElementById('sim1'), cv = document.getElementById('cv1'), N = 12;
+  let mask = [1,1,0,0,1,0,1,1,1,0,0,1], k = 0, pr = 'pos', hits = []; // 1 = 투명(빛 통과)
+  const ST = ['① 막 입히기','② 감광액 바르기','③ 노광 (빛 쬐기)','④ 현상','⑤ 식각','⑥ 감광액 제거 → 완성'];
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const L = 40, cw = (w - 80)/N, my = 20, wy = 230;
+    hits = [];
+    // 마스크
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.fillText('마스크', L - 6, my + 18);
+    for(let i=0;i<N;i++){ ctx.fillStyle = mask[i] ? 'rgba(180,220,255,.35)' : '#222'; ctx.fillRect(L + i*cw + 1, my, cw - 2, 26); ctx.strokeStyle = J.c('--line'); ctx.strokeRect(L + i*cw + 1, my, cw - 2, 26); hits.push({x:L + i*cw, y:my, w:cw, h:26, i}); }
+    // 빛
+    if(k === 2){ for(let i=0;i<N;i++) if(mask[i]){ const g = ctx.createLinearGradient(0, my + 26, 0, wy - 40); g.addColorStop(0, 'rgba(160,100,255,.55)'); g.addColorStop(1, 'rgba(160,100,255,.15)'); ctx.fillStyle = g; ctx.fillRect(L + i*cw + 3, my + 30, cw - 6, wy - 40 - my - 30); }
+      ctx.fillStyle = J.c('--plum'); ctx.textAlign = 'center'; ctx.font = '600 12px "Noto Sans KR"'; ctx.fillText('자외선 ↓', w/2, my + 50); }
+    // 웨이퍼 단면
+    const subY = wy + 40, filmY = wy + 14, prY = wy - 10;
+    ctx.fillStyle = '#8f98a8'; ctx.fillRect(L, subY, w - 80, 40); ctx.fillStyle = J.c('--ink2'); ctx.textAlign = 'right'; ctx.font = '12px "Noto Sans KR"'; ctx.fillText('규소', L - 6, subY + 24);
+    const exposed = i => mask[i] === 1, removePR = i => pr === 'pos' ? exposed(i) : !exposed(i);
+    for(let i=0;i<N;i++){ const x = L + i*cw;
+      const filmLeft = k < 4 ? true : !removePR(i);
+      if(filmLeft){ ctx.fillStyle = J.c('--jade'); ctx.fillRect(x, filmY, cw, 26); }
+      const prLeft = k >= 1 && k <= 4 && (k < 3 || !removePR(i));
+      if(prLeft){ ctx.fillStyle = k >= 2 && exposed(i) ? '#c79bdc' : '#e7b75a'; ctx.fillRect(x, prY, cw, 24); }
+    }
+    ctx.textAlign = 'right'; ctx.fillStyle = J.c('--ink2'); ctx.fillText('막', L - 6, filmY + 18); if(k >= 1 && k <= 4) ctx.fillText('감광액', L - 6, prY + 16);
+    if(k === 4){ ctx.fillStyle = J.c('--red'); ctx.textAlign = 'center'; ctx.font = '600 12px "Noto Sans KR"'; ctx.fillText('식각 기체가 드러난 막을 깎음 ↓', w/2, prY - 14); }
+    ctx.fillStyle = J.c('--ink3'); ctx.textAlign = 'left'; ctx.font = '11.5px "Noto Sans KR"'; ctx.fillText('노란색 = 감광액, 보라 = 빛 받은 감광액, 초록 = 막', L, h - 8);
+    J.out(box,'st', ST[k]);
+    J.out(box,'pat', k === 5 ? mask.map((m, i) => removePR(i) ? '□' : '■').join('') : '?'.repeat(N));
+  }
+  cv.addEventListener('click', e => { const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; const hh = hits.find(q => x > q.x && x < q.x + q.w && y > q.y && y < q.y + q.h); if(hh){ mask[hh.i] ^= 1; k = 0; draw(); } });
+  cv.style.cursor = 'pointer';
+  J.sim('sim1', v => { pr = v.pr; draw(); });
+  J.$('#b1n').onclick = () => { k = Math.min(5, k + 1); draw(); }; J.$('#b1p').onclick = () => { k = Math.max(0, k - 1); draw(); }; J.$('#b1r').onclick = () => { k = 0; draw(); };
+})();
+
+/* 14-2 해상도 */
+J.sim('sim2', (v, box) => {
+  let lam = +v.l, na = v.na;
+  if(v.l === '134'){ lam = 193; na = Math.min(1.35, v.na*1.42); }
+  if(v.l === '13.5') na = Math.min(0.55, v.na*0.58);
+  J.$('[data-o="na"]', box).textContent = J.fmt(na, 2) + (v.l === '134' ? ' (물속)' : v.l === '13.5' ? ' (EUV 거울)' : '');
+  const hp = v.hp, p = 2*hp, sig = 0.7;
+  // 부분 결맞음: 회절 차수 m의 수광 비율
+  const capt = m => { const f = m*lam/p; return J.clamp((na*(1 + sig) - f)/(2*na*sig), 0, 1); };
+  const a0 = 0.5, an = m => Math.sin(Math.PI*m/2)/(Math.PI*m);
+  const I = x => { let s = 0, c0 = a0*a0; for(let m = 1; m <= 7; m += 2){ s += 2*an(m)*capt(m)*Math.cos(2*Math.PI*m*x/p); } return Math.pow(a0 + s, 2) + 0*c0; };
+  const {ctx, w, h} = J.fit(document.getElementById('cv2')); ctx.clearRect(0,0,w,h);
+  const L = 40, Rr = w - 20, per = 4, X = x => L + x/(per*p)*(Rr - L);
+  // 마스크
+  for(let q = 0; q < per*2; q++){ if(q % 2 === 0){ ctx.fillStyle = '#222'; ctx.fillRect(X(q*hp), 14, X(hp) - X(0), 22); } }
+  ctx.strokeStyle = J.c('--line'); ctx.strokeRect(L, 14, Rr - L, 22);
+  ctx.fillStyle = J.c('--ink2'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.fillText('마스크', L - 4, 30);
+  // 세기
+  const gT = 60, gB = 220, mxI = 1.4; let imax = 0, imin = 9; const vals = [];
+  for(let i=0;i<=400;i++){ const x = i/400*per*p, y = I(x + hp/2); vals.push(y); imax = Math.max(imax, y); imin = Math.min(imin, y); }
+  const Yi = y => gB - y/mxI*(gB - gT);
+  ctx.strokeStyle = J.c('--line2'); ctx.strokeRect(L, gT, Rr - L, gB - gT);
+  ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2.5; ctx.beginPath(); vals.forEach((y, i) => { const x = L + i/400*(Rr - L); i ? ctx.lineTo(x, Yi(y)) : ctx.moveTo(x, Yi(y)); }); ctx.stroke();
+  const th = 0.3; ctx.strokeStyle = J.c('--ink3'); ctx.setLineDash([5,4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(L, Yi(th)); ctx.lineTo(Rr, Yi(th)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = J.c('--ink2'); ctx.textAlign = 'right'; ctx.fillText('빛 세기', L - 4, gT + 12); ctx.textAlign = 'left'; ctx.fillText('감광 기준', Rr - 60, Yi(th) - 4);
+  // 현상 결과 (양성: 세기>기준인 곳 녹음)
+  const rY = 240; ctx.fillStyle = '#8f98a8'; ctx.fillRect(L, rY + 24, Rr - L, 18);
+  vals.forEach((y, i) => { if(y < th){ ctx.fillStyle = '#e7b75a'; ctx.fillRect(L + i/400*(Rr - L), rY, (Rr - L)/400 + 0.6, 24); } });
+  ctx.fillStyle = J.c('--ink2'); ctx.textAlign = 'right'; ctx.fillText('결과', L - 4, rY + 16);
+  const contrast = (imax - imin)/(imax + imin + 1e-9), ok = contrast > 0.3 && imin < th && imax > th;
+  const minhp = 0.25*lam/na;
+  ctx.fillStyle = J.c('--ink3'); ctx.textAlign = 'center'; ctx.fillText(`선 간격(반주기) ${J.fmt(hp, 1)} nm · 파장 ${lam} nm · NA ${J.fmt(na, 2)}`, w/2, h - 8);
+  J.out(box,'min', J.fmt(minhp, 1) + ' nm'); J.out(box,'c', J.fmt(contrast*100, 0) + ' %', ok ? 'good' : 'bad');
+  J.out(box,'res', ok ? '무늬가 선명하게 찍힘' : contrast > 0.1 ? '흐릿함 — 불량 위험' : '무늬가 사라짐 (해상 불가)', ok ? 'good' : 'bad');
+});
+
+/* 14-3 정렬 */
+(function(){
+  const box = document.getElementById('sim3');
+  let off = [17, -12], V = {x:0, y:0};
+  J.sim('sim3', v => { V = v; draw(); });
+  J.$('#b3n').onclick = () => { off = [Math.round((Math.random() - .5)*50*2)/2, Math.round((Math.random() - .5)*50*2)/2]; const sx = J.$('#sim3 [data-k="x"]'), sy = J.$('#sim3 [data-k="y"]'); sx.value = 0; sy.value = 0; sx.dispatchEvent(new Event('input')); };
+  function draw(){
+    const {ctx, w, h} = J.fit(document.getElementById('cv3')); ctx.clearRect(0,0,w,h);
+    const sc = Math.min(w, h)/150, cx = w/2, cy = h/2, ex = off[0] + V.x, ey = off[1] + V.y;
+    const lines = [-40, 0, 40];
+    lines.forEach(y => { ctx.fillStyle = J.c('--indigo'); ctx.globalAlpha = .7; ctx.fillRect(cx - 70*sc, cy + (y - 10)*sc, 140*sc, 20*sc); ctx.globalAlpha = 1; });
+    let ok = 0; const vx = [-45, -15, 15, 45];
+    lines.forEach(y => vx.forEach(x => { const px = x + ex, py = y + ey, good = Math.abs(py - y) <= 4 && Math.abs(ex) <= 30;
+      if(good) ok++;
+      ctx.fillStyle = J.c(good ? '--jade' : '--red'); ctx.globalAlpha = .85; ctx.fillRect(cx + (px - 6)*sc, cy + (py - 6)*sc, 12*sc, 12*sc); ctx.globalAlpha = 1; }));
+    ctx.strokeStyle = J.c('--ink3'); ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.moveTo(0, cy); ctx.lineTo(w, cy); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('파랑: 아래층 금속선 (폭 20 nm) · 네모: 위층 비아 (12 nm)', 8, h - 8);
+    const e = Math.hypot(ex, ey);
+    J.out(box,'e', `X ${J.fmt(ex, 1)} / Y ${J.fmt(ey, 1)} nm`); J.out(box,'ok', ok + ' / 12', ok === 12 ? 'good' : 'bad');
+    J.out(box,'j', Math.abs(ex) <= 3 && Math.abs(ey) <= 3 ? '정렬 성공! 🎯' : ok === 12 ? '연결은 됐지만 여유가 부족' : '어긋남 — 칩 불량', Math.abs(ex) <= 3 && Math.abs(ey) <= 3 ? 'good' : 'bad');
+  }
+})();
+</script>
+</body>
+</html>

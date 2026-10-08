@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>빛을 내고 빛을 먹는 반도체 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="light">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 09 <span class="hanja">中卷 素子 · 第九章 · 光</span></div>
+  <h1>빛을 내고 빛을 먹는 반도체</h1>
+  <p class="lead">PN 접합에서 전자와 정공이 만나 사라질 때, 띠틈만큼의 에너지가 남는다. 그 에너지가 빛으로 나오면 <span class="term">LED</span>(발광 다이오드)다. 거꾸로, 빛이 접합에 들어와 전자-정공 쌍을 만들고 접합의 전기장이 이 둘을 갈라놓으면 전기가 생긴다 — <span class="term">태양전지</span>다. 같은 PN 접합이 빛을 내기도, 먹기도 한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>LED에서 빛이 나오는 원리와, 띠틈이 빛의 색을 정한다는 것을 안다.</li>
+  <li>빨강·초록·파랑 빛을 섞어 화면의 색을 만드는 원리를 실험한다.</li>
+  <li>태양전지가 빛 에너지를 전기로 바꾸는 과정을 설명한다.</li>
+  <li>태양전지의 I–V 곡선에서 최대 전력점과 효율을 찾는다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>LED: 재결합이 빛이 될 때</h2>
+<p>LED에 순방향 전압을 걸면 n쪽 전자와 p쪽 정공이 접합 부근으로 몰려와 재결합한다. 전자는 전도띠에서 원자가띠로 "뛰어내리며" 띠틈 E<sub>g</sub>만큼의 에너지를 빛 알갱이(광자) 하나로 내보낸다. 그러니 <b>빛의 색은 띠틈이 정한다</b>. 규소는 이 에너지를 주로 열로 내보내서(간접 띠틈) 빛을 잘 못 내기 때문에, LED는 GaAs·GaP·GaN 같은 화합물 반도체로 만든다.</p>
+<div class="eq">$$\lambda\,[\text{nm}] \approx \frac{1240}{E_g\,[\text{eV}]}$$<div class="note">빨강 LED(AlGaInP, ~1.9 eV) → 650 nm, 파랑 LED(InGaN, ~2.7 eV) → 460 nm. 파란 LED를 만든 연구자들은 2014년 노벨 물리학상을 받았다.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-1</span><span class="ttl">띠틈으로 LED 색 정하기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab"><span>띠틈 E<sub>g</sub></span> <output data-o="eg"></output></span><input type="range" data-k="eg" min="1.2" max="3.6" step="0.01" value="1.9" data-d="2" data-u="eV"></label>
+      <label class="ctrl"><span class="lab">LED 전류 <output data-o="i"></output></span><input type="range" data-k="i" min="0" max="30" step="1" value="15" data-d="0" data-u="mA"></label>
+    </div>
+    <div class="btnrow"><span class="hint">재료 바로가기:</span>
+      <button class="sbtn" data-eg="1.42">GaAs (리모컨 적외선)</button><button class="sbtn" data-eg="1.9">AlGaInP (빨강)</button><button class="sbtn" data-eg="2.1">AlGaInP (주황·노랑)</button><button class="sbtn" data-eg="2.35">InGaN (초록)</button><button class="sbtn" data-eg="2.7">InGaN (파랑)</button><button class="sbtn" data-eg="3.4">GaN (자외선)</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">빛의 파장</span><span class="v" data-r="l"></span></div>
+      <div class="ro"><span class="k">색</span><span class="v" data-r="c" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">켜는 데 필요한 전압 (약)</span><span class="v" data-r="vf"></span></div>
+      <div class="ro"><span class="k">1초에 나오는 광자 (약)</span><span class="v" data-r="np"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: LED 칩의 띠 그림. 전도띠의 전자(빨강)가 원자가띠의 정공(흰 원)으로 떨어지며 광자(물결)를 낸다. 오른쪽: LED 모양과 그 빛. 띠틈이 1.65 eV(750 nm)보다 작으면 사람 눈에 보이지 않는 적외선 — 리모컨 LED가 이렇다(휴대폰 카메라로 보면 보인다!). 3.1 eV(400 nm)보다 크면 자외선이다. 켜는 전압은 대략 띠틈(eV)을 V로 바꾼 값과 비슷하다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>세 가지 빛으로 모든 색을</h2>
+<p>휴대폰 화면을 돋보기로 보면 빨강(R)·초록(G)·파랑(B)의 아주 작은 점(<span class="term">부화소</span>)이 빽빽하게 있다. 세 빛의 세기를 조절해 섞으면 우리 눈은 그것을 하나의 색으로 느낀다. 셋을 모두 켜면 흰색. 조명용 흰색 LED는 보통 파란 LED 위에 노란빛을 내는 형광체를 발라 만든다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-2</span><span class="ttl">RGB LED 색 섞기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">빨강 R <output data-o="r"></output></span><input type="range" data-k="r" min="0" max="255" step="1" value="255" data-d="0"></label>
+      <label class="ctrl"><span class="lab">초록 G <output data-o="g"></output></span><input type="range" data-k="g" min="0" max="255" step="1" value="160" data-d="0"></label>
+      <label class="ctrl"><span class="lab">파랑 B <output data-o="b"></output></span><input type="range" data-k="b" min="0" max="255" step="1" value="0" data-d="0"></label>
+    </div>
+    <div class="btnrow"><span class="hint">맞혀 보기 →</span><button class="sbtn" id="b2q">목표 색 바꾸기</button><span class="hint" id="b2t"></span></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="250"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="250"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">섞인 색 코드</span><span class="v" data-r="hex"></span></div>
+      <div class="ro"><span class="k">목표와의 차이</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">판정</span><span class="v" data-r="ok" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>해 보기.</b> 왼쪽은 세 LED 빛이 겹치는 모습(빛의 삼원색), 오른쪽 위는 섞인 색, 아래는 화면 부화소를 확대한 모습이다. "목표 색 바꾸기"를 눌러 나오는 색을 슬라이더로 만들어 보자. 차이가 30 이하면 성공!</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>태양전지: 빛을 먹고 전기를 낸다</h2>
+<p>빛이 PN 접합에 들어오면 띠틈보다 큰 에너지를 가진 광자가 전자-정공 쌍을 만든다(3장). 공핍층 근처에서 생긴 쌍은 접합의 내부 전기장(7장)에 의해 전자는 n쪽으로, 정공은 p쪽으로 갈라진다. 바깥에 전선을 연결하면 전자가 회로를 돌아 p쪽으로 가서 정공과 만난다 — 전류가 흐른다! 빛이 셀수록 전류가 크다. 규소 태양전지 한 장은 약 0.6 V를 내므로, 여러 장을 직렬로 이어 패널을 만든다.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 860 240" role="img" aria-label="태양전지 원리" id="fig3"></svg>
+<figcaption><b>그림 9-1.</b> 태양전지의 단면. ① 빛이 들어와 전자-정공 쌍 생성 ② 접합의 전기장이 둘을 갈라놓음 ③ 전자는 위쪽 전극에서 회로를 돌아 전구를 켜고 ④ 아래쪽 전극으로 돌아와 정공과 만난다.</figcaption>
+</figure>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-3</span><span class="ttl">태양전지 최대 전력 찾기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">햇빛 세기 <output data-o="s"></output></span><input type="range" data-k="s" min="0" max="1000" step="10" value="1000" data-d="0" data-u="W/m²"></label>
+      <label class="ctrl"><span class="lab">연결한 부하 저항 <output data-o="r"></output></span><input type="range" data-k="r" min="-2.5" max="1" step="0.02" value="-1.6" data-log="1" data-si="Ω"></label>
+      <label class="ctrl"><span class="lab">셀 온도 <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="75" step="5" value="25" data-d="0" data-u="°C"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">전압 / 전류</span><span class="v" data-r="vi"></span></div>
+      <div class="ro"><span class="k">출력 전력</span><span class="v" data-r="p"></span></div>
+      <div class="ro"><span class="k">최대 전력 대비</span><span class="v" data-r="pm"></span></div>
+      <div class="ro"><span class="k">변환 효율</span><span class="v" data-r="eff"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>가정.</b> 15.6 cm × 15.6 cm(0.0243 m²) 규소 셀 한 장. 왼쪽: I–V 곡선(빨강)과 부하선(초록 점선), 그 교점이 동작점. 오른쪽: 전압에 따른 출력 전력. 부하 저항을 바꿔 전력이 가장 큰 점(<b>최대 전력점</b>)을 찾아보자. 실제 태양광 인버터는 이 점을 자동으로 계속 쫓아간다(MPPT). 셀이 뜨거워지면 전압이 줄어 효율이 떨어진다 — 여름 한낮보다 맑은 봄날에 발전 효율이 좋은 이유다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 규소 태양전지의 이론 효율 한계는 약 33 %다. 띠틈보다 에너지가 작은 빛(적외선)은 흡수되지 못하고, 너무 큰 에너지의 빛(파랑)은 남는 에너지를 열로 잃기 때문이다. 띠틈이 서로 다른 반도체를 여러 층 쌓으면 이 손실을 줄일 수 있을까? (힌트: 우주 위성용 태양전지는 효율이 40 %에 가깝다.)</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">띠틈이 2.7 eV인 LED가 내는 빛의 색은?</p><ol><li>빨강</li><li>초록</li><li>파랑</li><li>적외선</li></ol>
+<p class="explain">λ ≈ 1240/2.7 ≈ 460 nm → 파랑.</p></div>
+<div class="quiz" data-a="1"><p class="q">빨강·초록 빛을 같은 세기로 섞으면?</p><ol><li>보라</li><li>노랑</li><li>청록</li><li>검정</li></ol>
+<p class="explain">빛의 혼합(가산 혼합)에서 R + G = 노랑.</p></div>
+<div class="quiz" data-a="0"><p class="q">태양전지에서 전자와 정공을 서로 반대쪽으로 갈라놓는 것은?</p><ol><li>PN 접합의 내부 전기장</li><li>햇빛의 압력</li><li>중력</li><li>전선의 저항</li></ol>
+<p class="explain">공핍층의 내부 전기장이 전자는 n쪽, 정공은 p쪽으로 보낸다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+function wl2rgb(l){
+  let r = 0, g = 0, b = 0;
+  if(l >= 380 && l < 440){ r = -(l - 440)/60; b = 1; } else if(l >= 440 && l < 490){ g = (l - 440)/50; b = 1; } else if(l >= 490 && l < 510){ g = 1; b = -(l - 510)/20; }
+  else if(l >= 510 && l < 580){ r = (l - 510)/70; g = 1; } else if(l >= 580 && l < 645){ r = 1; g = -(l - 645)/65; } else if(l >= 645 && l <= 780){ r = 1; }
+  const f = l < 380 || l > 780 ? 0 : l < 420 ? 0.3 + 0.7*(l - 380)/40 : l > 700 ? 0.3 + 0.7*(780 - l)/80 : 1;
+  return [r*f, g*f, b*f].map(x => Math.round(255*Math.max(0, x)));
+}
+const cname = l => l > 780 ? '적외선 (안 보임)' : l > 620 ? '빨강' : l > 590 ? '주황' : l > 570 ? '노랑' : l > 495 ? '초록' : l > 450 ? '파랑' : l >= 380 ? '보라' : '자외선 (안 보임)';
+
+/* 9-1 */
+(function(){
+  let V = {eg:1.9, i:15}, t = 0;
+  const R = J.rng(4), P = Array.from({length:14}, () => ({x:R(), ph:R()}));
+  function draw(dt){
+    const l = 1240/V.eg, rgb = wl2rgb(l), vis = l >= 380 && l <= 780, col = vis ? `rgb(${rgb})` : J.c(l > 780 ? '--red' : '--plum');
+    { const {ctx, w, h} = J.fit(document.getElementById('cv1a')); ctx.clearRect(0,0,w,h);
+      const cb = 50, vb = cb + V.eg/3.6*(h - 110) + 20;
+      ctx.fillStyle = J.c('--red-soft'); ctx.fillRect(20, 14, w - 40, cb - 14);
+      ctx.fillStyle = J.c('--indigo-soft'); ctx.fillRect(20, vb, w - 40, h - 14 - vb);
+      ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('전도띠 (전자)', 26, 30); ctx.fillText('원자가띠 (정공)', 26, h - 20);
+      ctx.fillStyle = J.c('--gold'); ctx.fillText('띠틈 ' + J.fmt(V.eg, 2) + ' eV', 26, (cb + vb)/2 + 4);
+      const n = Math.round(V.i/30*P.length);
+      for(let k=0;k<n;k++){ const p = P[k]; p.ph += dt*(0.5 + V.i/40); if(p.ph > 1){ p.ph -= 1; p.x = R(); }
+        const x = 60 + p.x*(w - 120), y = J.lerp(cb - 10, vb + 10, Math.min(1, p.ph*1.6));
+        ctx.fillStyle = J.c('--card'); ctx.strokeStyle = J.c('--indigo'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, vb + 10, 5, 0, 7); ctx.fill(); ctx.stroke();
+        if(p.ph < 0.62){ ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill(); }
+        else { const q = (p.ph - 0.62)/0.38, px = x + q*(w*0.4); ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.beginPath();
+          for(let s = -24; s <= 0; s += 2){ const xx = px + s, yy = (cb + vb)/2 + Math.sin((xx - x)/(l/90))*6; s === -24 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy); } ctx.stroke(); } } }
+    { const {ctx, w, h} = J.fit(document.getElementById('cv1b')); ctx.clearRect(0,0,w,h);
+      ctx.fillStyle = '#111'; ctx.fillRect(0,0,w,h);
+      const cx = w/2, cy = h/2 - 10, br = J.clamp(V.i/20, 0, 1.2);
+      if(vis && V.i > 0){ const g = ctx.createRadialGradient(cx, cy, 10, cx, cy, 140*br + 20); g.addColorStop(0, `rgba(${rgb},${0.9*Math.min(1, br)})`); g.addColorStop(1, `rgba(${rgb},0)`); ctx.fillStyle = g; ctx.fillRect(0,0,w,h); }
+      ctx.fillStyle = vis && V.i > 0 ? `rgb(${rgb.map(c => Math.min(255, c + 90*br))})` : '#bbb'; ctx.globalAlpha = .9;
+      ctx.beginPath(); ctx.arc(cx, cy, 34, Math.PI, 0); ctx.lineTo(cx + 34, cy + 40); ctx.lineTo(cx - 34, cy + 40); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.fillStyle = '#999'; ctx.fillRect(cx - 40, cy + 40, 80, 8); ctx.fillRect(cx - 18, cy + 48, 4, 60); ctx.fillRect(cx + 14, cy + 48, 4, 50);
+      ctx.fillStyle = '#ccc'; ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center';
+      ctx.fillText(vis ? '' : l > 780 ? '눈에는 꺼진 것처럼 보임 (적외선)' : '눈에 안 보임 (자외선)', cx, h - 14); }
+  }
+  J.sim('sim1', (v, box) => { V = v;
+    const l = 1240/v.eg; J.out(box,'l', J.fmt(l, 0) + ' nm'); J.out(box,'c', cname(l)); J.out(box,'vf', J.fmt(v.eg + 0.25, 2) + ' V');
+    J.out(box,'np', J.sci(v.i/1000/1.6e-19*0.3, 1) + ' 개'); draw(0); });
+  J.$$('#sim1 [data-eg]').forEach(b => b.onclick = () => { const s = J.$('#sim1 [data-k="eg"]'); s.value = b.dataset.eg; s.dispatchEvent(new Event('input')); });
+  J.loop(document.getElementById('cv1a'), dt => draw(dt));
+})();
+
+/* 9-2 */
+(function(){
+  let target = [180, 60, 220];
+  J.sim('sim2', (v, box) => {
+    const {ctx, w, h} = J.fit(document.getElementById('cv2a')); ctx.fillStyle = '#000'; ctx.fillRect(0,0,w,h);
+    ctx.globalCompositeOperation = 'lighter'; const r = Math.min(w, h)*0.28, cx = w/2, cy = h/2 + 6;
+    [[v.r, 0, 0, -90],[0, v.g, 0, 30],[0, 0, v.b, 150]].forEach(([R, G, B, a]) => { const x = cx + Math.cos(a*Math.PI/180)*r*0.55, y = cy + Math.sin(a*Math.PI/180)*r*0.55;
+      ctx.fillStyle = `rgb(${R},${G},${B})`; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); });
+    ctx.globalCompositeOperation = 'source-over';
+    const c2 = J.fit(document.getElementById('cv2b')), g = c2.ctx; g.clearRect(0,0,c2.w,c2.h);
+    g.fillStyle = `rgb(${v.r},${v.g},${v.b})`; g.fillRect(10, 10, c2.w/2 - 15, c2.h*0.5 - 15);
+    g.fillStyle = `rgb(${target})`; g.fillRect(c2.w/2 + 5, 10, c2.w/2 - 15, c2.h*0.5 - 15);
+    g.fillStyle = J.c('--ink2'); g.font = '12px "Noto Sans KR"'; g.textAlign = 'center'; g.fillText('내가 만든 색', c2.w/4, c2.h*0.5 + 10); g.fillText('목표 색', c2.w*3/4, c2.h*0.5 + 10);
+    const py = c2.h*0.5 + 22, cell = 16; g.fillStyle = '#000'; g.fillRect(10, py, c2.w - 20, c2.h - py - 8);
+    for(let x = 14; x < c2.w - 20; x += cell) for(let y = py + 4; y < c2.h - 14; y += cell){ [[v.r,0,0],[0,v.g,0],[0,0,v.b]].forEach((c, k) => { g.fillStyle = `rgb(${c})`; g.fillRect(x + k*5, y, 4, cell - 4); }); }
+    const d = Math.round(Math.hypot(v.r - target[0], v.g - target[1], v.b - target[2]));
+    J.out(box,'hex', '#' + [v.r, v.g, v.b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase());
+    J.out(box,'d', d, d <= 30 ? 'good' : d < 80 ? 'warn' : 'bad'); J.out(box,'ok', d <= 30 ? '성공! 🎉' : d < 80 ? '거의 다 왔어요' : '더 조절해 보세요');
+  });
+  J.$('#b2q').onclick = () => { const T = [[255,255,0],[0,255,255],[255,0,255],[255,128,0],[128,0,255],[255,255,255],[255,105,180],[0,128,128],[200,230,90]]; target = T[Math.floor(Math.random()*T.length)];
+    J.$('#sim2 [data-k="r"]').dispatchEvent(new Event('input')); };
+})();
+
+/* 그림 9-1 */
+(function(){
+  const s = document.getElementById('fig3');
+  J.svg('rect', {x:200, y:60, width:460, height:50, fill:'var(--red-soft)', stroke:'var(--red)'}, s);
+  J.svg('rect', {x:200, y:110, width:460, height:90, fill:'var(--indigo-soft)', stroke:'var(--indigo)'}, s);
+  J.svg('rect', {x:200, y:100, width:460, height:22, fill:'var(--gold)', opacity:.3}, s);
+  J.svg('text', {x:670, y:90, class:'t-s', text:'n형 (얇게)'}, s); J.svg('text', {x:670, y:160, class:'t-s', text:'p형'}, s); J.svg('text', {x:670, y:116, class:'t-s', text:'공핍층 (전기장)', style:'fill:var(--gold)'}, s);
+  [240, 330, 420, 510, 600].forEach(x => J.svg('rect', {x:x - 6, y:52, width:12, height:10, fill:'var(--ink3)'}, s));
+  J.svg('rect', {x:200, y:200, width:460, height:10, fill:'var(--ink3)'}, s);
+  [[300, 20],[380, 14],[460, 22]].forEach(([x, y]) => { J.svg('path', {d:`M${x - 30} ${y} q 8 -8 16 0 t 16 0 t 16 0`, fill:'none', stroke:'var(--gold)', 'stroke-width':2.5, transform:`rotate(55 ${x} ${y})`}, s); });
+  J.svg('text', {x:250, y:22, class:'t-s', text:'① 햇빛', style:'fill:var(--gold);font-weight:700'}, s);
+  [[330, 125],[430, 130]].forEach(([x, y]) => { J.svg('circle', {cx:x, cy:y - 30, r:6, class:'s-red'}, s); J.svg('circle', {cx:x, cy:y + 20, r:6, fill:'var(--card)', stroke:'var(--indigo)', 'stroke-width':2}, s);
+    J.svg('line', {x1:x + 12, y1:y - 4, x2:x + 12, y2:y - 32, stroke:'var(--red)', 'stroke-width':2}, s); J.svg('line', {x1:x + 12, y1:y + 2, x2:x + 12, y2:y + 26, stroke:'var(--indigo)', 'stroke-width':2}, s); });
+  J.svg('text', {x:350, y:100, class:'t-s', text:'② 갈라짐', style:'font-weight:700'}, s);
+  J.svg('path', {d:'M600 52 L600 30 L790 30 L790 230 L640 230 L640 210', fill:'none', stroke:'var(--ink2)', 'stroke-width':2.5}, s);
+  J.svg('circle', {cx:790, cy:130, r:18, fill:'#ffd65a', stroke:'var(--ink2)', 'stroke-width':2}, s);
+  J.svg('text', {x:800, y:24, class:'t-s', text:'③ 전자가 회로를 돌아', style:'font-weight:700', 'text-anchor':'end'}, s);
+  J.svg('text', {x:780, y:225, class:'t-s', text:'④ 정공과 만남', style:'font-weight:700', 'text-anchor':'end'}, s);
+  J.svg('text', {x:20, y:100, class:'t-m', text:'전극(위)', style:'fill:var(--ink2)'}, s); J.svg('text', {x:20, y:208, class:'t-m', text:'전극(아래)', style:'fill:var(--ink2)'}, s);
+})();
+
+/* 9-3 태양전지 */
+J.sim('sim3', (v, box) => {
+  const A = 0.0243, T = v.t + 273, VT = 8.617e-5*T, Isc = 9.0*v.s/1000, n = 1.3, I0 = 1e-7*Math.pow(T/298, 3/n)*Math.exp(1.12/(n*8.617e-5)*(1/298 - 1/T));
+  const I = V => Isc - I0*(Math.exp(V/(n*VT)) - 1);
+  const Voc = Isc > 0 ? n*VT*Math.log(Isc/I0 + 1) : 0;
+  // 동작점: I(V) = V/R
+  let a = 0, b = Math.max(1e-6, Voc); for(let k=0;k<60;k++){ const m = (a + b)/2; if(I(m) > m/v.r) a = m; else b = m; }
+  const Vop = (a + b)/2, Iop = Math.max(0, I(Vop)), P = Vop*Iop;
+  let Pm = 0, Vm = 0; for(let V = 0; V <= Voc; V += Voc/400){ const p = V*I(V); if(p > Pm){ Pm = p; Vm = V; } }
+  const iv = [], pv = []; for(let V = 0; V <= 0.8; V += 0.004){ iv.push([V, Math.max(-1, I(V))]); pv.push([V, Math.max(0, V*I(V))]); }
+  J.plot(document.getElementById('cv3a'), {x:[0, 0.8], y:[0, 10], xlab:'전압 (V)', ylab:'전류 (A)', series:[{pts:iv, color:'--red', w:3},{pts:[[0,0],[0.8, 0.8/v.r]], color:'--jade', w:2, dash:[6,4]}], points:[{x:Vop, y:Iop, color:'--ink', r:6}]});
+  J.plot(document.getElementById('cv3b'), {x:[0, 0.8], y:[0, 5], xlab:'전압 (V)', ylab:'전력 (W)', series:[{pts:pv, color:'--gold', w:3, fill:.15}], points:[{x:Vm, y:Pm, color:'--red', r:5, label:'최대', align:'right'},{x:Vop, y:P, color:'--ink', r:6}]});
+  J.out(box,'vi', J.fmt(Vop, 3) + ' V / ' + J.fmt(Iop, 2) + ' A');
+  J.out(box,'p', J.fmt(P, 2) + ' W'); J.out(box,'pm', Pm > 0 ? J.fmt(P/Pm*100, 0) + ' %' : '—', Pm > 0 && P/Pm > 0.95 ? 'good' : 'warn');
+  J.out(box,'eff', v.s > 0 ? J.fmt(P/(v.s*A)*100, 1) + ' %' : '—');
+});
+</script>
+</body>
+</html>

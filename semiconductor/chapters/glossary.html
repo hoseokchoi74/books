@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>용어집 & 종합 퀴즈 · 반도체 기초 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%233f6b2e'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E基%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+  .gsearch{width:100%; font-size:16px; padding:11px 14px; border:1.5px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink); font-family:var(--sans)}
+  .gsearch:focus{outline:none; border-color:var(--gold)}
+  .gfilter{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 16px}
+  .glist{display:grid; gap:8px}
+  .gi{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:10px 14px}
+  .gi b{font-family:var(--serif); font-size:16.5px}
+  .gi .en{margin-left:6px}
+  .gi p{margin:4px 0 0; font-size:14.5px; color:var(--ink2)}
+  .gi a.ch{float:right; font-family:var(--mono); font-size:12px; color:var(--red)}
+  .score{font-family:var(--serif); font-size:20px; font-weight:700}
+</style>
+</head>
+<body data-ch="glossary">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 19 <span class="hanja">附錄 · 第十九章 · 結</span></div>
+  <h1>용어집 & 종합 퀴즈</h1>
+  <p class="lead">上·中·下 세 권의 핵심 용어를 한곳에 모았다. 검색하거나 분류로 걸러 보고, 마지막의 종합 문제로 실력을 점검해 보자.</p>
+</header>
+
+<h2 id="s1"><span class="n">01</span>용어집</h2>
+<input class="gsearch" id="gq" placeholder="용어 검색 (예: 정공, 띠틈, 도핑, 웨이퍼)" aria-label="용어 검색">
+<div class="gfilter" id="gf"></div>
+<p class="hint" id="gcount"></p>
+<div class="glist" id="gl"></div>
+
+<h2 id="s2"><span class="n">02</span>종합 퀴즈</h2>
+<p>20문제. 세 권을 고루 섞었다. 각 문제를 누르면 바로 채점되고 해설이 열린다.</p>
+<div class="readouts" style="margin-bottom:10px"><div class="ro"><span class="k">점수</span><span class="v score" id="score">0 / 20</span></div><div class="ro"><span class="k">푼 문제</span><span class="v" id="done">0</span></div></div>
+<div id="qz"></div>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const G = [
+ [
+  "원자핵",
+  "nucleus",
+  "원자 가운데의 양성자·중성자 덩어리. 원자 질량의 거의 전부.",
+  "上卷 · 원리",
+  "atom"
+ ],
+ [
+  "전자",
+  "electron",
+  "(−) 전기를 띤 아주 가벼운 알갱이. 전류를 나르는 주인공.",
+  "上卷 · 원리",
+  "atom"
+ ],
+ [
+  "원자가 전자",
+  "valence electron",
+  "맨 바깥 껍질의 전자. 결합과 전기 전도를 결정한다. 규소는 4개.",
+  "上卷 · 원리",
+  "atom"
+ ],
+ [
+  "화합물 반도체",
+  "compound semiconductor",
+  "13족과 15족 원소를 짝지어 만든 반도체. GaAs, GaN 등.",
+  "上卷 · 원리",
+  "atom"
+ ],
+ [
+  "도체",
+  "conductor",
+  "자유 전자가 많아 전기가 잘 통하는 물질. 구리, 은.",
+  "上卷 · 원리",
+  "material"
+ ],
+ [
+  "부도체 (절연체)",
+  "insulator",
+  "전자가 모두 묶여 있어 전기가 거의 통하지 않는 물질. 유리, 고무.",
+  "上卷 · 원리",
+  "material"
+ ],
+ [
+  "반도체",
+  "semiconductor",
+  "도체와 부도체 사이. 온도·빛·불순물로 전도도를 크게 바꿀 수 있다.",
+  "上卷 · 원리",
+  "material"
+ ],
+ [
+  "옴의 법칙",
+  "Ohm's law",
+  "V = IR. 전압 = 전류 × 저항.",
+  "上卷 · 원리",
+  "material"
+ ],
+ [
+  "비저항",
+  "resistivity",
+  "물질 고유의 전기 저항. R = ρL/A.",
+  "上卷 · 원리",
+  "material"
+ ],
+ [
+  "서미스터",
+  "thermistor",
+  "온도에 따라 저항이 크게 바뀌는 반도체 부품.",
+  "上卷 · 원리",
+  "material"
+ ],
+ [
+  "에너지 준위",
+  "energy level",
+  "전자가 가질 수 있는 띄엄띄엄한 에너지 값.",
+  "上卷 · 원리",
+  "band"
+ ],
+ [
+  "에너지 띠",
+  "energy band",
+  "원자들이 모여 촘촘해진 준위의 띠.",
+  "上卷 · 원리",
+  "band"
+ ],
+ [
+  "원자가띠",
+  "valence band",
+  "전자로 꽉 찬 아래쪽 띠.",
+  "上卷 · 원리",
+  "band"
+ ],
+ [
+  "전도띠",
+  "conduction band",
+  "비어 있는 위쪽 띠. 여기 올라간 전자는 자유롭게 움직인다.",
+  "上卷 · 원리",
+  "band"
+ ],
+ [
+  "띠틈 (밴드갭)",
+  "band gap",
+  "원자가띠와 전도띠 사이 전자가 있을 수 없는 구간. 규소 1.12 eV.",
+  "上卷 · 원리",
+  "band"
+ ],
+ [
+  "전자볼트",
+  "eV",
+  "전자 하나를 1 V로 밀 때 얻는 에너지. 1.6×10⁻¹⁹ J.",
+  "上卷 · 원리",
+  "band"
+ ],
+ [
+  "공유 결합",
+  "covalent bond",
+  "이웃 원자와 전자 쌍을 함께 쓰는 결합.",
+  "上卷 · 원리",
+  "crystal"
+ ],
+ [
+  "다이아몬드 구조",
+  "diamond lattice",
+  "정사면체로 이어진 결정 구조. 규소·다이아몬드.",
+  "上卷 · 원리",
+  "crystal"
+ ],
+ [
+  "단결정",
+  "single crystal",
+  "모든 원자가 같은 방향으로 규칙적으로 줄 선 결정.",
+  "上卷 · 원리",
+  "crystal"
+ ],
+ [
+  "정공",
+  "hole",
+  "전자가 빠진 빈자리. (+) 전하를 가진 입자처럼 움직인다.",
+  "上卷 · 원리",
+  "crystal"
+ ],
+ [
+  "전자-정공 쌍",
+  "electron-hole pair",
+  "결합이 끊어질 때 함께 생기는 자유 전자와 정공.",
+  "上卷 · 원리",
+  "crystal"
+ ],
+ [
+  "재결합",
+  "recombination",
+  "전자가 정공을 만나 둘 다 사라지는 것.",
+  "上卷 · 원리",
+  "crystal"
+ ],
+ [
+  "도핑",
+  "doping",
+  "반도체에 일부러 불순물을 넣어 전도도를 바꾸는 것.",
+  "上卷 · 원리",
+  "doping"
+ ],
+ [
+  "n형 반도체",
+  "n-type",
+  "15족(인·비소)을 넣어 자유 전자가 많은 반도체.",
+  "上卷 · 원리",
+  "doping"
+ ],
+ [
+  "p형 반도체",
+  "p-type",
+  "13족(붕소)을 넣어 정공이 많은 반도체.",
+  "上卷 · 원리",
+  "doping"
+ ],
+ [
+  "주개 / 받개",
+  "donor / acceptor",
+  "전자를 내주는 불순물 / 전자를 받는(정공을 만드는) 불순물.",
+  "上卷 · 원리",
+  "doping"
+ ],
+ [
+  "다수·소수 운반자",
+  "majority / minority carrier",
+  "많은 쪽 운반자와 적은 쪽 운반자. n × p = nᵢ².",
+  "上卷 · 원리",
+  "doping"
+ ],
+ [
+  "표류",
+  "drift",
+  "전기장에 떠밀려 움직이는 것. v = μE.",
+  "上卷 · 원리",
+  "current"
+ ],
+ [
+  "이동도",
+  "mobility",
+  "전기장에 운반자가 얼마나 잘 반응하는지. 전자 > 정공.",
+  "上卷 · 원리",
+  "current"
+ ],
+ [
+  "확산",
+  "diffusion",
+  "농도가 높은 곳에서 낮은 곳으로 저절로 퍼지는 것.",
+  "上卷 · 원리",
+  "current"
+ ],
+ [
+  "PN 접합",
+  "p-n junction",
+  "p형과 n형이 맞닿은 경계. 거의 모든 소자의 출발점.",
+  "中卷 · 소자",
+  "pn"
+ ],
+ [
+  "공핍층",
+  "depletion region",
+  "접합 근처 운반자가 사라지고 이온만 남은 층.",
+  "中卷 · 소자",
+  "pn"
+ ],
+ [
+  "내부 전위",
+  "built-in potential",
+  "공핍층 이온이 만든 전압. 규소 0.6–0.9 V.",
+  "中卷 · 소자",
+  "pn"
+ ],
+ [
+  "다이오드",
+  "diode",
+  "한쪽 방향으로만 전류를 잘 흘리는 소자.",
+  "中卷 · 소자",
+  "diode"
+ ],
+ [
+  "순방향 / 역방향",
+  "forward / reverse bias",
+  "p쪽에 + (전류 흐름) / n쪽에 + (거의 막힘).",
+  "中卷 · 소자",
+  "diode"
+ ],
+ [
+  "문턱 전압 (다이오드)",
+  "turn-on voltage",
+  "다이오드 전류가 급히 늘어나는 전압. 규소 약 0.6–0.7 V.",
+  "中卷 · 소자",
+  "diode"
+ ],
+ [
+  "정류",
+  "rectification",
+  "다이오드로 교류를 한 방향의 직류로 바꾸는 것.",
+  "中卷 · 소자",
+  "diode"
+ ],
+ [
+  "항복",
+  "breakdown",
+  "큰 역전압에서 갑자기 큰 전류가 흐르는 현상. 제너 다이오드에 이용.",
+  "中卷 · 소자",
+  "diode"
+ ],
+ [
+  "LED",
+  "light-emitting diode",
+  "재결합 에너지를 빛으로 내는 다이오드. 색은 띠틈이 결정.",
+  "中卷 · 소자",
+  "light"
+ ],
+ [
+  "태양전지",
+  "solar cell",
+  "빛으로 전자-정공 쌍을 만들고 접합 전기장으로 갈라 전기를 얻는 소자.",
+  "中卷 · 소자",
+  "light"
+ ],
+ [
+  "트랜지스터",
+  "transistor",
+  "전기 신호로 다른 전류를 켜고 끄거나 키우는 소자.",
+  "中卷 · 소자",
+  "mosfet"
+ ],
+ [
+  "MOSFET",
+  "metal-oxide-semiconductor FET",
+  "게이트 전압으로 채널을 만들어 소스-드레인 전류를 조절하는 트랜지스터.",
+  "中卷 · 소자",
+  "mosfet"
+ ],
+ [
+  "게이트·소스·드레인",
+  "gate / source / drain",
+  "조절 단자 / 전자가 나오는 곳 / 전자가 빠져나가는 곳.",
+  "中卷 · 소자",
+  "mosfet"
+ ],
+ [
+  "채널 (반전층)",
+  "channel / inversion layer",
+  "게이트 아래 표면에 모인 전자의 길.",
+  "中卷 · 소자",
+  "mosfet"
+ ],
+ [
+  "문턱 전압 (MOSFET)",
+  "threshold voltage",
+  "채널이 생기기 시작하는 게이트 전압.",
+  "中卷 · 소자",
+  "mosfet"
+ ],
+ [
+  "CMOS",
+  "complementary MOS",
+  "nMOS와 pMOS를 짝지은 회로 방식. 대기 전력이 아주 작다.",
+  "中卷 · 소자",
+  "logic"
+ ],
+ [
+  "논리 게이트",
+  "logic gate",
+  "0과 1로 판단하는 회로. NOT, NAND, NOR, AND, OR, XOR.",
+  "中卷 · 소자",
+  "logic"
+ ],
+ [
+  "진리표",
+  "truth table",
+  "입력 조합마다 출력을 정리한 표.",
+  "中卷 · 소자",
+  "logic"
+ ],
+ [
+  "전가산기",
+  "full adder",
+  "두 비트와 올림을 더해 합과 올림을 내는 회로.",
+  "中卷 · 소자",
+  "logic"
+ ],
+ [
+  "SRAM",
+  "static RAM",
+  "교차 연결된 인버터로 기억하는 빠른 메모리 (트랜지스터 6개).",
+  "中卷 · 소자",
+  "memory"
+ ],
+ [
+  "DRAM",
+  "dynamic RAM",
+  "축전기에 전하로 기억하는 메모리. 주기적인 리프레시가 필요.",
+  "中卷 · 소자",
+  "memory"
+ ],
+ [
+  "플래시 메모리",
+  "flash memory",
+  "플로팅 게이트에 전자를 가둬 전원 없이도 기억하는 메모리.",
+  "中卷 · 소자",
+  "memory"
+ ],
+ [
+  "폴리실리콘",
+  "polysilicon",
+  "작은 결정이 제각각 모인 고순도 규소.",
+  "下卷 · 제조",
+  "wafer"
+ ],
+ [
+  "잉곳",
+  "ingot",
+  "녹은 규소에서 끌어올린 원기둥 모양 단결정.",
+  "下卷 · 제조",
+  "wafer"
+ ],
+ [
+  "웨이퍼",
+  "wafer",
+  "잉곳을 얇게 잘라 거울처럼 연마한 원판. 현재 300 mm.",
+  "下卷 · 제조",
+  "wafer"
+ ],
+ [
+  "포토리소그래피",
+  "photolithography",
+  "빛과 감광액으로 마스크 무늬를 웨이퍼에 옮기는 공정.",
+  "下卷 · 제조",
+  "litho"
+ ],
+ [
+  "감광액",
+  "photoresist",
+  "빛을 받으면 성질이 바뀌는 막.",
+  "下卷 · 제조",
+  "litho"
+ ],
+ [
+  "EUV",
+  "extreme ultraviolet",
+  "파장 13.5 nm 극자외선 노광. 최첨단 공정에 쓰인다.",
+  "下卷 · 제조",
+  "litho"
+ ],
+ [
+  "식각",
+  "etching",
+  "필요 없는 부분을 깎아 내는 공정. 습식(등방) / 건식(이방).",
+  "下卷 · 제조",
+  "process"
+ ],
+ [
+  "증착",
+  "deposition",
+  "얇은 막을 쌓는 공정. CVD, ALD, PVD.",
+  "下卷 · 제조",
+  "process"
+ ],
+ [
+  "이온 주입",
+  "ion implantation",
+  "불순물 이온을 가속해 웨이퍼에 쏘아 넣는 도핑 방법.",
+  "下卷 · 제조",
+  "process"
+ ],
+ [
+  "무어의 법칙",
+  "Moore's law",
+  "칩의 트랜지스터 수가 약 2년마다 두 배가 된다는 관찰.",
+  "下卷 · 제조",
+  "scale"
+ ],
+ [
+  "핀펫 / GAA",
+  "FinFET / gate-all-around",
+  "게이트가 채널을 3면 / 4면에서 감싸는 3차원 트랜지스터.",
+  "下卷 · 제조",
+  "scale"
+ ],
+ [
+  "클린룸",
+  "clean room",
+  "먼지를 극도로 줄인 반도체 생산 공간.",
+  "下卷 · 제조",
+  "fab"
+ ],
+ [
+  "수율",
+  "yield",
+  "웨이퍼 위 칩 중 양품의 비율. Y ≈ e^(−DA).",
+  "下卷 · 제조",
+  "fab"
+ ],
+ [
+  "팹리스 / 파운드리",
+  "fabless / foundry",
+  "설계만 하는 회사 / 생산을 맡아 주는 회사.",
+  "下卷 · 제조",
+  "world"
+ ],
+ [
+  "메모리 / 시스템 반도체",
+  "memory / logic",
+  "기억하는 반도체 / 계산·제어·감지하는 반도체.",
+  "下卷 · 제조",
+  "world"
+ ]
+];
+(function(){
+  const cats = ['전체', ...new Set(G.map(g => g[3]))];
+  let cat = '전체';
+  const gf = document.getElementById('gf'), gl = document.getElementById('gl'), gq = document.getElementById('gq');
+  gf.innerHTML = cats.map(c => `<button class="sbtn ${c==='전체'?'on':''}" data-c="${c}">${c}</button>`).join('');
+  const chn = s => BOOK.chapters.find(c => c.slug === s).n;
+  function render(){
+    const q = gq.value.trim().toLowerCase();
+    const list = G.filter(g => (cat === '전체' || g[3] === cat) && (!q || (g[0]+g[1]+g[2]).toLowerCase().includes(q)));
+    gl.innerHTML = list.map(g => `<div class="gi"><a class="ch" href="${g[4]}.html">Ch.${chn(g[4])} →</a><b>${g[0]}</b><span class="en">${g[1]}</span><p>${g[2]}</p></div>`).join('') || '<p class="hint">찾는 용어가 없습니다.</p>';
+    document.getElementById('gcount').textContent = `${list.length}개 용어`;
+  }
+  gf.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; J.$$('button', gf).forEach(x => x.classList.remove('on')); b.classList.add('on'); cat = b.dataset.c; render(); });
+  gq.addEventListener('input', render);
+  render();
+  const Q = [["규소의 원자가 전자 수는?",["2개","3개","4개","5개"],2,"1장. 14족 원소."],["온도를 올릴 때 저항이 크게 줄어드는 것은?",["구리","순수한 규소","유리","은"],1,"2장. 열로 자유 전자가 늘어난다."],["띠틈이 가장 큰 것은?",["저마늄","규소","갈륨비소","다이아몬드"],3,"3장. 다이아몬드 약 5.5 eV."],["규소(띠틈 1.12 eV)를 통과하는 빛은?",["파란빛","초록빛","1300 nm 적외선","자외선"],2,"3장. 1240/1.12 ≈ 1107 nm보다 긴 빛은 통과."],["정공은 어떤 전하처럼 행동하는가?",["(+)","(−)","전하 없음","상황마다 다름"],0,"4장."],["붕소를 넣은 규소는?",["n형","p형","절연체","금속"],1,"5장. 13족 → 받개 → p형."],["n = 10¹⁶일 때 p는? (nᵢ = 10¹⁰)",["10¹⁶","10¹⁰","10⁴","0"],2,"5장. p = nᵢ²/n."],["전기장 없이도 흐르는 전류는?",["표류 전류","확산 전류","누설 전류만","없다"],1,"6장."],["공핍층에 남아 있는 것은?",["자유 전자","정공","고정된 이온","아무것도"],2,"7장."],["다이오드에 순방향 전압을 걸면?",["공핍층이 넓어진다","언덕이 낮아져 전류가 흐른다","전류가 0이 된다","항복한다"],1,"8장."],["파란 LED에 가장 가까운 띠틈은?",["1.1 eV","1.9 eV","2.7 eV","5.5 eV"],2,"9장. 1240/2.7 ≈ 460 nm."],["MOSFET 게이트에 전류가 거의 흐르지 않는 이유는?",["게이트 아래 산화막이 절연체","드레인이 막아서","전압이 작아서","금속이 아니라서"],0,"10장."],["NAND 게이트의 출력이 0인 경우는?",["A=0,B=0","A=0,B=1","A=1,B=0","A=1,B=1"],3,"11장."],["전원을 꺼도 기억하는 메모리는?",["SRAM","DRAM","플래시","캐시"],2,"12장."],["단결정 잉곳을 기르는 방법은?",["초크랄스키 법","이온 주입","습식 식각","CMP"],0,"13장."],["더 가는 선을 찍는 방법은?",["더 밝은 빛","더 긴 파장","더 짧은 파장","더 두꺼운 감광액"],2,"14장. 선폭 ∝ λ/NA."],["수직으로 깎이는 식각은?",["습식 식각","건식(이방성) 식각","열산화","어닐링"],1,"15장."],["GAA 트랜지스터에서 게이트가 감싸는 면은?",["1면","2면","3면","4면"],3,"16장."],["칩 면적이 커질 때 수율은?",["지수적으로 감소","변화 없음","증가","정확히 반으로"],0,"17장. Y = e^(−DA)."],["다음 중 메모리 반도체는?",["NPU","이미지 센서","HBM","모뎀"],2,"18장. HBM은 쌓아 올린 DRAM."]];
+  let score = 0, done = 0;
+  document.getElementById('qz').innerHTML = Q.map((q,i) => `<div class="quiz" data-a="${q[2]}"><p class="q" data-n="${i+1}">${q[0]}</p><ol>${q[1].map(o => `<li>${o}</li>`).join('')}</ol><p class="explain">${q[3]}</p></div>`).join('');
+  J.$$('#qz .quiz').forEach(qe => J.$$('li', qe).forEach((li, k) => li.addEventListener('click', () => {
+    if(qe.dataset.scored) return; qe.dataset.scored = 1; done++;
+    if(k === +qe.dataset.a) score++;
+    document.getElementById('score').textContent = `${score} / ${Q.length}`;
+    document.getElementById('done').textContent = done + (done === Q.length ? (score >= 17 ? ' · 집현전 학사 合格!' : score >= 12 ? ' · 잘했어요' : ' · 다시 읽어 보기') : '');
+  })));
+})();
+</script>
+</body>
+</html>
