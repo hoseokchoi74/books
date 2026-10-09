@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>식각 레시피 놀이터 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="playground">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 15 <span class="hanja">第十五章 · 戱</span></div>
+  <h1>식각 레시피 놀이터</h1>
+  <p class="lead">이제 여러분이 식각 엔지니어다. 가스를 고르고, 압력과 소스 전력, 바이어스 전력, 산소 비율, 식각 시간을 정해 목표 단면을 깎아 보자. 이 책에서 다룬 원리들이 모두 한 화면의 입자 추적 시뮬레이터 안에서 움직인다. 압력을 올리면 라디칼이 늘고 이온 각도가 넓어지며, 바이어스를 올리면 이온 에너지가 오르지만 마스크도 빨리 닳는다. 폴리머가 많은 가스는 측벽을 지키고 정지막 선택비를 높이지만 너무 많으면 식각이 멈춘다. 임무마다 통과 조건이 있고, 모두 만족하면 별을 얻는다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>가스·압력·전력·바이어스·산소·시간이 이온/라디칼/폴리머의 균형을 통해 단면을 바꾸는 방식을 종합적으로 익힌다.</li>
+  <li>이방성, 선택비, 보잉, 언더컷, 식각 시간 사이의 맞바꿈을 체험한다.</li>
+</ul></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 15-1</span><span class="ttl">식각 레시피 놀이터</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">임무</span><select data-k="ms"><option value="0" selected>① 수직 트렌치 (40 nm 폭)</option><option value="1">② 정지막에서 멈추기</option><option value="2">③ 등방성 언더컷 (희생층 제거)</option><option value="3">④ 빠르고 곧게</option><option value="4">⑤ 좁은 구멍 (16 nm) 끝까지</option></select></label>
+    </div>
+    <div id="mdesc" class="note" style="margin:6px 0 12px; padding:10px 14px; border-radius:6px; background:var(--gold-soft); font-size:14.5px"></div>
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">가스</span><select data-k="g"><option value="cf4">CF₄ (불소 많음)</option><option value="c4f8" selected>C₄F₈/Ar (폴리머성)</option><option value="c4f6">C₄F₆/Ar (고폴리머, 고선택)</option><option value="sf6">SF₆ (라디칼 위주)</option></select></label>
+      <label class="ctrl"><span class="lab">압력 <output data-o="p"></output></span><input type="range" data-k="p" min="5" max="150" step="5" value="30" data-d="0" data-u="mTorr"></label>
+      <label class="ctrl"><span class="lab">소스 전력 <output data-o="src"></output></span><input type="range" data-k="src" min="200" max="2500" step="50" value="1000" data-d="0" data-u="W"></label>
+      <label class="ctrl"><span class="lab">바이어스 전력 <output data-o="b"></output></span><input type="range" data-k="b" min="0" max="2000" step="50" value="600" data-d="0" data-u="W"></label>
+      <label class="ctrl"><span class="lab">O₂ 첨가 <output data-o="o"></output></span><input type="range" data-k="o" min="0" max="30" step="1" value="5" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">식각 시간 <output data-o="t"></output></span><input type="range" data-k="t" min="50" max="800" step="10" value="400" data-d="0" data-u="스텝"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="bg">식각 시작/멈춤</button><button class="sbtn warn" id="br">새 웨이퍼</button><span class="hint" id="bh"></span></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cva" data-h="340"></canvas></div>
+      <div class="canvas-box"><canvas id="cvb" data-h="340"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">이온 에너지 · 각도 · 라디칼/이온</span><span class="v" data-r="pl" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">깊이 · 시간</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">측벽 각 · 보잉 · 언더컷</span><span class="v" data-r="sh"></span></div>
+      <div class="ro"><span class="k">남은 마스크 · 정지막 손실</span><span class="v" data-r="m"></span></div>
+      <div class="ro"><span class="k">임무 판정</span><span class="v" data-r="ok" style="font-size:15px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 단면(보라 = 마스크, 하늘색 = 산화막 160 nm, 노랑 = 질화막 정지층 12 nm, 초록 = 폴리머, 회색 = 실리콘). 오른쪽: 깊이에 따른 구멍 폭(빨강)과 목표 범위(초록 띠). 식각은 정해진 시간(스텝)이 되면 저절로 멈추고 판정한다. 임무 별은 이 브라우저에 저장된다.</p>
+</div>
+
+<div id="stars" style="margin:10px 0 24px; font-size:15px"></div>
+
+<div class="think"><p><b>생각해 보기.</b> 임무 ②에서 정지막을 지키려 C₄F₆처럼 폴리머가 많은 가스를 쓰면 무엇이 어려워질까?</p><p>바닥에 폴리머가 쌓여 식각이 너무 일찍 멈출 수 있다(etch stop). 특히 좁고 깊은 곳일수록 이온이 덜 와서 먼저 멈춘다. 그래서 산소를 조금 넣거나 바이어스를 올려 균형을 맞춘다. 실제 레시피가 주 식각(빠르게)과 과식각(선택적으로) 두 단계로 나뉘는 이유다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">압력을 크게 올렸을 때 단면에 생기기 쉬운 변화는?</p><ol><li>더 수직이 된다</li><li>마스크 손실이 사라진다</li><li>라디칼이 늘고 이온 각도가 넓어져 언더컷·보잉이 커진다</li><li>식각이 멈춘다</li></ol>
+<p class="explain">쉬스 충돌과 라디칼 비율 증가로 등방성 성분이 커진다.</p></div>
+<div class="quiz" data-a="0"><p class="q">바이어스 전력을 올리면 일반적으로?</p><ol><li>이온 에너지가 올라 식각이 빨라지지만 마스크·정지막 선택비가 떨어진다</li><li>라디칼이 늘어난다</li><li>폴리머가 두꺼워진다</li><li>압력이 내려간다</li></ol>
+<p class="explain">스퍼터링 수율은 물질을 가리지 않으므로 선택비가 낮아진다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const GAS = {cf4:{sN:0.07, poly:0.15, spont:0.35, Ym:0.1, Ys:0.18, sP:0.3}, c4f8:{sN:0.05, poly:0.5, spont:0.2, Ym:0.06, Ys:0.06, sP:0.35}, c4f6:{sN:0.045, poly:0.9, spont:0.12, Ym:0.04, Ys:0.025, sP:0.4}, sf6:{sN:0.12, poly:0, spont:0.9, Ym:0.12, Ys:0.25, sP:0.3}};
+const MS = [
+  {open:[[40, 60]], t:'폭 40 nm 트렌치를 정지막까지 수직으로. 측벽 각 ≥ 86°, 보잉 ≤ 4 nm, 언더컷 ≤ 3 nm, 남은 마스크 ≥ 10 nm.', chk:(M, s) => [['정지막 도달', M.reachedStop || M.depth >= 160], ['측벽 ≥ 86°', M.swa >= 86], ['보잉 ≤ 4', M.bow <= 4], ['언더컷 ≤ 3', M.under <= 3], ['마스크 ≥ 10', M.maskLeft >= 10]]},
+  {open:[[40, 60]], t:'막을 완전히 뚫되 정지막(12 nm)을 4 nm 넘게 깎지 말 것. 과식각을 충분히 주어야 바닥이 깨끗하다. 마스크 ≥ 6 nm.', chk:(M, s, L) => [['정지막 도달', M.reachedStop || L.loss > 0], ['정지막 손실 ≤ 4 nm', L.loss <= 4 && !L.punch], ['바닥 폭 ≥ 24 nm', M.wBot >= 24], ['마스크 ≥ 6', M.maskLeft >= 6]]},
+  {open:[[46, 54]], t:'좁은 틈(16 nm)으로 아래 산화막을 옆으로 파내 언더컷 ≥ 30 nm을 만들되, 깊이는 100 nm 이하로(희생층 제거처럼).', chk:(M) => [['언더컷 ≥ 30', M.under >= 30], ['깊이 ≤ 100', M.depth <= 100], ['깊이 ≥ 20', M.depth >= 20]]},
+  {open:[[40, 60]], t:'시간 300 스텝 이하로 정지막까지 뚫고, 측벽 각 ≥ 84°, 보잉 ≤ 6 nm, 마스크 ≥ 6 nm.', chk:(M, s) => [['정지막 도달', M.reachedStop || M.depth >= 160], ['300 스텝 이하', s.t <= 300], ['측벽 ≥ 84°', M.swa >= 84], ['보잉 ≤ 6', M.bow <= 6], ['마스크 ≥ 6', M.maskLeft >= 6]]},
+  {open:[[46, 54]], t:'폭 16 nm의 좁은 구멍(종횡비 10)을 정지막까지. 측벽 각 ≥ 85°, 바닥 폭 ≥ 8 nm, 마스크 ≥ 6 nm.', chk:(M) => [['정지막 도달', M.reachedStop || M.depth >= 160], ['측벽 ≥ 85°', M.swa >= 85], ['바닥 폭 ≥ 8', M.wBot >= 8], ['마스크 ≥ 6', M.maskLeft >= 6]]}];
+let stars = []; try{ stars = JSON.parse(localStorage.getItem('etch-play-stars') || '[]'); }catch(e){ stars = []; }
+const showStars = () => { const el = J.$('#stars'); if(el) el.innerHTML = '<b>획득한 별</b> ' + MS.map((m, i) => stars.includes(i) ? '⭐' : '☆').join(' ') + ' (' + stars.length + '/' + MS.length + ')'; };
+showStars();
+(function(){
+  const box = J.$('#sim1'); let s = null, V = null, run = false, rr = J.rng(5), msPrev = null, done = false;
+  const mk = m => ES.create({W:100, H:120, dx:2, gap:6, stack:[[ES.MASK, 30], [ES.FILM, 80], [ES.STOP, 6], [ES.SUB, 30]], open:MS[m].open});
+  const params = v => { const G = GAS[v.g], E = 40 + v.b*0.35, sig = 1.2 + v.p/12, ion = Math.round(50 + v.src/18), nr = (3 + v.p/10)*(G.spont > 0.5 ? 2 : 1), o = v.o/100;
+    return {ionE:E, ionSig:sig, ion, neu:Math.round(ion*nr*(1 + o)), poly:Math.round(ion*G.poly*Math.max(0, 1 - o*4)), sN:G.sN*(1 + o), spont:G.spont, Ymask:G.Ym + o*0.4, Ystop:G.Ys*(1 + o*2), sPoly:G.sP, reflect:0.6, _nr:nr}; };
+  const stopLoss = () => { const xc = Math.floor((MS[+V.ms].open[0][0] + MS[+V.ms].open[0][1])/2), st = s.tops[ES.STOP]; let y = 0; while(y < s.H && !ES.solid(s, xc, y)) y++; const mat = s.m[Math.min(s.H - 1, y)*s.W + xc];
+    return {loss:Math.max(0, (y - st))*s.dx, punch:mat === ES.SUB || y >= st + 6}; };
+  const draw = () => { const v = V, M0 = MS[+v.ms], [a, b] = M0.open[0], {ctx, w, h} = J.fit(J.$('#cva')); ctx.clearRect(0,0,w,h); ES.draw(ctx, w, h, s);
+    const M = ES.measure(s, a, b), xc = Math.floor((a + b)/2), ft = s.tops[ES.FILM], wp = []; for(let y = ft; y < s.H; y++){ if(ES.solid(s, xc, y)) break; let l = xc, r = xc; while(l > 0 && !ES.solid(s, l - 1, y)) l--; while(r < s.W - 1 && !ES.solid(s, r + 1, y)) r++; wp.push([(y - ft)*2, (r - l + 1)*2]); }
+    const L = stopLoss(), p = params(v);
+    J.plot(J.$('#cvb'), {x:[0, 180], y:[0, 120], xlab:'막 윗면에서 깊이 (nm)', ylab:'구멍 폭 (nm)', series:[{pts:wp, color:'--red', w:3}], bands:[{y0:(b - a)*2 - 4, y1:(b - a)*2 + 4, color:'--jade', alpha:.18}], vlines:[{x:160, color:'--gold', label:'정지막'}]});
+    J.out(box, 'pl', J.fmt(p.ionE, 0) + ' eV · ' + J.fmt(p.ionSig, 1) + '° · ' + J.fmt(p._nr, 1)); J.out(box, 'd', J.fmt(M.depth, 0) + ' nm · ' + s.t + ' / ' + v.t);
+    J.out(box, 'sh', J.fmt(M.swa, 0) + '° · ' + J.fmt(M.bow, 0) + ' · ' + J.fmt(M.under, 0) + ' nm'); J.out(box, 'm', J.fmt(M.maskLeft, 0) + ' nm · ' + (L.punch ? '관통!' : J.fmt(L.loss, 0) + ' nm'), L.punch || M.maskLeft <= 0 ? 'bad' : '');
+    if(done){ const C = M0.chk(M, s, L), all = C.every(c => c[1]); J.out(box, 'ok', all ? '⭐ 임무 성공!' : '미달: ' + C.filter(c => !c[1]).map(c => c[0]).join(', '), all ? 'good' : 'bad');
+      if(all && !stars.includes(+v.ms)){ stars.push(+v.ms); try{ localStorage.setItem('etch-play-stars', JSON.stringify(stars)); }catch(e){} showStars(); } }
+    else J.out(box, 'ok', run ? '식각 중…' : '식각을 시작하세요', '');
+    J.$('#bh').textContent = run ? '식각 중…' : done ? '완료' : ''; };
+  J.sim('sim1', v => { if(msPrev !== v.ms || !s){ msPrev = v.ms; s = mk(+v.ms); done = false; run = false; J.$('#bg').classList.remove('on'); J.$('#mdesc').textContent = MS[+v.ms].t; } V = v; draw(); });
+  J.$('#bg').onclick = e => { if(done){ s = mk(+V.ms); done = false; } run = !run; e.target.classList.toggle('on', run); draw(); };
+  J.$('#br').onclick = () => { s = mk(+V.ms); done = false; run = false; J.$('#bg').classList.remove('on'); draw(); };
+  J.loop(J.$('#cva'), () => { if(!run || !V) return; const p = params(V); for(let k = 0; k < 3 && s.t < V.t; k++) ES.step(s, p, rr); if(s.t >= V.t){ run = false; done = true; J.$('#bg').classList.remove('on'); } draw(); });
+})();
+</script>
+</body>
+</html>

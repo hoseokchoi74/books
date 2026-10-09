@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>습식 식각 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="wet">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 02 <span class="hanja">第二章 · 液</span></div>
+  <h1>습식 식각</h1>
+  <p class="lead">가장 오래되고 가장 단순한 식각은 약액에 담그는 것이다. 불산(HF)은 산화막을, 인산은 질화막을, 수산화칼륨(KOH)은 실리콘을 녹인다. 습식 식각은 플라스마 손상이 없고 선택비가 매우 높으며(HF는 산화막을 실리콘보다 100배 이상 빨리 녹인다) 장비가 싸다. 대신 모든 방향으로 녹아 언더컷이 생긴다. 그래서 오늘날에는 미세 무늬를 만드는 데는 쓰지 않지만, 막 전체 제거, 세정, 희생층 제거, MEMS의 결정면 식각처럼 등방성이나 높은 선택비가 필요한 곳에서 여전히 주인공이다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>등방성 식각 전선이 마스크 모서리에서 원호로 퍼지는 과정을 호이겐스 원리로 본다.</li>
+  <li>반응 제한과 확산 제한을 구별하고, 온도에 따른 식각 속도를 아레니우스 식으로 계산한다.</li>
+  <li>KOH가 실리콘 (100)면을 (111)면보다 수백 배 빨리 녹여 54.7° V자 홈을 만드는 원리를 본다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>등방성 식각 전선</h2>
+<p>약액은 막 표면 어디서든 같은 속도 r로 녹인다. 그래서 t초 후의 식각 전선은 처음 노출된 모든 점에서 반지름 rt인 원을 그려 겹친 모양이 된다(호이겐스 원리). 마스크 틈 바닥은 평평하게 내려가고, 마스크 모서리 아래에서는 사분원을 그리며 옆으로 파고든다. 막을 다 뚫은 뒤에도 더 담가 두면(과식각) 아래가 녹지 않는 대신 옆으로만 계속 파고든다. 마스크와 막 사이 접착이 약하면 약액이 그 틈으로 스며들어 언더컷이 더 커진다.</p>
+<div class="eq">$$\text{전선} = \bigl\{\,\mathbf x : \operatorname{dist}(\mathbf x,\ \text{노출면}) \le r\,t\,\bigr\},\qquad \text{언더컷} \approx r\,t\ (\text{정지막에 닿은 뒤에도 증가})$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-1</span><span class="ttl">약액 속 식각 전선 애니메이션</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">마스크 틈 <output data-o="w"></output></span><input type="range" data-k="w" min="0.2" max="4" step="0.1" value="1" data-d="1" data-u="µm"></label>
+      <label class="ctrl"><span class="lab">막 두께 <output data-o="d"></output></span><input type="range" data-k="d" min="0.2" max="2" step="0.05" value="1" data-d="2" data-u="µm"></label>
+      <label class="ctrl"><span class="lab">마스크 접착 불량 (계면 속도 배율) <output data-o="ad"></output></span><input type="range" data-k="ad" min="1" max="4" step="0.1" value="1" data-d="1" data-u="×"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b1g">담그기 시작/멈춤</button><button class="sbtn warn" id="b1r">꺼내기 (처음으로)</button></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">경과 (r = 0.1 µm/분)</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">깊이</span><span class="v" data-r="dep"></span></div>
+      <div class="ro"><span class="k">언더컷 (한쪽)</span><span class="v" data-r="u"></span></div>
+      <div class="ro"><span class="k">과식각</span><span class="v" data-r="oe"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 하늘색 = 산화막, 보라 = 감광액 마스크, 회색 = 실리콘(약액에 거의 녹지 않음), 연한 파랑 = 약액. 점선 원은 시간 간격마다의 식각 전선이다. 접착 불량을 키우면 마스크–막 계면을 따라 약액이 빨리 스며들어 윗부분이 더 넓게 패인다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>반응 제한과 확산 제한</h2>
+<p>식각은 두 단계를 거친다. 약액 속 반응물이 표면까지 <b>확산</b>해 오고, 표면에서 <b>반응</b>한다. 둘 중 느린 쪽이 전체 속도를 정한다. 반응이 느리면(반응 제한) 온도에 매우 민감하고(활성화 에너지), 저어도 빨라지지 않는다. 확산이 느리면(확산 제한) 온도에 둔감하고, 저을수록(경계층이 얇아질수록) 빨라지며, 넓게 노출된 곳은 반응물이 빨리 고갈되어 느려진다. 양산에서는 균일도를 위해 반응 제한 영역에서 온도를 정밀하게 맞춘다. HF의 산화막 식각은 활성화 에너지 약 0.4 eV의 반응 제한이다.</p>
+<div class="eq">$$\frac{1}{R} = \frac{1}{k_s C} + \frac{\delta}{D\,C},\qquad k_s = A\,e^{-E_a/k_BT}$$<div class="note">k<sub>s</sub>: 표면 반응 속도 상수, D: 확산 계수, δ: 경계층 두께(교반이 셀수록 얇음), C: 약액 농도.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-2</span><span class="ttl">HF 식각 속도: 온도·농도·교반</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="15" max="60" step="1" value="25" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">HF 농도 <output data-o="c"></output></span><input type="range" data-k="c" min="0.5" max="49" step="0.5" value="5" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">교반 (경계층 두께) <output data-o="dl"></output></span><input type="range" data-k="dl" min="10" max="500" step="10" value="100" data-d="0" data-u="µm"></label>
+      <label class="ctrl"><span class="lab">막 종류</span><select data-k="m"><option value="th" selected>열산화막</option><option value="cvd">CVD 산화막 (TEOS)</option><option value="bpsg">BPSG (도핑 유리)</option><option value="sin">질화막</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">식각 속도</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">지배 단계</span><span class="v" data-r="lim"></span></div>
+      <div class="ro"><span class="k">온도 1 °C 오차 → 속도 변화</span><span class="v" data-r="sens"></span></div>
+      <div class="ro"><span class="k">열산화막 대비 선택비</span><span class="v" data-r="sel"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 아레니우스 그림(가로 = 1000/T, 세로 = 식각 속도 로그). 파랑 = 표면 반응만, 초록 점선 = 확산만, 빨강 = 실제(직렬 합). 두 직선이 만나는 곳에서 지배 단계가 바뀐다. 오른쪽: 막 종류별 식각 속도 막대. 도핑된 유리(BPSG)와 증착 산화막은 열산화막보다 빨리 녹아, 같은 HF로도 골라 녹일 수 있다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🍬</span><b>사탕 녹이기</b><span>사탕을 물에 녹일 때 따뜻한 물(반응 가속)과 젓기(확산 가속) 중 무엇이 더 효과적일지는 상황에 따라 다르다. 사탕 표면 반응이 느리면 온도가, 사탕 주변 물이 금방 달아져(포화) 버리면 젓기가 효과적이다. 습식 식각 엔지니어도 같은 질문을 한다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>결정면 식각: KOH가 만드는 V자 홈</h2>
+<p>대부분의 습식 식각은 등방성이지만, 단결정 실리콘을 KOH나 TMAH로 녹이면 놀라운 일이 일어난다. 원자가 촘촘히 박힌 (111)면은 (100)면보다 수백 배 느리게 녹는다. (100) 웨이퍼에 사각형 틈을 열고 담그면 바닥은 빨리 내려가지만 옆벽은 (111)면이 드러나며 멈추고, 그 결과 54.74° 경사의 피라미드 구멍이 생긴다. 틈이 좁으면 두 (111)면이 만나 V자 홈이 되며 식각이 저절로 멈춘다. 이 원리로 압력 센서의 얇은 막, 잉크젯 노즐, 광섬유 정렬 홈을 만든다(MEMS).</p>
+<div class="eq">$$\tan 54.74^\circ = \sqrt{2},\qquad d_{max} = \frac{w}{2}\tan 54.74^\circ = \frac{w}{\sqrt 2},\qquad \frac{R_{(100)}}{R_{(111)}} \approx 100\sim 400$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-3</span><span class="ttl">KOH 이방성 식각</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">마스크 틈 w <output data-o="w"></output></span><input type="range" data-k="w" min="20" max="400" step="5" value="140" data-d="0" data-u="µm"></label>
+      <label class="ctrl"><span class="lab">식각 시간 <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="240" step="1" value="60" data-d="0" data-u="분"></label>
+      <label class="ctrl"><span class="lab">R(100)/R(111) <output data-o="ar"></output></span><input type="range" data-k="ar" min="1" max="400" step="1" value="100" data-d="0"></label>
+      <label class="ctrl"><span class="lab">웨이퍼 두께 <output data-o="T"></output></span><input type="range" data-k="T" min="200" max="725" step="5" value="400" data-d="0" data-u="µm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">깊이 (R(100) = 1 µm/분)</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">자기 정지 깊이 w/√2</span><span class="v" data-r="dm"></span></div>
+      <div class="ro"><span class="k">바닥 폭 / 언더컷</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">상태</span><span class="v" data-r="st"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 단면(회색 = 실리콘, 보라 = 질화막 마스크). 측벽은 (111)면으로 54.74° 기울고, R(111)만큼 아주 천천히 뒤로 물러난다(언더컷). 오른쪽: 위에서 본 모습. 바닥 사각형이 줄어들다 점이 되면 피라미드가 완성되어 멈춘다. R(100)/R(111)을 1로 하면 등방성처럼 둥글게 파인다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 반도체 공정에서 KOH 같은 알칼리 금속 약액을 쓰지 않으려는 이유는?</p><p>칼륨(K⁺) 같은 알칼리 이온은 게이트 산화막 속을 쉽게 움직여 문턱 전압을 흔드는 치명적인 오염원이다. 그래서 CMOS 공정에서는 금속이 없는 TMAH를 쓴다(감광액 현상액과 같은 물질). MEMS 전용 팹에서는 KOH를 마음껏 쓴다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">확산 제한 영역의 습식 식각 특징으로 옳은 것은?</p><ol><li>온도에 매우 민감하다</li><li>교반을 세게 하면 빨라진다</li><li>노출 면적과 무관하다</li><li>활성화 에너지가 크다</li></ol>
+<p class="explain">경계층을 얇게 하면 반응물이 빨리 공급된다. 온도 의존성은 약하다.</p></div>
+<div class="quiz" data-a="3"><p class="q">(100) 실리콘에 폭 100 µm 틈을 열고 KOH로 끝까지 식각하면 V자 홈 깊이는 약?</p><ol><li>100 µm</li><li>141 µm</li><li>50 µm</li><li>71 µm</li></ol>
+<p class="explain">d = w/√2 = 70.7 µm.</p></div>
+<div class="quiz" data-a="0"><p class="q">HF 습식 식각의 가장 큰 장점은?</p><ol><li>산화막/실리콘 선택비가 매우 높고 손상이 없다</li><li>이방성이다</li><li>10 nm 무늬를 정확히 만든다</li><li>모든 물질을 녹인다</li></ol>
+<p class="explain">대신 등방성이라 미세 무늬에는 쓰지 않는다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 2-1 등방성 전선: 거리 변환 */
+(function(){
+  const box = J.$('#sim1'), NX = 200, NY = 110; let V = null, t = 0, run = false, dist = null;
+  const setup = () => { // 격자 1칸 = 0.04 µm, 노출면에서의 "도달 시간" 계산 (다익스트라, 계면은 빠름)
+    const sc = 0.04, top = 20, d = Math.round(V.d/sc), w = Math.round(V.w/sc), cx = NX/2, T = new Float64Array(NX*NY).fill(1e9), H = [];
+    const film = (x, y) => y >= top && y < top + d; const push = (k, i) => { H.push([k, i]); let j = H.length - 1; while(j > 0){ const p = (j - 1) >> 1; if(H[p][0] <= H[j][0]) break; [H[p], H[j]] = [H[j], H[p]]; j = p; } };
+    const pop = () => { const t0 = H[0], l = H.pop(); if(H.length){ H[0] = l; let j = 0; for(;;){ let s = j; const a = 2*j + 1, b = a + 1; if(a < H.length && H[a][0] < H[s][0]) s = a; if(b < H.length && H[b][0] < H[s][0]) s = b; if(s === j) break; [H[s], H[j]] = [H[j], H[s]]; j = s; } } return t0; };
+    for(let x = Math.floor(cx - w/2); x < Math.ceil(cx + w/2); x++){ const i = top*NX + x; T[i] = 0.5; push(0.5, i); }
+    const N8 = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [-1, 1, 1.414], [1, -1, 1.414], [-1, -1, 1.414]]; [[2, 1], [1, 2]].forEach(([a, b]) => [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([s1, s2]) => N8.push([a*s1, b*s2, Math.hypot(a, b)])));
+    while(H.length){ const [tt, i] = pop(); if(tt > T[i]) continue; const x = i % NX, y = (i - x)/NX;
+      for(const [dx, dy, c] of N8){ const xx = x + dx, yy = y + dy; if(xx < 0 || xx >= NX || yy < top || !film(xx, yy)) continue; const fast = yy === top && Math.abs(xx - cx) >= w/2 ? V.ad : 1, nt = tt + c/fast; const j = yy*NX + xx; if(nt < T[j]){ T[j] = nt; push(nt, j); } } }
+    dist = {T, top, d, w, sc}; };
+  const draw = () => { const {ctx, w, h} = J.fit(J.$('#cv1')); ctx.clearRect(0,0,w,h); const s = Math.min(w/NX, h/NY), ox = (w - s*NX)/2, {T, top, d, sc} = dist, cells = t/sc*0.1;
+    ctx.fillStyle = 'rgba(150,200,240,.35)'; ctx.fillRect(ox, 0, NX*s, NY*s);
+    for(let y = top; y < NY; y++) for(let x = 0; x < NX; x++){ const i = y*NX + x; if(y >= top + d){ ctx.fillStyle = '#8f96a3'; ctx.fillRect(ox + x*s, y*s, s + .5, s + .5); continue; } if(T[i] > cells){ ctx.fillStyle = '#8cc6e6'; ctx.fillRect(ox + x*s, y*s, s + .5, s + .5); } }
+    ctx.strokeStyle = 'rgba(40,80,140,.45)'; ctx.setLineDash([2, 3]);
+    for(let q = 1; q <= 5; q++){ const lv = cells*q/5; if(lv < 1) continue; ctx.fillStyle = 'rgba(40,80,140,.5)'; for(let y = top; y < top + d; y++) for(let x = 0; x < NX - 1; x++){ const a = T[y*NX + x] <= lv, b = T[y*NX + x + 1] <= lv; if(a !== b) ctx.fillRect(ox + (x + 1)*s - .5, y*s, 1, s); } } ctx.setLineDash([]);
+    const cx = NX/2; ctx.fillStyle = '#9c7bd1'; ctx.fillRect(ox, (top - 6)*s, (cx - dist.w/2)*s, 6*s); ctx.fillRect(ox + (cx + dist.w/2)*s, (top - 6)*s, (NX - cx - dist.w/2)*s, 6*s);
+    let dep = 0; for(let y = top; y < top + d; y++) if(T[y*NX + Math.floor(cx)] <= cells) dep = y - top + 1; let u = 0; for(let x = Math.floor(cx + dist.w/2); x < NX; x++) if(T[top*NX + x] <= cells) u = x - (cx + dist.w/2) + 1;
+    const tClear = (() => { let m = 1e9; for(let x = Math.floor(cx - 2); x <= cx + 2; x++) m = Math.min(m, T[(top + d - 1)*NX + x]); return m; })();
+    const box2 = J.$('#sim1'); J.out(box2, 't', J.fmt(t, 1) + ' 분'); J.out(box2, 'dep', J.fmt(dep*sc, 2) + ' µm'); J.out(box2, 'u', J.fmt(Math.max(0, u)*sc, 2) + ' µm', u*sc < 0.2 ? 'good' : 'warn');
+    J.out(box2, 'oe', cells > tClear ? J.fmt((cells/tClear - 1)*100, 0) + ' %' : '아직 안 뚫림'); };
+  J.sim('sim1', v => { V = v; setup(); draw(); });
+  J.$('#b1g').onclick = e => { run = !run; e.target.classList.toggle('on', run); };
+  J.$('#b1r').onclick = () => { t = 0; draw(); };
+  J.loop(J.$('#cv1'), dt => { if(!run || !dist) return; t += dt*2; if(t > 25){ run = false; J.$('#b1g').classList.remove('on'); } draw(); });
+})();
+
+/* 2-2 아레니우스 */
+(function(){
+  const box = J.$('#sim2'), kB = 8.617e-5, Ea = 0.4, MAT = {th:[1, '열산화막'], cvd:[2.2, 'CVD 산화막'], bpsg:[6, 'BPSG'], sin:[0.012, '질화막']};
+  const rates = (T, c, dl, f) => { const TK = T + 273.15, ks = 3e7*Math.exp(-Ea/(kB*TK))*f, kd = 1500/dl*Math.pow(TK/298, 1.5); // nm/min per %
+    const Rr = ks*c, Rd = kd*c; return {Rr, Rd, R:1/(1/Rr + 1/Rd)}; };
+  J.sim('sim2', v => { const f = MAT[v.m][0], cur = rates(v.T, v.c, v.dl, f);
+    const S = [[], [], []]; for(let T = 10; T <= 80; T += 1){ const x = 1000/(T + 273.15), q = rates(T, v.c, v.dl, f); S[0].push([x, q.Rr]); S[1].push([x, q.Rd]); S[2].push([x, q.R]); }
+    J.plot(J.$('#cv2a'), {x:[2.83, 3.54], y:[1, 1e5], logy:true, xlab:'1000 / T (K⁻¹)', ylab:'식각 속도 (nm/분)', series:[{pts:S[0], color:'--indigo', w:2}, {pts:S[1], color:'--jade', w:2, dash:[5, 4]}, {pts:S[2], color:'--red', w:3}], points:[{x:1000/(v.T + 273.15), y:cur.R, color:'--red', r:6, label:J.fmt(cur.R, 0) + ' nm/분'}]});
+    const {ctx, w, h} = J.fit(J.$('#cv2b')); ctx.clearRect(0,0,w,h); const keys = Object.keys(MAT), mx = Math.max(...keys.map(k => rates(v.T, v.c, v.dl, MAT[k][0]).R)), bw = (w - 60)/keys.length;
+    keys.forEach((k, i) => { const r = rates(v.T, v.c, v.dl, MAT[k][0]).R, bh = (h - 60)*Math.log10(1 + r)/Math.log10(1 + mx); ctx.fillStyle = J.c(k === v.m ? '--red' : '--indigo'); ctx.globalAlpha = k === v.m ? 1 : .55; ctx.fillRect(40 + i*bw + 8, h - 30 - bh, bw - 16, bh); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c('--ink'); ctx.font = '11.5px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(MAT[k][1], 40 + i*bw + bw/2, h - 12); ctx.font = '11px "JetBrains Mono"'; ctx.fillText(J.fmt(r, r < 10 ? 2 : 0), 40 + i*bw + bw/2, h - 34 - bh); });
+    const up = rates(v.T + 1, v.c, v.dl, f).R/cur.R - 1, th = rates(v.T, v.c, v.dl, 1).R;
+    J.out(box, 'r', J.fmt(cur.R, cur.R < 10 ? 2 : 0) + ' nm/분'); J.out(box, 'lim', cur.Rr < cur.Rd ? '표면 반응 (온도 민감)' : '확산 (교반 민감)', cur.Rr < cur.Rd ? '' : 'warn');
+    J.out(box, 'sens', '+' + J.fmt(up*100, 1) + ' %', up < 0.03 ? 'good' : 'warn'); J.out(box, 'sel', J.fmt(cur.R/th, 2) + ' ×'); });
+})();
+
+/* 2-3 KOH */
+(function(){
+  const box = J.$('#sim3'), ang = 54.74*Math.PI/180, tn = Math.tan(ang);
+  J.sim('sim3', v => { const R100 = 1, R111 = R100/v.ar, dm = v.w/2*tn, t = v.t;
+    // (111)면의 후퇴: 면에 수직으로 R111 t → 마스크 모서리 언더컷 = R111 t / sin(ang)
+    const uc = R111*t/Math.sin(ang), wTop = v.w + 2*uc; let dep = Math.min(R100*t, wTop/2*tn, v.T); const bot = Math.max(0, wTop - 2*dep/tn);
+    const iso = v.ar < 3;
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const span = Math.max(500, wTop + 120), sc = Math.min((w - 20)/span, (h - 40)/(v.T + 30)), cx = w/2, top = 24, X = x => cx + x*sc, Y = y => top + y*sc;
+    ctx.fillStyle = '#8f96a3'; ctx.fillRect(X(-span/2), Y(0), span*sc, v.T*sc);
+    ctx.fillStyle = 'rgba(150,200,240,.6)'; ctx.beginPath();
+    if(iso){ const r = R100*t; ctx.moveTo(X(-v.w/2), Y(0)); for(let i = 0; i <= 20; i++){ const a = Math.PI/2*i/20; ctx.lineTo(X(-v.w/2 - r*Math.cos(a)), Y(Math.min(v.T, r*Math.sin(a)))); } ctx.lineTo(X(v.w/2), Y(Math.min(v.T, r))); for(let i = 20; i >= 0; i--){ const a = Math.PI/2*i/20; ctx.lineTo(X(v.w/2 + r*Math.cos(a)), Y(Math.min(v.T, r*Math.sin(a)))); } }
+    else { ctx.moveTo(X(-wTop/2), Y(0)); ctx.lineTo(X(-bot/2), Y(dep)); ctx.lineTo(X(bot/2), Y(dep)); ctx.lineTo(X(wTop/2), Y(0)); }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#9c7bd1'; ctx.fillRect(X(-span/2), Y(-6), (span/2 - v.w/2)*sc, 6*sc + 2); ctx.fillRect(X(v.w/2), Y(-6), (span/2 - v.w/2)*sc, 6*sc + 2);
+    if(!iso && dep > 5){ ctx.fillStyle = J.c('--red'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('(111) 54.7°', X(bot/2) + 6, Y(dep*0.6)); }
+    { const c2 = J.fit(J.$('#cv3b')), g = c2.ctx, W2 = c2.w, H2 = c2.h; g.clearRect(0, 0, W2, H2); const s2 = Math.min(W2, H2)*0.8/Math.max(wTop, 50), cx2 = W2/2, cy2 = H2/2;
+      g.fillStyle = '#c6cad3'; g.fillRect(0, 0, W2, H2); g.fillStyle = '#7e8696'; g.fillRect(cx2 - wTop/2*s2, cy2 - wTop/2*s2, wTop*s2, wTop*s2);
+      g.fillStyle = '#5a6272'; g.fillRect(cx2 - bot/2*s2, cy2 - bot/2*s2, bot*s2, bot*s2); g.strokeStyle = '#3b4250'; g.beginPath(); [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([a, b]) => { g.moveTo(cx2 + a*wTop/2*s2, cy2 + b*wTop/2*s2); g.lineTo(cx2 + a*bot/2*s2, cy2 + b*bot/2*s2); }); g.stroke();
+      g.strokeStyle = '#9c7bd1'; g.lineWidth = 2; g.strokeRect(cx2 - v.w/2*s2, cy2 - v.w/2*s2, v.w*s2, v.w*s2); g.fillStyle = J.c('--ink'); g.font = '11px "Noto Sans KR"'; g.fillText('위에서 본 모습 (보라 = 마스크 틈)', 6, 14); }
+    J.out(box, 'd', J.fmt(iso ? Math.min(R100*t, v.T) : dep, 1) + ' µm'); J.out(box, 'dm', J.fmt(dm, 1) + ' µm'); J.out(box, 'b', iso ? '—' : J.fmt(bot, 1) + ' µm / ' + J.fmt(uc, 2) + ' µm');
+    J.out(box, 'st', iso ? '등방성' : dep >= v.T ? '관통 (막 형성 가능)' : bot <= 0.5 ? 'V홈 완성, 자기 정지' : '식각 중', iso ? 'warn' : 'good'); });
+})();
+</script>
+</body>
+</html>

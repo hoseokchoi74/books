@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>용어집 & 종합 퀴즈 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+  .gsearch{width:100%; font-size:16px; padding:11px 14px; border:1.5px solid var(--line); border-radius:6px; background:var(--card); color:var(--ink); font-family:var(--sans)}
+  .gsearch:focus{outline:none; border-color:var(--gold)}
+  .gfilter{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 16px}
+  .glist{display:grid; gap:8px}
+  .gi{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:10px 14px}
+  .gi b{font-family:var(--serif); font-size:16.5px}
+  .gi .en{margin-left:6px}
+  .gi p{margin:4px 0 0; font-size:14.5px; color:var(--ink2)}
+  .gi a.ch{float:right; font-family:var(--mono); font-size:12px; color:var(--red)}
+  .score{font-family:var(--serif); font-size:20px; font-weight:700}
+</style>
+</head>
+<body data-ch="glossary">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+
+<header class="chead">
+  <div class="kicker">Chapter 16 <span class="hanja">第十六章 · 結</span></div>
+  <h1>용어집 & 종합 퀴즈</h1>
+  <p class="lead">식각 공정의 핵심 용어를 한곳에 모았다. 검색하거나 분류로 걸러 보고, 마지막의 종합 문제로 실력을 점검해 보자.</p>
+</header>
+
+<h2 id="s1"><span class="n">01</span>용어집</h2>
+<input class="gsearch" id="gq" placeholder="용어 검색 (예: 선택비, 쉬스, ARDE, ALE, OES)" aria-label="용어 검색">
+<div class="gfilter" id="gf"></div>
+<p class="hint" id="gcount"></p>
+<div class="glist" id="gl"></div>
+
+<h2 id="s2"><span class="n">02</span>종합 퀴즈</h2>
+<p>20문제. 각 장을 고루 섞었다. 각 문제를 누르면 바로 채점되고 해설이 열린다.</p>
+<div class="readouts" style="margin-bottom:10px"><div class="ro"><span class="k">점수</span><span class="v score" id="score">0 / 20</span></div><div class="ro"><span class="k">푼 문제</span><span class="v" id="done">0</span></div></div>
+<div id="qz"></div>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const G = [
+ [
+  "식각",
+  "etching",
+  "막을 깎아 무늬를 새기는 공정. 습식(약액)과 건식(플라스마)이 있다.",
+  "기초·지표",
+  "overview"
+ ],
+ [
+  "식각 속도",
+  "etch rate",
+  "단위 시간에 깎이는 두께(nm/분).",
+  "기초·지표",
+  "overview"
+ ],
+ [
+  "선택비",
+  "selectivity",
+  "깎을 막과 남길 막(마스크·정지막)의 식각 속도 비.",
+  "기초·지표",
+  "overview"
+ ],
+ [
+  "이방성",
+  "anisotropy",
+  "A = 1 − 옆 속도/아래 속도. 1이면 완전 수직.",
+  "기초·지표",
+  "overview"
+ ],
+ [
+  "등방성",
+  "isotropic",
+  "모든 방향으로 같은 속도로 깎임. 습식 식각이 대표.",
+  "기초·지표",
+  "wet"
+ ],
+ [
+  "언더컷",
+  "undercut",
+  "마스크 아래로 옆으로 파고든 식각.",
+  "기초·지표",
+  "wet"
+ ],
+ [
+  "과식각",
+  "over-etch",
+  "가장 느린 곳까지 뚫기 위해 추가로 하는 식각.",
+  "기초·지표",
+  "overview"
+ ],
+ [
+  "균일도",
+  "uniformity",
+  "웨이퍼 위 식각 속도의 고른 정도. (최대−최소)/(2·평균).",
+  "기초·지표",
+  "control"
+ ],
+ [
+  "CD 바이어스",
+  "CD bias",
+  "식각 전후 선폭의 변화.",
+  "기초·지표",
+  "transfer"
+ ],
+ [
+  "습식 식각",
+  "wet etching",
+  "약액(HF, H₃PO₄, KOH 등)으로 녹이는 식각.",
+  "기초·지표",
+  "wet"
+ ],
+ [
+  "BOE / DHF",
+  "buffered oxide etch / dilute HF",
+  "산화막을 녹이는 불산 계열 약액.",
+  "화학·표면",
+  "wet"
+ ],
+ [
+  "아레니우스 식",
+  "Arrhenius",
+  "반응 속도 k = A·exp(−Eₐ/kT).",
+  "화학·표면",
+  "wet"
+ ],
+ [
+  "반응 제한 / 확산 제한",
+  "reaction / diffusion limited",
+  "표면 반응과 반응물 공급 중 느린 쪽이 속도를 정함.",
+  "화학·표면",
+  "wet"
+ ],
+ [
+  "KOH 결정면 식각",
+  "anisotropic wet etch",
+  "(111)면이 느려 54.7° V홈을 만드는 실리콘 식각.",
+  "화학·표면",
+  "wet"
+ ],
+ [
+  "플라스마",
+  "plasma",
+  "이온·전자·중성 입자가 섞인 이온화 기체. 식각 플라스마는 이온화율 0.1 % 이하.",
+  "플라스마 물리",
+  "plasma"
+ ],
+ [
+  "전자 온도",
+  "electron temperature (Tₑ)",
+  "전자의 평균 에너지 척도. 식각 플라스마는 2~5 eV.",
+  "플라스마 물리",
+  "plasma"
+ ],
+ [
+  "EEDF",
+  "electron energy distribution",
+  "전자 에너지 분포. 꼬리가 이온화·해리를 일으킨다.",
+  "플라스마 물리",
+  "plasma"
+ ],
+ [
+  "해리",
+  "dissociation",
+  "전자 충돌로 분자가 쪼개져 라디칼이 생김.",
+  "플라스마 물리",
+  "plasma"
+ ],
+ [
+  "라디칼",
+  "radical",
+  "짝 없는 전자를 가진 반응성 큰 중성 입자(F, Cl, O).",
+  "플라스마 물리",
+  "plasma"
+ ],
+ [
+  "파셴 곡선",
+  "Paschen curve",
+  "방전 개시 전압과 압력×거리의 관계.",
+  "플라스마 물리",
+  "plasma"
+ ],
+ [
+  "디바이 길이",
+  "Debye length",
+  "플라스마가 전하를 가리는 거리. 수십 µm.",
+  "플라스마 물리",
+  "plasma"
+ ],
+ [
+  "쉬스",
+  "sheath",
+  "벽 앞 이온만 남은 얇은 층. 이온을 수직으로 가속한다.",
+  "플라스마 물리",
+  "sheath"
+ ],
+ [
+  "봄 속도",
+  "Bohm velocity",
+  "쉬스에 들어가는 이온의 최소 속도 √(kTₑ/M).",
+  "플라스마 물리",
+  "sheath"
+ ],
+ [
+  "차일드 법칙",
+  "Child law",
+  "공간 전하 제한 쉬스의 두께–전압 관계.",
+  "플라스마 물리",
+  "sheath"
+ ],
+ [
+  "IEDF",
+  "ion energy distribution",
+  "웨이퍼에 오는 이온 에너지 분포. 낮은 RF 주파수에서 쌍봉.",
+  "플라스마 물리",
+  "sheath"
+ ],
+ [
+  "자기 바이어스",
+  "self bias (V_dc)",
+  "RF 전극에 저절로 생기는 음의 직류 전위.",
+  "플라스마 물리",
+  "sheath"
+ ],
+ [
+  "전하 교환 충돌",
+  "charge exchange",
+  "빠른 이온이 느린 원자와 전자를 주고받는 충돌. 이온 각도를 넓힌다.",
+  "플라스마 물리",
+  "sheath"
+ ],
+ [
+  "플루오로카본",
+  "fluorocarbon (CFₓ)",
+  "C·F로 된 가스와 그 폴리머. 산화막 식각의 주인공.",
+  "화학·표면",
+  "chemistry"
+ ],
+ [
+  "C/F 비",
+  "C/F ratio",
+  "가스의 탄소 대 불소 비. 높을수록 폴리머가 많다.",
+  "화학·표면",
+  "chemistry"
+ ],
+ [
+  "코번 도표",
+  "Coburn diagram",
+  "F/C 비와 이온 에너지로 식각/증착 경계를 그린 도표.",
+  "화학·표면",
+  "chemistry"
+ ],
+ [
+  "폴리머",
+  "polymer passivation",
+  "표면에 쌓이는 CFₓ 막. 측벽 보호와 선택비를 만든다.",
+  "화학·표면",
+  "chemistry"
+ ],
+ [
+  "휘발성 생성물",
+  "volatile product",
+  "펌프로 뽑아낼 수 있는 식각 생성물(SiF₄, SiCl₄, CO).",
+  "화학·표면",
+  "chemistry"
+ ],
+ [
+  "이온–중성 시너지",
+  "ion-neutral synergy",
+  "이온과 라디칼을 함께 쓸 때 각각의 합보다 훨씬 빠른 식각.",
+  "화학·표면",
+  "synergy"
+ ],
+ [
+  "코번–윈터스 실험",
+  "Coburn–Winters",
+  "XeF₂ + Ar⁺ 빔으로 시너지를 보인 1979년 실험.",
+  "화학·표면",
+  "synergy"
+ ],
+ [
+  "덮임률",
+  "surface coverage (θ)",
+  "표면 자리 중 반응물이 흡착된 비율.",
+  "화학·표면",
+  "synergy"
+ ],
+ [
+  "이온 제한 / 중성 제한",
+  "ion / neutral limited",
+  "속도가 이온 선속 / 라디칼 선속으로 정해지는 영역.",
+  "화학·표면",
+  "synergy"
+ ],
+ [
+  "스퍼터링",
+  "sputtering",
+  "이온이 원자를 물리적으로 튕겨 내는 것.",
+  "화학·표면",
+  "synergy"
+ ],
+ [
+  "RIE",
+  "reactive ion etching",
+  "이온 보조 화학 식각. 건식 식각의 표준.",
+  "장비",
+  "reactor"
+ ],
+ [
+  "CCP",
+  "capacitively coupled plasma",
+  "평판 전극에 RF를 거는 플라스마. 산화막 식각.",
+  "장비",
+  "reactor"
+ ],
+ [
+  "ICP",
+  "inductively coupled plasma",
+  "코일 유도 전기장으로 만드는 고밀도 플라스마.",
+  "장비",
+  "reactor"
+ ],
+ [
+  "이중 주파수",
+  "dual frequency",
+  "고주파(밀도)와 저주파(이온 에너지)를 함께 쓰는 CCP.",
+  "장비",
+  "reactor"
+ ],
+ [
+  "소스 / 바이어스 전력",
+  "source / bias power",
+  "플라스마 밀도 / 이온 에너지를 정하는 전력.",
+  "장비",
+  "reactor"
+ ],
+ [
+  "전역 모형",
+  "global model",
+  "입자·에너지 균형으로 Tₑ와 밀도를 구하는 모형.",
+  "장비",
+  "reactor"
+ ],
+ [
+  "정전 척",
+  "electrostatic chuck (ESC)",
+  "웨이퍼를 정전기로 붙이고 헬륨으로 냉각하는 받침.",
+  "장비",
+  "reactor"
+ ],
+ [
+  "에지 링",
+  "edge ring",
+  "웨이퍼 둘레의 링. 가장자리 쉬스와 균일도를 정한다.",
+  "장비",
+  "reactor"
+ ],
+ [
+  "다운스트림 플라스마",
+  "remote plasma",
+  "이온 없이 라디칼만 보내는 원격 플라스마.",
+  "장비",
+  "damage"
+ ],
+ [
+  "프로파일",
+  "etch profile",
+  "식각 단면 모양(측벽 각, 보잉, 테이퍼).",
+  "프로파일",
+  "profile"
+ ],
+ [
+  "측벽 각",
+  "sidewall angle",
+  "측벽과 바닥이 이루는 각. 90°가 수직.",
+  "프로파일",
+  "profile"
+ ],
+ [
+  "보잉",
+  "bowing",
+  "구멍 위쪽 측벽이 불룩하게 파이는 현상.",
+  "프로파일",
+  "profile"
+ ],
+ [
+  "테이퍼",
+  "taper",
+  "아래로 좁아지는 측벽.",
+  "프로파일",
+  "profile"
+ ],
+ [
+  "마스크 패싯",
+  "mask faceting",
+  "마스크 모서리가 비스듬히 깎이는 현상.",
+  "프로파일",
+  "profile"
+ ],
+ [
+  "종횡비",
+  "aspect ratio (AR)",
+  "깊이 ÷ 폭.",
+  "프로파일",
+  "aspect"
+ ],
+ [
+  "ARDE / RIE 지연",
+  "aspect-ratio dependent etching",
+  "좁고 깊을수록 느려지는 식각.",
+  "프로파일",
+  "aspect"
+ ],
+ [
+  "크누센 수송",
+  "Knudsen transport",
+  "벽과만 충돌하는 분자의 이동. 클라우징 계수로 표현.",
+  "프로파일",
+  "aspect"
+ ],
+ [
+  "차징",
+  "charging",
+  "전자 그림자로 구멍 바닥이 양으로 대전되는 현상.",
+  "프로파일",
+  "aspect"
+ ],
+ [
+  "노칭",
+  "notching",
+  "바닥 모서리가 옆으로 파이는 결함.",
+  "프로파일",
+  "aspect"
+ ],
+ [
+  "비틀림",
+  "twisting",
+  "깊은 구멍이 옆으로 휘는 현상.",
+  "프로파일",
+  "aspect"
+ ],
+ [
+  "멀티 데크",
+  "multi-deck",
+  "3D 낸드에서 층을 나눠 쌓고 파는 방식.",
+  "프로파일",
+  "aspect"
+ ],
+ [
+  "종말점 검출",
+  "endpoint detection",
+  "식각이 막을 다 뚫은 시점을 찾는 것.",
+  "공정·제어",
+  "endpoint"
+ ],
+ [
+  "OES",
+  "optical emission spectroscopy",
+  "플라스마 발광 분광. CO·SiF 선으로 종말점을 본다.",
+  "공정·제어",
+  "endpoint"
+ ],
+ [
+  "로딩 효과",
+  "loading effect",
+  "노출 면적이 클수록 식각이 느려지는 현상(매크로/마이크로).",
+  "공정·제어",
+  "endpoint"
+ ],
+ [
+  "정지막",
+  "etch stop layer",
+  "식각을 멈추게 하는 선택비 높은 아래 막.",
+  "공정·제어",
+  "endpoint"
+ ],
+ [
+  "ALE",
+  "atomic layer etching",
+  "흡착과 제거의 자기 제한 두 단계로 원자층씩 깎는 식각.",
+  "공정·제어",
+  "ale"
+ ],
+ [
+  "EPC",
+  "etch per cycle",
+  "ALE 한 사이클당 식각량.",
+  "공정·제어",
+  "ale"
+ ],
+ [
+  "ALE 창",
+  "ALE window",
+  "EPC가 일정하고 바탕 스퍼터가 없는 이온 에너지 구간.",
+  "공정·제어",
+  "ale"
+ ],
+ [
+  "안테나 효과",
+  "antenna effect",
+  "긴 도체가 모은 전하가 게이트 산화막을 손상시키는 현상.",
+  "공정·제어",
+  "damage"
+ ],
+ [
+  "FN 터널링",
+  "Fowler–Nordheim tunneling",
+  "강한 전기장에서 산화막을 뚫는 전류.",
+  "공정·제어",
+  "damage"
+ ],
+ [
+  "격자 손상",
+  "lattice damage",
+  "이온 충돌로 원자가 제자리를 벗어난 손상층.",
+  "공정·제어",
+  "damage"
+ ],
+ [
+  "low-k 손상",
+  "low-k damage",
+  "애싱 중 저유전막의 탄소가 빠져 k가 오르는 손상.",
+  "공정·제어",
+  "damage"
+ ],
+ [
+  "애싱",
+  "ashing",
+  "산소 등 플라스마로 감광액을 태워 없애는 공정.",
+  "공정·제어",
+  "damage"
+ ],
+ [
+  "하드마스크",
+  "hard mask",
+  "감광액 대신 쓰는 단단한 마스크(SiN, 탄소막).",
+  "공정·제어",
+  "transfer"
+ ],
+ [
+  "SOC / SiARC",
+  "spin-on carbon / Si-ARC",
+  "다층 마스크의 탄소막과 실리콘 반사 방지막.",
+  "공정·제어",
+  "transfer"
+ ],
+ [
+  "트리밍",
+  "trimming",
+  "옆으로 깎아 선폭을 줄이는 식각.",
+  "공정·제어",
+  "transfer"
+ ],
+ [
+  "LER 전사",
+  "LER transfer",
+  "가장자리 거칠기가 식각을 거치며 옮겨지는 정도.",
+  "공정·제어",
+  "transfer"
+ ],
+ [
+  "시즈닝",
+  "seasoning",
+  "세정 후 더미 웨이퍼로 챔버 벽을 안정시키는 일.",
+  "공정·제어",
+  "control"
+ ],
+ [
+  "WAC",
+  "waferless auto clean",
+  "웨이퍼 없이 플라스마로 챔버 벽을 청소하는 단계.",
+  "공정·제어",
+  "control"
+ ],
+ [
+  "챔버 매칭",
+  "chamber matching",
+  "여러 챔버의 결과를 같게 맞추는 일.",
+  "공정·제어",
+  "control"
+ ],
+ [
+  "앞먹임 / 되먹임",
+  "feedforward / feedback",
+  "입고 측정 / 결과 측정으로 다음 조건을 고치는 제어.",
+  "공정·제어",
+  "control"
+ ]
+];
+(function(){
+  const cats = ['전체', ...new Set(G.map(g => g[3]))];
+  let cat = '전체';
+  const gf = document.getElementById('gf'), gl = document.getElementById('gl'), gq = document.getElementById('gq');
+  gf.innerHTML = cats.map(c => `<button class="sbtn ${c==='전체'?'on':''}" data-c="${c}">${c}</button>`).join('');
+  const chn = s => BOOK.chapters.find(c => c.slug === s).n;
+  function render(){
+    const q = gq.value.trim().toLowerCase();
+    const list = G.filter(g => (cat === '전체' || g[3] === cat) && (!q || (g[0]+g[1]+g[2]).toLowerCase().includes(q)));
+    gl.innerHTML = list.map(g => `<div class="gi"><a class="ch" href="${g[4]}.html">Ch.${chn(g[4])} →</a><b>${g[0]}</b><span class="en">${g[1]}</span><p>${g[2]}</p></div>`).join('') || '<p class="hint">찾는 용어가 없습니다.</p>';
+    document.getElementById('gcount').textContent = `${list.length}개 용어`;
+  }
+  gf.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; J.$$('button', gf).forEach(x => x.classList.remove('on')); b.classList.add('on'); cat = b.dataset.c; render(); });
+  gq.addEventListener('input', render);
+  render();
+  const Q = [["이방성 A = 0.8, 깊이 100 nm면 언더컷은?",["0","20 nm","80 nm","100 nm"],1,"1장. (1 − A)d."],["HF 산화막 식각이 반응 제한일 때 가장 효과적인 조절 변수는?",["온도","노출 면적","빛","교반"],0,"2장."],["KOH로 폭 100 µm 틈을 끝까지 식각하면 V홈 깊이는?",["50 µm","141 µm","100 µm","71 µm"],3,"2장. w/√2."],["식각 플라스마에서 전자는 뜨겁고 기체는 차가운 이유는?",["이온이 식혀서","전자가 가볍고 탄성 충돌 손실이 작아서","냉각수 때문","RF가 낮아서"],1,"3장."],["쉬스에서 이온이 얻는 것은?",["수직 방향 가속","열","라디칼","빛"],0,"4장."],["RF 바이어스 주파수를 높이면 IEDF는?",["좁아진다","사라진다","변화 없음","넓어진다"],0,"4장."],["CF₄에 O₂ 20 %를 넣으면 Si 식각이 빨라지는 이유는?",["이온 에너지 증가","압력 감소","F 재결합 감소","폴리머 증가"],2,"5장."],["C₄F₈에서 SiO₂가 Si보다 빨리 깎이는 이유는?",["빛 때문","SiO₂ 위 폴리머가 얇아서","Si가 무거워서","SiO₂가 무르기 때문"],1,"5장."],["이온 + 라디칼이 각각의 합보다 빠른 현상은?",["로딩","시너지","ARDE","노칭"],1,"6장."],["ICP의 장점은?",["싸다","압력이 높다","균일도 무관","밀도와 이온 에너지 독립 조절"],3,"7장."],["측벽을 수직으로 지켜 주는 것은?",["라디칼","전자","측벽 폴리머","바닥 폴리머"],2,"8장."],["보잉의 주원인은?",["낮은 압력","반사·비스듬한 이온","정지막","폴리머 과다"],1,"8장."],["좁은 구멍이 느리게 깎이는 현상은?",["ARDE","로딩","시즈닝","트리밍"],0,"9장."],["깊은 구멍 바닥이 양으로 대전되는 이유는?",["이온 부족","폴리머","온도","전자 그림자"],3,"9장."],["산화막 식각 종말점에서 줄어드는 발광은?",["F","H","CO","Ar"],2,"10장."],["ALE의 두 단계는?",["산화와 확산","흡착(변형)과 이온 제거","증착과 CMP","노광과 현상"],1,"11장."],["안테나 비가 클 때 손상되는 것은?",["게이트 산화막","마스크","정지막","챔버 벽"],0,"12장."],["SOC 150 nm, SiARC 선택비 30, 과식각 20 %면 SiARC 소모는?",["30 nm","1.5 nm","150 nm","6 nm"],3,"13장."],["습식 세정 후 시즈닝이 필요한 이유는?",["가스가 없어서","RF가 꺼져서","벽 상태가 플라스마 화학을 바꿔서","웨이퍼가 차가워서"],2,"14장."],["입고 막 두께로 식각 시간을 고치는 제어는?",["시즈닝","앞먹임","되먹임","WAC"],1,"14장."]];
+  let score = 0, done = 0;
+  document.getElementById('qz').innerHTML = Q.map((q,i) => `<div class="quiz" data-a="${q[2]}"><p class="q" data-n="${i+1}">${q[0]}</p><ol>${q[1].map(o => `<li>${o}</li>`).join('')}</ol><p class="explain">${q[3]}</p></div>`).join('');
+  J.$$('#qz .quiz').forEach(qe => J.$$('li', qe).forEach((li, k) => li.addEventListener('click', () => {
+    if(qe.dataset.scored) return; qe.dataset.scored = 1; done++;
+    if(k === +qe.dataset.a) score++;
+    document.getElementById('score').textContent = `${score} / ${Q.length}`;
+    document.getElementById('done').textContent = done + (done === Q.length ? (score >= 17 ? ' · 집현전 학사 合格!' : score >= 12 ? ' · 잘했어요' : ' · 다시 읽어 보기') : '');
+  })));
+})();
+</script>
+</body>
+</html>

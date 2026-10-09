@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>플라스마의 기초 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="plasma">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 03 <span class="hanja">第三章 · 電</span></div>
+  <h1>플라스마의 기초</h1>
+  <p class="lead">건식 식각의 무대는 <span class="term">플라스마</span>다. 낮은 압력(수 mTorr ~ 수백 mTorr)의 가스에 전기장을 걸면 몇 안 되는 자유 전자가 가속되어 기체 분자에 부딪히고, 분자를 쪼개(해리) 반응성이 큰 라디칼을 만들고, 전자를 떼어 내(이온화) 이온과 새 전자를 만든다. 전자는 수만 도(수 eV)로 뜨겁지만 기체와 이온은 거의 실온이다. 이 "차가운 플라스마" 덕분에 웨이퍼를 태우지 않고도 고온에서나 일어날 화학 반응을 일으킬 수 있다. 이 장은 전자의 에너지 분포, 방전이 켜지는 조건, 그리고 플라스마가 전기적으로 중성을 지키는 길이를 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>전자 에너지 분포(맥스웰)에서 이온화·해리 문턱을 넘는 전자의 비율이 전자 온도에 얼마나 민감한지 본다.</li>
+  <li>파셴 곡선으로 방전 개시 전압이 압력 × 거리에 따라 최소값을 갖는 이유를 이해한다.</li>
+  <li>디바이 길이와 플라스마 진동수로 플라스마가 전하를 가리는(차폐) 원리를 계산한다.</li>
+</ul></div>
+
+<figure class="fig">
+<svg viewBox="0 0 860 220" role="img" aria-label="플라스마 속 충돌" id="fig1"></svg>
+<figcaption><b>그림 3-1.</b> 플라스마 속 전자 충돌의 종류. 들뜸(빛을 냄 → 플라스마의 색, 10장 종말점 검출), 해리(라디칼 → 화학 식각), 이온화(이온 → 물리 식각과 방전 유지), 부착(음이온). 문턱 에너지가 낮은 순서로 들뜸·해리 &lt; 이온화이므로, 전자 온도가 낮을수록 이온보다 라디칼이 상대적으로 많아진다.</figcaption>
+</figure>
+
+<h2 id="s1"><span class="n">01</span>뜨거운 전자, 차가운 기체</h2>
+<p>전자는 이온보다 수만 배 가벼워 전기장에서 쉽게 가속되지만, 무거운 기체 분자와 탄성 충돌할 때 에너지를 거의 잃지 않는다. 그래서 전자만 수 eV(1 eV ≈ 11,600 K)로 뜨거워진다. 전자 에너지는 대략 맥스웰 분포를 따르므로, 평균은 3 eV라도 꼬리에는 15 eV를 넘는 전자가 일부 있고, 이들이 이온화를 일으킨다. 문턱보다 높은 꼬리의 넓이는 전자 온도에 지수적으로 민감하다. 전자 온도가 3 eV에서 4 eV로만 올라도 이온화 속도는 몇 배가 된다.</p>
+<div class="eq">$$f(\varepsilon) = \frac{2}{\sqrt\pi}\,\frac{\sqrt{\varepsilon}}{(k T_e)^{3/2}}\,e^{-\varepsilon/kT_e},\qquad k_{iz}(T_e) \approx \sigma_0\,\bar v_e\,\Bigl(1 + \frac{2kT_e}{\varepsilon_{iz}}\Bigr)e^{-\varepsilon_{iz}/kT_e}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-1</span><span class="ttl">전자 에너지 분포와 반응 문턱</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">전자 온도 T_e <output data-o="te"></output></span><input type="range" data-k="te" min="0.8" max="8" step="0.1" value="3" data-d="1" data-u="eV"></label>
+      <label class="ctrl"><span class="lab">분포 모양</span><select data-k="f"><option value="m" selected>맥스웰 (충돌 많음)</option><option value="d">드리베스타인 (꼬리 빈약)</option></select></label>
+      <label class="ctrl"><span class="lab">가스</span><select data-k="g"><option value="ar" selected>Ar (이온화 15.8 eV)</option><option value="cf4">CF₄ (해리 12.5 / 이온화 16)</option><option value="cl2">Cl₂ (해리 2.5 / 이온화 11.5)</option><option value="o2">O₂ (해리 5.1 / 이온화 12.1)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">평균 전자 에너지</span><span class="v" data-r="avg"></span></div>
+      <div class="ro"><span class="k">이온화 문턱 넘는 전자 비율</span><span class="v" data-r="iz"></span></div>
+      <div class="ro"><span class="k">해리 문턱 넘는 전자 비율</span><span class="v" data-r="dis"></span></div>
+      <div class="ro"><span class="k">라디칼 : 이온 생성비 (대략)</span><span class="v" data-r="ratio"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 전자 에너지 분포(곡선 아래 넓이 = 1). 초록 영역 = 해리 문턱 이상, 빨강 영역 = 이온화 문턱 이상. 오른쪽: 전자 온도에 따른 이온화 비율(로그 눈금). 전자 온도가 조금만 바뀌어도 이온화가 자릿수로 달라진다. 실제 식각 플라스마의 T<sub>e</sub>는 2~5 eV.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>파셴 곡선: 방전은 언제 켜지는가</h2>
+<p>두 전극 사이 기체에 전압을 올리면, 어느 순간 전자 하나가 연쇄적으로 이온화를 일으켜 전류가 폭발하는 <b>방전 개시</b>(breakdown)가 일어난다. 압력이 너무 낮으면 전자가 전극에 닿기 전에 충돌을 거의 못 하고, 압력이 너무 높으면 충돌이 너무 잦아 전자가 문턱까지 가속되지 못한다. 그 사이 어딘가(pd ≈ 1 Torr·cm 근처)에서 개시 전압이 최소가 된다. 이것이 <span class="term">파셴 법칙</span>이다. 식각 장비는 이 곡선을 보고 압력·전극 간격을 정하며, 원치 않는 곳(가스 구멍, 웨이퍼 뒷면)에서 방전이 켜지지 않게 설계한다.</p>
+<div class="eq">$$V_b = \frac{B\,pd}{\ln(A\,pd) - \ln\!\bigl[\ln(1 + 1/\gamma)\bigr]}$$<div class="note">A, B: 기체 상수, γ: 이온이 전극에서 2차 전자를 떼어 낼 확률(≈ 0.01~0.1), p: 압력, d: 전극 간격.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-2</span><span class="ttl">파셴 곡선</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">압력 <output data-o="p"></output></span><input type="range" data-k="p" min="-2" max="2" step="0.02" value="-0.5" data-log="1" data-d="3" data-u="Torr"></label>
+      <label class="ctrl"><span class="lab">전극 간격 <output data-o="d"></output></span><input type="range" data-k="d" min="0.1" max="10" step="0.1" value="3" data-d="1" data-u="cm"></label>
+      <label class="ctrl"><span class="lab">2차 전자 계수 γ <output data-o="ga"></output></span><input type="range" data-k="ga" min="0.005" max="0.2" step="0.005" value="0.05" data-d="3"></label>
+      <label class="ctrl"><span class="lab">걸어 준 전압 <output data-o="v"></output></span><input type="range" data-k="v" min="100" max="1500" step="10" value="400" data-d="0" data-u="V"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">pd</span><span class="v" data-r="pd"></span></div>
+      <div class="ro"><span class="k">개시 전압 V_b (Ar)</span><span class="v" data-r="vb"></span></div>
+      <div class="ro"><span class="k">방전 상태</span><span class="v" data-r="st"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 아르곤(빨강), 질소(파랑), 공기(회색)의 파셴 곡선(로그 가로축). 검은 점이 현재 조건, 점선이 걸어 준 전압이다. 점이 점선 아래에 있으면 방전이 켜진다. 오른쪽: 두 전극 사이 전자 사태(avalanche). 방전이 켜지면 전자가 배로 불어나며 빛난다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🎳</span><b>볼링 레인의 길이</b><span>공(전자)이 핀(기체 분자)을 쓰러뜨리려면 충분히 달려와야 한다. 레인이 너무 짧으면(낮은 pd) 핀을 거의 만나지 못하고, 핀이 너무 빽빽하면(높은 pd) 속도를 붙이기 전에 계속 부딪혀 힘이 빠진다. 가장 적은 힘으로 연쇄 쓰러뜨림을 일으키는 적당한 간격이 파셴 최소점이다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>디바이 차폐: 플라스마는 중성을 지킨다</h2>
+<p>플라스마 안에 전하를 하나 넣으면 주변의 전자와 이온이 재배치되어 그 전하를 가린다. 가림이 일어나는 거리가 <span class="term">디바이 길이</span> λ<sub>D</sub>다. 식각 플라스마(n<sub>e</sub> ≈ 10¹⁰~10¹¹ cm⁻³, T<sub>e</sub> ≈ 3 eV)에서 λ<sub>D</sub>는 수십 µm다. 장비 크기(수십 cm)보다 훨씬 작으므로 플라스마 내부는 거의 완벽히 중성이고, 전기장은 벽 근처 얇은 층(쉬스, 4장)에만 몰린다. 전자가 한 번 흔들리는 플라스마 진동수 f<sub>pe</sub>는 수 GHz로, 13.56 MHz RF 전기장을 전자가 즉시 따라갈 수 있다.</p>
+<div class="eq">$$\lambda_D = \sqrt{\frac{\varepsilon_0\,kT_e}{e^2 n_e}} \approx 743\sqrt{\frac{T_e[\text{eV}]}{n_e[\text{cm}^{-3}]}}\ \text{cm},\qquad f_{pe} = \frac{1}{2\pi}\sqrt{\frac{e^2 n_e}{\varepsilon_0 m_e}} \approx 8.98\sqrt{n_e}\ \text{kHz}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-3</span><span class="ttl">전하 차폐 입자 시뮬레이션</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">전자 밀도 n_e <output data-o="n"></output></span><input type="range" data-k="n" min="8" max="12" step="0.1" value="10.5" data-log="1" data-d="2" data-u="cm⁻³"></label>
+      <label class="ctrl"><span class="lab">전자 온도 T_e <output data-o="te"></output></span><input type="range" data-k="te" min="0.5" max="8" step="0.1" value="3" data-d="1" data-u="eV"></label>
+      <label class="ctrl"><span class="lab">넣은 전하 (탐침 전위) <output data-o="q"></output></span><input type="range" data-k="q" min="-20" max="20" step="1" value="10" data-d="0" data-u="V"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">디바이 길이</span><span class="v" data-r="ld"></span></div>
+      <div class="ro"><span class="k">플라스마 진동수</span><span class="v" data-r="fp"></span></div>
+      <div class="ro"><span class="k">디바이 구 속 전자 수</span><span class="v" data-r="nd"></span></div>
+      <div class="ro"><span class="k">전자 열속도</span><span class="v" data-r="ve"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 탐침(가운데) 주변의 전자(파랑 점)와 이온(빨강 점). 양전하 탐침 주변에는 전자가 몰리고 이온이 밀려난다. 노란 원이 디바이 길이다. 오른쪽: 탐침에서 거리에 따른 전위. 차폐된 전위(빨강, 지수 감소)는 진공 속 쿨롱 전위(회색 점선)보다 훨씬 빨리 0이 된다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 플라스마의 이온화율(이온 밀도 ÷ 기체 밀도)은 얼마나 될까?</p><p>10 mTorr의 기체 밀도는 약 3 × 10¹⁴ cm⁻³이고, 플라스마 밀도는 10¹¹ cm⁻³ 정도이므로 이온화율은 0.03 % 남짓이다. 반면 라디칼은 기체의 수 %~수십 %에 이른다. 식각 플라스마는 "거의 중성 기체 속에 이온이 조금 섞인" 상태이고, 그래서 라디칼과 이온의 균형(6장)이 핵심이 된다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">식각 플라스마에서 전자는 뜨겁고 기체는 차가운 이유는?</p><ol><li>기체가 냉각수로 식기 때문</li><li>가벼운 전자는 전기장에 쉽게 가속되고 무거운 분자와의 탄성 충돌에서 에너지를 거의 잃지 않기 때문</li><li>이온이 전자를 식히기 때문</li><li>RF 주파수가 낮아서</li></ol>
+<p class="explain">탄성 충돌의 에너지 전달 비율은 2m<sub>e</sub>/M ≈ 10⁻⁵ 수준이다.</p></div>
+<div class="quiz" data-a="2"><p class="q">파셴 곡선에서 pd가 아주 작을 때 개시 전압이 높아지는 이유는?</p><ol><li>전자가 너무 자주 충돌해서</li><li>기체가 이온화되지 않는 종류라서</li><li>전자가 전극에 닿기 전에 충돌(이온화)을 거의 하지 못해서</li><li>γ가 커져서</li></ol>
+<p class="explain">충돌할 상대가 부족하면 전자 사태가 일어나지 않는다.</p></div>
+<div class="quiz" data-a="0"><p class="q">n<sub>e</sub> = 10¹⁰ cm⁻³, T<sub>e</sub> = 4 eV일 때 디바이 길이는 약?</p><ol><li>150 µm</li><li>1.5 µm</li><li>1.5 cm</li><li>15 nm</li></ol>
+<p class="explain">743 × √(4/10¹⁰) cm = 743 × 2 × 10⁻⁵ cm ≈ 0.015 cm = 150 µm.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 3-1 */
+(function(){
+  const s = J.$('#fig1'); if(!s) return;
+  J.live(() => { s.innerHTML = ''; const T = [['들뜸', 'e + Ar → e + Ar* → 빛', '~11.5 eV', '--gold'], ['해리', 'e + CF₄ → e + CF₃ + F', '~12.5 eV', '--jade'], ['이온화', 'e + Ar → 2e + Ar⁺', '15.8 eV', '--red'], ['부착', 'e + Cl₂ → Cl⁻ + Cl', '~0 eV', '--indigo']];
+    T.forEach(([a, b, c, col], i) => { const x = 14 + i*212; J.svg('rect', {x, y:30, width:196, height:150, rx:10, fill:J.c('--card'), stroke:J.c(col), 'stroke-width':2}, s);
+      const t1 = J.svg('text', {x:x + 98, y:62, 'text-anchor':'middle', 'font-size':17, 'font-weight':700, fill:J.c(col)}, s); t1.textContent = a;
+      const t2 = J.svg('text', {x:x + 98, y:100, 'text-anchor':'middle', 'font-size':12.5, fill:J.c('--ink')}, s); t2.textContent = b;
+      const t3 = J.svg('text', {x:x + 98, y:138, 'text-anchor':'middle', 'font-size':12.5, fill:J.c('--ink2')}, s); t3.textContent = '문턱 ' + c;
+      J.svg('circle', {cx:x + 30, cy:160, r:5, fill:J.c('--indigo')}, s); J.svg('line', {x1:x + 36, y1:160, x2:x + 80, y2:160, stroke:J.c('--ink3'), 'stroke-width':1.5}, s); J.svg('circle', {cx:x + 92, cy:160, r:10, fill:J.c('--ink3')}, s); });
+    const t = J.svg('text', {x:430, y:210, 'text-anchor':'middle', 'font-size':12, fill:J.c('--ink3')}, s); t.textContent = '파랑 점 = 전자, 회색 원 = 기체 분자'; });
+})();
+
+/* 3-1 EEDF */
+(function(){
+  const box = J.$('#sim1'), G = {ar:[11.5, 15.8, 'Ar'], cf4:[12.5, 16, 'CF₄'], cl2:[2.5, 11.5, 'Cl₂'], o2:[5.1, 12.1, 'O₂']};
+  const fM = (e, T) => 2/Math.sqrt(Math.PI)*Math.sqrt(e)/Math.pow(T, 1.5)*Math.exp(-e/T);
+  const fD = (e, T) => { const a = 1.5*T; return 1.04*Math.sqrt(e)/Math.pow(a, 1.5)*Math.exp(-0.55*Math.pow(e/a, 2)); }; // 평균 ≈ 같은 값이 되도록 근사
+  const tail = (f, T, th) => { let s = 0, tot = 0; for(let e = 0.01; e < 120; e += 0.02){ const v = f(e, T)*0.02; tot += v; if(e >= th) s += v; } return s/tot; };
+  J.sim('sim1', v => { const f = v.f === 'm' ? fM : fD, [td, ti] = G[v.g], T = v.te, pts = [], pd = [], pi = [];
+    let mx = 0; for(let e = 0.01; e <= 30; e += 0.05){ const y = f(e, T); mx = Math.max(mx, y); pts.push([e, y]); if(e >= td) pd.push([e, y]); if(e >= ti) pi.push([e, y]); }
+    J.plot(J.$('#cv1a'), {x:[0, 30], y:[0, mx*1.15], xlab:'전자 에너지 (eV)', ylab:'f(ε)', series:[{pts:pd, color:'--jade', w:0, fill:.35}, {pts:pi, color:'--red', w:0, fill:.6}, {pts, color:'--indigo', w:3}], vlines:[{x:td, color:'--jade', label:'해리'}, {x:ti, color:'--red', label:'이온화'}]});
+    const curve = []; for(let t = 0.8; t <= 8; t += 0.1) curve.push([t, Math.max(1e-12, tail(f, t, ti))]);
+    const fi = tail(f, T, ti), fdis = tail(f, T, td);
+    J.plot(J.$('#cv1b'), {x:[0.8, 8], y:[1e-10, 1], logy:true, xlab:'전자 온도 (eV)', ylab:'이온화 문턱 이상 비율', series:[{pts:curve, color:'--red', w:3}], points:[{x:T, y:Math.max(1e-10, fi), color:'--ink', r:6}]});
+    J.out(box, 'avg', J.fmt(1.5*T, 1) + ' eV'); J.out(box, 'iz', J.sci(fi*100, 2) + ' %'); J.out(box, 'dis', J.sci(fdis*100, 2) + ' %'); J.out(box, 'ratio', fi > 0 ? J.sci(fdis/fi, 2) + ' : 1' : '—'); });
+})();
+
+/* 3-2 파셴 */
+(function(){
+  const box = J.$('#sim2'), GAS = [['Ar', 12, 180, '--red'], ['N₂', 12, 342, '--indigo'], ['공기', 15, 365, '--ink3']];
+  const Vb = (pd, A, B, g) => { const den = Math.log(A*pd) - Math.log(Math.log(1 + 1/g)); return den > 0 ? B*pd/den : Infinity; };
+  let av = [], V = null;
+  J.sim('sim2', v => { V = v; const pd = v.p*v.d, S = GAS.map(([n, A, B, c]) => ({pts:Array.from({length:200}, (_, i) => { const x = Math.pow(10, -1.5 + i*0.02); return [x, Math.min(5000, Vb(x, A, B, v.ga))]; }).filter(p => isFinite(p[1]) && p[1] > 0), color:c, w:n === 'Ar' ? 3 : 2}));
+    const vb = Vb(pd, 12, 180, v.ga);
+    J.plot(J.$('#cv2a'), {x:[0.03, 100], y:[100, 5000], logx:true, logy:true, xlab:'pd (Torr·cm)', ylab:'개시 전압 (V)', series:S, hlines:[{y:v.v, color:'--ink', label:'걸어 준 ' + v.v + ' V'}], points:[{x:pd, y:J.clamp(isFinite(vb) ? vb : 5000, 100, 5000), color:'--ink', r:6}]});
+    const on = isFinite(vb) && v.v >= vb;
+    J.out(box, 'pd', J.fmt(pd, 3) + ' Torr·cm'); J.out(box, 'vb', isFinite(vb) ? J.fmt(vb, 0) + ' V' : '방전 불가'); J.out(box, 'st', on ? '켜짐 (플라스마)' : '꺼짐', on ? 'good' : 'warn'); });
+  J.loop(J.$('#cv2b'), dt => { if(!V) return; const pd = V.p*V.d, vb = Vb(pd, 12, 180, V.ga), on = isFinite(vb) && V.v >= vb, {ctx, w, h} = J.fit(J.$('#cv2b')); ctx.clearRect(0,0,w,h);
+    ctx.fillStyle = on ? 'rgba(170,110,230,.25)' : (J.isDark() ? '#1d1b18' : '#fbf7ee'); ctx.fillRect(40, 20, w - 80, h - 40); ctx.fillStyle = '#555'; ctx.fillRect(30, 20, 10, h - 40); ctx.fillRect(w - 40, 20, 10, h - 40);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('음극', 26, 14); ctx.fillText('양극', w - 46, 14);
+    if(Math.random() < 0.15) av.push({x:42, y:30 + Math.random()*(h - 60), vx:60, gen:0});
+    const step = Math.min(dt, 0.05), grow = on ? 1.6 : 0.4;
+    for(let i = av.length - 1; i >= 0; i--){ const e = av[i]; e.x += e.vx*step*(w/300); e.y += (Math.random() - .5)*4; if(e.x > w - 42 || av.length > 400){ av.splice(i, 1); continue; } if(Math.random() < grow*step*2 && av.length < 400){ av.push({x:e.x, y:e.y + (Math.random() - .5)*6, vx:e.vx, gen:e.gen + 1}); } if(!on && Math.random() < 0.6*step) { av.splice(i, 1); continue; }
+      ctx.fillStyle = J.c('--indigo'); ctx.beginPath(); ctx.arc(e.x, e.y, 2, 0, 7); ctx.fill(); }
+    ctx.fillStyle = J.c('--ink2'); ctx.fillText('전자 ' + av.length + '개', 46, h - 26); });
+})();
+
+/* 3-3 디바이 */
+(function(){
+  const box = J.$('#sim3'); let V = null, P = [];
+  const init = () => { const r = J.rng(5); P = []; for(let i = 0; i < 700; i++) P.push({x:r(), y:r(), q:i % 2 ? 1 : -1, ox:0, oy:0}); };
+  init();
+  J.sim('sim3', v => { V = v; const ld = 743*Math.sqrt(v.te/v.n)*1e4, fp = 8.98e3*Math.sqrt(v.n), nd = 4/3*Math.PI*Math.pow(ld*1e-4, 3)*v.n, ve = Math.sqrt(8*v.te*1.6e-19/(Math.PI*9.11e-31));
+    const L = 6*ld, pts = [], pc = []; for(let x = ld*0.05; x <= L; x += L/200){ pts.push([x, v.q*Math.exp(-x/ld)*ld*0.3/x]); pc.push([x, v.q*ld*0.3/x]); }
+    J.plot(J.$('#cv3b'), {x:[0, L], y:[-20, 20], xlab:'탐침에서 거리 (µm)', ylab:'전위 (V)', series:[{pts:pc, color:'--ink3', w:1.5, dash:[5, 4]}, {pts, color:'--red', w:3}], vlines:[{x:ld, color:'--gold', label:'λ_D'}], hlines:[{y:0, color:'--ink3'}]});
+    J.out(box, 'ld', J.fmt(ld, 1) + ' µm'); J.out(box, 'fp', J.si(fp, 'Hz')); J.out(box, 'nd', J.sci(nd, 2) + ' 개', nd > 100 ? 'good' : 'warn'); J.out(box, 've', J.sci(ve/1000, 2) + ' km/s'); });
+  J.loop(J.$('#cv3a'), (dt, t) => { if(!V) return; const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const cx = w/2, cy = h/2, R = Math.min(w, h)*0.18, k = V.q/20;
+    ctx.strokeStyle = 'rgba(230,180,40,.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+    P.forEach((p, i) => { const x0 = p.x*w, y0 = p.y*h, dx = x0 - cx, dy = y0 - cy, d = Math.hypot(dx, dy) + 1, pull = -p.q*k*Math.exp(-d/R)*Math.min(d*0.8, R*0.9)*(p.q < 0 ? 1 : 0.5);
+      const jx = Math.sin(t*3 + i)*2*(p.q < 0 ? 1.5 : 0.3), jy = Math.cos(t*2.7 + i*1.3)*2*(p.q < 0 ? 1.5 : 0.3), x = x0 + dx/d*pull + jx, y = y0 + dy/d*pull + jy;
+      ctx.fillStyle = p.q < 0 ? '#3d7fd0' : '#d65a4a'; ctx.beginPath(); ctx.arc(x, y, 2.2, 0, 7); ctx.fill(); });
+    ctx.fillStyle = V.q >= 0 ? '#d65a4a' : '#3d7fd0'; ctx.beginPath(); ctx.arc(cx, cy, 9, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(V.q > 0 ? '+' : V.q < 0 ? '−' : '0', cx, cy + 4);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('노란 원 = 디바이 길이', 6, 14); });
+})();
+</script>
+</body>
+</html>

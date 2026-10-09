@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>식각 화학 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="chemistry">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 05 <span class="hanja">第五章 · 化</span></div>
+  <h1>식각 화학</h1>
+  <p class="lead">건식 식각은 결국 화학 반응이다. 고체 원자를 기체 분자로 바꿔 펌프로 뽑아내야 한다. 실리콘은 불소와 만나 SiF₄(끓는점 −86 °C)가 되어 날아가고, 염소와 만나 SiCl₄가 된다. 산화막의 산소는 탄소가 CO, CO₂로 가져간다. 그래서 어떤 가스를 섞느냐가 무엇을 깎고 무엇을 남길지(선택비)를 정한다. 이 장에서는 CF₄에 산소나 수소를 섞을 때 불소 라디칼과 폴리머가 어떻게 바뀌는지, 탄소/불소 비가 식각과 증착의 경계를 어떻게 가르는지, 그리고 얇은 플루오로카본 막이 어떻게 산화막만 골라 깎게 해 주는지 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>식각 생성물의 휘발성이 가스 선택을 정한다는 것을 안다(Si–F, Si–Cl, Al–Cl, Cu는 왜 어려운가).</li>
+  <li>CF₄/O₂와 CF₄/H₂ 혼합에서 불소 농도와 폴리머의 변화를 모형으로 계산한다.</li>
+  <li>C/F 비와 이온 에너지로 식각–증착 경계를 그리는 코번 도표를 읽는다.</li>
+  <li>정상 상태 플루오로카본 막 두께로 SiO₂/Si, SiO₂/SiN 선택비를 설명한다.</li>
+</ul></div>
+
+<div class="tbwrap"><table class="tb">
+<tr><th>식각할 막</th><th>주 가스</th><th>휘발성 생성물 (끓는점)</th><th>쓰임</th></tr>
+<tr><td>실리콘, 폴리실리콘</td><td>Cl₂, HBr, SF₆</td><td>SiCl₄ (58 °C), SiBr₄, SiF₄ (−86 °C)</td><td>게이트, 핀, STI 트렌치</td></tr>
+<tr><td>산화막 SiO₂</td><td>C₄F₈, C₄F₆, CHF₃ + Ar/O₂</td><td>SiF₄, CO, CO₂, COF₂</td><td>콘택·비아 홀, 3D 낸드 채널 홀</td></tr>
+<tr><td>질화막 SiN</td><td>CH₂F₂, CH₃F + O₂</td><td>SiF₄, HCN, N₂</td><td>스페이서, 하드마스크</td></tr>
+<tr><td>알루미늄</td><td>Cl₂ + BCl₃</td><td>AlCl₃ (180 °C, 승화)</td><td>예전 배선</td></tr>
+<tr><td>구리</td><td>— (염화물이 휘발 안 됨)</td><td>CuCl (1,490 °C)</td><td>식각 대신 다마신(CMP)</td></tr>
+<tr><td>탄소막·감광액</td><td>O₂, N₂/H₂</td><td>CO, CO₂, H₂O, HCN</td><td>하드마스크, 애싱</td></tr>
+</table></div>
+
+<h2 id="s1"><span class="n">01</span>CF₄에 산소 또는 수소를 섞으면</h2>
+<p>CF₄ 플라스마는 전자 충돌로 CF₃, CF₂ 같은 조각과 F 원자를 만든다. 조각들은 F와 다시 결합해 CF₄로 돌아가거나 벽에 폴리머로 쌓인다. 산소를 조금 넣으면 산소가 CFₓ 조각을 CO, COF₂로 가져가 F가 재결합할 상대가 줄어들고, F 농도가 오히려 늘어 실리콘 식각이 빨라진다. 산소가 20 %를 넘으면 희석 효과와 표면 산화로 다시 느려진다. 반대로 수소를 넣으면 H가 F를 HF로 잡아가 F가 줄고 탄소가 남아 폴리머가 쌓인다. 실리콘 위에는 폴리머가 쌓여 식각이 멈추지만, 산화막은 자신의 산소로 폴리머를 태우며 계속 깎인다. 이것이 산화막/실리콘 고선택비 식각의 원조다.</p>
+<div class="eq">$$\mathrm{CF_x + O \to COF_{x-1} + F},\qquad \mathrm{H + F \to HF},\qquad R_{Si} \propto [F],\quad R_{SiO_2} \propto [F]^{0.3}\,\Gamma_i$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-1</span><span class="ttl">첨가 가스와 식각 속도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">첨가 가스</span><select data-k="g"><option value="o2" selected>CF₄ + O₂</option><option value="h2">CF₄ + H₂</option></select></label>
+      <label class="ctrl"><span class="lab">첨가 비율 <output data-o="x"></output></span><input type="range" data-k="x" min="0" max="70" step="1" value="15" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">이온 에너지 <output data-o="e"></output></span><input type="range" data-k="e" min="20" max="600" step="10" value="200" data-d="0" data-u="eV"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">상대 F 농도</span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">Si / SiO₂ 식각 속도</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">SiO₂ : Si 선택비</span><span class="v" data-r="s"></span></div>
+      <div class="ro"><span class="k">표면 상태</span><span class="v" data-r="st"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 첨가 비율에 따른 Si(파랑)와 SiO₂(빨강) 식각 속도, F 농도(초록 점선), 폴리머 경향(갈색 점선). O₂는 20 % 근처에서 Si 식각이 최대(모가브의 고전 실험), H₂는 40 % 근처에서 Si 식각이 멈추며 선택비가 치솟는다(에프라스). 오른쪽: 현재 조건에서 Si·SiO₂ 표면에 쌓인 폴리머(갈색)와 생성물 분자의 모식도.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>코번 도표: 식각과 증착의 경계</h2>
+<p>플루오로카본 가스는 식각제(F)와 증착제(CFₓ 폴리머)를 동시에 품고 있다. 가스의 불소/탄소 원자 비(F/C)가 높으면 식각이 이기고, 낮으면 폴리머가 쌓인다. 여기에 이온 에너지가 높을수록 이온이 폴리머를 벗겨 내므로 경계가 낮은 F/C 쪽으로 밀린다. 산소는 탄소를 빼앗아 실효 F/C를 올리고, 수소는 불소를 빼앗아 낮춘다. 공정 엔지니어는 이 도표 위에서 "경계 바로 위", 곧 바닥은 깎이고 측벽과 마스크에는 폴리머가 남는 자리를 찾는다.</p>
+<div class="eq">$$\left(\frac{F}{C}\right)_{eff} = \frac{n_F - \tfrac{1}{2}n_H}{n_C - 2\,n_{O_2}\cdot\eta},\qquad \text{식각} \iff \left(\frac{F}{C}\right)_{eff} > 2.3 - k\sqrt{E_i}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-2</span><span class="ttl">코번 도표 위 레시피 찍기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">주 가스</span><select data-k="g"><option value="cf4">CF₄ (F/C = 4)</option><option value="c2f6">C₂F₆ (3)</option><option value="c4f8" selected>C₄F₈ (2)</option><option value="c4f6">C₄F₆ (1.5)</option><option value="chf3">CHF₃ (F 3, H 1)</option><option value="ch2f2">CH₂F₂ (F 2, H 2)</option></select></label>
+      <label class="ctrl"><span class="lab">O₂ 첨가 <output data-o="o"></output></span><input type="range" data-k="o" min="0" max="60" step="1" value="10" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">H₂ 첨가 <output data-o="h"></output></span><input type="range" data-k="h" min="0" max="60" step="1" value="0" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">이온 에너지 <output data-o="e"></output></span><input type="range" data-k="e" min="10" max="1000" step="10" value="300" data-d="0" data-u="eV"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">실효 F/C</span><span class="v" data-r="fc"></span></div>
+      <div class="ro"><span class="k">경계까지 거리</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">영역</span><span class="v" data-r="z"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로 = 실효 F/C, 세로 = 이온 에너지. 경계선(굵은 선) 오른쪽 위는 식각, 왼쪽 아래는 폴리머 증착. 회색 점은 각 가스를 그대로 쓸 때의 위치, 빨간 별이 현재 레시피다. 산화막 고선택비 식각(C₄F₈, C₄F₆)은 경계 바로 근처, 실리콘 식각은 멀리 오른쪽에서 이루어진다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🧂</span><b>간 맞추기</b><span>불소는 소금, 탄소는 설탕이라고 해 보자. 소금이 많으면 짜게(식각), 설탕이 많으면 끈적하게(폴리머) 된다. 산소는 설탕을 태워 없애고, 수소는 소금을 빼낸다. 요리사는 "아주 살짝 짭조름하면서 겉은 윤기 나는" 지점을 찾는다. 바로 경계 근처다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>얇은 막 하나가 만드는 선택비</h2>
+<p>C₄F₈ 같은 폴리머성 플라스마에서는 모든 표면에 얇은 플루오로카본(CFₓ) 막이 정상 상태로 덮인다. 이온과 라디칼은 이 막을 뚫고 아래 물질과 반응해야 하므로, 막이 두꺼울수록 식각이 지수적으로 느려진다. 산화막은 식각되며 산소를 내놓아 막의 탄소를 태우므로 막이 1~2 nm로 얇다. 실리콘은 산소가 없어 막이 4~6 nm로 두껍고 식각이 거의 멈춘다. 질화막은 그 중간이다. 이온 에너지를 올리면 모든 막이 얇아져 식각은 빨라지지만 선택비는 줄어든다.</p>
+<div class="eq">$$R_j = R_{0,j}(E)\,\exp\!\left(-\frac{t_{fc,j}}{\lambda}\right),\qquad t_{fc,SiO_2} < t_{fc,SiN} < t_{fc,Si},\qquad \lambda \approx 1\ \text{nm}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-3</span><span class="ttl">플루오로카본 막과 선택비</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">가스 폴리머성 (C/F) <output data-o="p"></output></span><input type="range" data-k="p" min="0" max="1" step="0.02" value="0.6" data-d="2"></label>
+      <label class="ctrl"><span class="lab">이온 에너지 <output data-o="e"></output></span><input type="range" data-k="e" min="30" max="1500" step="10" value="500" data-d="0" data-u="eV"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">막 두께 SiO₂ / SiN / Si</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">SiO₂ 식각 속도</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">SiO₂ : SiN 선택비</span><span class="v" data-r="sn"></span></div>
+      <div class="ro"><span class="k">SiO₂ : Si 선택비</span><span class="v" data-r="ss"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 세 물질 위에 덮인 플루오로카본 막(갈색)의 두께와 이온(빨간 화살표)이 뚫고 들어가는 모습. 오른쪽: 이온 에너지에 따른 식각 속도(빨강 SiO₂, 노랑 SiN, 파랑 Si, 로그 눈금)와 선택비(점선, 오른쪽 축 대신 SiO₂/Si 값 ÷ 10). 낮은 에너지에서는 Si 위 막이 두꺼워 식각이 멈추고(선택비 무한대), 높은 에너지에서는 모두 비슷하게 깎인다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 구리 배선은 왜 식각으로 만들지 않고, 홈을 판 뒤 채우고 갈아 내는 다마신 공정을 쓸까?</p><p>구리는 불소·염소와 결합해도 휘발성 화합물을 만들지 않아(CuCl의 끓는점 1,490 °C) 플라스마로 뽑아낼 수 없다. 대신 산화막에 홈을 식각하고(이건 쉽다) 구리를 채운 뒤 CMP로 갈아 낸다. 식각 화학이 배선 공정 전체의 구조를 바꾼 사례다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">CF₄에 O₂를 약 20 % 넣으면 실리콘 식각이 빨라지는 이유는?</p><ol><li>산소가 실리콘을 직접 식각해서</li><li>산소가 CFₓ를 소비해 F의 재결합이 줄고 F 농도가 늘어서</li><li>폴리머가 많아져서</li><li>이온 에너지가 높아져서</li></ol>
+<p class="explain">모가브의 결과. 더 넣으면 희석과 표면 산화로 다시 느려진다.</p></div>
+<div class="quiz" data-a="3"><p class="q">C₄F₈ 플라스마에서 SiO₂가 Si보다 빨리 깎이는 주된 이유는?</p><ol><li>SiO₂가 더 무르기 때문</li><li>Si가 더 무겁기 때문</li><li>Si 위 이온 에너지가 낮아서</li><li>SiO₂의 산소가 표면 플루오로카본 막을 얇게 유지하기 때문</li></ol>
+<p class="explain">얇은 막 → 식각 지속, 두꺼운 막(Si) → 식각 억제.</p></div>
+<div class="quiz" data-a="0"><p class="q">구리를 플라스마로 식각하기 어려운 이유는?</p><ol><li>구리 할로겐화물이 휘발성이 없어서</li><li>구리가 너무 단단해서</li><li>구리가 플라스마를 꺼뜨려서</li><li>구리가 빛을 반사해서</li></ol>
+<p class="explain">생성물이 날아가지 않으면 표면에 쌓일 뿐 제거되지 않는다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 5-1 */
+(function(){
+  const box = J.$('#sim1');
+  const model = (g, x, E) => { x = x/100; const ion = Math.sqrt(E) - Math.sqrt(15);
+    if(g === 'o2'){ const F = (1 - x)*(0.3 + 3*x/(x + 0.08)), ox = Math.max(0, x - 0.35)/0.35, poly = (1 - x)*Math.exp(-x/0.06)*0.8;
+      return {F, poly, si:22*F*Math.exp(-ox*1.5)/(1 + 3*poly), sio:(6*Math.pow(F, 0.3) + 0.002*ion*ion*0.6)*(1 - x*0.6)}; }
+    const F = 0.3*Math.exp(-x/0.12) + 0.02, poly = Math.min(3, 0.15/(F + 0.03)), si = Math.max(0, 22*F*(1 - poly/2.2)), sio = (6*Math.pow(F/0.3, 0.15) + 0.002*ion*ion*0.6)*(1 - 0.5*x);
+    return {F, poly, si, sio}; };
+  J.sim('sim1', v => { const S = [[], [], [], []]; for(let x = 0; x <= 70; x += 1){ const m = model(v.g, x, v.e); S[0].push([x, m.si]); S[1].push([x, m.sio]); S[2].push([x, m.F*20]); S[3].push([x, m.poly*15]); }
+    const m = model(v.g, v.x, v.e);
+    J.plot(J.$('#cv1a'), {x:[0, 70], y:[0, 60], xlab:(v.g === 'o2' ? 'O₂' : 'H₂') + ' 비율 (%)', ylab:'식각 속도 (nm/분, 상대)', series:[{pts:S[0], color:'--indigo', w:3}, {pts:S[1], color:'--red', w:3}, {pts:S[2], color:'--jade', w:1.5, dash:[5, 4]}, {pts:S[3], color:'#8a5a2b', w:1.5, dash:[3, 3]}], vlines:[{x:v.x, color:'--ink3'}]});
+    const {ctx, w, h} = J.fit(J.$('#cv1b')); ctx.clearRect(0,0,w,h); const pt = Math.min(30, m.poly*14);
+    [['Si', '#8f96a3', 0.25, Math.min(30, pt*1.1)], ['SiO₂', '#8cc6e6', 0.75, Math.min(30, pt*0.3)]].forEach(([n, c, fx, t]) => { const x0 = w*fx - w*0.18, bw = w*0.36, base = h - 40;
+      ctx.fillStyle = c; ctx.fillRect(x0, base - 60, bw, 60); ctx.fillStyle = 'rgba(138,90,43,.85)'; ctx.fillRect(x0, base - 60 - t, bw, t);
+      ctx.fillStyle = J.c('--ink'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(n, w*fx, base + 18);
+      const r = J.rng(n.length + Math.round(v.x)); const k = n === 'Si' ? m.si : m.sio; for(let i = 0; i < Math.min(12, Math.round(k/3)); i++){ ctx.fillStyle = J.c('--jade'); ctx.beginPath(); ctx.arc(x0 + r()*bw, base - 70 - t - r()*80, 4, 0, 7); ctx.fill(); }
+      ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText(n === 'Si' ? 'SiF₄ ↑' : 'SiF₄, CO ↑', w*fx, 18); });
+    const sel = m.si > 0.05 ? m.sio/m.si : Infinity;
+    J.out(box, 'f', J.fmt(m.F, 2)); J.out(box, 'r', J.fmt(m.si, 1) + ' / ' + J.fmt(m.sio, 1)); J.out(box, 's', isFinite(sel) ? J.fmt(sel, 2) + ' : 1' : '∞ (Si 식각 멈춤)', sel > 10 ? 'good' : '');
+    J.out(box, 'st', m.poly > 1.2 ? '폴리머 덮임' : m.poly > 0.4 ? '얇은 폴리머' : '깨끗 (식각 우세)'); });
+})();
+
+/* 5-2 코번 도표 */
+(function(){
+  const box = J.$('#sim2'), G = {cf4:[1, 4, 0, 'CF₄'], c2f6:[2, 6, 0, 'C₂F₆'], c4f8:[4, 8, 0, 'C₄F₈'], c4f6:[4, 6, 0, 'C₄F₆'], chf3:[1, 3, 1, 'CHF₃'], ch2f2:[1, 2, 2, 'CH₂F₂']};
+  const fcEff = (k, o, hh) => { const [C, F, H] = G[k], a = 1 - (o + hh)/100, oo = o/100/a, h2 = hh/100/a; return Math.max(0.2, (F - 0.5*H - 2*h2*0.8)/Math.max(0.15, C - 2*oo*0.8*C/2)); };
+  const bound = E => 2.3 - 0.035*Math.sqrt(E);
+  J.sim('sim2', v => { const fc = fcEff(v.g, v.o, v.h), b = bound(v.e);
+    const P = J.plot(J.$('#cv2'), {x:[0.5, 6], y:[0, 1000], xlab:'실효 F/C 비', ylab:'이온 에너지 (eV)', series:[{pts:Array.from({length:101}, (_, i) => { const E = i*10; return [bound(E), E]; }), color:'--ink', w:3}]});
+    const ctx = P.ctx; ctx.save(); ctx.globalAlpha = .12; ctx.fillStyle = J.c('--jade'); ctx.beginPath(); ctx.moveTo(P.X(bound(0)), P.Y(0)); for(let E = 0; E <= 1000; E += 20) ctx.lineTo(P.X(bound(E)), P.Y(E)); ctx.lineTo(P.X(6), P.Y(1000)); ctx.lineTo(P.X(6), P.Y(0)); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8a5a2b'; ctx.beginPath(); ctx.moveTo(P.X(0.5), P.Y(0)); ctx.lineTo(P.X(bound(0)), P.Y(0)); for(let E = 0; E <= 1000; E += 20) ctx.lineTo(P.X(bound(E)), P.Y(E)); ctx.lineTo(P.X(0.5), P.Y(1000)); ctx.closePath(); ctx.fill(); ctx.restore();
+    ctx.font = '13px "Noto Sans KR"'; ctx.fillStyle = J.c('--jade'); ctx.fillText('식각', P.X(4.5), P.Y(800)); ctx.fillStyle = '#8a5a2b'; ctx.fillText('폴리머 증착', P.X(0.6), P.Y(120));
+    Object.keys(G).forEach(k => { const x = fcEff(k, 0, 0); ctx.fillStyle = J.c('--ink3'); ctx.beginPath(); ctx.arc(P.X(x), P.Y(60), 5, 0, 7); ctx.fill(); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(G[k][3], P.X(x), P.Y(60) - 8); });
+    ctx.fillStyle = J.c('--red'); ctx.font = '22px serif'; ctx.textAlign = 'center'; ctx.fillText('★', P.X(J.clamp(fc, 0.5, 6)), P.Y(v.e) + 8);
+    const d = fc - b;
+    J.out(box, 'fc', J.fmt(fc, 2)); J.out(box, 'd', (d >= 0 ? '+' : '') + J.fmt(d, 2), d > 0 && d <= 0.6 ? 'good' : ''); J.out(box, 'z', d > 0.6 ? '식각 (폴리머 거의 없음)' : d > 0 ? '경계 위: 선택적 식각' : d > -0.4 ? '경계 아래: 식각 멈춤 위험' : '증착', d > 0 && d <= 0.6 ? 'good' : d > 0 ? '' : 'warn'); });
+})();
+
+/* 5-3 */
+(function(){
+  const box = J.$('#sim3'), lam = 0.7;
+  const th = (p, E) => { const t0 = (0.5 + 6*p)/(1 + Math.sqrt(E)/25); return {ox:t0*0.22, sin:t0*0.7, si:t0*1.4}; };
+  const rate = (E, t, k) => k*Math.max(0, Math.sqrt(E) - Math.sqrt(30))*Math.exp(-t/lam);
+  J.sim('sim3', v => { const S = [[], [], [], []]; for(let E = 30; E <= 1500; E += 15){ const t = th(v.p, E), a = rate(E, t.ox, 25), b = rate(E, t.sin, 20), c = rate(E, t.si, 22); S[0].push([E, Math.max(0.1, a)]); S[1].push([E, Math.max(0.1, b)]); S[2].push([E, Math.max(0.1, c)]); S[3].push([E, Math.max(0.1, Math.min(1000, c > 0.01 ? a/c*10 : 1000))]); }
+    J.plot(J.$('#cv3b'), {x:[30, 1500], y:[0.1, 1000], logy:true, xlab:'이온 에너지 (eV)', ylab:'식각 속도 (nm/분)', series:[{pts:S[0], color:'--red', w:3}, {pts:S[1], color:'--gold', w:2.5}, {pts:S[2], color:'--indigo', w:2.5}, {pts:S[3], color:'--ink3', w:1.5, dash:[5, 4]}], vlines:[{x:v.e, color:'--ink'}]});
+    const t = th(v.p, v.e), {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h);
+    [['SiO₂', '#8cc6e6', t.ox], ['SiN', '#d9a441', t.sin], ['Si', '#8f96a3', t.si]].forEach(([n, c, tt], i) => { const x0 = 20 + i*(w - 40)/3, bw = (w - 40)/3 - 16, base = h - 36, sc = 9;
+      ctx.fillStyle = c; ctx.fillRect(x0, base - 70, bw, 70); ctx.fillStyle = 'rgba(138,90,43,.85)'; ctx.fillRect(x0, base - 70 - tt*sc, bw, tt*sc);
+      ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2; const pen = Math.min(70 + tt*sc, lam*sc*3 + 4); [0.3, 0.6].forEach(f => { ctx.beginPath(); ctx.moveTo(x0 + bw*f, base - 70 - tt*sc - 40); ctx.lineTo(x0 + bw*f, base - 70 - tt*sc + pen); ctx.stroke(); });
+      ctx.fillStyle = J.c('--ink'); ctx.font = '12.5px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(n, x0 + bw/2, base + 16); ctx.font = '11px "JetBrains Mono"'; ctx.fillText(J.fmt(tt, 1) + ' nm', x0 + bw/2, base - 76 - tt*sc - 42); });
+    const a = rate(v.e, t.ox, 25), b = rate(v.e, t.sin, 20), c = rate(v.e, t.si, 22), f = x => x > 999 || !isFinite(x) ? '∞' : J.fmt(x, 1) + ' : 1';
+    J.out(box, 't', J.fmt(t.ox, 1) + ' / ' + J.fmt(t.sin, 1) + ' / ' + J.fmt(t.si, 1) + ' nm'); J.out(box, 'r', J.fmt(a, 0) + ' nm/분'); J.out(box, 'sn', f(a/b), a/b > 10 ? 'good' : 'warn'); J.out(box, 'ss', f(a/c), a/c > 20 ? 'good' : 'warn'); });
+})();
+</script>
+</body>
+</html>

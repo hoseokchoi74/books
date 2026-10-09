@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>단면 프로파일 진화 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="profile">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 08 <span class="hanja">第八章 · 形</span></div>
+  <h1>단면 프로파일 진화</h1>
+  <p class="lead">식각의 결과물은 숫자 하나가 아니라 <b>모양</b>이다. 같은 깊이를 파도 측벽이 수직인지, 아래로 좁아지는지(테이퍼), 가운데가 불룩한지(보잉), 마스크 아래로 파고들었는지(언더컷)에 따라 소자가 살고 죽는다. 이 모양은 수십억 개의 입자가 표면에 부딪히는 방식으로 정해진다. 위에서 거의 수직으로 떨어지는 <span class="term">이온</span>, 사방으로 튀며 반응하는 <span class="term">라디칼</span>, 그리고 표면에 달라붙는 <span class="term">폴리머</span> 전구체. 이 장에서는 이 세 종류의 입자를 하나하나 추적하는 단면 시뮬레이터로 프로파일이 자라나는 과정을 지켜본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>이온의 방향성, 라디칼의 등방성, 폴리머의 측벽 보호가 어떻게 합쳐져 이방성 식각을 만드는지 본다.</li>
+  <li>측벽 각도·보잉·언더컷·마스크 패싯을 만드는 원인을 시뮬레이션으로 찾는다.</li>
+  <li>대표 레시피 네 가지(순수 화학, 순수 물리, 이온 보조, 측벽 보호)의 단면을 나란히 비교한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>세 가지 입자의 단면 시뮬레이터</h2>
+<p>플라스마에서 웨이퍼로 오는 입자는 크게 셋이다. <b>이온</b>은 쉬스 전기장에 가속되어 수직에 가깝게(각도 퍼짐 수 도) 떨어지고, 큰 에너지로 바닥을 때린다. <b>라디칼</b>(F, Cl 같은 중성 원자)은 이온보다 수백 배 많지만 방향 없이 날아다니며, 표면에 닿을 때마다 일정 확률로 반응하고 아니면 다시 튕겨 나간다. <b>폴리머 전구체</b>(CFₓ)는 표면에 달라붙어 얇은 보호막을 만든다. 바닥에 쌓인 폴리머는 이온이 금방 벗겨 내지만, 이온이 거의 닿지 않는 측벽의 폴리머는 남아 라디칼의 공격을 막는다. 이것이 수직 측벽의 비밀이다.</p>
+<div class="eq">$$\text{식각 속도} \propto \underbrace{Y_i(E,\theta)\,\Gamma_i}_{\text{이온}} + \underbrace{s\,\Gamma_n}_{\text{라디칼}} - \underbrace{\text{폴리머 보호}}_{\text{측벽}},\qquad Y_i \propto \sqrt{E} - \sqrt{E_{th}}$$<div class="note">Γ: 입자 선속, Y<sub>i</sub>: 이온 하나가 떼어 내는 원자 수(에너지 문턱 E<sub>th</sub> ≈ 20 eV), s: 라디칼 반응 확률. 시뮬레이터는 1 칸 = 2 nm 격자에서 입자를 하나하나 직선으로 추적한다.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-1</span><span class="ttl">입자 추적 단면 시뮬레이터</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">이온 에너지 <output data-o="E"></output></span><input type="range" data-k="E" min="30" max="800" step="10" value="300" data-d="0" data-u="eV"></label>
+      <label class="ctrl"><span class="lab">이온 각도 퍼짐 σ <output data-o="sig"></output></span><input type="range" data-k="sig" min="0.5" max="15" step="0.5" value="3" data-d="1" data-u="°"></label>
+      <label class="ctrl"><span class="lab">라디칼 : 이온 비 <output data-o="nr"></output></span><input type="range" data-k="nr" min="0" max="20" step="0.5" value="6" data-d="1"></label>
+      <label class="ctrl"><span class="lab">라디칼 반응 확률 s <output data-o="s"></output></span><input type="range" data-k="s" min="0" max="0.3" step="0.01" value="0.05" data-d="2"></label>
+      <label class="ctrl"><span class="lab">폴리머 : 이온 비 <output data-o="pr"></output></span><input type="range" data-k="pr" min="0" max="1.5" step="0.05" value="0.4" data-d="2"></label>
+      <label class="ctrl"><span class="lab">마스크 상대 수율 <output data-o="ym"></output></span><input type="range" data-k="ym" min="0.02" max="0.6" step="0.01" value="0.08" data-d="2"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b1g">식각 시작/멈춤</button><button class="sbtn warn" id="b1r">처음으로</button><span class="hint" id="b1h"></span></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="340"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="340"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">깊이 / 시간</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">CD 위 / 중간 / 바닥</span><span class="v" data-r="cd"></span></div>
+      <div class="ro"><span class="k">측벽 각 · 보잉 · 언더컷</span><span class="v" data-r="sh"></span></div>
+      <div class="ro"><span class="k">마스크 선택비</span><span class="v" data-r="sel"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 단면(보라 = 감광액 마스크, 하늘색 = 식각할 산화막, 노랑 = 질화막 정지층, 초록 = 폴리머, 회색 = 기판). 틈 폭 40 nm, 막 두께 160 nm, 1 칸 = 2 nm. 오른쪽: 깊이에 따른 구멍 폭(빨강)과 마스크 틈 폭(점선). 라디칼만 키우면 둥근 언더컷이, 이온 각도를 키우거나 반사가 많으면 보잉이, 폴리머를 너무 키우면 테이퍼와 식각 멈춤이 생긴다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🌧️</span><b>비와 안개, 그리고 우비</b><span>이온은 바람 없는 날의 굵은 빗줄기처럼 곧게 떨어져 바닥만 때린다. 라디칼은 안개처럼 사방으로 스며들어 벽까지 적신다. 폴리머는 벽에 입힌 우비다. 빗줄기는 바닥의 우비는 찢지만 벽의 우비는 거의 건드리지 못하므로, 벽은 안개로부터 보호된다.</span></div>
+
+<h2 id="s2"><span class="n">02</span>네 가지 레시피 나란히 보기</h2>
+<p>식각 레시피는 이 세 입자의 균형을 맞추는 일이다. 라디칼만 있으면 사방으로 똑같이 깎이는 <b>등방성</b> 식각(습식과 비슷)이 된다. 이온만 있으면 방향은 좋지만 물리적으로 원자를 튕겨 내는 <b>스퍼터링</b>이라 느리고 마스크까지 깎는다. 이온과 라디칼이 함께 오면 이온이 바닥 표면을 "활성화"해 라디칼 반응이 빨라지고(6장의 시너지), 폴리머를 더하면 측벽이 보호되어 빠르면서도 수직인 식각이 된다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-2</span><span class="ttl">레시피 4종 동시 식각</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><button class="sbtn pri" id="b2g">동시 식각 시작/멈춤</button><button class="sbtn warn" id="b2r">처음으로</button></div>
+    <div class="canvas-box"><canvas id="cv2" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">① 순수 화학 (라디칼만)</span><span class="v" data-r="a" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">② 순수 물리 (Ar 이온)</span><span class="v" data-r="b" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">③ 이온 + 라디칼</span><span class="v" data-r="c" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">④ 이온 + 라디칼 + 폴리머</span><span class="v" data-r="e" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 같은 시간 동안 네 레시피로 식각한 단면. 각 칸 아래 숫자는 깊이와 언더컷. ①은 마스크 아래로 둥글게 파고들고, ②는 느리고 마스크 모서리가 비스듬히 깎이며(패싯), ③은 빠르지만 측벽이 조금 휘고, ④가 가장 수직에 가깝다. 실제 SiO₂ 식각은 ④(C₄F₈/Ar/O₂ 같은 플루오로카본 화학)를 쓴다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>보잉과 마스크 패싯</h2>
+<p>이온이 완전히 수직이라면 측벽은 완벽할 것이다. 그러나 이온은 수 도의 각도 퍼짐을 갖고, 마스크 모서리에 비스듬히 부딪힌 이온은 반사되어 구멍 위쪽 측벽을 때린다. 그래서 구멍 위쪽 1/3 지점이 불룩해지는 <span class="term">보잉</span>이 생긴다. 또 스퍼터링 수율은 수직보다 비스듬히(약 60°) 맞을 때 더 커서, 마스크 모서리가 먼저 깎여 경사면(<span class="term">패싯</span>)이 생긴다. 패싯이 넓어지면 반사 이온이 더 많아져 보잉이 악화되고, 마스크가 얇아지면 CD가 넓어진다.</p>
+<div class="eq">$$Y(\theta) \approx Y(0)\,\bigl[\cos\theta + 2.2\sin^2\theta\cos\theta\bigr]\ (\text{마스크}),\qquad \theta_{max} \approx 60^\circ$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-3</span><span class="ttl">보잉 만들기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">이온 각도 퍼짐 σ <output data-o="sig"></output></span><input type="range" data-k="sig" min="0.5" max="12" step="0.5" value="9" data-d="1" data-u="°"></label>
+      <label class="ctrl"><span class="lab">스치는 이온 반사 확률 <output data-o="rf"></output></span><input type="range" data-k="rf" min="0" max="1" step="0.05" value="0.8" data-d="2"></label>
+      <label class="ctrl"><span class="lab">마스크 두께 <output data-o="mt"></output></span><input type="range" data-k="mt" min="10" max="60" step="2" value="24" data-d="0" data-u="칸"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b3g">식각 시작/멈춤</button><button class="sbtn warn" id="b3r">처음으로</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="320"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="320"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">보잉 (최대 폭 − 위·아래 폭)</span><span class="v" data-r="bow"></span></div>
+      <div class="ro"><span class="k">보잉 위치 (막 윗면에서)</span><span class="v" data-r="pos"></span></div>
+      <div class="ro"><span class="k">남은 마스크</span><span class="v" data-r="mask"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 단면과 최근 이온 궤적 몇 개(노랑, 반사된 이온은 주황). 오른쪽: 깊이별 구멍 폭의 시간 변화(옅은 선 = 이전, 진한 선 = 현재). 반사 확률을 0으로 하면 보잉이 크게 줄고, 마스크를 얇게 하면 패싯이 빨리 내려와 윗부분 CD가 넓어진다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 폴리머를 많이 넣으면 측벽은 수직에 가까워지지만, 너무 많으면 식각이 멈춘다(etch stop). 왜일까?</p><p>바닥에 쌓이는 폴리머의 속도가 이온이 벗겨 내는 속도보다 빨라지면 바닥이 폴리머로 덮여 라디칼이 막을 만나지 못한다. 구멍이 깊어질수록 이온은 덜 도착하므로 깊은 곳부터 멈춘다. 그래서 산소를 조금 넣어 폴리머를 태우는 "균형점"을 찾는다. 5장에서 C/F 비로 다룬다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">플루오로카본 플라스마에서 측벽이 수직으로 유지되는 주된 이유는?</p><ol><li>라디칼이 수직으로만 날아와서</li><li>마스크가 측벽을 가려서</li><li>측벽의 폴리머는 이온이 거의 닿지 않아 남아 라디칼을 막기 때문</li><li>바닥의 온도가 더 높아서</li></ol>
+<p class="explain">이온은 바닥의 폴리머를 제거하지만 측벽에는 스치듯 닿아 폴리머가 보호막으로 남는다.</p></div>
+<div class="quiz" data-a="0"><p class="q">구멍 위쪽 측벽이 불룩해지는 보잉의 주된 원인은?</p><ol><li>마스크 모서리 등에서 반사되거나 비스듬히 들어온 이온</li><li>정지막</li><li>너무 많은 폴리머</li><li>낮은 이온 에너지</li></ol>
+<p class="explain">각도 퍼짐을 가진 이온과 패싯에서 반사된 이온이 위쪽 측벽을 때린다.</p></div>
+<div class="quiz" data-a="1"><p class="q">라디칼만으로 식각하면 단면은?</p><ol><li>수직 측벽</li><li>마스크 아래로 둥글게 파고드는 등방성 단면</li><li>아래로 좁아지는 테이퍼</li><li>식각되지 않는다</li></ol>
+<p class="explain">라디칼은 방향성이 없어 모든 방향으로 같은 속도로 깎는다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const mk = (o = {}) => ES.create({W:o.W || 100, H:o.H || 120, dx:2, gap:6, stack:[[ES.MASK, o.mt || 30], [ES.FILM, o.ft || 80], [ES.STOP, 6], [ES.SUB, 30]], open:o.open || [[40, 60]]});
+function widthProfile(s, a, b){ const xc = Math.floor((a + b)/2), ft = s.tops[ES.FILM], pts = []; for(let y = ft; y < s.H; y++){ if(ES.solid(s, xc, y)) break; let l = xc, r = xc; while(l > xc - s.W/2 && !ES.solid(s, l - 1, y)) l--; while(r < xc + s.W/2 && !ES.solid(s, r + 1, y)) r++; pts.push([(y - ft)*s.dx, (r - l + 1)*s.dx]); } return pts; }
+
+/* 8-1 */
+(function(){
+  const box = J.$('#sim1'); let s = mk(), run = false, V = null, r = J.rng(7);
+  const params = v => ({ionE:v.E, ionSig:v.sig, ion:120, neu:Math.round(120*v.nr), poly:Math.round(120*v.pr), sN:v.s, Ymask:v.ym, reflect:0.6, sPoly:0.35, spont:0.25});
+  const draw = () => { const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); ES.draw(ctx, w, h, s);
+    const M = ES.measure(s, 40, 60), wp = widthProfile(s, 40, 60);
+    J.plot(J.$('#cv1b'), {x:[0, 170], y:[0, 140], xlab:'막 윗면에서 깊이 (nm)', ylab:'구멍 폭 (nm)', series:[{pts:wp, color:'--red', w:3}], hlines:[{y:40, color:'--ink3', label:'마스크 틈 40'}]});
+    const mLost = 60 - M.maskLeft;
+    J.out(box, 'd', J.fmt(M.depth, 0) + ' nm / ' + s.t + ' 스텝'); J.out(box, 'cd', J.fmt(M.wTop, 0) + ' / ' + J.fmt(M.wMid, 0) + ' / ' + J.fmt(M.wBot, 0) + ' nm');
+    J.out(box, 'sh', J.fmt(M.swa, 0) + '° · ' + J.fmt(M.bow, 0) + ' nm · ' + J.fmt(M.under, 0) + ' nm', M.swa > 86 && M.bow < 6 && M.under < 4 ? 'good' : M.swa > 80 ? 'warn' : 'bad');
+    J.out(box, 'sel', mLost > 1 ? J.fmt(M.depth/mLost, 1) + ' : 1 (막 깊이 ÷ 마스크 손실)' : (M.depth ? '∞' : '—'), mLost > 1 && M.depth/mLost < 3 ? 'warn' : '');
+    J.$('#b1h').textContent = run ? '식각 중…' : (M.reachedStop ? '정지막 도달' : ''); };
+  J.sim('sim1', v => { V = v; draw(); });
+  J.$('#b1g').onclick = e => { run = !run; e.target.classList.toggle('on', run); };
+  J.$('#b1r').onclick = () => { s = mk(); draw(); };
+  J.loop(J.$('#cv1a'), () => { if(!run || !V) return; for(let k = 0; k < 2; k++) ES.step(s, params(V), r); draw(); if(s.t > 600){ run = false; J.$('#b1g').classList.remove('on'); } });
+})();
+
+/* 8-2 */
+(function(){
+  const box = J.$('#sim2'), R = [
+    {k:'a', name:'① 화학', p:{ionE:30, ion:0, neu:330, poly:0, sN:0.1, spont:1, Ymask:0.1}},
+    {k:'b', name:'② 물리', p:{ionE:500, ionSig:3, ion:120, neu:0, poly:0, Yfilm:0.3, Ymask:0.12, reflect:0.5}},
+    {k:'c', name:'③ 이온+라디칼', p:{ionE:300, ionSig:3, ion:120, neu:720, poly:0, sN:0.05, spont:0.25, Ymask:0.08}},
+    {k:'e', name:'④ +폴리머', p:{ionE:300, ionSig:3, ion:120, neu:720, poly:48, sN:0.05, spont:0.25, Ymask:0.08, sPoly:0.35}}];
+  let S = R.map(() => mk({W:60, H:100, open:[[20, 40]], ft:56})), run = false, rr = J.rng(3);
+  const draw = () => { const {ctx, w, h} = J.fit(J.$('#cv2')); ctx.clearRect(0,0,w,h); const cw = w/4;
+    S.forEach((s, i) => { ctx.save(); ctx.translate(i*cw, 0); ES.draw(ctx, cw - 6, h - 22, s); ctx.restore(); const M = ES.measure(s, 20, 40);
+      ctx.fillStyle = J.c('--ink'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(R[i].name, i*cw + cw/2 - 3, h - 6);
+      J.out(box, R[i].k, '깊이 ' + J.fmt(M.depth, 0) + ' nm · 언더컷 ' + J.fmt(M.under, 0) + ' · 각 ' + J.fmt(M.swa, 0) + '°'); }); };
+  J.live(draw);
+  J.$('#b2g').onclick = e => { run = !run; e.target.classList.toggle('on', run); };
+  J.$('#b2r').onclick = () => { S = R.map(() => mk({W:60, H:100, open:[[20, 40]], ft:56})); draw(); };
+  J.loop(J.$('#cv2'), () => { if(!run) return; S.forEach((s, i) => ES.step(s, R[i].p, rr)); draw(); if(S[0].t > 280){ run = false; J.$('#b2g').classList.remove('on'); } });
+})();
+
+/* 8-3 */
+(function(){
+  const box = J.$('#sim3'); let V = null, s = null, run = false, hist = [], rr = J.rng(11);
+  const reset = () => { s = mk({mt:V.mt}); hist = []; };
+  const draw = () => { const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const g = ES.draw(ctx, w, h, s);
+    const r2 = J.rng(s.t + 1); for(let i = 0; i < 14; i++){ let x = 30 + r2()*40, y = 0.01; const th = J.gauss(r2)*V.sig*Math.PI/180; let vx = Math.sin(th), vy = Math.cos(th); ctx.lineWidth = 1.2;
+      for(let b = 0; b < 3; b++){ const hh = ES.trace(s, x, y, vx, vy); if(!hh) break; ctx.strokeStyle = b ? 'rgba(240,120,20,.9)' : 'rgba(250,210,40,.8)'; ctx.beginPath(); ctx.moveTo(g.ox + x*g.sc, y*g.sc); ctx.lineTo(g.ox + hh.px*g.sc, hh.py*g.sc); ctx.stroke();
+        const n = ES.normal(s, hh.xi, hh.yi), ca = -(vx*n[0] + vy*n[1]); if(ca < 0.34 && r2() < V.rf){ const d = vx*n[0] + vy*n[1]; vx -= 2*d*n[0]; vy -= 2*d*n[1]; x = hh.px; y = hh.py; } else break; } }
+    const wp = widthProfile(s, 40, 60); if(s.t % 60 === 0 && s.t && (!hist.length || hist[hist.length - 1].t !== s.t)) hist.push({t:s.t, wp});
+    J.plot(J.$('#cv3b'), {x:[0, 170], y:[0, 100], xlab:'깊이 (nm)', ylab:'구멍 폭 (nm)', series:hist.slice(-6).map((q, i, a) => ({pts:q.wp, color:'--ink3', w:1})).concat([{pts:wp, color:'--red', w:3}]), hlines:[{y:40, color:'--ink3'}]});
+    const M = ES.measure(s, 40, 60);
+    J.out(box, 'bow', J.fmt(M.bow, 0) + ' nm', M.bow < 4 ? 'good' : M.bow < 10 ? 'warn' : 'bad'); J.out(box, 'pos', M.bow > 1 ? J.fmt(M.yBow, 0) + ' nm' : '—'); J.out(box, 'mask', J.fmt(M.maskLeft, 0) + ' nm', M.maskLeft > 10 ? 'good' : M.maskLeft > 0 ? 'warn' : 'bad'); };
+  J.sim('sim3', v => { const re = !V || V.mt !== v.mt; V = v; if(re) reset(); draw(); });
+  J.$('#b3g').onclick = e => { run = !run; e.target.classList.toggle('on', run); };
+  J.$('#b3r').onclick = () => { reset(); draw(); };
+  J.loop(J.$('#cv3a'), () => { if(!run || !V) return; for(let k = 0; k < 2; k++) ES.step(s, {ionE:300, ionSig:V.sig, ion:120, neu:720, poly:48, sN:0.05, spont:0.25, Ymask:0.12, reflect:V.rf, sPoly:0.35}, rr); draw(); if(s.t > 500){ run = false; J.$('#b3g').classList.remove('on'); } });
+})();
+</script>
+</body>
+</html>

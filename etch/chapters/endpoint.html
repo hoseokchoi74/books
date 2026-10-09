@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>선택비와 종말점 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="endpoint">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 10 <span class="hanja">第十章 · 止</span></div>
+  <h1>선택비와 종말점</h1>
+  <p class="lead">식각에서 가장 어려운 순간은 "멈추는 순간"이다. 막을 다 뚫었는지 웨이퍼를 꺼내 보지 않고 어떻게 알까? 플라스마가 내는 빛 속에는 식각 생성물의 지문이 들어 있다. 산화막이 깎이는 동안에는 CO 분자의 빛이 밝고, 막이 사라지면 어두워진다. 이 빛을 실시간으로 읽는 <span class="term">발광 분광 종말점 검출</span>(OES)이 식각의 브레이크다. 그런데 웨이퍼 위 곳곳이 다른 시각에 뚫리고, 노출 면적이 몇 %에 불과하면 신호가 잡음에 묻힌다. 또 노출 면적이 많을수록 반응물이 고갈되어 식각이 느려진다(로딩). 이 장은 종말점 검출, 로딩 효과, 그리고 선택비 예산을 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>OES 신호의 변화로 종말점을 검출하고, 노출 면적·불균일·잡음이 검출 정확도에 주는 영향을 본다.</li>
+  <li>반응물 소모로 생기는 매크로 로딩과 패턴 밀도에 따른 마이크로 로딩을 계산한다.</li>
+  <li>막 두께·식각 속도 산포와 과식각, 선택비로 정지막 손실 분포를 몬테카를로로 구한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>빛으로 읽는 종말점</h2>
+<p>플라스마 속 분자와 원자는 전자에 들떴다가 고유한 파장의 빛을 낸다. 산화막을 플루오로카본으로 깎으면 CO(483.5 nm), SiF(440 nm)가, 실리콘을 염소로 깎으면 SiCl(287 nm)이 나온다. 분광기로 이 선의 세기를 따라가다가, 막이 사라져 생성물이 줄면 신호가 떨어지는 순간을 잡는다. 웨이퍼 전체가 동시에 뚫리지 않으므로 신호는 계단이 아니라 완만한 경사로 떨어지고, 경사가 끝나는 곳이 "가장 느린 곳까지 뚫린" 시각이다. 노출 면적이 1 % 수준인 콘택 식각은 신호 변화가 잡음과 비슷해 여러 파장을 함께 쓰는 통계 기법(주성분 분석)으로 잡는다.</p>
+<div class="eq">$$I_{CO}(t) \propto A_{open}\cdot\frac{1}{N}\sum_i \mathbb 1\bigl[t < t_{clear,i}\bigr] + I_{bg} + \varepsilon(t),\qquad t_{clear,i} = \frac{d_i}{R_i}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-1</span><span class="ttl">OES 종말점 검출기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">노출 면적 <output data-o="a"></output></span><input type="range" data-k="a" min="0.5" max="60" step="0.5" value="20" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">식각 속도 불균일 (1σ) <output data-o="u"></output></span><input type="range" data-k="u" min="0" max="10" step="0.5" value="3" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">신호 잡음 <output data-o="n"></output></span><input type="range" data-k="n" min="0" max="5" step="0.1" value="1" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">평활화 창 <output data-o="w"></output></span><input type="range" data-k="w" min="1" max="15" step="1" value="5" data-d="0" data-u="s"></label>
+      <label class="ctrl"><span class="lab">종말점 후 과식각 <output data-o="oe"></output></span><input type="range" data-k="oe" min="0" max="50" step="1" value="15" data-d="0" data-u="%"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b1r">다른 웨이퍼</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">실제 완전 관통 시각</span><span class="v" data-r="tc"></span></div>
+      <div class="ro"><span class="k">검출한 종말점</span><span class="v" data-r="ep"></span></div>
+      <div class="ro"><span class="k">식각 종료 (과식각 포함)</span><span class="v" data-r="te"></span></div>
+      <div class="ro"><span class="k">덜 뚫린 자리</span><span class="v" data-r="ue"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: CO 483 nm 세기(회색 = 원신호, 빨강 = 평활화). 파란 점선 = 실제로 모든 자리가 뚫린 시각, 빨간 선 = 검출된 종말점(평활 신호가 처음 값과 바닥값의 중간 아래로 떨어지고 기울기가 평평해진 시각), 검정 선 = 과식각 후 종료. 막 두께 300 nm, 평균 속도 300 nm/분. 오른쪽: 웨이퍼 자리별 관통 시각 분포(막대)와 종료 시각. 노출 면적을 줄이고 잡음을 키우면 검출이 흔들린다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>로딩: 많이 깎으면 느려진다</h2>
+<p>식각 반응물(F 라디칼)은 플라스마에서 일정한 속도로 만들어지고, 웨이퍼 위 노출된 막이 소모하며, 펌프가 뽑아낸다. 노출 면적이 크면 소모가 늘어 반응물 농도가 떨어지고 식각이 느려진다(<b>매크로 로딩</b>). 같은 이유로 칩 안에서도 패턴이 빽빽한 영역(넓게 노출)은 주변 반응물이 고갈되어 듬성한 영역보다 느리다(<b>마이크로 로딩</b>, 수 mm 범위). 그래서 같은 레시피도 제품마다 식각 시간이 달라지고, 설계에 더미 패턴을 채워 밀도를 고르게 한다.</p>
+<div class="eq">$$R = \frac{R_0}{1 + \Phi\,A_{open}},\qquad \Phi = \frac{k\,\rho_{site}}{\text{생성률 / 펌프 손실}}\quad(\text{모가브})$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-2</span><span class="ttl">칩 안 마이크로 로딩 지도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">소모 계수 Φ <output data-o="k"></output></span><input type="range" data-k="k" min="0" max="5" step="0.1" value="1.5" data-d="1"></label>
+      <label class="ctrl"><span class="lab">반응물 확산 길이 <output data-o="L"></output></span><input type="range" data-k="L" min="0.2" max="5" step="0.1" value="1.2" data-d="1" data-u="mm"></label>
+      <label class="ctrl"><span class="lab">더미 패턴 채우기</span><select data-k="d"><option value="0" selected>없음</option><option value="1">빈 곳에 더미 채움</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">칩 안 식각 속도 범위</span><span class="v" data-r="rg"></span></div>
+      <div class="ro"><span class="k">불균일 (최대−최소)/(2·평균)</span><span class="v" data-r="nu"></span></div>
+      <div class="ro"><span class="k">칩 평균 노출 면적</span><span class="v" data-r="ao"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 10 × 10 mm 칩. 위 = 패턴 밀도(진할수록 많이 노출: 메모리 배열, 로직, 빈 영역), 아래 = 식각 속도 지도(빨강 = 느림, 파랑 = 빠름). 오른쪽: 웨이퍼 전체 노출 면적에 따른 매크로 로딩(회색)과 칩 안 국소 밀도에 따른 속도(점). 더미를 채우면 밀도가 고르게 되어 국소 차이가 줄지만 전체 속도는 내려간다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🍕</span><b>피자를 나눠 먹는 사람들</b><span>피자(반응물)가 일정한 속도로 구워져 나오는데 먹는 사람(노출 면적)이 많아지면 한 사람이 먹는 양이 줄어든다(매크로 로딩). 큰 테이블 한쪽에 사람이 몰려 앉아 있으면 그쪽 접시가 먼저 비고, 반대쪽 접시는 남는다(마이크로 로딩). 빈자리에 사람을 고르게 앉히는 것이 더미 패턴이다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>선택비 예산</h2>
+<p>정지막을 얼마나 두껍게, 선택비를 얼마나 높게 해야 할까? 막 두께도 웨이퍼마다, 자리마다 몇 % 다르고, 식각 속도도 다르다. 가장 늦게 뚫리는 자리까지 확실히 뚫으려면 과식각을 해야 하고, 그동안 가장 먼저 뚫린 자리는 정지막을 계속 깎는다. 수십억 개 자리 중 하나라도 정지막이 뚫리면 불량이므로 분포의 꼬리(6σ)까지 봐야 한다. 이 실험은 그 예산을 몬테카를로로 세운다.</p>
+<div class="eq">$$\Delta_{stop} = \frac{R_i\,t_{etch} - d_i}{S},\qquad t_{etch} = (1 + OE)\,\max_i\frac{d_i}{R_i}\ (\text{근사적으로 } \mu + 4\sigma)$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-3</span><span class="ttl">정지막 손실 몬테카를로</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">막 두께 산포 (1σ) <output data-o="sd"></output></span><input type="range" data-k="sd" min="0" max="8" step="0.5" value="3" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">식각 속도 산포 (1σ) <output data-o="sr"></output></span><input type="range" data-k="sr" min="0" max="8" step="0.5" value="3" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">추가 과식각 <output data-o="oe"></output></span><input type="range" data-k="oe" min="0" max="40" step="1" value="10" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">선택비 S <output data-o="s"></output></span><input type="range" data-k="s" min="3" max="80" step="1" value="20" data-d="0"></label>
+      <label class="ctrl"><span class="lab">정지막 두께 <output data-o="t"></output></span><input type="range" data-k="t" min="5" max="50" step="1" value="15" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">필요 식각 시간 (막 300 nm)</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">정지막 손실 평균 / 최대</span><span class="v" data-r="l"></span></div>
+      <div class="ro"><span class="k">정지막 남는 최소 두께</span><span class="v" data-r="m"></span></div>
+      <div class="ro"><span class="k">이 산포에서 필요한 최소 선택비</span><span class="v" data-r="smin"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 자리 2만 개의 정지막 손실 분포. 빨간 선 = 정지막 두께(넘으면 관통 불량). 오른쪽: 산포(막 + 속도 합성)에 따른 필요 최소 선택비(정지막 두께별 곡선). 현재 조건은 점으로 표시. 산포가 두 배가 되면 필요한 선택비도 거의 두 배가 된다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 정지막이 너무 얇아 선택비로 버틸 수 없다면 어떤 방법이 있을까?</p><p>식각을 두 단계로 나눈다. 빠르지만 선택비가 낮은 주 식각으로 대부분을 깎고, 종말점 근처에서 느리지만 선택비가 아주 높은 과식각 레시피(폴리머가 많은 가스, 낮은 이온 에너지)로 바꾼다. 실제 식각 레시피는 이렇게 5~10개 단계로 이루어진다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="0"><p class="q">산화막 플루오로카본 식각의 종말점에서 OES로 주로 보는 신호 변화는?</p><ol><li>CO 발광이 줄어든다</li><li>CO 발광이 갑자기 는다</li><li>Ar 발광이 사라진다</li><li>플라스마가 꺼진다</li></ol>
+<p class="explain">산화막의 산소가 탄소와 만나 CO가 생기므로, 막이 사라지면 CO가 줄어든다.</p></div>
+<div class="quiz" data-a="2"><p class="q">노출 면적이 클수록 식각 속도가 느려지는 현상은?</p><ol><li>ARDE</li><li>노칭</li><li>매크로 로딩</li><li>보잉</li></ol>
+<p class="explain">반응물이 더 많이 소모되어 농도가 떨어진다.</p></div>
+<div class="quiz" data-a="1"><p class="q">막 300 nm, 가장 느린 곳 기준으로 20 % 과식각, 가장 빠른 곳은 가장 느린 곳보다 10 % 빠르고 선택비 30이면 정지막 최대 손실은?</p><ol><li>1 nm</li><li>3.2 nm</li><li>10 nm</li><li>30 nm</li></ol>
+<p class="explain">가장 빠른 곳은 300 × 1.1 × 1.2 = 396 nm를 깎을 시간을 받으므로 96 nm만큼 초과 식각, ÷ 30 = 3.2 nm.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 10-1 OES */
+(function(){
+  const box = J.$('#sim1'); let seed = 1;
+  J.sim('sim1', v => { const r = J.rng(seed), N = 2000, d = 300, R0 = 300/60, tc = []; // nm/s
+    for(let i = 0; i < N; i++){ const R = R0*(1 + v.u/100*J.gauss(r)), dd = d*(1 + 0.01*J.gauss(r)); tc.push(dd/Math.max(R, 0.2*R0)); }
+    tc.sort((a, b) => a - b); const tAll = tc[N - 1], dt = 0.25, T = 110, sig = [], sm = [];
+    for(let t = 0; t <= T; t += dt){ let k = 0, lo = 0, hi = N; while(lo < hi){ const m = (lo + hi) >> 1; if(tc[m] <= t) lo = m + 1; else hi = m; } k = N - lo; const base = 1, amp = v.a/20*0.6;
+      sig.push([t, base + amp*k/N*(1 - 0.002*t) + (v.n/100)*J.gauss(r)]); }
+    const W = Math.max(1, Math.round(v.w/dt)); for(let i = 0; i < sig.length; i++){ let s = 0, c = 0; for(let j = Math.max(0, i - W + 1); j <= i; j++){ s += sig[j][1]; c++; } sm.push([sig[i][0], s/c]); }
+    const startV = sm[Math.round(20/dt)][1], endV = sm[sm.length - 1][1], mid = (startV + endV)/2;
+    let ep = null; for(let i = Math.round(20/dt); i < sm.length - W; i++){ if(sm[i][1] < mid){ // 기울기 평평해질 때까지
+        for(let j = i; j < sm.length - W; j++){ const slope = (sm[j + W][1] - sm[j][1])/(W*dt); if(Math.abs(slope) < Math.abs(startV - endV)/40 + v.n/100/(W*dt)){ ep = sm[j][0]; break; } } break; } }
+    const tEnd = ep ? ep*(1 + v.oe/100) : null, under = tEnd ? tc.filter(t => t > tEnd).length : N;
+    J.plot(J.$('#cv1a'), {x:[0, T], y:[Math.min(...sig.map(p => p[1])) - 0.02, Math.max(...sig.map(p => p[1])) + 0.02], xlab:'시간 (s)', ylab:'CO 483 nm 세기', series:[{pts:sig, color:'--ink3', w:1}, {pts:sm, color:'--red', w:2.5}], vlines:[{x:tAll, color:'--indigo'}].concat(ep ? [{x:ep, color:'--red', label:'검출', align:'right'}, {x:tEnd, color:'--ink', label:'종료'}] : [])});
+    const bins = new Array(40).fill(0), t0 = tc[0]*0.97, t1 = Math.max(tAll, tEnd || 0)*1.03; tc.forEach(t => { const k = Math.floor((t - t0)/(t1 - t0)*40); if(k >= 0 && k < 40) bins[k]++; });
+    J.plot(J.$('#cv1b'), {x:[t0, t1], y:[0, Math.max(...bins)*1.1], xlab:'자리별 관통 시각 (s)', ylab:'자리 수', series:[{pts:bins.flatMap((n, k) => [[t0 + k*(t1 - t0)/40, n], [t0 + (k + 1)*(t1 - t0)/40, n]]), color:'--indigo', w:1.5, fill:.3}], vlines:tEnd ? [{x:tEnd, color:'--ink', label:'종료'}] : []});
+    J.out(box, 'tc', J.fmt(tAll, 1) + ' s'); J.out(box, 'ep', ep ? J.fmt(ep, 1) + ' s' : '검출 실패', ep ? (Math.abs(ep - tAll) < 3 ? 'good' : 'warn') : 'bad'); J.out(box, 'te', tEnd ? J.fmt(tEnd, 1) + ' s' : '—');
+    J.out(box, 'ue', under ? under + ' / ' + N + ' 자리' : '없음', under ? 'bad' : 'good'); });
+  J.$('#b1r').onclick = () => { seed++; J.redrawAll(); };
+})();
+
+/* 10-2 로딩 */
+(function(){
+  const box = J.$('#sim2'), G = 50; // 0.2 mm 격자
+  const density = dummy => { const D = new Float32Array(G*G); for(let j = 0; j < G; j++) for(let i = 0; i < G; i++){ let d = 0.05; if(i < 22 && j < 30) d = 0.55; else if(i >= 26 && j < 22) d = 0.25; else if(j >= 34) d = (i % 10 < 5) ? 0.35 : 0.05; if(dummy && d < 0.2) d = 0.3; D[j*G + i] = d; } return D; };
+  const blur = (A, s) => { const R = Math.ceil(2.5*s), k = []; let S = 0; for(let j = -R; j <= R; j++){ const v = Math.exp(-j*j/(2*s*s)); k.push(v); S += v; } const T = new Float32Array(G*G), O = new Float32Array(G*G);
+    for(let y = 0; y < G; y++) for(let x = 0; x < G; x++){ let a = 0; for(let j = -R; j <= R; j++) a += A[y*G + Math.min(G - 1, Math.max(0, x + j))]*k[j + R]; T[y*G + x] = a/S; }
+    for(let y = 0; y < G; y++) for(let x = 0; x < G; x++){ let a = 0; for(let j = -R; j <= R; j++) a += T[Math.min(G - 1, Math.max(0, y + j))*G + x]*k[j + R]; O[y*G + x] = a/S; } return O; };
+  J.sim('sim2', v => { const D = density(v.d === '1'), B = blur(D, v.L/0.2), mean = D.reduce((a, b) => a + b, 0)/D.length, macro = 1/(1 + v.k*mean*0.6);
+    const Rm = new Float32Array(G*G); let mn = 9, mx = 0, s = 0; for(let i = 0; i < G*G; i++){ Rm[i] = macro/(1 + v.k*(B[i] - mean)*0.15); mn = Math.min(mn, Rm[i]); mx = Math.max(mx, Rm[i]); s += Rm[i]; } const avg = s/(G*G);
+    const {ctx, w, h} = J.fit(J.$('#cv2a')); ctx.clearRect(0,0,w,h); const cs = Math.min(w, (h - 20)/2)/G, ox = (w - cs*G)/2;
+    for(let j = 0; j < G; j++) for(let i = 0; i < G; i++){ const d = D[j*G + i]; ctx.fillStyle = `rgba(80,60,140,${0.1 + d*1.4})`; ctx.fillRect(ox + i*cs, j*cs, cs + .4, cs + .4);
+      const t = J.clamp((Rm[j*G + i] - avg)/(0.08*avg) + 0.5, 0, 1); ctx.fillStyle = `rgb(${Math.round(220*(1 - t) + 40*t)},${Math.round(80 + 60*t)},${Math.round(60*(1 - t) + 210*t)})`; ctx.fillRect(ox + i*cs, G*cs + 14 + j*cs, cs + .4, cs + .4); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('패턴 밀도', ox + 2, G*cs + 11); ctx.fillStyle = '#fff'; ctx.fillText('메모리', ox + 4, 14); ctx.fillText('로직', ox + 28*cs, 14);
+    const pts = []; for(let a = 0; a <= 0.8; a += 0.02) pts.push([a*100, 1/(1 + v.k*a*0.6)]);
+    const P = J.plot(J.$('#cv2b'), {x:[0, 80], y:[0.3, 1.1], xlab:'노출 면적 (%)', ylab:'상대 식각 속도', series:[{pts, color:'--ink3', w:2.5}], points:[{x:mean*100, y:macro, color:'--red', r:6, label:'칩 평균'}]});
+    for(let i = 0; i < G*G; i += 37){ P.ctx.fillStyle = 'rgba(70,110,200,.5)'; P.ctx.beginPath(); P.ctx.arc(P.X(D[i]*100), P.Y(Rm[i]), 2.5, 0, 7); P.ctx.fill(); }
+    J.out(box, 'rg', J.fmt(mn, 3) + ' ~ ' + J.fmt(mx, 3)); J.out(box, 'nu', '±' + J.fmt((mx - mn)/(2*avg)*100, 1) + ' %', (mx - mn)/(2*avg) < 0.03 ? 'good' : 'warn'); J.out(box, 'ao', J.fmt(mean*100, 1) + ' %'); });
+})();
+
+/* 10-3 선택비 예산 */
+(function(){
+  const box = J.$('#sim3');
+  const loss = (sd, sr, oe, S, N, r) => { const d = [], R = [], tc = []; for(let i = 0; i < N; i++){ const di = 300*(1 + sd/100*J.gauss(r)), Ri = 1 + sr/100*J.gauss(r); d.push(di); R.push(Ri); tc.push(di/Ri); }
+    const sorted = tc.slice().sort((a, b) => a - b), q = sorted[Math.floor(N*0.9999)], t = q*(1 + oe/100); return {t, L:d.map((di, i) => Math.max(0, R[i]*t - di)/S)}; };
+  J.sim('sim3', v => { const r = J.rng(5), N = 20000, res = loss(v.sd, v.sr, v.oe, v.s, N, r), L = res.L, mx = Math.max(...L), mean = L.reduce((a, b) => a + b, 0)/N;
+    const bins = new Array(50).fill(0), top = Math.max(v.t*1.3, mx*1.05); L.forEach(x => { const k = Math.floor(x/top*50); if(k >= 0 && k < 50) bins[k]++; });
+    J.plot(J.$('#cv3a'), {x:[0, top], y:[0, Math.max(...bins)*1.1], xlab:'정지막 손실 (nm)', ylab:'자리 수', series:[{pts:bins.flatMap((n, k) => [[k*top/50, n], [(k + 1)*top/50, n]]), color:'--gold', w:1.5, fill:.4}], vlines:[{x:v.t, color:'--red', label:'정지막 두께'}]});
+    const need = (sig, t) => { const s3 = Math.sqrt(2)*sig/100, tt = (1 + 3.9*s3)*(1 + v.oe/100), worst = (1 + 3.9*s3)*tt*300 - 300*(1 - 3.9*s3); return worst/(t*0.8); };
+    const S = [10, 20, 40].map((t, k) => ({pts:Array.from({length:40}, (_, i) => { const sg = i*0.2; return [sg, need(sg, t)]; }), color:['--red', '--gold', '--jade'][k], w:t === v.t ? 3 : 1.8}));
+    const comb = Math.sqrt((v.sd*v.sd + v.sr*v.sr)/2);
+    J.plot(J.$('#cv3b'), {x:[0, 8], y:[0, 100], xlab:'산포 (1σ, %)', ylab:'필요 최소 선택비', series:S, points:[{x:comb, y:v.s, color:'--ink', r:6}]});
+    const smin = mx*v.s/(v.t*0.8);
+    J.out(box, 't', J.fmt(res.t/(300/60), 1) + ' s (300 nm/분)'); J.out(box, 'l', J.fmt(mean, 1) + ' / ' + J.fmt(mx, 1) + ' nm'); J.out(box, 'm', J.fmt(v.t - mx, 1) + ' nm', v.t - mx > 0.2*v.t ? 'good' : v.t - mx > 0 ? 'warn' : 'bad'); J.out(box, 'smin', J.fmt(smin, 0), smin <= v.s ? 'good' : 'bad'); });
+})();
+</script>
+</body>
+</html>

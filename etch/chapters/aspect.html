@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>고종횡비 식각 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="aspect">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 09 <span class="hanja">第九章 · 深</span></div>
+  <h1>고종횡비 식각</h1>
+  <p class="lead">3D 낸드의 채널 구멍은 지름 약 100 nm에 깊이 6~10 µm, 곧 종횡비(깊이 ÷ 폭) 60~100이다. 지름 1 m짜리 우물을 80 m 깊이로 곧게 파는 셈이다. 구멍이 깊어질수록 바닥까지 내려가는 입자가 줄어 식각이 느려지고(<span class="term">ARDE</span>), 전자가 바닥에 닿지 못해 바닥이 양전하로 대전되어 이온을 휘게 만든다(<span class="term">차징</span>). 결과로 구멍이 비틀리고, 바닥이 좁아지고, 바닥 모서리가 파인다(노칭). 이 장은 같은 시간 동안 폭이 다른 구멍들을 함께 식각해 ARDE를 보고, 크누센 수송으로 라디칼이 바닥까지 가는 확률을 계산하고, 차징된 구멍 속 이온의 궤적을 추적한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>좁은 구멍이 넓은 구멍보다 느리게 식각되는 ARDE를 단면 시뮬레이터로 확인한다.</li>
+  <li>크누센 수송(클라우징 계수)과 이온 각도 퍼짐으로 깊이에 따른 라디칼·이온 선속 감소를 계산한다.</li>
+  <li>전자 그림자 효과로 생기는 바닥 대전, 이온 굴절, 노칭과 비틀림을 전기장 계산으로 본다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>ARDE: 좁을수록 느리다</h2>
+<p>같은 웨이퍼 위 폭이 다른 구멍을 같은 시간 동안 식각하면, 좁은 구멍이 덜 깊다. 이를 종횡비 의존 식각(ARDE, aspect-ratio dependent etching) 또는 RIE 지연(RIE lag)이라 한다. 원인은 주로 라디칼이다. 라디칼은 방향 없이 날아다니며 벽에 부딪혀 튕기다가 일부는 다시 구멍 밖으로 나가 버린다. 구멍이 깊고 좁을수록 바닥까지 가는 비율이 줄어든다. 이온도 각도 퍼짐 때문에 일부가 측벽에 맞아 바닥에 덜 온다. 폴리머 전구체는 반대로 위쪽 벽에 먼저 붙어 구멍 입구를 좁히기도 한다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-1</span><span class="ttl">폭이 다른 네 구멍 동시 식각</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">라디칼 : 이온 비 <output data-o="nr"></output></span><input type="range" data-k="nr" min="1" max="15" step="0.5" value="6" data-d="1"></label>
+      <label class="ctrl"><span class="lab">라디칼 반응 확률 <output data-o="s"></output></span><input type="range" data-k="s" min="0.01" max="0.3" step="0.01" value="0.06" data-d="2"></label>
+      <label class="ctrl"><span class="lab">이온 각도 퍼짐 <output data-o="sig"></output></span><input type="range" data-k="sig" min="0.5" max="8" step="0.5" value="2.5" data-d="1" data-u="°"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b1g">식각 시작/멈춤</button><button class="sbtn warn" id="b1r">처음으로</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="320"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="320"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">깊이 (12 / 24 / 48 / 96 nm 구멍)</span><span class="v" data-r="d" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">가장 좁은 / 가장 넓은 깊이 비</span><span class="v" data-r="lag"></span></div>
+      <div class="ro"><span class="k">가장 좁은 구멍의 종횡비</span><span class="v" data-r="ar"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 폭 12, 24, 48, 96 nm의 구멍(1 칸 = 2 nm)을 함께 식각하는 단면. 오른쪽: 각 구멍의 깊이를 종횡비에 대해 그린 것(색 = 구멍, 점 = 시간 간격). 같은 시각의 점들을 비교하면 좁은 구멍일수록 덜 깊고, 그 차이가 시간이 갈수록 벌어진다. 라디칼 반응 확률이 클수록(바닥에 닿기 전에 벽에서 소모) 지연이 심하고, 좁은 구멍은 아래로 좁아지는 테이퍼도 생긴다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>크누센 수송: 바닥까지 가는 확률</h2>
+<p>압력이 낮아 분자끼리 거의 부딪히지 않는 영역에서 분자는 벽과만 부딪히며 움직인다(크누센 흐름). 벽에서 확산 반사(무작위 방향으로 다시 튕김)를 한다면, 길이 L, 지름 D인 원통을 통과할 확률은 클라우징 계수 K(L/D)로 정해진다. 바닥에서 반응 확률이 s인 라디칼은 바닥에서 반응하지 못하면 다시 튕겨 나오므로, 바닥 식각 속도는 K와 s의 조합으로 정해진다(코번–윈터스 ARDE 식). s가 작을수록(여러 번 튕겨도 괜찮을수록) 깊은 구멍에서도 손실이 적다.</p>
+<div class="eq">$$K\!\left(\tfrac{L}{D}\right) \approx \frac{1}{1 + \tfrac{3L}{4D}},\qquad \frac{R(AR)}{R(0)} = \frac{K}{K + s(1 - K)},\qquad \Gamma_{i,bottom} \approx \operatorname{erf}\!\left(\frac{\tan^{-1}(D/2L)}{\sqrt2\,\sigma_\theta}\right)$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-2</span><span class="ttl">깊이에 따른 선속 감소</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">라디칼 반응 확률 s <output data-o="s"></output></span><input type="range" data-k="s" min="0.001" max="0.5" step="0.001" value="0.05" data-d="3"></label>
+      <label class="ctrl"><span class="lab">이온 각도 퍼짐 σ <output data-o="sig"></output></span><input type="range" data-k="sig" min="0.3" max="6" step="0.1" value="1.5" data-d="1" data-u="°"></label>
+      <label class="ctrl"><span class="lab">입구에서 라디칼 : 이온 <output data-o="r"></output></span><input type="range" data-k="r" min="1" max="200" step="1" value="30" data-d="0"></label>
+      <label class="ctrl"><span class="lab">종횡비 (현재) <output data-o="ar"></output></span><input type="range" data-k="ar" min="1" max="100" step="1" value="40" data-d="0"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">클라우징 계수 K</span><span class="v" data-r="k"></span></div>
+      <div class="ro"><span class="k">바닥 라디칼 / 이온 (입구 = 1)</span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">상대 식각 속도</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">바닥 영역</span><span class="v" data-r="reg"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 종횡비에 따른 바닥 라디칼 선속(초록), 이온 선속(빨강), 그리고 6장의 시너지 모형으로 합친 식각 속도(파랑). 오른쪽: 구멍 속에서 튕기는 라디칼 몇 개의 궤적(초록)과 이온(빨강). 대부분의 라디칼은 바닥에 닿기 전에 입구로 되돌아 나간다. 깊어질수록 바닥이 이온 제한에서 중성 제한으로 바뀐다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🏀</span><b>좁은 골목에 공 던지기</b><span>높은 담 사이 좁은 골목 바닥의 표적을 맞히려 한다. 위에서 똑바로 떨어뜨린 공(이온)은 대부분 바닥에 닿지만, 아무렇게나 던진 공(라디칼)은 벽에 튕기다 대부분 골목 밖으로 튀어 나간다. 골목이 깊을수록 바닥까지 가는 공이 급격히 줄어든다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>차징: 전자가 못 들어가는 구멍</h2>
+<p>이온은 수직으로 오지만 전자는 열운동으로 사방에서 온다. 깊은 구멍 바닥에는 이온은 거의 다 닿고 전자는 거의 못 닿는다(<b>전자 그림자</b>). 그래서 바닥은 양전하가 쌓여 전위가 올라가고, 입구 근처 측벽은 전자가 붙어 음으로 대전된다. 바닥 전위가 이온 에너지의 상당 부분에 이르면 이온이 감속되고 휘어 측벽 아래쪽을 때린다. 절연막 위에서 멈추는 식각에서는 바닥 모서리가 옆으로 파이는 <span class="term">노칭</span>이, 3D 낸드 채널 홀에서는 대전이 비대칭이면 구멍이 옆으로 휘는 <span class="term">비틀림</span>(twisting)이 생긴다. 대책은 펄스 플라스마(꺼진 동안 음이온·전자가 들어가 중화), 높은 이온 에너지, 낮은 전자 온도다.</p>
+<div class="eq">$$\Gamma_{i,b}(V_b) = \Gamma_{e,b}\ \Rightarrow\ V_b,\qquad \Gamma_{e,b} \approx \frac{\Gamma_e}{1 + 2\,AR},\qquad \nabla^2\phi = 0\ (\text{구멍 안})$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-3</span><span class="ttl">대전된 구멍 속 이온 궤적</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">종횡비 <output data-o="ar"></output></span><input type="range" data-k="ar" min="2" max="20" step="1" value="8" data-d="0"></label>
+      <label class="ctrl"><span class="lab">평균 이온 에너지 <output data-o="e"></output></span><input type="range" data-k="e" min="50" max="1000" step="10" value="250" data-d="0" data-u="eV"></label>
+      <label class="ctrl"><span class="lab">이온 에너지 폭 (쌍봉) <output data-o="de"></output></span><input type="range" data-k="de" min="0" max="400" step="10" value="200" data-d="0" data-u="eV"></label>
+      <label class="ctrl"><span class="lab">대전 비대칭 (왼벽 더 음) <output data-o="as"></output></span><input type="range" data-k="as" min="0" max="1" step="0.05" value="0.3" data-d="2"></label>
+      <label class="ctrl"><span class="lab">펄스 플라스마</span><select data-k="pl"><option value="0" selected>끔 (연속)</option><option value="1">켬 (꺼진 시간에 중화)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="340"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="340"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">바닥 전위 V_b</span><span class="v" data-r="vb"></span></div>
+      <div class="ro"><span class="k">바닥 도달 이온 비율</span><span class="v" data-r="fb"></span></div>
+      <div class="ro"><span class="k">측벽 아래 1/4 충돌 (노칭 위험)</span><span class="v" data-r="nt"></span></div>
+      <div class="ro"><span class="k">바닥 도달점 평균 치우침 (비틀림)</span><span class="v" data-r="tw"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 구멍 단면의 전위(빨강 = 양, 파랑 = 음)와 이온 궤적(노랑, 바닥에 도달 / 주황, 측벽에 충돌). 오른쪽: 이온 에너지 분포(회색)와 바닥 전위(빨간 선). 선보다 낮은 에너지의 이온은 바닥에 닿지 못하고 휘어 측벽을 때린다. 비대칭을 키우면 이온이 한쪽으로 쏠려 구멍이 비틀린다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 종횡비 80의 구멍을 한 번에 파기 어렵다면, 3D 낸드는 어떻게 300층 넘게 쌓을까?</p><p>층을 나눠 쌓고 파는 "멀티 데크"(예: 150층 + 150층)를 쓴다. 아래 데크 구멍을 파고 희생막으로 채운 뒤, 위 데크를 쌓고 다시 파서 두 구멍을 정렬해 잇는다. 대가는 공정 단계와 데크 사이 정렬 오차다. 한 번에 더 깊이 파는 식각 기술(극저온 식각 등)이 데크 수를 줄이는 경쟁의 핵심이다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">ARDE(RIE 지연)의 주된 원인은?</p><ol><li>마스크가 두꺼워서</li><li>깊고 좁은 구멍일수록 라디칼(과 일부 이온)이 바닥에 덜 도달해서</li><li>웨이퍼 온도가 낮아서</li><li>선택비가 높아서</li></ol>
+<p class="explain">크누센 수송으로 라디칼 선속이 종횡비에 따라 감소한다.</p></div>
+<div class="quiz" data-a="2"><p class="q">바닥 반응 확률 s가 작은 라디칼이 깊은 구멍에서 유리한 이유는?</p><ol><li>더 빨리 반응해서</li><li>이온과 같은 방향으로 날아서</li><li>벽에서 소모되지 않고 여러 번 튕겨 바닥까지 갈 기회가 많아서</li><li>전하를 띠어서</li></ol>
+<p class="explain">R/R₀ = K/(K + s(1 − K))에서 s → 0이면 1에 가깝다.</p></div>
+<div class="quiz" data-a="0"><p class="q">깊은 구멍 바닥이 양으로 대전되는 이유는?</p><ol><li>이온은 수직으로 들어오지만 전자는 사방으로 날아 바닥에 잘 못 닿아서</li><li>바닥이 금속이라서</li><li>폴리머 때문에</li><li>RF 주파수가 높아서</li></ol>
+<p class="explain">전자 그림자 효과.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 9-1 ARDE */
+(function(){
+  const box = J.$('#sim1'), OP = [[14, 20], [40, 52], [72, 96], [116, 164]], W = 180; let s = null, run = false, V = null, hist = [], rr = J.rng(9);
+  const mk = () => ES.create({W, H:150, dx:2, gap:6, stack:[[ES.MASK, 20], [ES.FILM, 110], [ES.STOP, 6], [ES.SUB, 10]], open:OP});
+  s = mk();
+  const draw = () => { const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); ES.draw(ctx, w, h, s);
+    const M = OP.map(([a, b]) => ES.measure(s, a, b)); if(s.t && s.t % 40 === 0 && (!hist.length || hist[hist.length - 1].t !== s.t)) hist.push({t:s.t, M});
+    const cols = ['--red', '--gold', '--jade', '--indigo'], S = OP.map((o, k) => ({pts:hist.map(q => [q.M[k].depth/((o[1] - o[0])*2), q.M[k].depth]), color:cols[k], w:2}));
+    const P = J.plot(J.$('#cv1b'), {x:[0, 12], y:[0, 230], xlab:'종횡비 (깊이 ÷ 폭)', ylab:'깊이 (nm)', series:S});
+    hist.forEach(q => q.M.forEach((m, k) => { P.ctx.fillStyle = J.c(cols[k]); P.ctx.beginPath(); P.ctx.arc(P.X(m.depth/((OP[k][1] - OP[k][0])*2)), P.Y(m.depth), 3, 0, 7); P.ctx.fill(); }));
+    J.out(box, 'd', M.map(m => J.fmt(m.depth, 0)).join(' / ') + ' nm'); J.out(box, 'lag', M[3].depth ? J.fmt(M[0].depth/M[3].depth, 2) : '—', M[3].depth && M[0].depth/M[3].depth > 0.85 ? 'good' : 'warn'); J.out(box, 'ar', J.fmt(M[0].depth/12, 1)); };
+  J.sim('sim1', v => { V = v; draw(); });
+  J.$('#b1g').onclick = e => { run = !run; e.target.classList.toggle('on', run); };
+  J.$('#b1r').onclick = () => { s = mk(); hist = []; draw(); };
+  J.loop(J.$('#cv1a'), () => { if(!run || !V) return; ES.step(s, {ionE:300, ionSig:V.sig, ion:180, neu:Math.round(180*V.nr), poly:40, sN:V.s, spont:0.25, Ymask:0.05, sPoly:0.3}, rr); draw(); if(s.t > 700){ run = false; J.$('#b1g').classList.remove('on'); } });
+})();
+
+/* 9-2 크누센 */
+(function(){
+  const box = J.$('#sim2'); let V = null, parts = [];
+  const erf = x => { const t = 1/(1 + 0.3275911*Math.abs(x)), y = 1 - (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x); return x >= 0 ? y : -y; };
+  const calc = (ar, v) => { const K = 1/(1 + 0.75*ar), fn = K/(K + v.s*(1 - K)), fi = ar > 0 ? erf(Math.atan(1/(2*ar))/(Math.SQRT2*v.sig*Math.PI/180)) : 1;
+    const Y = 1, s0 = v.s, gn = v.r*fn, gi = fi, th = s0*gn/(s0*gn + Y*gi), R = Y*gi*th; return {K, fn, fi, R, th}; };
+  J.sim('sim2', v => { V = v; const R0 = calc(0, v).R, S = [[], [], []]; for(let ar = 0; ar <= 100; ar += 0.5){ const c = calc(ar, v); S[0].push([ar, c.fn]); S[1].push([ar, c.fi]); S[2].push([ar, c.R/R0]); }
+    const c = calc(v.ar, v);
+    J.plot(J.$('#cv2a'), {x:[0, 100], y:[0, 1.05], xlab:'종횡비', ylab:'입구 대비 비율', series:[{pts:S[0], color:'--jade', w:2.5}, {pts:S[1], color:'--red', w:2.5}, {pts:S[2], color:'--indigo', w:3.5}], vlines:[{x:v.ar, color:'--ink3'}]});
+    J.out(box, 'k', J.fmt(c.K, 3)); J.out(box, 'f', J.fmt(c.fn, 3) + ' / ' + J.fmt(c.fi, 3)); J.out(box, 'r', J.fmt(c.R/R0, 3), c.R/R0 > 0.7 ? 'good' : c.R/R0 > 0.4 ? 'warn' : 'bad'); J.out(box, 'reg', c.th > 0.7 ? '이온 제한' : c.th < 0.3 ? '중성 제한' : '혼합'); parts = []; });
+  J.loop(J.$('#cv2b'), dt => { if(!V) return; const {ctx, w, h} = J.fit(J.$('#cv2b')); ctx.clearRect(0,0,w,h); const ar = Math.min(V.ar, 12), D = Math.min(60, (h - 40)/ar), L = D*ar, x0 = w/2 - D/2, y0 = 20;
+    ctx.fillStyle = '#8cc6e6'; ctx.fillRect(20, y0, x0 - 20, L); ctx.fillRect(x0 + D, y0, w - 20 - x0 - D, L); ctx.fillStyle = '#d9a441'; ctx.fillRect(20, y0 + L, w - 40, 8);
+    if(V.ar > 12){ ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('(종횡비 12까지만 그림)', 22, h - 6); }
+    if(Math.random() < 0.5) parts.push({x:x0 + Math.random()*D, y:y0 - 2, vx:(Math.random() - .5)*2, vy:Math.random(), ion:Math.random() < 0.25, life:300});
+    for(let i = parts.length - 1; i >= 0; i--){ const p = parts[i]; const sp = p.ion ? 4 : 3; if(p.ion){ p.vx = Math.tan(J.gauss()*V.sig*Math.PI/180)*0.0 + (p.vx0 ?? (p.vx0 = Math.tan(J.gauss()*V.sig*Math.PI/180))); p.vy = 1; }
+      const n = Math.hypot(p.vx, p.vy); p.x += p.vx/n*sp; p.y += p.vy/n*sp; p.life--;
+      if(p.y < y0 - 6 || p.life < 0){ parts.splice(i, 1); continue; }
+      if(p.y >= y0 + L){ if(p.ion || Math.random() < V.s*5){ ctx.fillStyle = p.ion ? '#d65a4a' : '#3aa36a'; ctx.beginPath(); ctx.arc(p.x, y0 + L - 2, 4, 0, 7); ctx.fill(); parts.splice(i, 1); continue; } p.y = y0 + L - 1; p.vy = -Math.random(); p.vx = (Math.random() - .5)*2; }
+      if(p.y > y0 && (p.x < x0 || p.x > x0 + D)){ if(p.ion){ parts.splice(i, 1); continue; } if(Math.random() < V.s){ parts.splice(i, 1); continue; } p.x = p.x < x0 ? x0 + 1 : x0 + D - 1; p.vx = (p.x < w/2 ? 1 : -1)*Math.random(); p.vy = (Math.random() - .5)*2; }
+      ctx.fillStyle = p.ion ? '#d65a4a' : '#3aa36a'; ctx.beginPath(); ctx.arc(p.x, p.y, 2.2, 0, 7); ctx.fill(); } });
+})();
+
+/* 9-3 차징 */
+(function(){
+  const box = J.$('#sim3'), NX = 40;
+  J.sim('sim3', v => { const NY = Math.round(NX/2*v.ar/2) + 10, Wd = 20, xL = 10, xR = xL + Wd, top = 6, bot = NY - 2;
+    // 이온 에너지 분포 (쌍봉)
+    const Es = []; const r = J.rng(3); for(let i = 0; i < 400; i++){ const ph = r()*2*Math.PI; Es.push(Math.max(5, v.e + v.de/2*Math.sin(ph) + 8*J.gauss(r))); }
+    // 바닥 전위: 바닥 도달 이온 비율 = 전자 비율
+    const fe = (v.pl === '1' ? 0.45 : 1)/(1 + 2*v.ar), share = Vb => Es.filter(E => E > Vb).length/Es.length;
+    let lo = 0, hi = v.e + v.de; for(let k = 0; k < 30; k++){ const m = (lo + hi)/2; if(share(m) > fe*6) lo = m; else hi = m; } const Vb = v.e*(1 - Math.exp(-v.ar/10))*(v.pl === '1' ? 0.35 : 1);
+    // 라플라스 풀기 (구멍 안)
+    const phi = new Float32Array(NX*NY), fixed = new Uint8Array(NX*NY);
+    for(let y = 0; y < NY; y++) for(let x = 0; x < NX; x++){ const i = y*NX + x; const inHole = x >= xL && x < xR && y >= top && y < bot; if(y >= bot){ fixed[i] = 1; phi[i] = Vb; } else if(!inHole && y >= top){ fixed[i] = 1; const f = (y - top)/(bot - top), wall = f < 0.35 ? -15*(1 - f/0.35) : Vb*Math.pow((f - 0.35)/0.65, 2); phi[i] = wall*(x < xL ? 1 + v.as : 1 - v.as*0.5); } else if(y < top){ fixed[i] = 1; phi[i] = 0; } }
+    for(let it = 0; it < 900; it++) for(let y = 1; y < NY - 1; y++) for(let x = xL; x < xR; x++){ const i = y*NX + x; if(fixed[i]) continue; phi[i] = 0.25*(phi[i - 1] + phi[i + 1] + phi[i - NX] + phi[i + NX]); }
+    // 이온 궤적
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const s = Math.min(w/NX, h/NY), ox = (w - s*NX)/2; let mx = Math.max(15, Vb);
+    for(let y = 0; y < NY; y++) for(let x = 0; x < NX; x++){ const i = y*NX + x, inHole = x >= xL && x < xR && y >= top && y < bot; if(!inHole && y >= top){ ctx.fillStyle = y >= bot ? '#d9a441' : '#8cc6e6'; ctx.fillRect(ox + x*s, y*s, s + .5, s + .5); continue; } if(y < top) continue; const p = phi[i]/mx; ctx.fillStyle = p > 0 ? `rgba(220,60,40,${J.clamp(p, 0, 1)*0.6})` : `rgba(60,110,220,${J.clamp(-p, 0, 1)*0.6})`; ctx.fillRect(ox + x*s, y*s, s + .5, s + .5); }
+    const field = (x, y) => { const xi = Math.floor(x), yi = Math.floor(y); if(xi < 1 || xi >= NX - 1 || yi < 1 || yi >= NY - 1) return [0, 0]; const i = yi*NX + xi; return [-(phi[i + 1] - phi[i - 1])/2, -(phi[i + NX] - phi[i - NX])/2]; };
+    let bottom = 0, notch = 0, offs = [], tot = 0;
+    Es.forEach((E, k) => { if(k % 2) return; tot++; let x = xL + 1 + (k/Es.length)*(Wd - 2), y = 0, vx = 0, vy = Math.sqrt(2*E), path = [[x, y]];
+      for(let st = 0; st < 3000; st++){ const [ex, ey] = field(x, y), dt = 0.02; vx += ex*dt; vy += ey*dt; x += vx*dt; y += vy*dt; if(st % 6 === 0) path.push([x, y]);
+        if(y >= bot){ bottom++; offs.push(x - (xL + Wd/2)); break; } if(y >= top && (x < xL || x >= xR)){ if((y - top)/(bot - top) > 0.75) notch++; break; } if(y < -2){ break; } }
+      if(k % 8) return; ctx.strokeStyle = y >= bot ? 'rgba(250,210,40,.85)' : 'rgba(240,120,20,.95)'; ctx.lineWidth = 1.2; ctx.beginPath(); path.forEach(([a, b], i) => i ? ctx.lineTo(ox + a*s, b*s) : ctx.moveTo(ox + a*s, b*s)); ctx.stroke(); });
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('− − 전자 대전', ox + 2, (top + 3)*s); ctx.fillText('+ 바닥 ' + J.fmt(Vb, 0) + ' V', ox + xL*s, (bot + 1.6)*s);
+    const bins = new Array(50).fill(0), Em = v.e + v.de; Es.forEach(E => { const q = Math.floor(E/(Em*1.1)*50); if(q >= 0 && q < 50) bins[q]++; });
+    J.plot(J.$('#cv3b'), {x:[0, Em*1.1], y:[0, Math.max(...bins)*1.1], xlab:'이온 에너지 (eV)', ylab:'개수', series:[{pts:bins.flatMap((n, q) => [[q*Em*1.1/50, n], [(q + 1)*Em*1.1/50, n]]), color:'--ink3', w:1.5, fill:.3}], vlines:[{x:Vb, color:'--red', label:'V_b'}]});
+    const twist = offs.length ? offs.reduce((a, b) => a + b, 0)/offs.length/Wd*100 : 0;
+    J.out(box, 'vb', J.fmt(Vb, 0) + ' V', Vb < 0.3*v.e ? 'good' : Vb < 0.7*v.e ? 'warn' : 'bad'); J.out(box, 'fb', J.fmt(bottom/tot*100, 0) + ' %'); J.out(box, 'nt', J.fmt(notch/tot*100, 0) + ' %', notch/tot < 0.05 ? 'good' : notch/tot < 0.2 ? 'warn' : 'bad'); J.out(box, 'tw', J.fmt(twist, 1) + ' % (폭 대비)', Math.abs(twist) < 3 ? 'good' : 'warn'); });
+})();
+</script>
+</body>
+</html>

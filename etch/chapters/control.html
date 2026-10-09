@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>균일도와 공정 제어 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="control">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 14 <span class="hanja">第十四章 · 制</span></div>
+  <h1>균일도와 공정 제어</h1>
+  <p class="lead">한 대의 식각 장비는 하루 수천 장의 웨이퍼를 처리하고, 한 팹에는 같은 장비가 수십~수백 대 있다. 그 모든 웨이퍼의 모든 자리가 같은 깊이, 같은 선폭으로 깎여야 한다. 그런데 웨이퍼 안에서는 가운데와 가장자리가 다르고, 시간이 지나면 챔버 벽에 폴리머가 쌓여 식각 속도가 변하고, 챔버마다 미세하게 다르다. 이 장은 정전 척의 온도 구역으로 반경 방향 균일도를 맞추고, 세정 후 챔버가 안정되는 시즈닝 과정을 보고, 측정값을 앞뒤로 되먹이는 제어로 여러 챔버의 결과를 하나로 모으는 방법을 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>다구역 정전 척 온도로 반경 방향 식각 속도 분포를 보정하는 방법(최소 제곱 튜닝)을 익힌다.</li>
+  <li>습식 세정 후 시즈닝과 장기 표류, 자동 세정(WAC)이 식각 속도에 주는 영향을 본다.</li>
+  <li>앞먹임(입고 막 두께)과 되먹임(결과 측정)으로 챔버 간 차이를 줄이는 런투런 제어를 설계한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>온도로 그리는 균일도</h2>
+<p>플라스마 밀도, 가스 흐름, 에지 링이 만드는 반경 방향 불균일을 마지막으로 다듬는 손잡이는 웨이퍼 온도다. 폴리머 부착과 반응 속도가 온도에 민감하므로, 최신 정전 척은 동심원 구역(4~수십 개)마다 히터를 따로 둔다. 플루오로카본 식각에서는 온도가 높을수록 폴리머가 덜 붙어 식각이 빨라지고 측벽 각도도 바뀐다. 각 구역 온도를 바꿨을 때의 반응(민감도)을 알면, 목표 분포와의 차이를 최소 제곱으로 풀어 구역 온도를 정할 수 있다.</p>
+<div class="eq">$$R(r) = R_0(r)\,\Bigl[1 + \alpha\sum_j T_j\,g_j(r)\Bigr],\qquad \min_{T}\ \sum_r \bigl[R(r) - \bar R\bigr]^2$$<div class="note">α: 온도 민감도(예: +0.8 %/°C), g<sub>j</sub>(r): 구역 j 히터가 웨이퍼 반경 r의 온도를 바꾸는 모양(열 퍼짐 포함).</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-1</span><span class="ttl">4구역 척 온도 튜닝</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">구역 1 (중심) <output data-o="t1"></output></span><input type="range" data-k="t1" min="-10" max="10" step="0.5" value="0" data-d="1" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">구역 2 <output data-o="t2"></output></span><input type="range" data-k="t2" min="-10" max="10" step="0.5" value="0" data-d="1" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">구역 3 <output data-o="t3"></output></span><input type="range" data-k="t3" min="-10" max="10" step="0.5" value="0" data-d="1" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">구역 4 (가장자리) <output data-o="t4"></output></span><input type="range" data-k="t4" min="-10" max="10" step="0.5" value="0" data-d="1" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">들어온 분포</span><select data-k="p"><option value="c" selected>중심 빠름</option><option value="e">가장자리 빠름</option><option value="w">W자 (중간 느림)</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b1a">자동 튜닝 (최소 제곱)</button><button class="sbtn warn" id="b1z">모두 0으로</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">불균일 (튜닝 전)</span><span class="v" data-r="u0"></span></div>
+      <div class="ro"><span class="k">불균일 (현재)</span><span class="v" data-r="u1"></span></div>
+      <div class="ro"><span class="k">평균 식각 속도 변화</span><span class="v" data-r="m"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 웨이퍼 식각 속도 지도(파랑 = 느림, 빨강 = 빠름, ±5 % 눈금)와 척의 네 구역 경계(점선). 오른쪽: 반경 방향 분포(회색 = 튜닝 전, 빨강 = 현재)와 각 구역 히터의 영향 모양(옅은 선). 구역 사이는 열이 퍼져 경계가 부드럽다. 가장자리 몇 mm의 급격한 변화는 온도로는 다 못 잡는다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>시즈닝과 표류: 챔버는 살아 있다</h2>
+<p>식각 중 생긴 폴리머와 부산물은 웨이퍼만이 아니라 챔버 벽에도 쌓인다. 벽은 라디칼을 잡아먹거나 내놓으며 플라스마 화학을 바꾸므로, 벽 상태에 따라 식각 속도가 달라진다. 습식 세정 직후의 깨끗한 벽은 라디칼을 많이 잡아먹어 처음 수십 장의 식각 속도가 다르다. 그래서 세정 후에는 더미 웨이퍼를 돌려 벽을 "길들이는" <span class="term">시즈닝</span>을 한다. 운전 중에도 벽이 서서히 두꺼워져 표류가 생기므로, 웨이퍼마다 또는 몇 장마다 웨이퍼 없이 플라스마로 벽을 청소하는 <span class="term">WAC</span>(waferless auto clean)를 넣는다. 시즈닝과 WAC는 생산 시간을 잡아먹는 비용이다.</p>
+<div class="eq">$$R_n = R_\infty + (R_0 - R_\infty)\,e^{-n/\tau_s} + \beta\,(n - n_{WAC})$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-2</span><span class="ttl">세정 이후 500장의 식각 속도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">시즈닝 웨이퍼 수 <output data-o="s"></output></span><input type="range" data-k="s" min="0" max="60" step="1" value="10" data-d="0" data-u="장"></label>
+      <label class="ctrl"><span class="lab">WAC 주기 <output data-o="w"></output></span><input type="range" data-k="w" min="0" max="50" step="1" value="0" data-d="0" data-u="장마다 (0 = 안 함)"></label>
+      <label class="ctrl"><span class="lab">벽 축적 표류 <output data-o="b"></output></span><input type="range" data-k="b" min="0" max="0.05" step="0.001" value="0.015" data-d="3" data-u="%/장"></label>
+      <label class="ctrl"><span class="lab">WAC 한 번 시간 <output data-o="tw"></output></span><input type="range" data-k="tw" min="10" max="120" step="5" value="30" data-d="0" data-u="s"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="290"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">규격(±2 %) 밖 생산 웨이퍼</span><span class="v" data-r="out"></span></div>
+      <div class="ro"><span class="k">식각 속도 범위 (생산분)</span><span class="v" data-r="rg"></span></div>
+      <div class="ro"><span class="k">추가 시간 (시즈닝 + WAC)</span><span class="v" data-r="t"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 세정 직후부터 웨이퍼 순서에 따른 식각 속도(회색 점 = 시즈닝 더미, 빨강 = 생산 웨이퍼). 초록 띠는 ±2 % 규격. 세정 직후 속도가 낮다가 벽이 덮이며 올라가고, 이후 서서히 표류한다. WAC를 넣으면 톱니처럼 되돌아간다. 웨이퍼 한 장의 식각 시간은 90 s로 가정.</p>
+</div>
+
+<div class="analogy"><span class="ic">🍳</span><b>새 프라이팬 길들이기</b><span>새 무쇠 팬은 처음 몇 번 기름을 먹여 길들여야 음식이 고르게 익는다(시즈닝). 쓰다 보면 기름때가 쌓여 맛이 변하므로 가끔 닦는다(WAC). 너무 박박 닦으면 다시 길들여야 한다. 식각 챔버의 벽도 똑같다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>여러 챔버를 하나처럼: 앞먹임과 되먹임</h2>
+<p>같은 레시피를 써도 챔버마다 식각 속도가 1~3 % 다르다(부품 공차, 에지 링 마모, 벽 상태). 또 들어오는 웨이퍼의 막 두께도 앞 공정(증착) 장비마다 다르다. 두 가지를 함께 잡는 방법이 런투런 제어다. <b>앞먹임</b>: 식각 전에 막 두께를 재서, 두꺼우면 식각 시간을 늘린다. <b>되먹임</b>: 식각 후 남은 두께(또는 깊이)를 재서 그 챔버의 실제 속도를 추정하고(EWMA), 다음 웨이퍼의 시간을 고친다. 두 제어를 함께 쓰면 챔버와 입고 산포가 모두 줄어든다.</p>
+<div class="eq">$$t_k = \frac{d_{in,k} - d_{target}}{\hat R_{c}},\qquad \hat R_c \leftarrow \lambda\,\frac{d_{in} - d_{out}}{t} + (1 - \lambda)\hat R_c$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-3</span><span class="ttl">챔버 4대의 런투런 제어</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">챔버 간 속도 차 (1σ) <output data-o="c"></output></span><input type="range" data-k="c" min="0" max="5" step="0.1" value="2" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">입고 막 두께 산포 (1σ) <output data-o="d"></output></span><input type="range" data-k="d" min="0" max="5" step="0.1" value="2" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">제어</span><select data-k="m"><option value="0">없음 (고정 시간)</option><option value="1">되먹임만</option><option value="2" selected>앞먹임 + 되먹임</option></select></label>
+      <label class="ctrl"><span class="lab">EWMA λ <output data-o="l"></output></span><input type="range" data-k="l" min="0.05" max="1" step="0.05" value="0.3" data-d="2"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">남은 두께 3σ (목표 50 nm)</span><span class="v" data-r="s"></span></div>
+      <div class="ro"><span class="k">챔버 평균 차이 (최대−최소)</span><span class="v" data-r="cm"></span></div>
+      <div class="ro"><span class="k">규격(±3 nm) 안 비율</span><span class="v" data-r="y"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 막 300 nm를 깎아 50 nm를 남기는 부분 식각(리세스). 왼쪽: 웨이퍼 400장의 남은 두께(색 = 챔버). 오른쪽: 챔버별 분포. 제어가 없으면 챔버마다 다른 높이에 띠가 생기고 입고 산포가 그대로 옮겨진다. 되먹임은 챔버 차이를, 앞먹임은 입고 산포를 지운다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 식각 장비의 부품(에지 링, 샤워헤드, 창)은 플라스마에 계속 깎인다. 부품을 바꾸면 무슨 일이 생길까?</p><p>부품의 모양과 표면이 바뀌어 식각 속도와 균일도가 계단처럼 변하고, 다시 시즈닝이 필요하다. 그래서 부품 수명을 늘리는 재료(이트리아 코팅 등), 교체 없이 높이를 보정하는 에지 링 승강 장치, 부품 상태를 센서로 추정하는 가상 계측이 중요해졌다. 장비의 "가동률"은 곧 원가다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">정전 척을 여러 온도 구역으로 나누는 주된 목적은?</p><ol><li>웨이퍼를 더 세게 붙이려고</li><li>반경 방향 식각 속도·선폭 분포를 온도로 보정하려고</li><li>플라스마를 켜려고</li><li>가스를 절약하려고</li></ol>
+<p class="explain">폴리머 부착과 반응 속도가 온도에 민감한 점을 이용한다.</p></div>
+<div class="quiz" data-a="3"><p class="q">습식 세정 직후 시즈닝 웨이퍼를 돌리는 이유는?</p><ol><li>웨이퍼를 데우려고</li><li>가스 라인을 비우려고</li><li>종말점을 찾으려고</li><li>깨끗한 챔버 벽이 플라스마 화학을 바꾸므로 벽 상태를 안정시키려고</li></ol>
+<p class="explain">벽이 라디칼을 흡수·방출하는 정도가 안정될 때까지 식각 속도가 변한다.</p></div>
+<div class="quiz" data-a="0"><p class="q">입고 막 두께를 미리 재서 식각 시간을 조절하는 제어는?</p><ol><li>앞먹임(feedforward)</li><li>되먹임(feedback)</li><li>WAC</li><li>시즈닝</li></ol>
+<p class="explain">결과가 나오기 전에 입력 변동을 보정한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const R0 = {c:r => 1 + 0.045*(1 - r*r) - 0.02, e:r => 1 - 0.03 + 0.06*Math.pow(r, 4), w:r => 1 + 0.03*Math.cos(2*Math.PI*r)*0.8 - 0.01*r}, ZB = [0, 0.35, 0.62, 0.85, 1.0];
+const gz = (j, r) => { const a = ZB[j], b = ZB[j + 1], s = 0.06; const sig = x => 1/(1 + Math.exp(-x/s)); return (j === 0 ? 1 : sig(r - a))*(j === 3 ? 1 : 1 - sig(r - b)); };
+const rate = (p, T, r) => R0[p](r)*(1 + 0.008*T.reduce((a, t, j) => a + t*gz(j, r), 0));
+const nonu = f => { let mx = 0, mn = 9, s = 0, c = 0; for(let r = 0; r <= 0.98; r += 0.01){ const v = f(r); mx = Math.max(mx, v); mn = Math.min(mn, v); s += v*r; c += r; } return {nu:(mx - mn)/(2*s/c), mean:s/c}; };
+/* 14-1 */
+(function(){
+  const box = J.$('#sim1'); let V = null;
+  J.sim('sim1', v => { V = v; const T = [v.t1, v.t2, v.t3, v.t4], f = r => rate(v.p, T, r), f0 = r => rate(v.p, [0, 0, 0, 0], r), A = nonu(f0), B = nonu(f);
+    const pts0 = [], pts = [], G = [[], [], [], []]; for(let r = 0; r <= 1; r += 0.01){ pts0.push([r*150, f0(r)]); pts.push([r*150, f(r)]); for(let j = 0; j < 4; j++) G[j].push([r*150, 0.92 + 0.03*gz(j, r)]); }
+    J.plot(J.$('#cv1b'), {x:[0, 150], y:[0.9, 1.08], xlab:'반지름 (mm)', ylab:'상대 식각 속도', series:G.map(g => ({pts:g, color:'--ink3', w:1})).concat([{pts:pts0, color:'--ink3', w:2, dash:[5, 4]}, {pts, color:'--red', w:3}]), bands:[{y0:B.mean*0.99, y1:B.mean*1.01, color:'--jade', alpha:.15}], vlines:ZB.slice(1, 4).map(z => ({x:z*150, color:'--line2'}))});
+    const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const cx = w/2, cy = h/2, R = Math.min(w, h)*0.44, n = 60, cs = 2*R/n;
+    for(let j = 0; j < n; j++) for(let i = 0; i < n; i++){ const x = (i + .5)/n*2 - 1, y = (j + .5)/n*2 - 1, r = Math.hypot(x, y); if(r > 1) continue; const t = J.clamp((f(r) - B.mean)/(0.05*B.mean)*0.5 + 0.5, 0, 1); ctx.fillStyle = `rgb(${Math.round(50 + 200*t)},${Math.round(90 + 60*(1 - Math.abs(t - .5)*2))},${Math.round(230 - 190*t)})`; ctx.fillRect(cx - R + i*cs, cy - R + j*cs, cs + .5, cs + .5); }
+    ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.setLineDash([4, 4]); ZB.slice(1, 4).forEach(z => { ctx.beginPath(); ctx.arc(cx, cy, z*R, 0, 7); ctx.stroke(); }); ctx.setLineDash([]);
+    J.out(box, 'u0', '±' + J.fmt(A.nu*100, 2) + ' %'); J.out(box, 'u1', '±' + J.fmt(B.nu*100, 2) + ' %', B.nu < 0.01 ? 'good' : B.nu < 0.025 ? 'warn' : 'bad'); J.out(box, 'm', (B.mean/A.mean - 1 >= 0 ? '+' : '') + J.fmt((B.mean/A.mean - 1)*100, 2) + ' %'); });
+  const setK = (k, val) => { const e = J.$(`#sim1 [data-k="${k}"]`); e.value = val; };
+  J.$('#b1a').onclick = () => { // 좌표 하강으로 불균일 최소화 (평균 유지 벌점)
+    let T = [V.t1, V.t2, V.t3, V.t4]; const cost = T => { const f = r => rate(V.p, T, r), q = nonu(f); return q.nu + 0.02*Math.abs(q.mean - nonu(r => rate(V.p, [0, 0, 0, 0], r)).mean); };
+    let best = cost(T), st = 4; for(let it = 0; it < 200 && st > 0.1; it++){ let moved = false; for(let j = 0; j < 4; j++) for(const s of [-1, 1]){ const c = T.slice(); c[j] = J.clamp(c[j] + s*st, -10, 10); const e = cost(c); if(e < best){ best = e; T = c; moved = true; } } if(!moved) st /= 2; }
+    T.forEach((t, j) => setK('t' + (j + 1), Math.round(t*2)/2)); J.$('#sim1 [data-k="t1"]').dispatchEvent(new Event('input')); };
+  J.$('#b1z').onclick = () => { ['t1', 't2', 't3', 't4'].forEach(k => setK(k, 0)); J.$('#sim1 [data-k="t1"]').dispatchEvent(new Event('input')); };
+})();
+
+/* 14-2 시즈닝 */
+(function(){
+  const box = J.$('#sim2');
+  J.sim('sim2', v => { const r = J.rng(4), N = 500, pts = [], dummy = [], tau = 12; let wall = 0, out = 0, mn = 9, mx = 0, wacs = 0;
+    for(let n = 0; n < N; n++){ if(v.w > 0 && n > v.s && (n - v.s) % v.w === 0){ wall = Math.max(0, wall - 0.9*(wall)); wacs++; }
+      const season = 1 - 0.05*Math.exp(-n/tau), Rn = season*(1 + v.b/100*wall*1) + 0.003*J.gauss(r); wall += 1;
+      if(n < v.s) dummy.push([n, Rn]); else { pts.push([n, Rn]); if(Math.abs(Rn - 1) > 0.02) out++; mn = Math.min(mn, Rn); mx = Math.max(mx, Rn); } }
+    const P = J.plot(J.$('#cv2'), {x:[0, N], y:[0.92, 1.1], xlab:'세정 후 웨이퍼 번호', ylab:'상대 식각 속도', series:[], bands:[{y0:0.98, y1:1.02, color:'--jade', alpha:.15}], vlines:v.s ? [{x:v.s, color:'--ink3', label:'생산 시작'}] : []});
+    const c = P.ctx; c.fillStyle = J.c('--ink3'); dummy.forEach(([n, y]) => c.fillRect(P.X(n) - 1.5, P.Y(y) - 1.5, 3, 3)); c.fillStyle = J.c('--red'); pts.forEach(([n, y]) => c.fillRect(P.X(n) - 1.2, P.Y(y) - 1.2, 2.4, 2.4));
+    const extra = v.s*90 + wacs*v.tw;
+    J.out(box, 'out', out + ' / ' + pts.length + ' 장', out === 0 ? 'good' : out < 20 ? 'warn' : 'bad'); J.out(box, 'rg', pts.length ? J.fmt((mn - 1)*100, 1) + ' ~ +' + J.fmt((mx - 1)*100, 1) + ' %' : '—'); J.out(box, 't', J.fmt(extra/60, 0) + ' 분 (' + J.fmt(extra/(extra + pts.length*90)*100, 1) + ' %)'); });
+})();
+
+/* 14-3 런투런 */
+(function(){
+  const box = J.$('#sim3'), cols = ['--red', '--indigo', '--jade', '--gold'];
+  J.sim('sim3', v => { const r = J.rng(12), Rc = [0, 1, 2, 3].map(() => 1 + v.c/100*J.gauss(r)), est = [1, 1, 1, 1], N = 400, out = [], perC = [[], [], [], []], R0 = 250/60; // nm/s
+    for(let k = 0; k < N; k++){ const c = k % 4, din = 300*(1 + v.d/100*J.gauss(r)), Rtrue = R0*Rc[c]*(1 + 0.004*J.gauss(r));
+      const t = +v.m === 0 ? 250/R0 : +v.m === 1 ? 250/(R0*est[c]) : (din - 50)/(R0*est[c]);
+      const dout = din - Rtrue*t + 0.4*J.gauss(r); out.push([k, dout, c]); perC[c].push(dout);
+      if(+v.m > 0){ const meas = (din - dout)/t/R0; est[c] = v.l*meas + (1 - v.l)*est[c]; } }
+    const P = J.plot(J.$('#cv3a'), {x:[0, N], y:[30, 70], xlab:'웨이퍼 순서', ylab:'남은 두께 (nm)', series:[], bands:[{y0:47, y1:53, color:'--jade', alpha:.15}]});
+    out.forEach(([k, d, c]) => { P.ctx.fillStyle = J.c(cols[c]); P.ctx.fillRect(P.X(k) - 1.3, P.Y(d) - 1.3, 2.6, 2.6); });
+    const S = perC.map((arr, c) => { const b = new Array(40).fill(0); arr.forEach(d => { const q = Math.floor((d - 30)/1); if(q >= 0 && q < 40) b[q]++; }); return {pts:b.flatMap((n, q) => [[30 + q, n], [31 + q, n]]), color:cols[c], w:2}; });
+    J.plot(J.$('#cv3b'), {x:[30, 70], y:[0, 40], xlab:'남은 두께 (nm)', ylab:'장 수', series:S, bands:[{x0:47, x1:53, color:'--jade', alpha:.12}]});
+    const all = out.map(o => o[1]), m = all.reduce((a, b) => a + b, 0)/N, s3 = 3*Math.sqrt(all.reduce((a, b) => a + (b - 50)**2, 0)/N), means = perC.map(a => a.reduce((x, y) => x + y, 0)/a.length), yld = all.filter(d => Math.abs(d - 50) <= 3).length/N;
+    J.out(box, 's', J.fmt(s3, 2) + ' nm', s3 < 3 ? 'good' : s3 < 6 ? 'warn' : 'bad'); J.out(box, 'cm', J.fmt(Math.max(...means) - Math.min(...means), 2) + ' nm'); J.out(box, 'y', J.fmt(yld*100, 1) + ' %', yld > 0.99 ? 'good' : yld > 0.9 ? 'warn' : 'bad'); });
+})();
+</script>
+</body>
+</html>

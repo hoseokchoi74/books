@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이온–중성 시너지 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="synergy">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 06 <span class="hanja">第六章 · 協</span></div>
+  <h1>이온–중성 시너지</h1>
+  <p class="lead">1979년 IBM의 코번과 윈터스는 단순하지만 결정적인 실험을 했다. 실리콘에 XeF₂ 기체만 뿌리면 아주 천천히 깎이고, 아르곤 이온만 쏘면 더 천천히 깎인다. 그런데 둘을 함께 쏘면 두 속도를 더한 것보다 열 배 가까이 빨리 깎였다. 이온과 중성 라디칼이 서로를 돕는 이 <span class="term">시너지</span>가 반응성 이온 식각(RIE)의 핵심이다. 이온이 닿는 바닥만 빨리 깎이므로 화학의 속도와 물리의 방향성을 함께 얻는다. 이 장은 그 실험을 재현하고, 표면 흡착–이온 반응 모형으로 이온 제한과 중성 제한 영역을 구별한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>코번–윈터스 실험을 재현하고 시너지 계수를 계산한다.</li>
+  <li>흡착률 θ와 이온 수율로 식각 속도를 계산하는 랑뮤어형 모형을 세운다.</li>
+  <li>라디칼/이온 선속비에 따라 이온 제한 → 중성 제한으로 바뀌는 영역을 표면 격자 몬테카를로로 확인한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>코번–윈터스 실험</h2>
+<p>진공 용기 속 실리콘 시료에 XeF₂ 기체(F 원자를 내놓는 분자)와 450 eV Ar⁺ 이온 빔을 따로 또 같이 쏘며 식각 속도를 잰다. XeF₂만 있으면 표면에 F가 덮이지만 SiF₄로 날아가는 반응이 느리다. Ar⁺만 있으면 원자를 물리적으로 튕겨 내는 스퍼터링뿐이다. 둘이 함께 있으면, 이온이 F로 덮인 표면을 때려 SiFₓ 조각을 쉽게 떼어 내고(화학 스퍼터링), 손상된 표면은 F를 더 잘 받아들인다.</p>
+<div class="eq">$$\text{시너지 계수} = \frac{R_{ion+neutral}}{R_{ion} + R_{neutral}} \approx 10$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-1</span><span class="ttl">빔 실험 재현</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">XeF₂ 기체</span><select data-k="n"><option value="1" selected>켬</option><option value="0">끔</option></select></label>
+      <label class="ctrl"><span class="lab">Ar⁺ 이온 빔</span><select data-k="i"><option value="1">켬</option><option value="0" selected>끔</option></select></label>
+      <label class="ctrl"><span class="lab">이온 에너지 <output data-o="e"></output></span><input type="range" data-k="e" min="50" max="1000" step="10" value="450" data-d="0" data-u="eV"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b1a">자동 시퀀스 (중성 → 둘 다 → 이온)</button><button class="sbtn warn" id="b1r">기록 지우기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">현재 식각 속도</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">따로 쏠 때의 합</span><span class="v" data-r="sum"></span></div>
+      <div class="ro"><span class="k">시너지 계수</span><span class="v" data-r="syn"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 실험 장치(가운데 실리콘 시료, 왼쪽 위 XeF₂ 노즐, 오른쪽 위 이온총). 오른쪽: 시간에 따른 식각 속도 기록. 원래 논문 그림처럼 "XeF₂만 → 둘 다 → 이온만" 순서로 바꿔 보면, 가운데 구간이 양옆을 더한 것보다 훨씬 높다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>흡착–이온 반응 모형</h2>
+<p>표면 자리 중 F로 덮인 비율을 θ라 하자. 라디칼은 빈자리(1 − θ)에 부착 확률 s₀로 달라붙고, 이온은 덮인 자리를 때려 Y개의 원자를 생성물로 떼어 낸다. 둘이 균형을 이룰 때의 θ와 식각 속도는 간단한 식으로 나온다. 라디칼이 이온보다 훨씬 많으면 표면이 꽉 덮여(θ → 1) 이온이 올 때마다 깎이는 <b>이온 제한</b> 영역이 되고, 속도는 이온 선속과 에너지에 비례한다. 라디칼이 부족하면 이온이 와도 깎을 F가 없는 <b>중성 제한</b> 영역이 된다. 고종횡비 구멍 바닥은 라디칼이 잘 못 들어가 점점 중성 제한으로 바뀐다(9장).</p>
+<div class="eq">$$\theta = \frac{s_0\Gamma_n}{s_0\Gamma_n + Y\Gamma_i},\qquad R = \frac{1}{\rho}\Bigl[\,Y\Gamma_i\,\theta + Y_{sp}\Gamma_i + k_{sp}\Gamma_n\Bigr],\qquad Y \propto \sqrt{E} - \sqrt{E_{th}}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-2</span><span class="ttl">선속비 지도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">라디칼 선속 Γ_n <output data-o="gn"></output></span><input type="range" data-k="gn" min="15" max="19" step="0.05" value="17.5" data-log="1" data-d="1" data-u="/cm²s"></label>
+      <label class="ctrl"><span class="lab">이온 선속 Γ_i <output data-o="gi"></output></span><input type="range" data-k="gi" min="14" max="17" step="0.05" value="15.7" data-log="1" data-d="1" data-u="/cm²s"></label>
+      <label class="ctrl"><span class="lab">이온 에너지 <output data-o="e"></output></span><input type="range" data-k="e" min="30" max="800" step="10" value="200" data-d="0" data-u="eV"></label>
+      <label class="ctrl"><span class="lab">부착 확률 s₀ <output data-o="s"></output></span><input type="range" data-k="s" min="0.01" max="1" step="0.01" value="0.1" data-d="2"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">덮임률 θ</span><span class="v" data-r="th"></span></div>
+      <div class="ro"><span class="k">식각 속도</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">영역</span><span class="v" data-r="reg"></span></div>
+      <div class="ro"><span class="k">이온 하나당 떼어 낸 원자</span><span class="v" data-r="y"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 라디칼/이온 선속비에 따른 식각 속도(이온 에너지 3가지). 곡선이 처음엔 가파르게 오르다(중성 제한) 평평해진다(이온 제한). 점이 현재 조건이다. 오른쪽: 이온 선속과 라디칼 선속 평면의 식각 속도 지도(밝을수록 빠름)와 두 영역의 경계(점선).</p>
+</div>
+
+<div class="analogy"><span class="ic">🧹</span><b>청소부와 쓰레기 봉투</b><span>라디칼은 쓰레기를 봉투에 담는 사람, 이온은 봉투를 들고 가는 수거차다. 봉투에 담는 사람이 많아도 수거차가 안 오면 길가에 봉투만 쌓이고(이온 제한), 수거차가 아무리 자주 와도 담는 사람이 없으면 빈손으로 간다(중성 제한). 둘이 함께 있을 때만 거리가 빨리 깨끗해진다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>표면 격자 몬테카를로</h2>
+<p>모형 속 θ가 실제로 어떻게 생겨나는지 원자 수준에서 보자. 표면 자리 하나하나에 라디칼이 날아와 붙고, 이온이 무작위로 떨어져 덮인 자리를 떼어 낸다. 덮이지 않은 자리에 떨어진 이온은 거의 아무것도 못 한다. 선속을 바꾸면 덮임률이 바뀌고, 식각 속도는 해석식과 잘 맞는다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-3</span><span class="ttl">표면 자리 시뮬레이터</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">라디칼 : 이온 선속비 <output data-o="r"></output></span><input type="range" data-k="r" min="0.5" max="100" step="0.5" value="10" data-d="1"></label>
+      <label class="ctrl"><span class="lab">부착 확률 s₀ <output data-o="s"></output></span><input type="range" data-k="s" min="0.02" max="1" step="0.02" value="0.2" data-d="2"></label>
+      <label class="ctrl"><span class="lab">이온 수율 Y (덮인 자리) <output data-o="y"></output></span><input type="range" data-k="y" min="0.2" max="1" step="0.05" value="0.6" data-d="2"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b3g">시작/멈춤</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">덮임률 θ (시뮬 / 해석)</span><span class="v" data-r="th"></span></div>
+      <div class="ro"><span class="k">이온당 식각 (시뮬)</span><span class="v" data-r="ey"></span></div>
+      <div class="ro"><span class="k">떼어 낸 원자 수</span><span class="v" data-r="n"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 위에서 본 실리콘 표면 30 × 18 자리(회색 = 빈자리, 초록 = F로 덮인 자리, 노란 섬광 = 이온 충돌, 빨강 = 막 떼어 낸 자리). 오른쪽: 시간에 따른 덮임률(초록)과 이온당 식각량(빨강). 해석식 θ = s₀Γ<sub>n</sub>/(s₀Γ<sub>n</sub> + YΓ<sub>i</sub>)를 점선으로 함께 그렸다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 이온 에너지를 높이면 식각은 빨라지지만 무엇을 잃을까?</p><p>선택비와 손상이다. 높은 에너지의 이온은 마스크와 정지막도 물리적으로 깎고(스퍼터링 수율은 막을 가리지 않는다), 표면 아래 수 nm까지 결정을 망가뜨린다(12장). 그래서 "필요한 만큼만" 이온 에너지를 쓰고 라디칼 쪽을 늘리는 것이 이상적이다. 원자층 식각(11장)은 이 생각의 극단이다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">코번–윈터스 실험의 핵심 결과는?</p><ol><li>이온만으로 가장 빨리 깎인다</li><li>XeF₂만으로 가장 빨리 깎인다</li><li>이온과 중성 라디칼을 함께 쏘면 각각의 합보다 훨씬 빠르다</li><li>둘을 함께 쏘면 식각이 멈춘다</li></ol>
+<p class="explain">이온 보조 화학 식각의 시너지 발견.</p></div>
+<div class="quiz" data-a="0"><p class="q">라디칼이 이온보다 훨씬 많을 때(θ ≈ 1) 식각 속도를 좌우하는 것은?</p><ol><li>이온 선속과 에너지</li><li>라디칼 선속</li><li>압력</li><li>마스크 두께</li></ol>
+<p class="explain">이온 제한 영역: R ∝ YΓ<sub>i</sub>.</p></div>
+<div class="quiz" data-a="1"><p class="q">s₀Γ<sub>n</sub> = YΓ<sub>i</sub>일 때 덮임률 θ는?</p><ol><li>0</li><li>0.5</li><li>1</li><li>0.25</li></ol>
+<p class="explain">θ = s₀Γ<sub>n</sub>/(s₀Γ<sub>n</sub> + YΓ<sub>i</sub>) = 1/2.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const model = (gn, gi, E, s0, ksp = 0.002) => { const Y = 0.35*Math.max(0, Math.sqrt(E) - Math.sqrt(20)), Ysp = 0.003*Math.max(0, Math.sqrt(E) - Math.sqrt(40)), th = s0*gn/(s0*gn + Y*gi + 1e-30), rho = 5e22;
+  const R = (Y*gi*th + Ysp*gi + ksp*s0*gn*(1 - th*0.5))/rho*1e7*60; return {Y, th, R, Ysp}; }; // nm/분
+/* 6-1 */
+(function(){
+  const box = J.$('#sim1'); let hist = [], t = 0, V = null, auto = false, at = 0;
+  const rate = v => { const gn = +v.n ? 3e16 : 0, gi = +v.i ? 3e15 : 0; return model(gn, gi, v.e, 0.1, 0.08).R; };
+  J.sim('sim1', v => { V = v; const R = rate(v), Rn = rate({n:v.n, i:0, e:v.e}), Ri = rate({n:0, i:v.i, e:v.e});
+    J.out(box, 'r', J.fmt(R, 1) + ' nm/분'); J.out(box, 'sum', +v.n && +v.i ? J.fmt(Rn + Ri, 1) + ' nm/분' : '—'); J.out(box, 'syn', +v.n && +v.i ? J.fmt(R/(Rn + Ri), 1) + ' ×' : '—', +v.n && +v.i ? 'good' : ''); });
+  const setSel = (k, val) => { const e = J.$(`#sim1 [data-k="${k}"]`); e.value = val; e.dispatchEvent(new Event('input')); };
+  J.$('#b1a').onclick = e => { auto = !auto; e.target.classList.toggle('on', auto); at = 0; hist = []; t = 0; };
+  J.$('#b1r').onclick = () => { hist = []; t = 0; };
+  J.loop(J.$('#cv1a'), (dt, tt) => { if(!V) return; t += dt;
+    if(auto){ at += dt; const ph = Math.floor(at/4); const seq = [[1, 0], [1, 1], [0, 1]][ph % 3]; if(String(seq[0]) !== V.n) setSel('n', seq[0]); if(String(seq[1]) !== V.i) setSel('i', seq[1]); if(at > 12){ auto = false; J.$('#b1a').classList.remove('on'); } }
+    const R = rate(V); hist.push([t, R]); if(hist.length > 900) hist.shift();
+    const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const cx = w/2, by = h - 50;
+    ctx.fillStyle = '#8f96a3'; ctx.fillRect(cx - 60, by, 120, 26); ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('Si 시료', cx, by + 42);
+    ctx.fillStyle = '#5b6170'; ctx.fillRect(20, 20, 40, 18); ctx.fillRect(w - 60, 20, 40, 18); ctx.fillText('XeF₂', 40, 52); ctx.fillText('Ar⁺ 이온총', w - 40, 52);
+    const r = J.rng(Math.floor(tt*20)); if(+V.n) for(let k = 0; k < 18; k++){ const f = r(); ctx.fillStyle = J.c('--jade'); ctx.beginPath(); ctx.arc(60 + f*(cx - 60 - 10) + (r() - .5)*30, 38 + f*(by - 38), 3, 0, 7); ctx.fill(); }
+    if(+V.i){ ctx.strokeStyle = 'rgba(214,90,74,.6)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(w - 50, 38); ctx.lineTo(cx + 20, by); ctx.stroke(); for(let k = 0; k < 8; k++){ const f = (tt*1.5 + k/8) % 1; ctx.fillStyle = '#d65a4a'; ctx.beginPath(); ctx.arc(w - 50 + (cx + 20 - w + 50)*f, 38 + (by - 38)*f, 3, 0, 7); ctx.fill(); } }
+    if(R > 0.5){ for(let k = 0; k < Math.min(14, R); k++){ ctx.fillStyle = 'rgba(120,120,200,.7)'; ctx.beginPath(); ctx.arc(cx - 40 + r()*80, by - 10 - r()*60, 2.5, 0, 7); ctx.fill(); } ctx.fillStyle = J.c('--indigo'); ctx.fillText('SiF₄ ↑', cx, by - 80); }
+    J.plot(J.$('#cv1b'), {x:[Math.max(0, t - 15), Math.max(15, t)], y:[0, Math.max(10, ...hist.map(q => q[1]))*1.15], xlab:'시간 (s)', ylab:'식각 속도 (nm/분)', series:[{pts:hist, color:'--red', w:3, step:false}]}); });
+})();
+
+/* 6-2 */
+(function(){
+  const box = J.$('#sim2');
+  J.sim('sim2', v => { const cur = model(v.gn, v.gi, v.e, v.s), S = [];
+    [100, v.e, 600].forEach((E, k) => { const pts = []; for(let lr = -1; lr <= 4; lr += 0.05){ const gn = v.gi*Math.pow(10, lr); pts.push([Math.pow(10, lr), model(gn, v.gi, E, v.s).R]); } S.push({pts, color:['--indigo', '--red', '--gold'][k], w:k === 1 ? 3 : 1.8}); });
+    const ymax = Math.max(...S.flatMap(s => s.pts.map(p => p[1])))*1.1;
+    J.plot(J.$('#cv2a'), {x:[0.1, 1e4], y:[0, ymax], logx:true, xlab:'Γ_n / Γ_i', ylab:'식각 속도 (nm/분)', series:S, points:[{x:J.clamp(v.gn/v.gi, 0.1, 1e4), y:cur.R, color:'--ink', r:6}]});
+    const {ctx, w, h} = J.fit(J.$('#cv2b')); ctx.clearRect(0,0,w,h); const L = 50, B = h - 34, nx = 50, ny = 40, cw = (w - L - 10)/nx, ch = (B - 10)/ny; let mx = 0; const grid = [];
+    for(let j = 0; j < ny; j++){ const row = []; for(let i = 0; i < nx; i++){ const gi = Math.pow(10, 14 + 3*i/(nx - 1)), gn = Math.pow(10, 15 + 4*j/(ny - 1)), R = model(gn, gi, v.e, v.s).R; row.push(R); mx = Math.max(mx, R); } grid.push(row); }
+    grid.forEach((row, j) => row.forEach((R, i) => { const t = Math.sqrt(R/mx); ctx.fillStyle = `rgb(${Math.round(30 + 220*t)},${Math.round(30 + 160*t*t)},${Math.round(90 + 40*(1 - t))})`; ctx.fillRect(L + i*cw, B - (j + 1)*ch, cw + .5, ch + .5); }));
+    ctx.strokeStyle = '#fff'; ctx.setLineDash([5, 4]); ctx.beginPath(); for(let i = 0; i < nx; i++){ const gi = Math.pow(10, 14 + 3*i/(nx - 1)), gn = cur.Y*gi/v.s, j = (Math.log10(gn) - 15)/4*(ny - 1); const X = L + (i + .5)*cw, Y = B - (j + .5)*ch; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); } ctx.stroke(); ctx.setLineDash([]);
+    const px = L + (Math.log10(v.gi) - 14)/3*(nx - 1)*cw, py = B - (Math.log10(v.gn) - 15)/4*(ny - 1)*ch; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px, py, 6, 0, 7); ctx.fill();
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('이온 선속 10¹⁴ → 10¹⁷', (L + w)/2, h - 8); ctx.save(); ctx.translate(14, B/2); ctx.rotate(-Math.PI/2); ctx.fillText('라디칼 선속 10¹⁵ → 10¹⁹', 0, 0); ctx.restore();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.fillText('이온 제한', L + 6, 20); ctx.textAlign = 'right'; ctx.fillText('중성 제한', w - 14, B - 6);
+    J.out(box, 'th', J.fmt(cur.th, 3)); J.out(box, 'r', J.fmt(cur.R, 1) + ' nm/분'); J.out(box, 'reg', cur.th > 0.8 ? '이온 제한' : cur.th < 0.3 ? '중성 제한' : '혼합', cur.th > 0.8 ? '' : 'warn'); J.out(box, 'y', J.fmt(cur.Y*cur.th + cur.Ysp, 2)); });
+})();
+
+/* 6-3 격자 */
+(function(){
+  const box = J.$('#sim3'), NX = 30, NY = 18; let S = new Uint8Array(NX*NY), flash = [], run = false, V = null, ions = 0, removed = 0, hist = [], t = 0, rr = J.rng(2);
+  J.sim('sim3', v => { V = v; draw(); });
+  function draw(){ const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const s = Math.min(w/NX, h/NY), ox = (w - s*NX)/2;
+    for(let j = 0; j < NY; j++) for(let i = 0; i < NX; i++){ const c = S[j*NX + i]; ctx.fillStyle = c ? '#5fae6a' : '#a9afba'; ctx.fillRect(ox + i*s + 1, j*s + 1, s - 2, s - 2); }
+    flash.forEach(f => { ctx.fillStyle = f.rm ? 'rgba(220,60,40,.9)' : 'rgba(250,210,40,.8)'; ctx.beginPath(); ctx.arc(ox + (f.i + .5)*s, (f.j + .5)*s, s*0.45*f.l, 0, 7); ctx.fill(); });
+    const th = S.reduce((a, b) => a + b, 0)/(NX*NY), thA = V.s*V.r/(V.s*V.r + V.y);
+    const P = J.plot(J.$('#cv3b'), {x:[Math.max(0, t - 300), Math.max(300, t)], y:[0, 1], xlab:'시간 (스텝)', ylab:'θ  /  이온당 식각', series:[{pts:hist.map(q => [q[0], q[1]]), color:'--jade', w:2.5}, {pts:hist.map(q => [q[0], q[2]]), color:'--red', w:2}], hlines:[{y:thA, color:'--jade', label:'해석 θ'}, {y:V.y*thA, color:'--red', label:'해석 Yθ'}]});
+    J.out(box, 'th', J.fmt(th, 2) + ' / ' + J.fmt(thA, 2)); J.out(box, 'ey', ions ? J.fmt(removed/ions, 2) : '—'); J.out(box, 'n', removed); }
+  J.$('#b3g').onclick = e => { run = !run; e.target.classList.toggle('on', run); };
+  J.loop(J.$('#cv3a'), () => { if(!run || !V) return; const ni = 3, nn = Math.round(ni*V.r); let rmStep = 0;
+    for(let k = 0; k < nn; k++){ const c = Math.floor(rr()*NX*NY); if(!S[c] && rr() < V.s) S[c] = 1; }
+    for(let k = 0; k < ni; k++){ const c = Math.floor(rr()*NX*NY), i = c % NX, j = (c - i)/NX; ions++; let rm = false; if(S[c] && rr() < V.y){ S[c] = 0; removed++; rmStep++; rm = true; } flash.push({i, j, l:1, rm}); }
+    flash.forEach(f => f.l -= 0.15); flash = flash.filter(f => f.l > 0); t++;
+    if(t % 3 === 0){ const th = S.reduce((a, b) => a + b, 0)/(NX*NY); const last = hist.length ? hist[hist.length - 1] : null; hist.push([t, th, ions ? (removed - (last ? last[3] : 0))/Math.max(1, ions - (last ? last[4] : 0)) : 0, removed, ions]); if(hist.length > 200) hist.shift(); }
+    draw(); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>패턴 전사와 하드마스크 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="transfer">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 13 <span class="hanja">第十三章 · 傳</span></div>
+  <h1>패턴 전사와 하드마스크</h1>
+  <p class="lead">EUV 감광액은 30~40 nm 두께에 불과해, 그 자체로는 수백 nm의 막을 깎는 동안 버티지 못한다. 그래서 무늬를 "릴레이"로 옮긴다. 얇은 감광액이 얇은 실리콘 반사 방지막(SiARC)을 열고, SiARC가 두꺼운 탄소막(SOC)을 열고, 탄소막이 단단한 하드마스크를 열고, 하드마스크가 마침내 본 막을 깎는다. 각 주자는 다음 주자와의 선택비가 높은 화학으로 깎이므로, 얇은 막으로 두꺼운 막을 연다. 대신 단계마다 선폭이 조금씩 변하고(CD 바이어스), 거칠기도 옮겨 간다. 이 장은 다층 마스크 스택의 두께 예산, 선폭을 줄이는 트리밍, 그리고 가장자리 거칠기의 전사를 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>감광액 → SiARC → SOC → 하드마스크 → 본 막으로 이어지는 다층 전사의 두께 예산을 세운다.</li>
+  <li>단계별 CD 바이어스와 트리밍으로 최종 선폭을 맞추고, 무너짐(collapse) 한계를 본다.</li>
+  <li>식각이 가장자리 거칠기의 높은 주파수는 지우고 낮은 주파수는 그대로 옮기는 필터라는 것을 확인한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>릴레이 전사: 두께 예산</h2>
+<p>각 단계에서 위 마스크는 아래 막 두께 ÷ 선택비 × (1 + 과식각)만큼 소모된다. 예를 들어 SiARC 20 nm를 CF₄로 열 때 감광액과의 선택비가 2라면 감광액은 12 nm(과식각 20 % 포함) 정도 깎인다. 다음 단계에서 SOC 120 nm를 O₂로 열 때 SiARC와의 선택비가 30이면 SiARC는 5 nm만 깎인다. 어느 단계에서든 위 마스크가 먼저 사라지면 무늬 윗부분이 무너진다. 이 실험에서 두께와 선택비를 바꿔 가며 끝까지 살아남는 스택을 설계해 보자.</p>
+<div class="eq">$$\Delta t_{mask,k} = \frac{t_{k+1}}{S_k}\,(1 + OE),\qquad \text{여유}_k = t_{mask,k} - \Delta t_{mask,k} > 0\ \ \forall k$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-1</span><span class="ttl">다층 마스크 릴레이</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">감광액 두께 <output data-o="pr"></output></span><input type="range" data-k="pr" min="15" max="80" step="1" value="35" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">SiARC 두께 <output data-o="sa"></output></span><input type="range" data-k="sa" min="5" max="40" step="1" value="20" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">SOC 두께 <output data-o="soc"></output></span><input type="range" data-k="soc" min="40" max="250" step="5" value="120" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">SiN 하드마스크 두께 <output data-o="hm"></output></span><input type="range" data-k="hm" min="10" max="80" step="1" value="50" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">산화막 (본 막) 두께 <output data-o="ox"></output></span><input type="range" data-k="ox" min="50" max="600" step="10" value="300" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">과식각 <output data-o="oe"></output></span><input type="range" data-k="oe" min="0" max="60" step="5" value="20" data-d="0" data-u="%"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b1p">← 이전</button><button class="sbtn pri" id="b1n">다음 단계 →</button><span class="hint" id="b1s"></span></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">단계</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">이 단계 위 마스크 여유</span><span class="v" data-r="m"></span></div>
+      <div class="ro"><span class="k">현재 선폭</span><span class="v" data-r="cd"></span></div>
+      <div class="ro"><span class="k">전체 판정</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 선 하나의 단면(보라 = 감광액, 연두 = SiARC, 검정 = SOC, 주황 = SiN, 하늘색 = 산화막). 오른쪽: 단계별로 위 마스크가 소모된 양(막대 진한 부분)과 남은 여유(옅은 부분). 빨간 막대는 마스크가 바닥났다는 뜻이다. 선택비 가정: SiARC/감광액 2, SOC/SiARC 30, SiN/SOC 4, 산화막/SiN 8.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>CD 바이어스와 트리밍</h2>
+<p>각 식각 단계는 선폭을 조금씩 바꾼다. 측벽에 폴리머가 쌓이면 넓어지고(양의 바이어스), 라디칼이 옆을 갉아먹으면 좁아진다(음의 바이어스). 이를 일부러 이용하는 것이 <span class="term">트리밍</span>이다. 노광으로는 40 nm까지만 찍히는 선을, 감광액이나 SOC를 산소 플라스마로 옆에서 깎아 25 nm로 줄인다. 대가는 두께 손실과 선의 무너짐이다. 높이 ÷ 폭(종횡비)이 3을 넘는 가는 감광액 선은 현상액이 마를 때 모세관 힘으로 쓰러진다. 트리밍은 옆과 위를 함께 깎으므로 종횡비가 어떻게 변하는지 확인해야 한다.</p>
+<div class="eq">$$CD(t) = CD_0 - 2\,r_{lat}\,t,\qquad h(t) = h_0 - r_{vert}\,t,\qquad \text{무너짐 위험} \iff \frac{h}{CD} > 2.5\sim3$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-2</span><span class="ttl">트리밍 시뮬레이터</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">처음 선폭 <output data-o="cd"></output></span><input type="range" data-k="cd" min="20" max="80" step="1" value="40" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">처음 높이 <output data-o="h"></output></span><input type="range" data-k="h" min="30" max="150" step="5" value="80" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">트리밍 시간 <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="60" step="1" value="8" data-d="0" data-u="s"></label>
+      <label class="ctrl"><span class="lab">옆 / 위 식각 속도 비 <output data-o="r"></output></span><input type="range" data-k="r" min="0.2" max="1.5" step="0.05" value="0.6" data-d="2"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">트리밍 후 선폭 / 높이</span><span class="v" data-r="cd"></span></div>
+      <div class="ro"><span class="k">종횡비</span><span class="v" data-r="ar"></span></div>
+      <div class="ro"><span class="k">LER 변화 (상대)</span><span class="v" data-r="ler"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 선 세 개의 단면(옅은 윤곽 = 처음, 진한 보라 = 트리밍 후). 종횡비가 3을 넘으면 선이 쓰러진 모습으로 그려진다. 오른쪽: 시간에 따른 선폭(빨강)과 높이(파랑), 그리고 종횡비(점선, 오른쪽 눈금 대신 ×10). 위 식각 속도는 1 nm/s로 고정.</p>
+</div>
+
+<div class="analogy"><span class="ic">🏃</span><b>릴레이 경주의 바통</b><span>달리기가 느린 주자(감광액)는 짧은 구간만 뛰고, 바통을 다음 주자에게 넘긴다. 각 주자는 자기 구간에 맞는 신발(가스 화학)을 신는다. 바통을 넘길 때마다 약간씩 흔들리므로(CD 바이어스) 최종 기록은 모든 구간의 합이다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>거칠기는 필터를 통과한다</h2>
+<p>감광액 가장자리의 거칠기(LER)는 식각을 거치며 그대로 옮겨지지 않는다. 짧은 주기의 잔물결은 측면 식각과 폴리머 증착이 평균을 내어 지워지지만, 긴 주기의 굽이는 그대로 아래로 내려간다. 식각은 일종의 <b>저역 통과 필터</b>다. 그래서 LER의 크기(σ)보다 그 스펙트럼 모양이 전사 후 거칠기를 정한다. 한편 하드마스크의 결정립이나 식각 중 생기는 줄무늬(striation)는 새로운 거칠기를 더한다.</p>
+<div class="eq">$$PSD_{after}(f) = |H(f)|^2\,PSD_{before}(f) + PSD_{added},\qquad H(f) = e^{-2\pi^2 \ell^2 f^2}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-3</span><span class="ttl">LER 전사 필터</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">감광액 LER 3σ <output data-o="s"></output></span><input type="range" data-k="s" min="0.5" max="6" step="0.1" value="3" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">감광액 상관 길이 <output data-o="xi"></output></span><input type="range" data-k="xi" min="2" max="60" step="1" value="12" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">식각 평활 길이 ℓ <output data-o="l"></output></span><input type="range" data-k="l" min="0" max="20" step="0.5" value="5" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">식각이 더하는 거칠기 <output data-o="a"></output></span><input type="range" data-k="a" min="0" max="2" step="0.05" value="0.4" data-d="2" data-u="nm 3σ"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">전사 후 LER 3σ</span><span class="v" data-r="af"></span></div>
+      <div class="ro"><span class="k">감소율</span><span class="v" data-r="red"></span></div>
+      <div class="ro"><span class="k">살아남은 성분</span><span class="v" data-r="lf" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 같은 선의 가장자리(위 = 감광액, 아래 = 식각 후, 가로 1 µm 중 일부, 세로 10배 확대). 오른쪽: PSD(회색 = 전, 빨강 = 후, 로그–로그). 평활 길이를 키우면 높은 주파수(오른쪽)가 꺾여 내려가지만 낮은 주파수(왼쪽)는 그대로다. 상관 길이가 긴 감광액은 식각해도 거칠기가 잘 줄지 않는다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 감광액 아래에 SiARC와 SOC를 굳이 두 겹으로 까는 이유는?</p><p>SOC(탄소막)는 산소로 잘 깎이고 불소에는 강하며, 두껍게 발라도 평탄해 아래 단차를 메운다. SiARC(실리콘 함유막)는 반대로 불소로 깎이고 산소에는 강하다. 서로의 약점을 보완하는 두 막을 번갈아 두면, 얇은 감광액 → 얇은 SiARC → 두꺼운 SOC 순으로 각 단계의 선택비가 매우 높아진다. 여기에 SiARC는 노광 때 반사 방지막 역할도 한다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">SOC 150 nm를 열 때 SiARC/SOC 선택비 1:30, 과식각 20 %면 SiARC 소모는?</p><ol><li>30 nm</li><li>6 nm</li><li>150 nm</li><li>0.6 nm</li></ol>
+<p class="explain">150/30 × 1.2 = 6 nm.</p></div>
+<div class="quiz" data-a="2"><p class="q">트리밍으로 감광액 선을 가늘게 할 때의 위험은?</p><ol><li>선이 굵어진다</li><li>선택비가 무한대가 된다</li><li>높이 대비 폭이 작아져(종횡비 증가) 선이 쓰러질 수 있다</li><li>노광이 다시 필요하다</li></ol>
+<p class="explain">종횡비가 약 3을 넘으면 모세관 힘에 의한 무너짐이 생긴다.</p></div>
+<div class="quiz" data-a="0"><p class="q">식각을 거치면 가장자리 거칠기 중 주로 줄어드는 것은?</p><ol><li>짧은 주기(높은 주파수) 성분</li><li>긴 주기(낮은 주파수) 성분</li><li>모든 성분이 같은 비율로</li><li>아무것도 줄지 않는다</li></ol>
+<p class="explain">식각은 저역 통과 필터처럼 작용한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 13-1 릴레이 */
+(function(){
+  const box = J.$('#sim1'); let k = 0, V = null;
+  const S = [['노광 후', 'PR', '—'], ['① SiARC 열기 (CF₄)', 'PR', 2], ['② SOC 열기 (O₂/N₂)', 'SiARC', 30], ['③ SiN 하드마스크 (CHF₃)', 'SOC', 4], ['④ 산화막 주 식각 (C₄F₈)', 'SiN', 8], ['⑤ 마스크 제거', '—', '—']];
+  const budget = v => { const oe = 1 + v.oe/100, use = [0, v.sa/2*oe, v.soc/30*oe, v.hm/4*oe, v.ox/8*oe], have = [0, v.pr, v.sa, v.soc, v.hm]; return {use, have, ok:use.map((u, i) => have[i] - u)}; };
+  const cds = [40, 39, 37, 37.5, 38.5, 38.5];
+  const draw = () => { const v = V, B = budget(v), {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h);
+    const tot = v.pr + v.sa + v.soc + v.hm + v.ox + 30, sc = (h - 30)/tot, base = h - 10, cx = w/2, lw = cds[k]*2.2;
+    let y = base; const layer = (t, col, full, wd) => { ctx.fillStyle = col; if(full) ctx.fillRect(20, y - t*sc, w - 40, t*sc); else ctx.fillRect(cx - wd/2, y - t*sc, wd, t*sc); y -= t*sc; };
+    ctx.fillStyle = '#8f96a3'; ctx.fillRect(20, base - 30*sc, w - 40, 30*sc); y = base - 30*sc;
+    const rem = i => Math.max(0, B.ok[i]);
+    layer(v.ox, '#8cc6e6', k < 4, lw);
+    if(k < 5) layer(k >= 4 ? Math.max(0, rem(4)) : v.hm, '#e08a3c', k < 3, lw);
+    if(k < 4) layer(k >= 3 ? rem(3) : v.soc, '#2f2f36', k < 2, lw);
+    if(k < 3) layer(k >= 2 ? rem(2) : v.sa, '#9fd36a', k < 1, lw);
+    if(k < 2) layer(k >= 1 ? rem(1) : v.pr, '#9c7bd1', false, lw);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('선폭 ' + cds[k] + ' nm (가로 과장)', 22, 14);
+    const Lb = ['PR', 'SiARC', 'SOC', 'SiN'], P = J.fit(J.$('#cv1b')), g = P.ctx, W2 = P.w, H2 = P.h; g.clearRect(0, 0, W2, H2); const mx = Math.max(...B.have.slice(1))*1.1, bw = (W2 - 60)/4;
+    for(let i = 1; i <= 4; i++){ const x = 40 + (i - 1)*bw + 8, have = B.have[i], use = B.use[i], sc2 = (H2 - 50)/mx, active = i <= k;
+      g.fillStyle = J.c('--line2'); g.fillRect(x, H2 - 30 - have*sc2, bw - 16, have*sc2);
+      g.fillStyle = B.ok[i] < 0 ? J.c('--red') : J.c(active ? '--indigo' : '--ink3'); g.globalAlpha = active ? 1 : .35; g.fillRect(x, H2 - 30 - Math.min(use, have)*sc2, bw - 16, Math.min(use, have)*sc2); g.globalAlpha = 1;
+      g.fillStyle = J.c('--ink'); g.font = '11.5px "Noto Sans KR"'; g.textAlign = 'center'; g.fillText(Lb[i - 1], x + (bw - 16)/2, H2 - 14); g.font = '11px "JetBrains Mono"'; g.fillText((B.ok[i] >= 0 ? '+' : '') + J.fmt(B.ok[i], 0), x + (bw - 16)/2, H2 - 34 - have*sc2); }
+    g.fillStyle = J.c('--ink2'); g.font = '11px "Noto Sans KR"'; g.textAlign = 'left'; g.fillText('위 마스크: 보유 두께와 소모량 (nm)', 6, 14);
+    const cur = k >= 1 && k <= 4 ? B.ok[k] : null, bad = B.ok.slice(1).some(x => x < 0);
+    J.out(box, 'st', S[k][0]); J.out(box, 'm', cur === null ? '—' : J.fmt(cur, 1) + ' nm', cur === null ? '' : cur > 5 ? 'good' : cur >= 0 ? 'warn' : 'bad'); J.out(box, 'cd', cds[k] + ' nm'); J.out(box, 'ok', bad ? '어딘가 마스크 부족' : '끝까지 통과', bad ? 'bad' : 'good'); J.$('#b1s').textContent = S[k][0]; };
+  J.sim('sim1', v => { V = v; draw(); });
+  J.$('#b1n').onclick = () => { k = Math.min(S.length - 1, k + 1); draw(); }; J.$('#b1p').onclick = () => { k = Math.max(0, k - 1); draw(); };
+})();
+
+/* 13-2 트리밍 */
+(function(){
+  const box = J.$('#sim2');
+  J.sim('sim2', v => { const rv = 1, rl = v.r*rv, cd = t => Math.max(0, v.cd - 2*rl*t), hh = t => Math.max(0, v.h - rv*t), ar = t => cd(t) > 0 ? hh(t)/cd(t) : 99;
+    const S1 = [], S2 = [], S3 = []; for(let t = 0; t <= 60; t += 1){ S1.push([t, cd(t)]); S2.push([t, hh(t)]); S3.push([t, Math.min(150, ar(t)*10)]); }
+    J.plot(J.$('#cv2b'), {x:[0, 60], y:[0, 150], xlab:'트리밍 시간 (s)', ylab:'nm', series:[{pts:S1, color:'--red', w:3}, {pts:S2, color:'--indigo', w:3}, {pts:S3, color:'--ink3', w:1.5, dash:[5, 4]}], hlines:[{y:30, color:'--gold', label:'종횡비 3 (×10)'}], vlines:[{x:v.t, color:'--ink'}]});
+    const {ctx, w, h} = J.fit(J.$('#cv2a')); ctx.clearRect(0,0,w,h); const sc = Math.min((h - 40)/160, (w - 40)/(3*v.cd*2.4)), base = h - 20, c = cd(v.t), hh0 = hh(v.t), col = ar(v.t) > 3;
+    ctx.fillStyle = '#2f2f36'; ctx.fillRect(10, base, w - 20, 10);
+    [0.2, 0.5, 0.8].forEach((f, i) => { const x = w*f; ctx.strokeStyle = 'rgba(156,123,209,.6)'; ctx.setLineDash([4, 3]); ctx.strokeRect(x - v.cd/2*sc, base - v.h*sc, v.cd*sc, v.h*sc); ctx.setLineDash([]);
+      ctx.save(); ctx.translate(x, base); if(col) ctx.rotate((i - 1 || 1)*0.35*(i === 0 ? -1 : 1)); ctx.fillStyle = '#9c7bd1'; ctx.fillRect(-c/2*sc, -hh0*sc, c*sc, hh0*sc); ctx.restore(); });
+    if(col){ ctx.fillStyle = J.c('--red'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('무너짐!', w/2, 20); }
+    J.out(box, 'cd', J.fmt(c, 1) + ' / ' + J.fmt(hh0, 0) + ' nm'); J.out(box, 'ar', J.fmt(ar(v.t), 2), ar(v.t) < 2.5 ? 'good' : ar(v.t) < 3 ? 'warn' : 'bad'); J.out(box, 'ler', J.fmt(Math.exp(-v.t*v.r/40)*100, 0) + ' %'); });
+})();
+
+/* 13-3 LER 필터 */
+(function(){
+  const box = J.$('#sim3'), N = 512, LEN = 1000, dy = LEN/N;
+  const psdT = (f, xi) => 2*xi/Math.pow(1 + Math.pow(2*Math.PI*f*xi, 2), 1.1);
+  J.sim('sim3', v => { const r = J.rng(8), s = v.s/3, modes = []; let tot = 0; for(let k = 1; k < N/2; k++){ const f = k/LEN, A = Math.sqrt(psdT(f, v.xi)); modes.push([k, f, A, r()*2*Math.PI]); tot += A*A/2; }
+    const nrm = s/Math.sqrt(tot), before = new Float64Array(N), after = new Float64Array(N), sa = v.a/3;
+    modes.forEach(([k, f, A, ph]) => { const H = Math.exp(-2*Math.PI*Math.PI*v.l*v.l*f*f); for(let i = 0; i < N; i++){ const c = Math.cos(2*Math.PI*k*i/N + ph)*A*nrm; before[i] += c; after[i] += c*H; } });
+    for(let i = 0; i < N; i++) after[i] += sa*J.gauss(r)*0.7;
+    const sd = a => { const m = a.reduce((x, y) => x + y, 0)/a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m)**2, 0)/a.length); };
+    const psd = e => { const out = []; for(let k = 1; k < N/2; k += 1){ let re = 0, im = 0; for(let i = 0; i < N; i++){ const a = 2*Math.PI*k*i/N; re += e[i]*Math.cos(a); im -= e[i]*Math.sin(a); } out.push([k/LEN, Math.max(1e-4, (re*re + im*im)*dy/N*2)]); } return out; };
+    J.plot(J.$('#cv3b'), {x:[1/LEN, 0.5/dy], y:[1e-4, 1e2], logx:true, logy:true, xf:t => t >= 0.1 ? J.fmt(t, 1) : t >= 0.01 ? J.fmt(t, 2) : J.fmt(t, 3), yf:t => '10^' + Math.round(Math.log10(t)), xlab:'공간 주파수 (1/nm)', ylab:'PSD (nm³)', series:[{pts:psd(before), color:'--ink3', w:1}, {pts:psd(after), color:'--red', w:1.5}], vlines:v.l > 0 ? [{x:1/(2*Math.PI*v.l), color:'--jade', label:'차단'}] : []});
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const M = Math.floor(N*0.45), sx = (w - 20)/M, sy = 10;
+    [[before, h*0.3, '#9c7bd1', '감광액'], [after, h*0.75, '#e08a3c', '식각 후']].forEach(([e, yb, c, lab]) => { ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(10, yb + 40); for(let i = 0; i < M; i++) ctx.lineTo(10 + i*sx, yb - e[i]*sy); ctx.lineTo(10 + (M - 1)*sx, yb + 40); ctx.closePath(); ctx.fill(); ctx.fillStyle = J.c('--ink'); ctx.font = '12px "Noto Sans KR"'; ctx.fillText(lab, 12, yb - 34); });
+    const b = 3*sd(before), a = 3*sd(after);
+    J.out(box, 'af', J.fmt(a, 2) + ' nm', a < 2 ? 'good' : 'warn'); J.out(box, 'red', J.fmt((1 - a/b)*100, 0) + ' %'); J.out(box, 'lf', v.l > 0 ? '주기 ' + J.fmt(2*Math.PI*v.l, 0) + ' nm 이상의 굽이' : '전부'); });
+})();
+</script>
+</body>
+</html>

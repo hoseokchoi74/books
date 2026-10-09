@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>식각 書 · 집현전</title>
+<meta name="description" content="집현전 인터랙티브 교과서 — 깎아서 새기는 나노 조각: 습식·플라스마·쉬스·식각 화학·시너지·장비·프로파일·고종횡비·종말점·ALE·손상·패턴 전사·공정 제어를 실험으로 배우는 식각 책">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/jade.css">
+<link rel="stylesheet" href="../assets/book.css">
+<script src="book.js"></script>
+<script src="../assets/book.js"></script>
+<script src="../assets/iso3d.js"></script>
+<style>
+  :root{--acc:#2d6470}
+  :root[data-theme="dark"]{--acc:#7cc4cf}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--acc:#7cc4cf} }
+  .hero{display:grid; grid-template-columns:1.05fr 1fr; gap:40px; align-items:center; padding:56px 0 40px}
+  .hero h1{font-size:clamp(34px,5.4vw,58px); margin:14px 0 18px; font-weight:900; line-height:1.18}
+  .hero h1 em{font-style:normal; color:var(--acc)}
+  .hero p.lead{font-size:17.5px; color:var(--ink2); max-width:560px}
+  .hero .cta{display:flex; gap:10px; flex-wrap:wrap; margin:24px 0 18px}
+  .hero .chips{display:flex; gap:8px; flex-wrap:wrap}
+  .hero .chips span{font-size:13px; border:1px solid var(--line); border-radius:3px; padding:2px 10px; background:var(--card); color:var(--ink2)}
+  .stage{position:relative; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:10px; box-shadow:inset 0 0 0 5px var(--card), inset 0 0 0 6px var(--line2), var(--shadow)}
+  .stage canvas{display:block; width:100%}
+  .stage .over{position:absolute; left:18px; top:14px; font-size:12px; color:var(--ink3)}
+  .stage .bar{display:flex; gap:8px; align-items:center; padding:4px 8px; font-size:12.5px; color:var(--ink2); flex-wrap:wrap}
+  .titleslip{position:absolute; right:-12px; top:-18px; writing-mode:vertical-rl; background:var(--paper); border:1px solid var(--line); padding:12px 7px; font-family:var(--serif); font-weight:900; font-size:20px; letter-spacing:.2em; box-shadow:var(--shadow)}
+  .titleslip small{display:block; font-weight:400; font-size:11px; letter-spacing:.15em; color:var(--ink3); margin-top:6px}
+  @media (max-width:900px){ .hero{grid-template-columns:1fr; padding-top:32px} .titleslip{right:6px; top:-14px} }
+  section.block{padding:46px 0 10px}
+  section.block > h2{font-size:28px; margin:0 0 8px; font-weight:900}
+  section.block > p.sub{color:var(--ink2); margin:0 0 22px; max-width:760px}
+  .chain svg{width:100%; height:auto; display:block}
+  .chain a:hover rect.blk{stroke:var(--red); stroke-width:3}
+  .nums{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px}
+  .num{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px; position:relative; overflow:hidden}
+  .num b{font-family:var(--serif); font-size:30px; font-weight:900; display:block}
+  .num span{font-size:14px; color:var(--ink2)}
+  .num:after{content:attr(data-h); position:absolute; right:10px; bottom:-14px; font-family:var(--serif); font-size:64px; color:var(--ink); opacity:.05; font-weight:900}
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px}
+  .card{display:flex; flex-direction:column; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:3px; padding:18px 18px 16px 24px; color:var(--ink); position:relative; transition:transform .15s, box-shadow .15s}
+  .card:before{content:''; position:absolute; left:8px; top:10px; bottom:10px; width:1px; background:var(--line)}
+  .card:hover{transform:translateY(-3px); box-shadow:var(--shadow); text-decoration:none; border-color:var(--acc)}
+  .card .cn{font-family:var(--mono); font-size:11.5px; color:var(--acc); letter-spacing:.15em}
+  .card h3{margin:0; font-size:18.5px}
+  .card p{margin:0; font-size:14px; color:var(--ink2); line-height:1.65; flex:1}
+  .card .tags{display:flex; gap:5px; flex-wrap:wrap; margin-top:6px}
+  .paths{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px}
+  .path{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px}
+  .path h3{margin:0 0 4px; font-size:17px}
+  .path p{margin:0 0 10px; font-size:14px; color:var(--ink2)}
+  .path .seq{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .path .seq a{font-family:var(--mono); font-size:13px; border:1px solid var(--acc); color:var(--acc); border-radius:3px; padding:1px 8px}
+  .path .seq i{color:var(--ink3); font-style:normal; font-size:12px}
+  .howto{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px}
+  .how{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px; text-align:center}
+  .how .hj{font-family:var(--serif); font-size:32px; font-weight:900; color:var(--red)}
+  .how b{display:block; font-family:var(--serif); margin:2px 0 4px}
+  .how span{font-size:13.5px; color:var(--ink2)}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<div class="wrap">
+
+<section class="hero">
+  <div>
+    <div class="kicker">Interactive Etching Textbook · 集賢殿 器部 別冊</div>
+    <h1>깎아서 새기는<br><em>나노 조각</em></h1>
+    <p class="lead">노광이 그린 무늬를 실제 회로로 새기는 것은 식각이다. 수 mTorr의 기체에 전력을 넣어 만든 플라스마에서 이온은 수직으로 떨어지고 라디칼은 사방으로 스며들며, 둘이 손을 잡아 원자를 하나씩 기체로 바꿔 날려 보낸다. 지름 100 nm 구멍을 8 µm 깊이로 곧게 파고, 원자 한 층만 골라 벗겨 내는 기술까지. 입자 하나하나를 추적하는 단면 시뮬레이터와 43개의 실험으로 식각의 물리와 화학을 직접 돌려 본다.</p>
+    <div class="cta">
+      <a class="btn red" href="chapters/overview.html" style="background:var(--acc);border-color:var(--acc)">1장부터 펼치기 →</a>
+      <a class="btn ghost" href="chapters/playground.html">식각 레시피 놀이터</a>
+    </div>
+    <div class="chips"><span>16개 장</span><span>43개 실험</span><span>3D 모형</span><span>공대 학부 수준</span></div>
+  </div>
+  <div class="stage">
+    <div class="titleslip">蝕刻 書<small>削刻之道</small></div>
+    <div class="over" id="hOver">드래그해서 돌려 보세요</div>
+    <canvas id="hero3d" data-h="400" aria-label="식각 공정 3D 모형"></canvas>
+    <div class="bar" id="modeBtns">
+      <button class="sbtn" data-m="0">마스크</button><button class="sbtn" data-m="1">플라스마</button><button class="sbtn" data-m="2">식각 중</button><button class="sbtn on" data-m="3">완성</button>
+      <button class="sbtn" id="hAuto">▶ 순서대로 재생</button>
+    </div>
+  </div>
+</section>
+
+<section class="block chain">
+  <div class="kicker">One etch step</div>
+  <h2>식각 한 번의 고리</h2>
+  <p class="sub">한 번의 식각은 이 고리를 돈다: <b>가스 주입 → 플라스마 점화 → 이온·라디칼 생성 → 표면 반응 → 생성물 배기 → 종말점 검출 → 과식각</b>. 그 바탕에는 쉬스의 물리와 식각 화학이, 그 결과에는 단면 모양·손상·균일도가 있다.</p>
+  <figure class="fig" style="margin:0">
+    <svg viewBox="0 0 980 300" role="img" aria-label="식각 고리"><g id="chainG"></g></svg>
+    <figcaption><b>그림 0-1.</b> 식각 한 번의 흐름(가운데)과 그것을 지배하는 원리·결과(양옆). 상자를 누르면 해당 장으로 간다.</figcaption>
+  </figure>
+</section>
+
+<section class="block">
+  <div class="kicker">Etching in numbers</div>
+  <h2>숫자로 보는 식각</h2>
+  <p class="sub">이 책을 덮을 즈음이면 아래 숫자가 왜 그 값인지 설명할 수 있게 됩니다. (2025–26년 대략값)</p>
+  <div class="nums">
+    <div class="num" data-h="深"><b>AR 60~100</b><span>3D 낸드 채널 홀의 종횡비 → 9장</span></div>
+    <div class="num" data-h="層"><b>0.5 nm</b><span>원자층 식각 한 사이클에 깎는 두께 → 11장</span></div>
+    <div class="num" data-h="選"><b>&gt; 20 : 1</b><span>산화막 고선택 식각의 선택비 → 5장</span></div>
+    <div class="num" data-h="協"><b>~10배</b><span>이온과 라디칼을 함께 쓸 때의 시너지 → 6장</span></div>
+    <div class="num" data-h="鞘"><b>~1 mm</b><span>이온을 가속하는 쉬스의 두께 → 4장</span></div>
+    <div class="num" data-h="均"><b>±1 %</b><span>300 mm 웨이퍼 식각 속도 균일도 목표 → 14장</span></div>
+    <div class="num" data-h="電"><b>0.1 %</b><span>식각 플라스마의 이온화율 → 3장</span></div>
+    <div class="num" data-h="角"><b>89°+</b><span>수직 측벽 각도 → 8장</span></div>
+  </div>
+</section>
+
+<section class="block" id="chapters">
+  <div class="kicker">Table of contents · 目次</div>
+  <h2>전체 장</h2>
+  <p class="sub">각 장은 <b>개념 → 그림 → 수식 → 실험 → 문제</b> 순서로 짜여 있습니다.</p>
+  <div class="cards" id="cards"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">Reading paths</div>
+  <h2>추천 학습 경로</h2>
+  <p class="sub">관심사와 직무에 따라 이렇게 읽어 보세요.</p>
+  <div class="paths" id="paths"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">How to read</div>
+  <h2>이 책 읽는 법</h2>
+  <div class="howto">
+    <div class="how"><div class="hj">讀</div><b>읽기</b><span>플라스마 물리와 표면 화학부터. 영어 용어는 괄호로 함께 씁니다.</span></div>
+    <div class="how"><div class="hj">觀</div><b>보기</b><span>입자 추적 단면 시뮬레이터로 프로파일이 자라는 것을 봅니다.</span></div>
+    <div class="how"><div class="hj">算</div><b>계산하기</b><span>차일드 법칙, 전역 모형, 크누센 수송, FN 터널링… 직접 돌립니다.</span></div>
+    <div class="how"><div class="hj">觸</div><b>만지기</b><span>슬라이더를 끝까지. 공정 창의 가장자리에서 배웁니다.</span></div>
+    <div class="how"><div class="hj">問</div><b>확인하기</b><span>장마다 문제, 마지막 장에서 20문제 종합 퀴즈.</span></div>
+  </div>
+</section>
+
+</div>
+<footer class="site">식각 書 — 집현전 인터랙티브 교과서 시리즈 · 수치는 교육용 근사 모델이며 특정 회사·장비의 사양이 아닙니다.<br>콘텐츠 CC BY 4.0 · 코드 MIT</footer>
+
+<script>
+(function(){
+  const B = window.BOOK;
+  document.getElementById('cards').innerHTML = B.chapters.map(c => `
+    <a class="card" href="chapters/${c.slug}.html"><span class="cn">CHAPTER ${c.n}</span><h3>${c.title}</h3><p>${c.desc}</p>
+    <span class="tags">${c.tags.map(t => `<span class="tag ${t==='시뮬레이터'?'sim':t==='3D'?'d3':''}">${t}</span>`).join('')}</span></a>`).join('');
+  const P = [
+    ['입문 · 전체 그림','식각이 처음이라면. 흐름과 핵심 원리.',['01','02','03','06','08']],
+    ['플라스마 물리','방전, 쉬스, 장비.',['03','04','07','09']],
+    ['식각 공정 엔지니어','화학, 프로파일, 종말점, 제어.',['05','08','10','14','15']],
+    ['고종횡비·메모리','3D 낸드 채널 홀과 차징.',['04','08','09','12']],
+    ['첨단 로직','ALE, 손상, 패턴 전사.',['06','11','12','13']],
+    ['장비·설비','장비 구조와 균일도, 시즈닝.',['03','07','10','14']]
+  ];
+  const slug = n => B.chapters.find(c => c.n === n).slug;
+  document.getElementById('paths').innerHTML = P.map(p => `<div class="path"><h3>${p[0]}</h3><p>${p[1]}</p><div class="seq">${p[2].map(n => `<a href="chapters/${slug(n)}.html">${n}</a>`).join('<i>→</i>')}</div></div>`).join('');
+})();
+
+(function(){
+  const g = document.getElementById('chainG'), cx = 490, cy = 150, R = 105;
+  const items = [['가스 주입','C₄F₈·Cl₂·O₂','chemistry','--jade'],['점화','RF 전력','plasma','--plum'],['이온·라디칼','해리·이온화','synergy','--red'],['표면 반응','시너지','profile','--wood2'],['배기','SiF₄·CO','reactor','--indigo'],['종말점','OES','endpoint','--gold'],['과식각','선택비','endpoint','--ink3']];
+  items.forEach(([t, s, ch, c], i) => { const a = -Math.PI/2 + i/items.length*Math.PI*2, x = cx + R*1.55*Math.cos(a), y = cy + R*Math.sin(a);
+    const l = J.svg('a', {href:'chapters/' + ch + '.html'}, g);
+    J.svg('rect', {class:'blk', x:x - 62, y:y - 26, width:124, height:52, rx:26, fill:'var(--card)', stroke:`var(${c})`, 'stroke-width':2.2}, l);
+    J.svg('text', {x, y:y - 2, 'text-anchor':'middle', class:'t-m', text:t, style:'font-weight:700'}, l);
+    J.svg('text', {x, y:y + 15, 'text-anchor':'middle', class:'t-s', text:s}, l);
+    const a2 = a + Math.PI*2/items.length*0.5, x2 = cx + R*1.25*Math.cos(a2), y2 = cy + R*0.8*Math.sin(a2);
+    J.svg('text', {x:x2, y:y2 + 5, 'text-anchor':'middle', class:'t-m', text:'→', style:`fill:var(--ink3);transform-origin:${x2}px ${y2}px;transform:rotate(${(a2 + Math.PI/2)*180/Math.PI}deg)`}, g); });
+  J.svg('circle', {cx, cy, r:48, fill:'var(--paper2)', stroke:'var(--line)'}, g);
+  J.svg('text', {x:cx, y:cy - 4, 'text-anchor':'middle', class:'t-l', text:'식각 1회'}, g); J.svg('text', {x:cx, y:cy + 16, 'text-anchor':'middle', class:'t-s', text:'수십 초 ~ 수 분'}, g);
+  const side = [['습식', 'wet', 70, 80], ['쉬스', 'sheath', 70, 150], ['장비', 'reactor', 70, 220], ['고종횡비', 'aspect', 910, 80], ['ALE', 'ale', 910, 150], ['손상', 'damage', 910, 220]];
+  side.forEach(([t, ch, x, y]) => { const l = J.svg('a', {href:'chapters/' + ch + '.html'}, g); J.svg('rect', {class:'blk', x:x - 56, y:y - 18, width:112, height:36, rx:4, fill:'var(--card)', stroke:'var(--acc)', 'stroke-width':1.5}, l); J.svg('text', {x, y:y + 5, 'text-anchor':'middle', class:'t-m', text:t}, l); });
+})();
+
+/* 히어로 3D: 마스크 → 플라스마 → 식각 중 → 완성 */
+(function(){
+  const cv = document.getElementById('hero3d'), cam = {yaw:-0.65, pitch:0.5, scale:30};
+  let stage = 3, prog = 1, auto = false, t = 0;
+  const over = ['마스크: 산화막 위 하드마스크 무늬', '플라스마: 이온은 수직, 라디칼은 사방으로', '식각 중: 측벽에 폴리머가 쌓이며 파 내려감', '완성: 정지막에서 멈춘 수직 트렌치'];
+  const lines = [-3.3, -1.1, 1.1, 3.3];
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h); cam.scale = Math.min(w, h*1.2)/15.5; cam.oy = h*0.16;
+    const S = new J3.Scene(), lv = stage + Math.min(1, prog) - 1, gap = 0.8, oxH = 2.4, dep = stage >= 2 ? J.clamp(lv - 1, 0, 1)*oxH : 0;
+    S.box(-5, -1.2, -3, 10, 1.2, 6, '#8f98a8', {layer:0}); S.box(-5, 0, -3, 10, 0.25, 6, '#d9a441', {layer:1});
+    const segs = []; let x0 = -5; lines.forEach(c => { segs.push([x0, c - gap/2]); x0 = c + gap/2; }); segs.push([x0, 5]);
+    segs.forEach(([a, b]) => { S.box(a, 0.25, -3, b - a, oxH, 6, '#8cc6e6', {layer:2}); S.box(a, 0.25 + oxH, -3, b - a, 0.35, 6, '#e08a3c', {layer:3}); });
+    lines.forEach(c => { if(oxH - dep > 0.01) S.box(c - gap/2, 0.25, -3, gap, oxH - dep, 6, '#8cc6e6', {layer:2});
+      if(dep > 0.05 && stage < 3) [-1, 1].forEach(sg => S.box(c + sg*gap/2 - (sg > 0 ? 0.06 : 0), 0.25 + oxH - dep, -3, 0.06, dep, 6, '#5f9a45', {layer:4})); });
+    if(stage === 1 || stage === 2){ const f = stage === 1 ? Math.min(1, prog) : 1; S.box(-5, 4.2, -3, 10, 1.4, 6, '#b48ae6', {layer:6, alpha:0.18*f});
+      lines.forEach(c => S.box(c - 0.08, 0.25 + oxH - dep, -2.6, 0.16, 4.2 - (0.25 + oxH - dep), 5.2, '#ffd84a', {layer:7, alpha:0.22*f})); }
+    S.render(ctx, cam, w, h);
+    if(stage === 1 || stage === 2){ const r = J.rng(Math.floor(t*6)); ctx.fillStyle = 'rgba(58,163,106,.75)'; for(let k = 0; k < 26; k++){ ctx.beginPath(); ctx.arc(w*0.15 + r()*w*0.7, h*0.12 + r()*h*0.3, 2.5, 0, 7); ctx.fill(); } }
+  }
+  J3.drag(cv, cam, draw); J.live(draw);
+  const setStage = s => { stage = s; prog = 0; J.$$('#modeBtns [data-m]').forEach(x => x.classList.toggle('on', +x.dataset.m === s)); J.$('#hOver').textContent = over[s] + ' · 드래그해서 돌려 보세요'; };
+  J.$$('#modeBtns [data-m]').forEach(b => b.onclick = () => { auto = false; J.$('#hAuto').classList.remove('on'); setStage(+b.dataset.m); });
+  J.$('#hAuto').onclick = e => { auto = !auto; e.target.classList.toggle('on', auto); if(auto) setStage(0); };
+  J.$('#hOver').textContent = over[3] + ' · 드래그해서 돌려 보세요';
+  J.loop(cv, dt => { t += dt; if(!cam.user) cam.yaw += dt*0.12; if(prog < 1) prog = Math.min(1, prog + dt*0.5); if(auto && prog >= 1 && (t % 2.6) < dt){ setStage((stage + 1) % 4); } draw(); });
+})();
+</script>
+</body>
+</html>

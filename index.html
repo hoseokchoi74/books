@@ -96,8 +96,8 @@
   <div>
     <div class="kicker">The Interactive Library · 集賢殿 叢書</div>
     <h1>책을 펼치면,<br><em>원리</em>가 움직입니다.</h1>
-    <p>집현전(Jade Hall)은 직접 만지며 배우는 인터랙티브 교과서 시리즈입니다. 옛 서책처럼 실로 엮은 한 권 한 권 안에, 슬라이더를 움직이고 3D 구조를 돌려 보는 실험이 가득합니다. 지금은 중·고등학생을 위한 입문서 <b>반도체 기초 書</b>(상·중·하 세 권), <b>DRAM</b>, <b>NAND 플래시</b>, 메모리 전반을 아우르는 <b>메모리 書</b>, 칩 전체를 다루는 <b>SoC 書</b>, 칩을 만드는 <b>공정 書</b>, 그리고 그중 노광만 깊이 파고든 별책 <b>포토 書</b>를 펼칠 수 있습니다.</p>
-    <div class="cta"><a class="btn red" href="semiconductor/index.html" style="background:#3f6b2e;border-color:#3f6b2e">반도체 기초 書 펼치기 →</a><a class="btn red" href="dram/index.html">DRAM 書 펼치기 →</a><a class="btn red" href="nand/index.html" style="background:var(--plum);border-color:var(--plum)">NAND 書 펼치기 →</a><a class="btn red" href="memory/index.html" style="background:var(--jade);border-color:var(--jade)">메모리 書 펼치기 →</a><a class="btn red" href="soc/index.html" style="background:var(--gold);border-color:var(--gold)">SoC 書 펼치기 →</a><a class="btn red" href="process/index.html" style="background:var(--wood2);border-color:var(--wood2)">공정 書 펼치기 →</a><a class="btn red" href="photo/index.html" style="background:#4b3a7c;border-color:#4b3a7c">포토 書 펼치기 →</a><a class="btn ghost" href="#shelf">서가 둘러보기</a></div>
+    <p>집현전(Jade Hall)은 직접 만지며 배우는 인터랙티브 교과서 시리즈입니다. 옛 서책처럼 실로 엮은 한 권 한 권 안에, 슬라이더를 움직이고 3D 구조를 돌려 보는 실험이 가득합니다. 지금은 중·고등학생을 위한 입문서 <b>반도체 기초 書</b>(상·중·하 세 권), <b>DRAM</b>, <b>NAND 플래시</b>, 메모리 전반을 아우르는 <b>메모리 書</b>, 칩 전체를 다루는 <b>SoC 書</b>, 칩을 만드는 <b>공정 書</b>, 그리고 노광과 식각을 각각 깊이 파고든 별책 <b>포토 書</b>와 <b>식각 書</b>를 펼칠 수 있습니다.</p>
+    <div class="cta"><a class="btn red" href="semiconductor/index.html" style="background:#3f6b2e;border-color:#3f6b2e">반도체 기초 書 펼치기 →</a><a class="btn red" href="dram/index.html">DRAM 書 펼치기 →</a><a class="btn red" href="nand/index.html" style="background:var(--plum);border-color:var(--plum)">NAND 書 펼치기 →</a><a class="btn red" href="memory/index.html" style="background:var(--jade);border-color:var(--jade)">메모리 書 펼치기 →</a><a class="btn red" href="soc/index.html" style="background:var(--gold);border-color:var(--gold)">SoC 書 펼치기 →</a><a class="btn red" href="process/index.html" style="background:var(--wood2);border-color:var(--wood2)">공정 書 펼치기 →</a><a class="btn red" href="photo/index.html" style="background:#4b3a7c;border-color:#4b3a7c">포토 書 펼치기 →</a><a class="btn red" href="etch/index.html" style="background:#2d6470;border-color:#2d6470">식각 書 펼치기 →</a><a class="btn ghost" href="#shelf">서가 둘러보기</a></div>
   </div>
 </section>
 
@@ -146,6 +146,7 @@ const SHELVES = [
     {t:'SoC 書', s:'統合', kr:'시스템 온 칩: 수백억 트랜지스터를 하나로', code:'器 · 肆', c:'#8a6420', href:'soc/index.html'},
     {t:'공정 書', s:'工程', kr:'반도체 공정: 웨이퍼 위에 새기는 천 개의 단계', code:'器 · 伍', c:'#6b4426', href:'process/index.html'},
     {t:'포토 書', s:'光刻', kr:'포토리소그래피: 빛으로 새기는 나노미터', code:'器 · 別冊', c:'#4b3a7c', href:'photo/index.html'},
+    {t:'식각 書', s:'蝕刻', kr:'식각: 깎아서 새기는 나노 조각', code:'器 · 別冊', c:'#2d6470', href:'etch/index.html'},
     {t:'包裝 書', s:'封止', kr:'패키징과 적층', code:'器 · 陸', c:'#3c6f8a'},
     {t:'感光 書', s:'映像', kr:'이미지 센서', code:'器 · 柒', c:'#8a2f28'},
     {t:'顯示 書', s:'畫面', kr:'디스플레이', code:'器 · 捌', c:'#3c3a6b'}
@@ -207,11 +208,17 @@ const SHELVES = [
     ['포토 書 · 4장','빛을 비스듬히 비추면?','광원 모양을 바꿔 동공 속 회절 차수를 옮기고 대비 살리기','photo/chapters/illumination.html#s1','pupil'],
     ['포토 書 · 10장','마스크를 일부러 틀리게 그린다?','ILT 경사 하강으로 곡선 마스크가 자라나는 과정 보기','photo/chapters/opc.html#s3','ilt'],
     ['포토 書 · 13장','분자가 스스로 줄을 선다?','블록 공중합체를 어닐링해 가이드 피치를 3배로 불리기','photo/chapters/highna.html#s3','dsa'],
+    ['식각 書 · 8장','이온과 라디칼이 만든 단면은?','입자 수천 개를 추적해 수직 트렌치·언더컷·보잉을 직접 깎기','etch/chapters/profile.html#s1','etchprof'],
+    ['식각 書 · 9장','깊은 구멍은 왜 느리게 깎일까?','폭이 다른 네 구멍을 함께 식각해 ARDE 관찰','etch/chapters/aspect.html#s1','arde'],
+    ['식각 書 · 11장','원자 한 층만 깎을 수 있을까?','흡착과 이온 두 단계로 도는 ALE 사이클 애니메이션','etch/chapters/ale.html#s1','ale'],
     ['SoC 書 · 3장','NPU는 행렬을 어떻게 곱할까?','3×3 시스톨릭 어레이로 데이터가 흐르는 모습 보기','soc/chapters/accel.html#s3','systolic'],
     ['SoC 書 · 4장','칩 안에도 교통 체증이 있을까?','4×4 메시 NoC에 패킷을 흘려 포화를 일으키기','soc/chapters/noc.html#s2','noc'],
     ['SoC 書 · 8장','게임하면 왜 폰이 느려질까?','20분 게임 동안 온도와 스로틀링 따라가기','soc/chapters/thermal.html#s1','thermal']
   ];
   const art = {
+    etchprof:'<rect x="20" y="10" width="260" height="14" fill="#9c7bd1"/><rect x="20" y="24" width="260" height="80" fill="#8cc6e6"/><rect x="20" y="104" width="260" height="8" fill="#d9a441"/>'+[70,150,230].map(x=>'<rect x="'+(x-12)+'" y="10" width="24" height="94" fill="var(--card)"/><rect x="'+(x-13)+'" y="24" width="2" height="80" fill="#5f9a45"/><rect x="'+(x+11)+'" y="24" width="2" height="80" fill="#5f9a45"/><line x1="'+x+'" y1="0" x2="'+x+'" y2="100" stroke="#e0b030" stroke-width="1.5"/>').join(''),
+    arde:'<rect x="20" y="10" width="260" height="100" fill="#8cc6e6"/>'+[[50,6,40],[110,12,62],[180,24,82],[250,40,96]].map(([x,w,d])=>'<rect x="'+(x-w/2)+'" y="10" width="'+w+'" height="'+d+'" fill="var(--card)"/>').join('')+'<rect x="20" y="6" width="260" height="4" fill="#9c7bd1"/>',
+    ale:Array.from({length:4},(_,l)=>Array.from({length:12},(_,i)=>'<circle cx="'+(40+i*20)+'" cy="'+(100-l*18)+'" r="8" fill="#8f96a3"/>').join('')).join('')+Array.from({length:12},(_,i)=>i%3?'<circle cx="'+(40+i*20)+'" cy="36" r="5" fill="#3aa36a"/>':'').join('')+'<line x1="80" y1="0" x2="80" y2="26" stroke="var(--red)" stroke-width="2.5"/><line x1="200" y1="0" x2="200" y2="26" stroke="var(--red)" stroke-width="2.5"/>',
     pupil:'<circle cx="150" cy="60" r="46" fill="none" stroke="var(--ink2)" stroke-width="2"/>'+[[-1,'var(--red)'],[0,'var(--ink)'],[1,'var(--red)']].map(([m,c])=>[[-34,0],[34,0]].map(([x,y])=>'<circle cx="'+(150+x+m*68)+'" cy="'+(60+y)+'" r="9" fill="'+c+'" opacity="'+(Math.abs(x+m*68)<46?.85:.2)+'"/>').join('')).join('')+'<text x="150" y="118" font-size="11" text-anchor="middle" fill="var(--ink3)">다이폴 동공</text>',
     ilt:'<rect x="20" y="10" width="260" height="100" fill="var(--paper2)"/>'+[[60,20,24,80],[130,20,24,50],[200,40,60,20]].map(([x,y,w,h])=>'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="9" fill="var(--ink)"/><rect x="'+(x-5)+'" y="'+(y-5)+'" width="9" height="9" rx="4" fill="var(--ink)"/><rect x="'+(x+w-4)+'" y="'+(y+h-4)+'" width="9" height="9" rx="4" fill="var(--ink)"/><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="none" stroke="var(--jade)" stroke-width="2"/>').join('')+'<path d="M110 18 q6 40 0 84" stroke="var(--ink3)" stroke-width="3" fill="none" opacity=".5"/>',
     dsa:Array.from({length:30},(_,k)=>'<rect x="'+(16+k*9)+'" y="10" width="4.5" height="100" fill="'+(k%2?'#2f9aa8':'#e07a2a')+'"/>').join('')+[0,1,2,3,4].map(k=>'<line x1="'+(18+k*54)+'" y1="6" x2="'+(18+k*54)+'" y2="114" stroke="#fff" stroke-dasharray="3 4" stroke-width="1.5"/>').join(''),

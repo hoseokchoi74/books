@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>플라스마 손상 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="damage">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 12 <span class="hanja">第十二章 · 傷</span></div>
+  <h1>플라스마 손상</h1>
+  <p class="lead">플라스마는 원하는 막만 깎고 끝나지 않는다. 웨이퍼 위 금속선은 안테나처럼 전하를 모아 얇은 게이트 산화막에 흘려보내고, 고에너지 이온은 표면 아래 수 nm까지 결정을 부수고, 산소 라디칼은 다공성 저유전막의 탄소를 빼앗아 유전율을 올린다. 이런 손상은 식각 직후에는 보이지 않다가 트랜지스터 문턱 전압 이동, 누설 전류, 배선 지연과 수명 단축으로 나타난다. 이 장은 세 가지 대표 손상을 계산한다: 안테나 효과에 의한 게이트 산화막 차징, 이온 충돌에 의한 격자 손상 깊이, 저유전막 애싱 손상.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>안테나 비와 플라스마 불균일이 게이트 산화막에 흐르는 파울러–노드하임 전류를 정하는 원리를 계산한다.</li>
+  <li>이온 충돌 몬테카를로로 이온 종류·에너지에 따른 격자 손상 깊이를 본다.</li>
+  <li>다공성 저유전막에서 라디칼 확산에 의한 손상층 성장과 실효 유전율 상승을 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>안테나 효과: 금속선이 모은 전하</h2>
+<p>게이트 전극에 연결된 금속선(또는 폴리실리콘)이 식각되는 동안, 그 넓은 표면은 플라스마의 이온과 전자를 모은다. 플라스마가 완벽히 균일하면 이온과 전자 전류가 상쇄되지만, 조금만 불균일해도 순전류가 남는다. 이 전류는 갈 곳이 없어 얇은 게이트 산화막을 뚫고 기판으로 흐른다(파울러–노드하임 터널링). 금속 면적이 게이트 면적의 수천 배면(<span class="term">안테나 비</span>) 산화막에는 수천 배 진한 전류가 흘러 결함을 만들고, 문턱 전압이 이동하거나 산화막이 파괴된다. 대책은 설계 규칙으로 안테나 비를 제한하고, 게이트 옆에 보호 다이오드를 달아 전하를 기판으로 빼는 것이다.</p>
+<div class="eq">$$J_{ox} = J_{net}\cdot AR,\qquad J_{FN} = A\,E_{ox}^2\,e^{-B/E_{ox}}\ (A = 1.25\times10^{-6}\ \mathrm{A/V^2},\ B = 233.5\ \mathrm{MV/cm}),\qquad Q_{inj} = J_{ox}\,t$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-1</span><span class="ttl">안테나 차징 계산기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">안테나 비 <output data-o="ar"></output></span><input type="range" data-k="ar" min="1" max="5" step="0.05" value="3.3" data-log="1" data-d="0"></label>
+      <label class="ctrl"><span class="lab">플라스마 순전류 밀도 <output data-o="j"></output></span><input type="range" data-k="j" min="0.01" max="5" step="0.01" value="0.5" data-d="2" data-u="µA/cm²"></label>
+      <label class="ctrl"><span class="lab">게이트 산화막 두께 <output data-o="t"></output></span><input type="range" data-k="t" min="1.5" max="10" step="0.1" value="3" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">과식각 시간 <output data-o="s"></output></span><input type="range" data-k="s" min="5" max="120" step="5" value="30" data-d="0" data-u="s"></label>
+      <label class="ctrl"><span class="lab">보호 다이오드</span><select data-k="d"><option value="0" selected>없음</option><option value="1">있음</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">산화막 전류 밀도</span><span class="v" data-r="jox"></span></div>
+      <div class="ro"><span class="k">산화막 전기장 / 전압</span><span class="v" data-r="e"></span></div>
+      <div class="ro"><span class="k">주입 전하 / 파괴 전하</span><span class="v" data-r="q"></span></div>
+      <div class="ro"><span class="k">판정</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 트랜지스터와 긴 금속 안테나(위에서 본 모습). 안테나가 이온(+)을 모아 게이트 아래 산화막으로 흘려보낸다(노란 화살표). 오른쪽: 산화막 전기장에 따른 FN 전류(곡선)와 안테나가 밀어 넣는 전류(수평선). 둘이 만나는 점에서 전기장이 정해진다. 주입 전하가 파괴 전하(Q<sub>bd</sub>)의 1 %를 넘으면 신뢰성 위험으로 판정한다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>이온이 남긴 상처: 격자 손상 깊이</h2>
+<p>이온은 표면에 부딪힌 뒤 바로 멈추지 않는다. 결정 속 원자들과 연쇄 충돌하며 에너지를 잃고, 15 eV 이상을 받은 원자는 제자리에서 튕겨 나가 빈자리와 틈새 원자를 남긴다. 손상층은 이온 에너지와 질량에 따라 1~10 nm에 이르며, 실리콘 표면이면 소자의 접합 누설과 이동도를 해친다. 가벼운 이온(H, He)은 깊이 파고들고, 무거운 이온(Ar)은 얕게 많이 부순다. 그래서 정지막 근처 과식각은 이온 에너지를 낮추고, 식각 후 손상층을 얇게 산화해 벗겨 내기도 한다.</p>
+<div class="eq">$$T = \gamma E\,\sin^2\frac{\theta_c}{2},\quad \gamma = \frac{4M_1M_2}{(M_1 + M_2)^2},\qquad \text{변위} \iff T > E_d \approx 15\ \text{eV}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-2</span><span class="ttl">충돌 연쇄 몬테카를로</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">이온</span><select data-k="ion"><option value="1">H⁺ (1)</option><option value="4">He⁺ (4)</option><option value="19">F⁺ (19)</option><option value="40" selected>Ar⁺ (40)</option><option value="84">Kr⁺ (84)</option></select></label>
+      <label class="ctrl"><span class="lab">이온 에너지 <output data-o="e"></output></span><input type="range" data-k="e" min="20" max="2000" step="10" value="300" data-d="0" data-u="eV"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b2r">다시 쏘기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">평균 투사 비정</span><span class="v" data-r="rp"></span></div>
+      <div class="ro"><span class="k">손상층 깊이 (변위의 90 %)</span><span class="v" data-r="dd"></span></div>
+      <div class="ro"><span class="k">이온당 변위 원자</span><span class="v" data-r="nd"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 실리콘 속 이온 궤적 40개(선)와 변위가 일어난 자리(빨간 점). 위가 표면. 오른쪽: 깊이에 따른 변위 원자 분포와 이온이 멈춘 깊이 분포(파랑). 이온 질량과 실리콘(28) 질량이 비슷할수록 한 번에 많은 에너지를 넘겨 얕고 진한 손상을 만든다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🎱</span><b>당구공 브레이크 샷</b><span>큐볼(이온)이 빽빽한 공 무리(결정)를 치면 공들이 사방으로 흩어진다. 탁구공(H⁺)을 던지면 무리 사이를 뚫고 깊이 들어가지만 공을 거의 못 움직이고, 같은 무게의 당구공(Ar⁺, 질량 40 대 28)을 던지면 첫 충돌부터 크게 흩뜨린다. 흩어진 공들이 원래 자리로 돌아오지 못한 것이 격자 손상이다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>저유전막 애싱 손상</h2>
+<p>배선 사이 절연막은 유전율 k를 낮추려고 탄소(메틸기)를 넣고 구멍을 뚫은 다공성 SiCOH(k ≈ 2.4)를 쓴다. 식각 후 감광액을 산소 플라스마로 태울 때(애싱), 산소 라디칼이 구멍을 타고 막 속으로 확산하며 Si–CH₃를 Si–OH로 바꾼다. 탄소를 잃은 층은 물을 빨아들여(k_물 = 80) 유전율이 3.5 이상으로 오르고, 배선 지연과 누설이 커진다. 손상층은 시간의 제곱근으로 자라며, 배선 간격이 좁을수록 손상층이 차지하는 비율이 커져 치명적이다. 그래서 산소 대신 수소·질소 기반 애싱, 극저온 식각, 구멍을 메웠다 비우는 기술이 개발되었다.</p>
+<div class="eq">$$\delta(t) = \sqrt{2 D_{eff} t},\qquad D_{eff} \propto \frac{\varepsilon_{pore}}{\tau}\,\bar v\,r_{pore},\qquad k_{eff} \approx \frac{2\delta\,k_{dmg} + (w - 2\delta)\,k_0}{w}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-3</span><span class="ttl">다공성 low-k 손상층</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">기공률 <output data-o="p"></output></span><input type="range" data-k="p" min="0" max="50" step="1" value="25" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">애싱 가스</span><select data-k="g"><option value="o2" selected>O₂ (산화성)</option><option value="co2">CO₂ (약산화)</option><option value="h2">N₂/H₂ (환원성)</option></select></label>
+      <label class="ctrl"><span class="lab">애싱 시간 <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="120" step="2" value="40" data-d="0" data-u="s"></label>
+      <label class="ctrl"><span class="lab">배선 간격 <output data-o="w"></output></span><input type="range" data-k="w" min="10" max="100" step="2" value="24" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">측벽 손상층 두께</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">원래 k / 손상 k</span><span class="v" data-r="k"></span></div>
+      <div class="ro"><span class="k">배선 사이 실효 k</span><span class="v" data-r="ke"></span></div>
+      <div class="ro"><span class="k">RC 지연 증가</span><span class="v" data-r="rc"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 구리 배선(주황) 사이 low-k 막의 단면. 진한 파랑이 탄소가 남은 건강한 영역, 옅은 노랑이 손상층이다. 오른쪽: 측벽에서의 깊이에 따른 탄소 농도(초록)와 시간에 따른 실효 k(빨강, 오른쪽 축 대신 같은 눈금). 기공률이 높을수록 k는 낮지만 손상이 빨리 퍼진다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 플라스마 손상을 피하는 가장 근본적인 방법은 플라스마와 웨이퍼를 떨어뜨리는 것이다. 어떤 장비가 그렇게 할까?</p><p>원격(다운스트림) 플라스마는 플라스마를 위쪽 별도 공간에서 만들고, 이온과 자외선은 그 안에서 사라지게 한 채 라디칼만 웨이퍼로 보낸다. 손상은 거의 없지만 이방성도 없어서, 감광액 애싱이나 등방성 선택 식각(나노시트 사이 SiGe 제거 등)에 쓰인다. 이온이 필요한 곳과 필요 없는 곳을 나누는 것이 손상 관리의 핵심이다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">안테나 비가 크면 게이트 산화막이 손상되기 쉬운 이유는?</p><ol><li>금속이 뜨거워져서</li><li>안테나가 이온을 반사해서</li><li>넓은 도체가 모은 순전류가 좁은 게이트 산화막으로 몰려 흐르기 때문</li><li>식각 속도가 느려져서</li></ol>
+<p class="explain">J<sub>ox</sub> = J<sub>net</sub> × 안테나 비.</p></div>
+<div class="quiz" data-a="0"><p class="q">같은 300 eV에서 H⁺와 Ar⁺ 중 손상이 더 깊이 들어가는 쪽은?</p><ol><li>H⁺ (가벼워 깊이 침투)</li><li>Ar⁺</li><li>같다</li><li>둘 다 표면에서 멈춘다</li></ol>
+<p class="explain">가벼운 이온은 충돌당 에너지 전달이 작아 멀리 간다. 대신 변위 수는 적다.</p></div>
+<div class="quiz" data-a="3"><p class="q">다공성 low-k의 애싱 손상층 두께는 시간에 대해 대략?</p><ol><li>t에 비례</li><li>t²에 비례</li><li>시간과 무관</li><li>√t에 비례</li></ol>
+<p class="explain">확산 지배: δ = √(2Dt).</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 12-1 안테나 */
+(function(){
+  const box = J.$('#sim1'), A = 1.25e-6, B = 233.5e6;
+  const Jfn = E => A*E*E*Math.exp(-B/E); // E: V/cm
+  J.sim('sim1', v => { const ar = v.ar, jnet = v.j*1e-6, jox = v.d === '1' ? Math.min(jnet*ar, 1e-9) : jnet*ar;
+    let lo = 1e6, hi = 3e7; for(let k = 0; k < 60; k++){ const m = Math.sqrt(lo*hi); if(Jfn(m) < jox) lo = m; else hi = m; } const E = Math.sqrt(lo*hi), Vox = E*v.t*1e-7, Q = jox*v.s, Qbd = 2*Math.pow(v.t/3, 1.5);
+    const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const cy = h/2;
+    ctx.fillStyle = '#9fd0ea'; ctx.fillRect(20, cy - 30, 70, 60); ctx.fillStyle = '#c66'; ctx.fillRect(48, cy - 40, 14, 80); ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('게이트', 34, cy + 56);
+    const len = J.clamp(Math.log10(ar)/5, 0.05, 1)*(w - 120); ctx.fillStyle = '#d98b3a'; ctx.fillRect(62, cy - 6, len + 20, 12); ctx.fillText('금속 안테나 (면적 비 ' + J.fmt(ar, 0) + ')', 80, cy - 14);
+    for(let k = 0; k < Math.min(30, len/12); k++){ ctx.fillStyle = '#d65a4a'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('+', 80 + k*12, cy - 22 - (k % 2)*8); }
+    ctx.strokeStyle = J.c('--gold'); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(80 + len, cy); ctx.lineTo(62, cy); ctx.lineTo(55, cy + 40); ctx.stroke();
+    if(v.d === '1'){ ctx.fillStyle = J.c('--jade'); ctx.fillRect(110, cy + 20, 30, 20); ctx.fillText('다이오드', 104, cy + 54); ctx.strokeStyle = J.c('--jade'); ctx.beginPath(); ctx.moveTo(125, cy + 6); ctx.lineTo(125, cy + 20); ctx.stroke(); }
+    const pts = []; for(let e = 2; e <= 20; e += 0.1) pts.push([e, Math.max(1e-14, Jfn(e*1e6))]);
+    J.plot(J.$('#cv1b'), {x:[2, 20], y:[1e-14, 10], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'산화막 전기장 (MV/cm)', ylab:'전류 밀도 (A/cm²)', series:[{pts, color:'--indigo', w:3}], hlines:[{y:Math.max(1e-14, jox), color:'--red', label:'안테나 전류'}], points:[{x:E/1e6, y:Math.max(1e-14, jox), color:'--red', r:6}]});
+    const frac = Q/Qbd;
+    J.out(box, 'jox', J.sci(jox, 2) + ' A/cm²'); J.out(box, 'e', J.fmt(E/1e6, 1) + ' MV/cm / ' + J.fmt(Vox, 2) + ' V'); J.out(box, 'q', J.sci(Q, 2) + ' / ' + J.fmt(Qbd, 1) + ' C/cm²');
+    J.out(box, 'ok', frac > 0.5 ? '산화막 파괴 위험' : frac > 0.01 ? 'Vt 이동·신뢰성 저하' : '안전', frac > 0.5 ? 'bad' : frac > 0.01 ? 'warn' : 'good'); });
+})();
+
+/* 12-2 충돌 MC */
+(function(){
+  const box = J.$('#sim2'); let seed = 1;
+  J.sim('sim2', v => { const M1 = +v.ion, M2 = 28, g = 4*M1*M2/Math.pow(M1 + M2, 2), r = J.rng(seed), N = 300, Ed = 15, stops = [], disp = [], paths = [];
+    for(let n = 0; n < N; n++){ let E = v.e, x = 0, z = 0, th = J.gauss(r)*0.05, path = n < 40 ? [[0, 0]] : null;
+      for(let st = 0; st < 3000 && E > 5; st++){ const lam = 0.27*Math.pow(E/100, 0.25)*Math.pow(40/M1, 0.3); x += Math.sin(th)*lam; z += Math.cos(th)*lam; if(z < 0) break;
+        const u = Math.pow(r(), 3), T = g*E*u; E -= T + 0.08*Math.sqrt(E)*lam*Math.pow(1/M1, 0.1)*3; if(T > Ed){ disp.push([x, z]); if(T > 3*Ed && r() < 0.5) disp.push([x + (r() - .5)*0.8, z + r()*0.6]); }
+        th += (r() < .5 ? -1 : 1)*Math.min(Math.PI/2, 2*Math.asin(Math.sqrt(u))*Math.min(1, M2/M1)*0.8); if(path) path.push([x, z]); }
+      if(z >= 0) stops.push(z); if(path) paths.push(path); }
+    const zmax = Math.max(3, ...stops, ...disp.map(d => d[1]))*1.05;
+    const {ctx, w, h} = J.fit(J.$('#cv2a')); ctx.clearRect(0,0,w,h); const s = (h - 30)/zmax, cx = w/2;
+    ctx.fillStyle = J.isDark() ? '#2a2c33' : '#e8eaee'; ctx.fillRect(0, 14, w, h - 14); ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('표면 ↓ 실리콘', 6, 11);
+    paths.forEach(p => { ctx.strokeStyle = 'rgba(60,90,180,.5)'; ctx.lineWidth = 1; ctx.beginPath(); p.forEach(([x, z], i) => i ? ctx.lineTo(cx + x*s, 14 + z*s) : ctx.moveTo(cx + x*s, 14 + z*s)); ctx.stroke(); });
+    ctx.fillStyle = 'rgba(214,70,50,.55)'; disp.slice(0, 3000).forEach(([x, z]) => ctx.fillRect(cx + x*s - 1, 14 + z*s - 1, 2.2, 2.2));
+    const nb = 40, db = new Array(nb).fill(0), sb = new Array(nb).fill(0); disp.forEach(([, z]) => { const k = Math.floor(z/zmax*nb); if(k >= 0 && k < nb) db[k]++; }); stops.forEach(z => { const k = Math.floor(z/zmax*nb); if(k >= 0 && k < nb) sb[k]++; });
+    const mx = Math.max(...db, 1), ms = Math.max(...sb, 1);
+    J.plot(J.$('#cv2b'), {x:[0, zmax], y:[0, 1.1], xlab:'깊이 (nm)', ylab:'상대 분포', series:[{pts:db.flatMap((n, k) => [[k*zmax/nb, n/mx], [(k + 1)*zmax/nb, n/mx]]), color:'--red', w:2, fill:.3}, {pts:sb.flatMap((n, k) => [[k*zmax/nb, n/ms], [(k + 1)*zmax/nb, n/ms]]), color:'--indigo', w:2}]});
+    const rp = stops.reduce((a, b) => a + b, 0)/Math.max(1, stops.length), dz = disp.map(d => d[1]).sort((a, b) => a - b), d90 = dz.length ? dz[Math.floor(dz.length*0.9)] : 0;
+    J.out(box, 'rp', J.fmt(rp, 2) + ' nm'); J.out(box, 'dd', J.fmt(d90, 2) + ' nm', d90 < 2 ? 'good' : d90 < 5 ? 'warn' : 'bad'); J.out(box, 'nd', J.fmt(disp.length/N, 1)); });
+  J.$('#b2r').onclick = () => { seed++; J.redrawAll(); };
+})();
+
+/* 12-3 low-k */
+(function(){
+  const box = J.$('#sim3'), G = {o2:[1, 3.6], co2:[0.45, 3.3], h2:[0.12, 2.9]};
+  J.sim('sim3', v => { const p = v.p/100, k0 = 3.0 - 2.0*p, D = (0.2 + 12*p*p)*G[v.g][0], d = t => Math.sqrt(2*D*t), kd = G[v.g][1] + p*0.8, dd = Math.min(v.w/2, d(v.t));
+    const keff = t => { const x = Math.min(v.w/2, d(t)); return (2*x*kd + (v.w - 2*x)*k0)/v.w; };
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const lw = 50, gap = w - 2*lw - 40, x0 = 20 + lw, top = 30, bot = h - 30, sc = gap/v.w;
+    ctx.fillStyle = '#d98b3a'; ctx.fillRect(20, top, lw, bot - top); ctx.fillRect(x0 + gap, top, lw, bot - top);
+    ctx.fillStyle = '#3d6fb0'; ctx.fillRect(x0, top, gap, bot - top); ctx.fillStyle = '#f0d77a'; ctx.fillRect(x0, top, dd*sc, bot - top); ctx.fillRect(x0 + gap - dd*sc, top, dd*sc, bot - top);
+    const r = J.rng(3); ctx.fillStyle = 'rgba(255,255,255,.35)'; for(let i = 0; i < 60*p*4; i++){ ctx.beginPath(); ctx.arc(x0 + r()*gap, top + r()*(bot - top), 1.5 + r()*1.5, 0, 7); ctx.fill(); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('Cu', 40, top - 6); ctx.fillText('low-k (간격 ' + v.w + ' nm)', x0 + 4, top - 6); ctx.fillText('Cu', x0 + gap + 18, top - 6);
+    const C = [], K = []; for(let x = 0; x <= v.w/2; x += v.w/200){ C.push([x, 1/(1 + Math.exp((x - dd)/(0.15 + dd*0.1)))]); } for(let t = 0; t <= 120; t += 2) K.push([t, keff(t)]);
+    const P = J.plot(J.$('#cv3b'), {x:[0, Math.max(v.w/2, 1)], y:[0, 4], xlab:'측벽에서 깊이 (nm)  |  빨강: 시간 0→120 s', ylab:'손실 탄소 비율 / k', series:[{pts:C.map(([x, c]) => [x, c*1]), color:'--jade', w:3}, {pts:K.map(([t, k]) => [t/120*Math.max(v.w/2, 1), k]), color:'--red', w:2.5}], points:[{x:v.t/120*Math.max(v.w/2, 1), y:keff(v.t), color:'--red', r:6}]});
+    J.out(box, 'd', J.fmt(dd, 1) + ' nm', dd < 2 ? 'good' : dd < 5 ? 'warn' : 'bad'); J.out(box, 'k', J.fmt(k0, 2) + ' / ' + J.fmt(kd, 2)); J.out(box, 'ke', J.fmt(keff(v.t), 2), keff(v.t) - k0 < 0.1 ? 'good' : keff(v.t) - k0 < 0.4 ? 'warn' : 'bad'); J.out(box, 'rc', '+' + J.fmt((keff(v.t)/k0 - 1)*100, 0) + ' %'); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>원자층 식각(ALE) · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="ale">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 11 <span class="hanja">第十一章 · 層</span></div>
+  <h1>원자층 식각(ALE)</h1>
+  <p class="lead">게이트 길이가 원자 수십 개 수준이 되자, 식각도 "원자 한 층씩" 깎아야 할 때가 왔다. <span class="term">원자층 식각</span>(ALE)은 연속 식각을 두 개의 자기 제한(self-limiting) 단계로 쪼갠다. 첫 단계에서 염소를 표면에 흡착시켜 맨 위 한 층만 변형하고, 기체를 비운 뒤 둘째 단계에서 낮은 에너지 이온으로 변형된 층만 떼어 낸다. 두 단계 모두 표면 한 층에서 저절로 멈추므로, 한 사이클에 정확히 원자 한 층(약 0.5 nm)이 깎인다. 시간이 조금 길거나 짧아도, 웨이퍼 곳곳의 조건이 조금 달라도 결과는 같다. 이 장은 ALE 사이클을 원자 단위로 보고, 자기 제한이 성립하는 이온 에너지 창을 찾고, ALE가 표면을 매끄럽게 만드는 이유를 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>흡착(변형)–퍼지–이온 제거–퍼지로 이루어진 ALE 사이클과 사이클당 식각량(EPC)을 이해한다.</li>
+  <li>각 단계의 포화 곡선과 이온 에너지 창(변형층만 제거되고 바탕은 깎이지 않는 구간)을 찾는다.</li>
+  <li>ALE 시너지 계수와 연속 식각 대비 표면 거칠기 감소를 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>한 사이클, 한 층</h2>
+<p>실리콘 ALE의 고전적 예: (A) Cl₂ 기체를 넣으면 맨 위 실리콘 원자에 염소가 붙는다. 염소는 표면 한 층에만 붙으므로 시간이 지나면 덮임률이 1에서 멈춘다(자기 제한). (B) 남은 Cl₂를 비운다. (C) 50 eV 안팎의 Ar⁺ 이온을 쏘면, Si–Cl 결합으로 약해진 맨 위 원자는 SiClₓ로 떨어져 나가지만 그 아래 깨끗한 실리콘은 이 에너지로는 거의 깎이지 않는다. 변형층이 다 떨어지면 이온을 더 쏴도 식각이 멈춘다. (D) 다시 비운다. 이것을 수십~수백 번 반복한다.</p>
+<div class="eq">$$EPC = d_{ML}\cdot\theta(t_A)\cdot f(t_C, E),\qquad \theta = 1 - e^{-t_A/\tau_A},\qquad f = 1 - e^{-t_C/\tau_C}$$<div class="note">d<sub>ML</sub>: 원자 한 층 두께(Si(100)은 약 0.136 nm 간격의 층이 4개 모여 0.54 nm 격자). 실제 EPC는 변형 깊이에 따라 0.3~1 nm.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-1</span><span class="ttl">ALE 사이클 원자 애니메이션</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">A: Cl₂ 흡착 시간 <output data-o="ta"></output></span><input type="range" data-k="ta" min="0.2" max="10" step="0.2" value="3" data-d="1" data-u="s"></label>
+      <label class="ctrl"><span class="lab">C: Ar⁺ 이온 시간 <output data-o="tc"></output></span><input type="range" data-k="tc" min="0.2" max="10" step="0.2" value="4" data-d="1" data-u="s"></label>
+      <label class="ctrl"><span class="lab">이온 에너지 <output data-o="e"></output></span><input type="range" data-k="e" min="10" max="150" step="1" value="50" data-d="0" data-u="eV"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b1g">사이클 재생/멈춤</button><button class="sbtn warn" id="b1r">처음으로</button><span class="hint" id="b1s"></span></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">사이클당 식각 EPC</span><span class="v" data-r="epc"></span></div>
+      <div class="ro"><span class="k">덮임률 θ / 제거율 f</span><span class="v" data-r="tf"></span></div>
+      <div class="ro"><span class="k">완료 사이클 / 누적 식각</span><span class="v" data-r="cum"></span></div>
+      <div class="ro"><span class="k">사이클 시간 (퍼지 각 2 s)</span><span class="v" data-r="ct"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 표면 단면의 원자들(회색 = Si, 초록 = 붙은 Cl, 빨강 화살표 = Ar⁺). A 단계에서 맨 위 층이 초록으로 덮이고, C 단계에서 덮인 원자가 떨어져 나간다. 오른쪽: 흡착 시간(초록)과 이온 시간(빨강)에 따른 EPC 포화 곡선. 점은 현재 설정. 두 곡선 모두 평평한 구간에 있어야 "자기 제한"이 성립한다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>이온 에너지 창</h2>
+<p>이온 에너지가 너무 낮으면 변형층조차 떼어 내지 못하고, 너무 높으면 변형되지 않은 바탕까지 물리적으로 스퍼터링해 자기 제한이 깨진다. 그 사이에서 EPC가 평평하게 유지되는 구간이 <span class="term">ALE 창</span>이다. 창의 품질은 시너지 계수로 표현한다. A 단계만 했을 때(자발 식각)와 C 단계만 했을 때(물리 스퍼터)의 식각량이 EPC에 비해 작을수록 이상적인 ALE다.</p>
+<div class="eq">$$S_{ALE} = \frac{EPC - (\alpha + \beta)}{EPC}\times 100\,\%,\qquad \alpha: \text{A만},\ \ \beta: \text{C만}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-2</span><span class="ttl">ALE 창 찾기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">이온 에너지 <output data-o="e"></output></span><input type="range" data-k="e" min="5" max="200" step="1" value="50" data-d="0" data-u="eV"></label>
+      <label class="ctrl"><span class="lab">이온 종류</span><select data-k="ion"><option value="ar" selected>Ar⁺ (가벼움)</option><option value="kr">Kr⁺ (무거움)</option><option value="he">He⁺ (매우 가벼움)</option></select></label>
+      <label class="ctrl"><span class="lab">이온 시간 <output data-o="tc"></output></span><input type="range" data-k="tc" min="1" max="20" step="0.5" value="5" data-d="1" data-u="s"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">EPC</span><span class="v" data-r="epc"></span></div>
+      <div class="ro"><span class="k">α (A만) / β (C만)</span><span class="v" data-r="ab"></span></div>
+      <div class="ro"><span class="k">ALE 시너지</span><span class="v" data-r="syn"></span></div>
+      <div class="ro"><span class="k">창 범위</span><span class="v" data-r="win"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 이온 에너지에 따른 EPC(빨강), 변형 안 된 실리콘의 스퍼터(회색, β), 초록 띠 = ALE 창(EPC가 한 층 ±10 % 안이고 β가 EPC의 10 % 미만인 구간). 무거운 이온은 같은 에너지에서 더 많이 스퍼터해 창이 좁아지고 낮은 쪽으로 이동한다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🧽</span><b>지우개로 한 줄씩</b><span>연필 그림을 지우개로 박박 문지르면 종이까지 찢긴다(연속 식각). ALE는 그림 위에 얇은 테이프를 붙였다(흡착) 떼어 내는(이온) 방식과 같다. 테이프는 맨 위 흑연 한 겹만 묻혀 오므로, 몇 번을 반복해도 매번 한 겹씩만 깨끗이 벗겨진다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>ALE는 표면을 매끄럽게 한다</h2>
+<p>연속 식각에서는 원자들이 무작위로 떨어져 나가 표면 거칠기가 깎은 깊이와 함께 커진다(산탄 잡음처럼 √깊이에 비례). ALE에서는 매 사이클 맨 위 층만, 그것도 거의 모든 자리에서 하나씩 떨어지므로 거칠기가 커지지 않는다. 오히려 튀어나온 원자는 염소에 더 잘 덮이고 이온에 더 쉽게 떨어져 나가 거칠기가 줄어든다. 그래서 ALE는 게이트 채널이나 나노시트 표면처럼 원자 수준 평탄도가 필요한 곳에 쓰인다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-3</span><span class="ttl">거칠기: 연속 식각 vs ALE</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">처음 거칠기 (RMS) <output data-o="r0"></output></span><input type="range" data-k="r0" min="0" max="2" step="0.1" value="0.8" data-d="1" data-u="층"></label>
+      <label class="ctrl"><span class="lab">ALE 사이클 완성도 (자리별 제거 확률) <output data-o="p"></output></span><input type="range" data-k="p" min="0.6" max="1" step="0.01" value="0.95" data-d="2"></label>
+      <label class="ctrl"><span class="lab">깎을 깊이 <output data-o="n"></output></span><input type="range" data-k="n" min="5" max="100" step="1" value="40" data-d="0" data-u="층"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b3r">다시 계산</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">연속 식각 후 거칠기</span><span class="v" data-r="a"></span></div>
+      <div class="ro"><span class="k">ALE 후 거칠기</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">필요 ALE 사이클</span><span class="v" data-r="c"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 표면 단면 200 자리(위 = 연속 식각, 아래 = ALE, 같은 평균 깊이). 오른쪽: 깎은 깊이에 따른 RMS 거칠기(빨강 = 연속, 초록 = ALE). 연속 식각은 거칠기가 계속 자라고, ALE는 처음 거칠기보다도 줄어든다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> ALE가 그렇게 좋다면 왜 모든 식각을 ALE로 하지 않을까?</p><p>느리기 때문이다. 한 사이클(수 초~수십 초)에 0.5 nm라면 100 nm를 깎는 데 200 사이클, 수십 분이 걸린다. 그래서 대부분은 빠른 연속 식각으로 깎고, 마지막 몇 nm(정지막 직전, 게이트 주변)만 ALE로 다듬는다. 가스 전환을 빠르게 하는 장비와, 연속 식각과 ALE의 중간인 "준-ALE"가 이 균형을 좁힌다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="3"><p class="q">ALE의 "자기 제한" 성질이 뜻하는 것은?</p><ol><li>식각 속도가 빠르다</li><li>이온 에너지가 높다</li><li>마스크가 필요 없다</li><li>각 단계가 표면 한 층에서 저절로 멈춰 시간을 더 늘려도 결과가 같다</li></ol>
+<p class="explain">흡착은 표면 자리가 다 차면, 제거는 변형층이 다 떨어지면 멈춘다.</p></div>
+<div class="quiz" data-a="1"><p class="q">ALE 창보다 이온 에너지가 높으면 생기는 문제는?</p><ol><li>변형층이 떨어지지 않는다</li><li>변형되지 않은 바탕까지 스퍼터링되어 자기 제한이 깨진다</li><li>염소가 흡착되지 않는다</li><li>사이클 시간이 길어진다</li></ol>
+<p class="explain">물리 스퍼터 β가 커져 시너지가 떨어진다.</p></div>
+<div class="quiz" data-a="0"><p class="q">EPC 0.5 nm, 사이클 시간 10 s인 ALE로 20 nm를 깎는 데 걸리는 시간은?</p><ol><li>400 s</li><li>40 s</li><li>200 s</li><li>4,000 s</li></ol>
+<p class="explain">20/0.5 = 40 사이클 × 10 s = 400 s.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const window_f = (E, ion = 'ar') => { const sh = {ar:[22, 55], kr:[18, 45], he:[35, 120]}[ion]; return J.clamp((E - sh[0])/12, 0, 1); };
+const sput = (E, ion = 'ar') => { const th = {ar:68, kr:50, he:150}[ion], k = {ar:0.004, kr:0.007, he:0.0015}[ion]; return E > th ? k*Math.pow(E - th, 1.2) : 0; }; // nm/s
+/* 11-1 */
+(function(){
+  const box = J.$('#sim1'), NX = 18, NL = 6; let V = null, run = false, ph = 0, pt = 0, cyc = 0, cum = 0, lat = null;
+  const reset = () => { lat = []; for(let l = 0; l < NL; l++){ const row = []; for(let i = 0; i < NX; i++) row.push({si:1, cl:0}); lat.push(row); } ph = 0; pt = 0; cyc = 0; cum = 0; };
+  reset();
+  const calc = v => { const th = 1 - Math.exp(-v.ta/1.2), f = (1 - Math.exp(-v.tc/1.0))*window_f(v.e), epc = 0.54*th*f + sput(v.e)*v.tc*0.2; return {th, f, epc}; };
+  const PH = ['A: Cl₂ 흡착', 'B: 퍼지', 'C: Ar⁺ 이온', 'D: 퍼지'];
+  const draw = (anim = 0) => { const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const s = Math.min((w - 20)/NX, (h - 60)/(NL + 3)), ox = (w - s*NX)/2, by = h - 20;
+    lat.forEach((row, l) => row.forEach((a, i) => { if(!a.si) return; const x = ox + (i + .5)*s, y = by - (l + .5)*s; ctx.fillStyle = '#8f96a3'; ctx.beginPath(); ctx.arc(x, y, s*0.42, 0, 7); ctx.fill(); if(a.cl){ ctx.fillStyle = '#3aa36a'; ctx.beginPath(); ctx.arc(x, y - s*0.45, s*0.22, 0, 7); ctx.fill(); } }));
+    if(ph === 0 && run){ const r = J.rng(Math.floor(pt*10)); for(let k = 0; k < 10; k++){ ctx.fillStyle = 'rgba(58,163,106,.6)'; ctx.beginPath(); ctx.arc(ox + r()*NX*s, 20 + r()*(h*0.4), 3, 0, 7); ctx.fill(); } }
+    if(ph === 2 && run){ const r = J.rng(Math.floor(pt*12)); ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2; for(let k = 0; k < 5; k++){ const x = ox + r()*NX*s; ctx.beginPath(); ctx.moveTo(x, 10); ctx.lineTo(x, 10 + h*0.3); ctx.stroke(); } }
+    ctx.fillStyle = J.c('--ink'); ctx.font = '13px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('사이클 ' + (cyc + 1) + ' · ' + PH[ph], 8, 18); J.$('#b1s').textContent = run ? PH[ph] : ''; };
+  J.sim('sim1', v => { V = v; const c = calc(v);
+    const S1 = [], S2 = []; for(let t = 0.2; t <= 10; t += 0.2){ S1.push([t, calc({...v, ta:t}).epc]); S2.push([t, calc({...v, tc:t}).epc]); }
+    J.plot(J.$('#cv1b'), {x:[0, 10], y:[0, 0.8], xlab:'단계 시간 (s)', ylab:'EPC (nm/사이클)', series:[{pts:S1, color:'--jade', w:3}, {pts:S2, color:'--red', w:3}], points:[{x:v.ta, y:c.epc, color:'--jade', r:6}, {x:v.tc, y:c.epc, color:'--red', r:6}], hlines:[{y:0.54, color:'--ink3', label:'한 층'}]});
+    J.out(box, 'epc', J.fmt(c.epc, 2) + ' nm', Math.abs(c.epc - 0.54) < 0.06 ? 'good' : 'warn'); J.out(box, 'tf', J.fmt(c.th, 2) + ' / ' + J.fmt(c.f, 2)); J.out(box, 'cum', cyc + ' / ' + J.fmt(cum, 2) + ' nm'); J.out(box, 'ct', J.fmt(v.ta + v.tc + 4, 1) + ' s'); draw(); });
+  J.$('#b1g').onclick = e => { run = !run; e.target.classList.toggle('on', run); };
+  J.$('#b1r').onclick = () => { reset(); J.redrawAll(); };
+  J.loop(J.$('#cv1a'), dt => { if(!run || !V) return; const dur = [V.ta, 2, V.tc, 2][ph]/4; pt += dt; const r = Math.random, c = calc(V), top = lat.findIndex(row => row.some(a => a.si));
+    if(top >= 0){ const L = lat.length - 1 - lat.slice().reverse().findIndex(row => row.some(a => a.si));
+      if(ph === 0) lat[L].forEach(a => { if(a.si && !a.cl && r() < dt/(1.2/4)*0.6 && r() < 1) a.cl = r() < c.th + 0.02 ? 1 : 0; });
+      if(ph === 2) lat[L].forEach(a => { if(a.si && r() < dt/(1.0/4)*0.5*window_f(V.e)){ if(a.cl){ a.si = 0; a.cl = 0; } } else if(a.si && !a.cl && r() < sput(V.e)*dt*2){ a.si = 0; } }); }
+    if(pt > dur){ pt = 0; ph = (ph + 1) % 4; if(ph === 0){ cyc++; cum += c.epc; const L = lat.length - 1 - lat.slice().reverse().findIndex(row => row.some(a => a.si)); if(L <= 2){ lat.unshift(Array.from({length:NX}, () => ({si:1, cl:0}))); lat.pop(); } } J.out(box, 'cum', cyc + ' / ' + J.fmt(cum, 2) + ' nm'); }
+    draw(); });
+})();
+
+/* 11-2 창 */
+(function(){
+  const box = J.$('#sim2');
+  J.sim('sim2', v => { const f = (E) => 0.54*(1 - Math.exp(-v.tc/1.0))*window_f(E, v.ion) + sput(E, v.ion)*v.tc*0.2, b = E => sput(E, v.ion)*v.tc*0.2, alpha = 0.01;
+    const S1 = [], S2 = []; let lo = null, hi = null; for(let E = 5; E <= 200; E += 1){ const e = f(E), bb = b(E); S1.push([E, e]); S2.push([E, bb]); const ok = Math.abs(e - 0.54) <= 0.054 && bb < 0.1*e; if(ok){ if(lo === null) lo = E; hi = E; } }
+    J.plot(J.$('#cv2'), {x:[5, 200], y:[0, 1.5], xlab:'이온 에너지 (eV)', ylab:'사이클당 식각 (nm)', series:[{pts:S2, color:'--ink3', w:2, dash:[5, 4]}, {pts:S1, color:'--red', w:3}], bands:lo !== null ? [{x0:lo, x1:hi, color:'--jade', alpha:.2}] : [], hlines:[{y:0.54, color:'--ink3', label:'한 층 0.54 nm'}], vlines:[{x:v.e, color:'--ink'}]});
+    const e = f(v.e), bb = b(v.e), syn = (e - (alpha + bb))/e*100;
+    J.out(box, 'epc', J.fmt(e, 2) + ' nm'); J.out(box, 'ab', J.fmt(alpha, 2) + ' / ' + J.fmt(bb, 2) + ' nm'); J.out(box, 'syn', J.fmt(Math.max(0, syn), 0) + ' %', syn > 90 ? 'good' : syn > 70 ? 'warn' : 'bad'); J.out(box, 'win', lo !== null ? lo + ' ~ ' + hi + ' eV' : '없음'); });
+})();
+
+/* 11-3 거칠기 */
+(function(){
+  const box = J.$('#sim3'); let seed = 4;
+  J.sim('sim3', v => { const r = J.rng(seed), N = 200, h0 = Array.from({length:N}, () => Math.round(v.r0*J.gauss(r))), rms = a => { const m = a.reduce((x, y) => x + y, 0)/a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m)**2, 0)/a.length); };
+    // 연속: 각 단계마다 자리별 포아송 제거
+    let A = h0.slice(), B = h0.slice(); const SA = [[0, rms(A)]], SB = [[0, rms(B)]]; let depA = 0, depB = 0, cycles = 0;
+    while(depA < v.n){ for(let i = 0; i < N; i++){ const k = r() < 0.5 ? 1 : 0; A[i] -= k + (r() < 0.25 ? 1 : 0)*(r() < 0.5 ? 1 : 0); } depA = -A.reduce((x, y) => x + y, 0)/N + h0.reduce((x, y) => x + y, 0)/N; SA.push([depA, rms(A)]); }
+    while(depB < v.n && cycles < 500){ cycles++; const mx = Math.max(...B); for(let i = 0; i < N; i++){ const exposure = 1 + 0.3*(B[i] - (B[(i + N - 1) % N] + B[(i + 1) % N])/2); if(r() < J.clamp(v.p*exposure, 0, 1)) B[i] -= 1; } depB = -B.reduce((x, y) => x + y, 0)/N + h0.reduce((x, y) => x + y, 0)/N; SB.push([depB, rms(B)]); }
+    J.plot(J.$('#cv3b'), {x:[0, v.n], y:[0, Math.max(3, ...SA.map(p => p[1]))*1.1], xlab:'깎은 깊이 (원자층)', ylab:'RMS 거칠기 (층)', series:[{pts:SA, color:'--red', w:2.5}, {pts:SB, color:'--jade', w:3}]});
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const s = (w - 20)/N, mA = A.reduce((x, y) => x + y, 0)/N, mB = B.reduce((x, y) => x + y, 0)/N, sc = Math.min(8, h*0.16/(2.5*Math.max(0.5, rms(A))));
+    [[A, mA, h*0.3, '연속 식각', '#d65a4a'], [B, mB, h*0.78, 'ALE', '#3aa36a']].forEach(([arr, m, base, lab, c]) => { ctx.fillStyle = '#8f96a3'; for(let i = 0; i < N; i++){ const y = base - (arr[i] - m)*sc; ctx.fillRect(10 + i*s, y, s + .5, h*0.2 + (base - y)); }
+      ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.beginPath(); for(let i = 0; i < N; i++){ const y = base - (arr[i] - m)*sc; i ? ctx.lineTo(10 + i*s, y) : ctx.moveTo(10, y); ctx.lineTo(10 + (i + 1)*s, y); } ctx.stroke(); ctx.fillStyle = J.c('--ink'); ctx.font = '12px "Noto Sans KR"'; ctx.fillText(lab, 12, base - 34); });
+    J.out(box, 'a', J.fmt(rms(A), 2) + ' 층', rms(A) < v.r0 ? 'good' : 'bad'); J.out(box, 'b', J.fmt(rms(B), 2) + ' 층', rms(B) <= Math.max(0.3, v.r0) ? 'good' : 'warn'); J.out(box, 'c', cycles + ' 사이클'); });
+  J.$('#b3r').onclick = () => { seed++; J.redrawAll(); };
+})();
+</script>
+</body>
+</html>

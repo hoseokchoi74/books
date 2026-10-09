@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>식각 한눈에 · 식각 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232d6470'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E蝕%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../etchsim.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="overview">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 01 <span class="hanja">第一章 · 削</span></div>
+  <h1>식각 한눈에</h1>
+  <p class="lead">노광이 감광액 위에 무늬를 "그린다"면, 식각은 그 무늬대로 아래 막을 "깎아" 새긴다. 감광액은 수십 nm 두께의 연약한 막일 뿐이고, 실제 회로가 되는 것은 그 아래의 산화막, 실리콘, 금속이다. 최첨단 칩 한 장에는 수백 번의 식각이 들어가고, 3D 낸드는 머리카락 굵기의 1,000분의 1인 구멍을 수 µm 깊이로 뚫는다. 이 장은 책 전체의 지도다. 습식과 건식, 그리고 식각을 평가하는 다섯 가지 지표(식각 속도, 선택비, 균일도, 이방성, 손상)를 익히고, 웨이퍼 한 장 위에서 이 지표들이 어떻게 맞물리는지 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>패턴 전사의 흐름(노광 → 하드마스크 식각 → 주 식각 → 감광액 제거 → 세정)을 단면으로 따라간다.</li>
+  <li>등방성과 이방성을 수식(A = 1 − r<sub>lat</sub>/r<sub>vert</sub>)과 단면으로 비교한다.</li>
+  <li>웨이퍼 위 식각 속도 불균일, 과식각, 선택비가 정지막 손실과 마스크 잔량을 정하는 방식을 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>패턴 전사: 그림을 조각으로</h2>
+<p>식각은 노광 바로 뒤에 온다. 감광액만으로는 깊고 단단한 막을 버티지 못하므로, 보통 감광액 무늬를 먼저 단단한 <b>하드마스크</b>(질화막, 탄소막)로 옮기고, 하드마스크로 본 막을 깎는다. 다 깎은 뒤에는 남은 마스크를 산소 플라스마로 태우고(애싱), 식각 찌꺼기(폴리머)를 약액으로 씻는다. 단계마다 선폭이 조금씩 바뀌므로(CD 바이어스), 마지막 선폭을 맞추려면 모든 단계를 함께 설계해야 한다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-1</span><span class="ttl">패턴 전사 단계별 단면</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><button class="sbtn" id="b1p">← 이전</button><button class="sbtn pri" id="b1n">다음 단계 →</button><button class="sbtn" id="b1a">자동 재생</button><span class="hint" id="b1s"></span></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">단계</span><span class="v" data-r="st" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">장비 / 가스</span><span class="v" data-r="tool" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">선폭 (CD)</span><span class="v" data-r="cd"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 보라 = 감광액, 검정 = 반사 방지막, 주황 = 하드마스크(SiN), 하늘색 = 식각할 산화막, 노랑 = 정지막, 회색 = 실리콘. 하드마스크 식각 단계에서 선폭이 약간 줄고(트림), 주 식각에서는 측벽 폴리머 때문에 약간 늘어난다. 마지막 선폭은 노광 선폭과 다르다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>등방성과 이방성</h2>
+<p>약액에 담그면 막은 모든 방향으로 같은 속도로 녹는다(<span class="term">등방성</span>). 깊이만큼 마스크 아래로도 파고들어(언더컷) 무늬가 뭉개진다. 선폭이 막 두께보다 훨씬 클 때(수 µm 시절)는 괜찮았지만, 선폭이 수십 nm가 되자 수직으로만 깎는 <span class="term">이방성</span> 식각이 필수가 되었다. 플라스마의 이온이 수직으로 떨어지는 성질을 이용하는 건식 식각이 그 답이다.</p>
+<div class="eq">$$A = 1 - \frac{r_{lateral}}{r_{vertical}},\qquad \text{언더컷} = r_{lateral}\,t = (1 - A)\,d$$<div class="note">A = 0이면 완전 등방성(습식), A = 1이면 완전 이방성. d: 깊이.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-2</span><span class="ttl">이방성 슬라이더</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">이방성 A <output data-o="a"></output></span><input type="range" data-k="a" min="0" max="1" step="0.01" value="0.3" data-d="2"></label>
+      <label class="ctrl"><span class="lab">마스크 틈 <output data-o="w"></output></span><input type="range" data-k="w" min="20" max="300" step="5" value="80" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">식각 진행 (막 두께 대비) <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="1.5" step="0.01" value="1" data-d="2"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">깊이</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">언더컷 (한쪽)</span><span class="v" data-r="u"></span></div>
+      <div class="ro"><span class="k">바닥 / 윗면 폭</span><span class="v" data-r="wd"></span></div>
+      <div class="ro"><span class="k">이웃 선(피치 = 2 × 틈)이 남는가</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 막 두께 100 nm를 식각한 단면. 등방 성분은 마스크 모서리를 중심으로 원호를 그리며 파고든다. 오른쪽: 마스크 틈(= 선 간격)에 따라 막을 다 뚫었을 때 남는 선 폭(빨강). A가 작으면 좁은 무늬는 선이 아예 사라진다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🥕</span><b>칼로 썰기와 소금물에 절이기</b><span>당근을 칼로 썰면(이방성) 칼날 방향으로만 잘린다. 소금물에 담그면(등방성) 겉에서부터 사방으로 고르게 절여진다. 습식 식각은 절이기, 건식 식각은 썰기에 가깝다. 다만 플라스마 칼은 화학(절이기)과 물리(썰기)를 섞어 쓴다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>웨이퍼 위의 식각: 균일도·과식각·선택비</h2>
+<p>웨이퍼 한가운데와 가장자리의 식각 속도는 몇 % 다르다. 가장 느린 곳까지 막을 완전히 뚫으려면 <b>과식각</b>(over-etch)을 해야 하고, 그동안 이미 뚫린 곳은 아래 정지막을 깎는다. 정지막을 얼마나 잃을지는 식각 속도의 비, 곧 <span class="term">선택비</span>가 정한다. 마스크도 같은 시간 동안 깎이므로, 마스크와의 선택비가 낮으면 마스크가 먼저 사라진다. 균일도, 과식각, 선택비는 한 몸처럼 설계해야 한다.</p>
+<div class="eq">$$t_{etch} = \frac{d}{R_{min}}(1 + OE),\qquad \Delta_{stop,max} = \frac{R_{max}\,t_{etch} - d}{S_{film/stop}},\qquad S = \frac{R_{film}}{R_{stop}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-3</span><span class="ttl">웨이퍼 식각 지도와 정지막 손실</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">막 두께 <output data-o="d"></output></span><input type="range" data-k="d" min="50" max="500" step="10" value="200" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">평균 식각 속도 <output data-o="r"></output></span><input type="range" data-k="r" min="50" max="600" step="10" value="300" data-d="0" data-u="nm/min"></label>
+      <label class="ctrl"><span class="lab">불균일 (가장자리 − 중심) <output data-o="u"></output></span><input type="range" data-k="u" min="-10" max="10" step="0.5" value="4" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">과식각 <output data-o="oe"></output></span><input type="range" data-k="oe" min="0" max="80" step="5" value="20" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">정지막 선택비 <output data-o="s"></output></span><input type="range" data-k="s" min="2" max="100" step="1" value="15" data-d="0"></label>
+      <label class="ctrl"><span class="lab">마스크 선택비 (마스크 50 nm) <output data-o="sm"></output></span><input type="range" data-k="sm" min="1" max="20" step="0.5" value="5" data-d="1"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">식각 시간</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">정지막 최대 손실</span><span class="v" data-r="loss"></span></div>
+      <div class="ro"><span class="k">마스크 최소 잔량</span><span class="v" data-r="mask"></span></div>
+      <div class="ro"><span class="k">판정 (정지막 10 nm)</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 웨이퍼 위 정지막 손실 지도(진할수록 많이 깎임, 빨강 = 정지막 뚫림). 오른쪽: 중심에서 가장자리까지의 단면 변화(파랑 = 막이 다 뚫린 시각, 빨강 = 정지막 손실, 보라 = 남은 마스크). 불균일이 클수록 과식각을 늘려야 하고, 그만큼 선택비가 높아야 한다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 선택비가 무한대라면 과식각을 얼마든지 해도 될까?</p><p>정지막은 안전하겠지만 과식각 동안에도 측면 식각과 마스크 소모가 계속되어 선폭이 넓어지고, 구멍 바닥 모서리가 깎이거나(노칭) 정지막 위 폴리머·차징이 쌓여 손상이 생긴다. 시간도 원가다. 그래서 종말점을 정확히 잡는 기술(10장)이 필요하다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">이방성 A = 0.8로 100 nm 깊이를 식각하면 한쪽 언더컷은?</p><ol><li>0 nm</li><li>80 nm</li><li>20 nm</li><li>100 nm</li></ol>
+<p class="explain">언더컷 = (1 − A) × d = 0.2 × 100 = 20 nm.</p></div>
+<div class="quiz" data-a="0"><p class="q">막 200 nm, 가장 느린 곳 280 nm/min, 과식각 25 %일 때 식각 시간은?</p><ol><li>약 54초</li><li>약 43초</li><li>약 30초</li><li>약 90초</li></ol>
+<p class="explain">200/280 분 × 1.25 = 0.893분 ≈ 54초.</p></div>
+<div class="quiz" data-a="3"><p class="q">선택비 S = 20의 의미는?</p><ol><li>식각 속도가 20 nm/min</li><li>20 %의 과식각</li><li>균일도 20 %</li><li>대상막이 정지막보다 20배 빨리 깎인다</li></ol>
+<p class="explain">S = R<sub>film</sub>/R<sub>stop</sub>.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 1-1 패턴 전사 */
+(function(){
+  const S = [['노광·현상 완료', '스캐너 + 트랙', 40], ['BARC 열기', 'CCP · CF₄/O₂', 40], ['하드마스크 식각 (+트림)', 'ICP · CH₂F₂/O₂', 36], ['감광액 제거 (애싱)', '다운스트림 O₂ 플라스마', 36], ['주 식각: 산화막', 'CCP · C₄F₈/Ar/O₂', 38], ['과식각 → 정지막에서 멈춤', 'CCP · 선택비 > 20', 38], ['하드마스크 제거 + 세정', '습식 H₃PO₄ / DHF', 38]];
+  let k = 0, auto = false, acc = 0;
+  function draw(){ const {ctx, w, h} = J.fit(J.$('#cv1')); ctx.clearRect(0,0,w,h);
+    const L = 30, R = w - 30, base = h - 30, X = f => L + f*(R - L), lines = [0.15, 0.45, 0.75], hw = 0.1;
+    const si = 30, stp = 10, ox = 90, hm = 22, barc = 7, res = 44;
+    const yS = base - si, yStop = yS - stp, yOx = yStop - ox, yHm = yOx - hm, yB = yHm - barc, yR = yB - res;
+    const inLine = (f, half) => lines.some(c => Math.abs(f - c) <= half);
+    const cdF = S[k][2]/40*hw;
+    ctx.fillStyle = '#8f96a3'; ctx.fillRect(L, yS, R - L, si);
+    ctx.fillStyle = '#d9a441'; ctx.fillRect(L, yStop, R - L, stp);
+    for(let px = L; px < R; px++){ const f = (px - L)/(R - L);
+      const oxKeep = k < 4 || inLine(f, cdF); if(oxKeep){ ctx.fillStyle = '#8cc6e6'; ctx.fillRect(px, yOx, 1.2, ox); } else if(k === 4){ ctx.fillStyle = '#8cc6e6'; ctx.fillRect(px, yOx + ox*0.75, 1.2, ox*0.25); }
+      const hmKeep = k < 2 || (k <= 5 && inLine(f, k >= 2 ? (k >= 4 ? cdF : 0.09) : hw)); if(hmKeep && k < 6){ ctx.fillStyle = '#e08a3c'; ctx.fillRect(px, yHm, 1.2, hm*(k >= 4 ? 0.7 : 1)); }
+      if(k < 3){ const bk = k < 1 || inLine(f, k >= 2 ? 0.09 : hw); if(bk){ ctx.fillStyle = '#2f2f36'; ctx.fillRect(px, yB, 1.2, barc); } if(inLine(f, k >= 2 ? 0.09 : hw)){ ctx.fillStyle = '#9c7bd1'; ctx.fillRect(px, yR + (k >= 1 ? 8*k : 0), 1.2, res - (k >= 1 ? 8*k : 0)); } } }
+    if(k === 4 || k === 5){ ctx.fillStyle = '#5f9a45'; lines.forEach(c => { [-1, 1].forEach(sg => ctx.fillRect(X(c + sg*cdF) - (sg < 0 ? 2 : 0), yOx, 2, ox)); }); }
+    if(k === 5){ ctx.fillStyle = J.c('--red'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'center'; [0.3, 0.6].forEach(f => ctx.fillText('정지막 약간 손실', X(f), yStop - 4)); }
+    if([1, 2, 4].includes(k)){ ctx.fillStyle = J.c('--plum'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; [0.3, 0.6].forEach(f => ctx.fillText('↓ 이온', X(f), yR - 6)); }
+    const box = J.$('#sim1'); J.out(box, 'st', (k + 1) + '/7 ' + S[k][0]); J.out(box, 'tool', S[k][1]); J.out(box, 'cd', S[k][2] + ' nm'); J.$('#b1s').textContent = S[k][0]; }
+  J.live(draw);
+  J.$('#b1n').onclick = () => { k = Math.min(S.length - 1, k + 1); draw(); }; J.$('#b1p').onclick = () => { k = Math.max(0, k - 1); draw(); };
+  J.$('#b1a').onclick = e => { auto = !auto; e.target.classList.toggle('on', auto); };
+  J.loop(J.$('#cv1'), dt => { if(!auto) return; acc += dt; if(acc > 1.4){ acc = 0; k = (k + 1) % S.length; draw(); } });
+})();
+
+/* 1-2 이방성 */
+(function(){
+  const box = J.$('#sim2'), D = 100;
+  J.sim('sim2', v => { const A = v.a, depth = Math.min(D, v.t*D), tt = v.t*D, lat = (1 - A)*tt, wd = v.w;
+    const {ctx, w, h} = J.fit(J.$('#cv2a')); ctx.clearRect(0,0,w,h); const span = wd + 2*Math.max(120, lat + 40), sc = Math.min((w - 20)/span, (h - 60)/(D + 40)), cx = w/2, top = 40, X = x => cx + x*sc, Y = y => top + y*sc;
+    ctx.fillStyle = '#8f96a3'; ctx.fillRect(X(-span/2), Y(D), span*sc, 30*sc);
+    ctx.fillStyle = '#8cc6e6'; ctx.fillRect(X(-span/2), Y(0), span*sc, D*sc);
+    // 식각된 영역: 바닥 중앙 직사각형 + 양쪽 타원(측면 lat, 수직 depth)
+    ctx.fillStyle = J.c('--paper'); ctx.beginPath(); ctx.moveTo(X(-wd/2), Y(0));
+    for(let i = 0; i <= 30; i++){ const a = Math.PI/2*i/30; ctx.lineTo(X(-wd/2 - lat*Math.cos(a)), Y(Math.min(D, tt*Math.sin(a)))); }
+    ctx.lineTo(X(wd/2), Y(depth)); for(let i = 30; i >= 0; i--){ const a = Math.PI/2*i/30; ctx.lineTo(X(wd/2 + lat*Math.cos(a)), Y(Math.min(D, tt*Math.sin(a)))); } ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#9c7bd1'; ctx.fillRect(X(-span/2), Y(-14), (span/2 - wd/2)*sc, 14*sc); ctx.fillRect(X(wd/2), Y(-14), (span/2 - wd/2)*sc, 14*sc);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('마스크', X(-span/2) + 2, Y(-16));
+    const pts = []; for(let W2 = 20; W2 <= 300; W2 += 5){ const lineW = W2 - 2*(1 - A)*D; pts.push([W2, Math.max(0, lineW)]); }
+    J.plot(J.$('#cv2b'), {x:[20, 300], y:[0, 300], xlab:'마스크 틈 = 선 폭 설계 (nm)', ylab:'남는 선 폭 (nm)', series:[{pts:pts.map(p => [p[0], p[0]]), color:'--ink3', w:1.5, dash:[5, 4]}, {pts, color:'--red', w:3}], points:[{x:wd, y:Math.max(0, wd - 2*(1 - A)*D), color:'--red', r:6}]});
+    const lineLeft = wd - 2*lat;
+    J.out(box, 'd', J.fmt(depth, 0) + ' nm'); J.out(box, 'u', J.fmt(lat, 1) + ' nm', lat < 5 ? 'good' : lat < 20 ? 'warn' : 'bad'); J.out(box, 'wd', (tt >= D ? J.fmt(wd + 2*lat*Math.sqrt(Math.max(0, 1 - (D/tt)**2)), 0) : '아직 안 뚫림') + ' / ' + J.fmt(wd + 2*lat, 0) + ' nm');
+    J.out(box, 'ok', lineLeft > 0 ? '남음 (' + J.fmt(lineLeft, 0) + ' nm)' : '사라짐', lineLeft > wd*0.8 ? 'good' : lineLeft > 0 ? 'warn' : 'bad'); });
+})();
+
+/* 1-3 웨이퍼 지도 */
+(function(){
+  const box = J.$('#sim3');
+  J.sim('sim3', v => { const R = r => v.r*(1 + v.u/100*(r*r)), Rmin = Math.min(R(0), R(1)), Rmax = Math.max(R(0), R(1)), t = v.d/Rmin*(1 + v.oe/100);
+    const loss = r => Math.max(0, R(r)*t - v.d)/v.s, mask = r => 50 - R(r)*t/v.sm;
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const cx = w/2, cy = h/2, Rp = Math.min(w, h)*0.42, n = 40, cs = 2*Rp/n, lmax = loss(v.u >= 0 ? 1 : 0);
+    for(let j = 0; j < n; j++) for(let i = 0; i < n; i++){ const x = (i + .5)/n*2 - 1, y = (j + .5)/n*2 - 1, r = Math.hypot(x, y); if(r > 1) continue; const l = loss(r);
+      ctx.fillStyle = l > 10 ? '#d03a2e' : `rgba(200,140,40,${0.1 + 0.85*J.clamp(l/10, 0, 1)})`; ctx.fillRect(cx - Rp + i*cs, cy - Rp + j*cs, cs + .5, cs + .5); }
+    ctx.strokeStyle = J.c('--ink3'); ctx.beginPath(); ctx.arc(cx, cy, Rp, 0, 7); ctx.stroke(); ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('정지막 손실 지도', 6, 14);
+    const pts = (f) => Array.from({length:31}, (_, i) => { const r = i/30; return [r*150, f(r)]; });
+    J.plot(J.$('#cv3b'), {x:[0, 150], y:[0, 60], xlab:'중심에서 거리 (mm)', ylab:'nm  /  초', series:[{pts:pts(r => v.d/R(r)*60), color:'--indigo', w:2}, {pts:pts(loss), color:'--red', w:3}, {pts:pts(r => Math.max(0, mask(r))), color:'--plum', w:2.5}], hlines:[{y:10, color:'--red', label:'정지막 10 nm'}]});
+    const mmin = Math.min(mask(0), mask(1));
+    J.out(box, 't', J.fmt(t*60, 1) + ' 초'); J.out(box, 'loss', J.fmt(lmax, 1) + ' nm', lmax < 5 ? 'good' : lmax < 10 ? 'warn' : 'bad'); J.out(box, 'mask', mmin > 0 ? J.fmt(mmin, 1) + ' nm' : '사라짐', mmin > 10 ? 'good' : mmin > 0 ? 'warn' : 'bad');
+    J.out(box, 'ok', lmax < 10 && mmin > 0 ? '통과' : lmax >= 10 ? '정지막 뚫림' : '마스크 부족', lmax < 10 && mmin > 0 ? 'good' : 'bad'); });
+})();
+</script>
+</body>
+</html>
