@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>포토 書 · 집현전</title>
+<meta name="description" content="집현전 인터랙티브 교과서 — 빛으로 새기는 나노미터: 회절·해상도·조명·마스크·감광액·공정 창·오버레이·OPC·다중 패터닝·EUV·High-NA를 실험으로 배우는 포토리소그래피 책">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/jade.css">
+<link rel="stylesheet" href="../assets/book.css">
+<script src="book.js"></script>
+<script src="../assets/book.js"></script>
+<script src="../assets/iso3d.js"></script>
+<style>
+  :root{--acc:#5a44a0}
+  :root[data-theme="dark"]{--acc:#a893ea}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--acc:#a893ea} }
+  .hero{display:grid; grid-template-columns:1.05fr 1fr; gap:40px; align-items:center; padding:56px 0 40px}
+  .hero h1{font-size:clamp(34px,5.4vw,58px); margin:14px 0 18px; font-weight:900; line-height:1.18}
+  .hero h1 em{font-style:normal; color:var(--acc)}
+  .hero p.lead{font-size:17.5px; color:var(--ink2); max-width:560px}
+  .hero .cta{display:flex; gap:10px; flex-wrap:wrap; margin:24px 0 18px}
+  .hero .chips{display:flex; gap:8px; flex-wrap:wrap}
+  .hero .chips span{font-size:13px; border:1px solid var(--line); border-radius:3px; padding:2px 10px; background:var(--card); color:var(--ink2)}
+  .stage{position:relative; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:10px; box-shadow:inset 0 0 0 5px var(--card), inset 0 0 0 6px var(--line2), var(--shadow)}
+  .stage canvas{display:block; width:100%}
+  .stage .over{position:absolute; left:18px; top:14px; font-size:12px; color:var(--ink3)}
+  .stage .bar{display:flex; gap:8px; align-items:center; padding:4px 8px; font-size:12.5px; color:var(--ink2); flex-wrap:wrap}
+  .titleslip{position:absolute; right:-12px; top:-18px; writing-mode:vertical-rl; background:var(--paper); border:1px solid var(--line); padding:12px 7px; font-family:var(--serif); font-weight:900; font-size:20px; letter-spacing:.2em; box-shadow:var(--shadow)}
+  .titleslip small{display:block; font-weight:400; font-size:11px; letter-spacing:.15em; color:var(--ink3); margin-top:6px}
+  @media (max-width:900px){ .hero{grid-template-columns:1fr; padding-top:32px} .titleslip{right:6px; top:-14px} }
+  section.block{padding:46px 0 10px}
+  section.block > h2{font-size:28px; margin:0 0 8px; font-weight:900}
+  section.block > p.sub{color:var(--ink2); margin:0 0 22px; max-width:760px}
+  .chain svg{width:100%; height:auto; display:block}
+  .chain a:hover rect.blk{stroke:var(--red); stroke-width:3}
+  .nums{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px}
+  .num{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px; position:relative; overflow:hidden}
+  .num b{font-family:var(--serif); font-size:30px; font-weight:900; display:block}
+  .num span{font-size:14px; color:var(--ink2)}
+  .num:after{content:attr(data-h); position:absolute; right:10px; bottom:-14px; font-family:var(--serif); font-size:64px; color:var(--ink); opacity:.05; font-weight:900}
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px}
+  .card{display:flex; flex-direction:column; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:3px; padding:18px 18px 16px 24px; color:var(--ink); position:relative; transition:transform .15s, box-shadow .15s}
+  .card:before{content:''; position:absolute; left:8px; top:10px; bottom:10px; width:1px; background:var(--line)}
+  .card:hover{transform:translateY(-3px); box-shadow:var(--shadow); text-decoration:none; border-color:var(--acc)}
+  .card .cn{font-family:var(--mono); font-size:11.5px; color:var(--acc); letter-spacing:.15em}
+  .card h3{margin:0; font-size:18.5px}
+  .card p{margin:0; font-size:14px; color:var(--ink2); line-height:1.65; flex:1}
+  .card .tags{display:flex; gap:5px; flex-wrap:wrap; margin-top:6px}
+  .paths{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px}
+  .path{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px}
+  .path h3{margin:0 0 4px; font-size:17px}
+  .path p{margin:0 0 10px; font-size:14px; color:var(--ink2)}
+  .path .seq{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .path .seq a{font-family:var(--mono); font-size:13px; border:1px solid var(--acc); color:var(--acc); border-radius:3px; padding:1px 8px}
+  .path .seq i{color:var(--ink3); font-style:normal; font-size:12px}
+  .howto{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px}
+  .how{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px; text-align:center}
+  .how .hj{font-family:var(--serif); font-size:32px; font-weight:900; color:var(--red)}
+  .how b{display:block; font-family:var(--serif); margin:2px 0 4px}
+  .how span{font-size:13.5px; color:var(--ink2)}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<div class="wrap">
+
+<section class="hero">
+  <div>
+    <div class="kicker">Interactive Lithography Textbook · 集賢殿 器部 別冊</div>
+    <h1>빛으로 새기는<br><em>나노미터</em></h1>
+    <p class="lead">파장 193 nm의 빛으로 40 nm 선을, 13.5 nm의 빛으로 12 nm 선을 찍는다. 빛의 한계보다 작은 무늬를 그리기 위해 엔지니어들은 물을 붓고, 빛을 비스듬히 비추고, 마스크를 일부러 틀리게 그리고, 한 층을 네 번 나눠 찍었다. 회절과 푸리에 광학에서 EUV의 다층 거울과 확률적 결함까지, 43개의 실험으로 포토리소그래피의 모든 묘수를 직접 돌려 본다.</p>
+    <div class="cta">
+      <a class="btn red" href="chapters/overview.html" style="background:var(--acc);border-color:var(--acc)">1장부터 펼치기 →</a>
+      <a class="btn ghost" href="chapters/playground.html">스캐너 놀이터</a>
+    </div>
+    <div class="chips"><span>16개 장</span><span>43개 실험</span><span>3D 모형</span><span>공대 학부 수준</span></div>
+  </div>
+  <div class="stage">
+    <div class="titleslip">光刻 書<small>寫光之道</small></div>
+    <div class="over" id="hOver">드래그해서 돌려 보세요</div>
+    <canvas id="hero3d" data-h="400" aria-label="노광 공정 3D 모형"></canvas>
+    <div class="bar" id="modeBtns">
+      <button class="sbtn" data-m="0">도포</button><button class="sbtn" data-m="1">노광</button><button class="sbtn" data-m="2">현상</button><button class="sbtn on" data-m="3">식각</button>
+      <button class="sbtn" id="hAuto">▶ 순서대로 재생</button>
+    </div>
+  </div>
+</section>
+
+<section class="block chain">
+  <div class="kicker">The litho loop</div>
+  <h2>노광 한 바퀴</h2>
+  <p class="sub">한 층의 무늬는 이 고리를 돈다: <b>도포 → 굽기 → 정렬 → 노광 → PEB → 현상 → 계측</b>. 계측에서 규격을 벗어나면 감광액을 벗기고 다시 찍고(재작업), 통과하면 식각으로 넘어간다. 그 위에 광학·마스크·계산 리소그래피가 해상도를 받쳐 준다.</p>
+  <figure class="fig" style="margin:0">
+    <svg viewBox="0 0 980 300" role="img" aria-label="노광 고리"><g id="chainG"></g></svg>
+    <figcaption><b>그림 0-1.</b> 노광 고리(가운데)와 해상도를 정하는 요소들(양옆). 상자를 누르면 해당 장으로 간다.</figcaption>
+  </figure>
+</section>
+
+<section class="block">
+  <div class="kicker">Lithography in numbers</div>
+  <h2>숫자로 보는 노광</h2>
+  <p class="sub">이 책을 덮을 즈음이면 아래 숫자가 왜 그 값인지 설명할 수 있게 됩니다. (2025–26년 대략값)</p>
+  <div class="nums">
+    <div class="num" data-h="光"><b>13.5 nm</b><span>EUV 파장. 광자 하나 92 eV, ArF의 14배 → 12장</span></div>
+    <div class="num" data-h="水"><b>NA 1.35</b><span>물 한 겹으로 넘은 NA 1의 벽(ArF 액침) → 3장</span></div>
+    <div class="num" data-h="限"><b>k₁ 0.28</b><span>단일 노광 양산의 사실상 한계 → 3장</span></div>
+    <div class="num" data-h="鏡"><b>~70 %</b><span>Mo/Si 40쌍 거울 한 장의 반사율 → 12장</span></div>
+    <div class="num" data-h="疊"><b>~2 nm</b><span>층 사이 오버레이 허용치 → 9장</span></div>
+    <div class="num" data-h="速"><b>200+ 장/h</b><span>EUV 스캐너 처리량 → 1장</span></div>
+    <div class="num" data-h="錫"><b>5만 방울/초</b><span>EUV 광원이 레이저로 때리는 주석 방울 → 12장</span></div>
+    <div class="num" data-h="數"><b>10⁻¹²</b><span>접촉 구멍 하나에 허용되는 막힘 확률 → 12장</span></div>
+  </div>
+</section>
+
+<section class="block" id="chapters">
+  <div class="kicker">Table of contents · 目次</div>
+  <h2>전체 장</h2>
+  <p class="sub">각 장은 <b>개념 → 그림 → 수식 → 실험 → 문제</b> 순서로 짜여 있습니다.</p>
+  <div class="cards" id="cards"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">Reading paths</div>
+  <h2>추천 학습 경로</h2>
+  <p class="sub">관심사와 직무에 따라 이렇게 읽어 보세요.</p>
+  <div class="paths" id="paths"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">How to read</div>
+  <h2>이 책 읽는 법</h2>
+  <div class="howto">
+    <div class="how"><div class="hj">讀</div><b>읽기</b><span>파동 광학의 원리부터. 영어 용어는 괄호로 함께 씁니다.</span></div>
+    <div class="how"><div class="hj">觀</div><b>보기</b><span>동공 그림, 공간 상, 단면으로 빛의 길을 따라갑니다.</span></div>
+    <div class="how"><div class="hj">算</div><b>계산하기</b><span>아베 결상, 전달 행렬, 최소 제곱, 푸아송… 직접 돌립니다.</span></div>
+    <div class="how"><div class="hj">觸</div><b>만지기</b><span>슬라이더를 끝까지. 공정 창의 가장자리에서 배웁니다.</span></div>
+    <div class="how"><div class="hj">問</div><b>확인하기</b><span>장마다 문제, 마지막 장에서 20문제 종합 퀴즈.</span></div>
+  </div>
+</section>
+
+</div>
+<footer class="site">포토 書 — 집현전 인터랙티브 교과서 시리즈 · 수치는 교육용 근사 모델이며 특정 회사·장비의 사양이 아닙니다.<br>콘텐츠 CC BY 4.0 · 코드 MIT</footer>
+
+<script>
+(function(){
+  const B = window.BOOK;
+  document.getElementById('cards').innerHTML = B.chapters.map(c => `
+    <a class="card" href="chapters/${c.slug}.html"><span class="cn">CHAPTER ${c.n}</span><h3>${c.title}</h3><p>${c.desc}</p>
+    <span class="tags">${c.tags.map(t => `<span class="tag ${t==='시뮬레이터'?'sim':t==='3D'?'d3':''}">${t}</span>`).join('')}</span></a>`).join('');
+  const P = [
+    ['입문 · 전체 그림','노광이 처음이라면. 흐름과 해상도의 기본.',['01','02','03','06','08']],
+    ['광학 깊이 읽기','회절에서 조명·마스크 설계까지.',['02','03','04','05','10']],
+    ['공정·제어 엔지니어','공정 창, 오버레이, 계측과 APC.',['07','08','09','14','15']],
+    ['계산 리소그래피','OPC·ILT와 다중 패터닝 분해.',['04','05','10','11']],
+    ['EUV 집중','EUV의 물리와 High-NA, 그 너머.',['03','06','12','13']],
+    ['재료·감광액','감광액 화학과 박막 광학.',['06','07','12','14']]
+  ];
+  const slug = n => B.chapters.find(c => c.n === n).slug;
+  document.getElementById('paths').innerHTML = P.map(p => `<div class="path"><h3>${p[0]}</h3><p>${p[1]}</p><div class="seq">${p[2].map(n => `<a href="chapters/${slug(n)}.html">${n}</a>`).join('<i>→</i>')}</div></div>`).join('');
+})();
+
+(function(){
+  const g = document.getElementById('chainG'), cx = 490, cy = 150, R = 105;
+  const items = [['도포','스핀 코팅','overview','--plum'],['굽기','소프트 베이크','resist','--gold'],['정렬','오버레이','overlay','--indigo'],['노광','ArF·EUV','resolution','--red'],['PEB','산 확산','resist','--wood2'],['현상','TMAH','resist','--jade'],['계측','CD·OVL','metrology','--ink3']];
+  items.forEach(([t, s, ch, c], i) => { const a = -Math.PI/2 + i/items.length*Math.PI*2, x = cx + R*1.55*Math.cos(a), y = cy + R*Math.sin(a);
+    const l = J.svg('a', {href:'chapters/' + ch + '.html'}, g);
+    J.svg('rect', {class:'blk', x:x - 62, y:y - 26, width:124, height:52, rx:26, fill:'var(--card)', stroke:`var(${c})`, 'stroke-width':2.2}, l);
+    J.svg('text', {x, y:y - 2, 'text-anchor':'middle', class:'t-m', text:t, style:'font-weight:700'}, l);
+    J.svg('text', {x, y:y + 15, 'text-anchor':'middle', class:'t-s', text:s}, l);
+    const a2 = a + Math.PI*2/items.length*0.5, x2 = cx + R*1.25*Math.cos(a2), y2 = cy + R*0.8*Math.sin(a2);
+    J.svg('text', {x:x2, y:y2 + 5, 'text-anchor':'middle', class:'t-m', text:'→', style:`fill:var(--ink3);transform-origin:${x2}px ${y2}px;transform:rotate(${(a2 + Math.PI/2)*180/Math.PI}deg)`}, g); });
+  J.svg('circle', {cx, cy, r:48, fill:'var(--paper2)', stroke:'var(--line)'}, g);
+  J.svg('text', {x:cx, y:cy - 4, 'text-anchor':'middle', class:'t-l', text:'한 층'}, g); J.svg('text', {x:cx, y:cy + 16, 'text-anchor':'middle', class:'t-s', text:'→ 식각으로'}, g);
+  const side = [['회절·광학', 'optics', 70, 80], ['조명', 'illumination', 70, 150], ['마스크', 'mask', 70, 220], ['OPC', 'opc', 910, 80], ['다중 패터닝', 'multi', 910, 150], ['EUV', 'euv', 910, 220]];
+  side.forEach(([t, ch, x, y]) => { const l = J.svg('a', {href:'chapters/' + ch + '.html'}, g); J.svg('rect', {class:'blk', x:x - 56, y:y - 18, width:112, height:36, rx:4, fill:'var(--card)', stroke:'var(--acc)', 'stroke-width':1.5}, l); J.svg('text', {x, y:y + 5, 'text-anchor':'middle', class:'t-m', text:t}, l); });
+})();
+
+/* 히어로 3D: 도포 → 노광 → 현상 → 식각 */
+(function(){
+  const cv = document.getElementById('hero3d'), cam = {yaw:-0.65, pitch:0.5, scale:30};
+  let stage = 3, prog = 1, auto = false, t = 0;
+  const over = ['도포: 산화막 위에 BARC와 감광액', '노광: 마스크 틈으로 들어온 빛', '현상: 빛 받은 감광액이 녹아 나감', '식각: 산화막에 무늬가 옮겨짐'];
+  const lines = [-3.3, -1.1, 1.1, 3.3]; // 열린 틈(빛이 지나는 곳)의 x 중심
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h); cam.scale = Math.min(w, h*1.2)/15.5; cam.oy = h*0.18;
+    const S = new J3.Scene(), lv = stage + Math.min(1, prog) - 1, gap = 0.9;
+    S.box(-5, -1.4, -3, 10, 1.4, 6, '#8f98a8', {layer:0});
+    // 산화막: 식각 단계에서 틈 아래가 파임
+    const etch = J.clamp(lv - 2, 0, 1), oxH = 0.6;
+    const segs = []; let x0 = -5; lines.forEach(c => { segs.push([x0, c - gap/2]); x0 = c + gap/2; }); segs.push([x0, 5]);
+    segs.forEach(([a, b]) => S.box(a, 0, -3, b - a, oxH, 6, '#9fd0ea', {layer:1}));
+    lines.forEach(c => S.box(c - gap/2, 0, -3, gap, oxH*(1 - etch), 6, '#9fd0ea', {layer:1}));
+    // BARC + 감광액
+    const resH = 0.9*Math.min(1, lv + 1), showRes = lv < 3;
+    if(showRes){ const dev = J.clamp(lv - 1, 0, 1);
+      segs.forEach(([a, b]) => { S.box(a, oxH, -3, b - a, 0.12, 6, '#2f2f36', {layer:2}); S.box(a, oxH + 0.12, -3, b - a, resH, 6, lv >= 0.99 && lv < 1.99 ? '#a888d8' : '#9c7bd1', {layer:3}); });
+      lines.forEach(c => { const hh = resH*(1 - dev); S.box(c - gap/2, oxH, -3, gap, 0.12*(1 - etch), 6, '#2f2f36', {layer:2}); if(hh > 0.01) S.box(c - gap/2, oxH + 0.12, -3, gap, hh, 6, lv >= 0.5 ? '#e7c6ff' : '#9c7bd1', {layer:3}); }); }
+    // 노광: 마스크와 빛
+    if(lv >= 0.5 && lv < 2){ const yM = 4.6, f = J.clamp((lv - 0.5)*2, 0, 1);
+      segs.forEach(([a, b]) => S.box(a, yM, -3, b - a, 0.18, 6, '#26262c', {layer:8}));
+      lines.forEach(c => S.box(c - gap/2, yM, -3, gap, 0.18, 6, '#cfe6f7', {layer:8, alpha:0.5}));
+      if(lv < 1.6) lines.forEach(c => S.box(c - gap*0.4, oxH + 1.05, -2.8, gap*0.8, (yM - oxH - 1.05)*f, 5.6, '#ffd84a', {layer:9, alpha:0.35})); }
+    S.render(ctx, cam, w, h);
+  }
+  J3.drag(cv, cam, draw); J.live(draw);
+  const setStage = s => { stage = s; prog = 0; J.$$('#modeBtns [data-m]').forEach(x => x.classList.toggle('on', +x.dataset.m === s)); J.$('#hOver').textContent = over[s] + ' · 드래그해서 돌려 보세요'; };
+  J.$$('#modeBtns [data-m]').forEach(b => b.onclick = () => { auto = false; J.$('#hAuto').classList.remove('on'); setStage(+b.dataset.m); });
+  J.$('#hAuto').onclick = e => { auto = !auto; e.target.classList.toggle('on', auto); if(auto) setStage(0); };
+  J.$('#hOver').textContent = over[3] + ' · 드래그해서 돌려 보세요';
+  J.loop(cv, dt => { t += dt; if(!cam.user) cam.yaw += dt*0.12; if(prog < 1) prog = Math.min(1, prog + dt*0.8); if(auto && prog >= 1 && (t % 2.4) < dt){ setStage((stage + 1) % 4); } draw(); });
+})();
+</script>
+</body>
+</html>

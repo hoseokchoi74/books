@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>조명 설계 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../lith.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="illumination">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 04 <span class="hanja">第四章 · 照</span></div>
+  <h1>조명 설계</h1>
+  <p class="lead">렌즈를 바꾸지 않고도 해상도를 끌어올리는 방법이 있다. 마스크를 비추는 빛의 <b>방향</b>을 고르는 것이다. 조명계의 퓨필 면에 어떤 모양으로 빛을 놓느냐(원반, 고리, 두 점, 네 점)에 따라 회절 차수가 동공 안으로 들어오는 방식이 달라진다. 이것을 <span class="term">변형 조명</span>(off-axis illumination, OAI)이라 한다. 요즘 스캐너는 수천 개의 마이크로 거울로 광원 모양을 자유롭게 그린다(<span class="term">자유형 조명</span>, FlexRay). 이 장에서는 광원 모양을 바꿔 가며 같은 렌즈로 찍을 수 있는 피치가 어떻게 달라지는지, 그리고 왜 "찍기 어려운 피치(금지 피치)"가 생기는지를 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>쾰러 조명에서 광원 한 점이 마스크를 비추는 기울기가 되고, 동공에서 회절 차수를 옆으로 미는 원리를 이해한다.</li>
+  <li>일반·환형·다이폴·쿼드러폴 조명의 동공 그림을 그리고 대비를 비교한다.</li>
+  <li>피치별 대비(through-pitch) 곡선에서 금지 피치와 조명–마스크 동시 최적화(SMO)의 필요성을 본다.</li>
+  <li>높은 NA에서 편광이 대비를 바꾸는 이유(TE와 TM의 간섭)를 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>광원 모양 = 회절 차수가 들어오는 자리</h2>
+<p>쾰러 조명에서 광원(조명 퓨필)의 한 점은 마스크 전체를 하나의 기울기로 비추는 평면파가 된다. 기울어진 빛이 마스크에 부딪히면 회절 차수 전체가 동공에서 그만큼 옆으로 밀린다. 0차를 동공 왼쪽 가장자리에 두면 +1차가 오른쪽 가장자리까지 갈 수 있으므로, 수직 조명보다 피치가 절반인 무늬까지 두 빛(0차와 +1차)으로 맺힌다. 그래서 피치가 작은 한 방향 선 무늬에는 x 방향으로 벌어진 두 점(다이폴)이 가장 좋다. 광원 각 점이 만든 상은 서로 결맞지 않으므로 <b>세기끼리</b> 더한다(아베 결상).</p>
+<div class="eq">$$I(x) = \sum_{\mathbf s\,\in\,\text{광원}} w_{\mathbf s}\,\Bigl|\sum_m c_m\,P\!\left(\tfrac{m}{p} + s_x\tfrac{NA}{\lambda},\ s_y\tfrac{NA}{\lambda}\right)e^{\,i2\pi m x/p}\Bigr|^2,\qquad p_{min} = \frac{\lambda}{NA\,(1 + \sigma_{max})}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-1</span><span class="ttl">광원 모양 편집기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">조명 모양</span><select data-k="t"><option value="conv">일반 (원반)</option><option value="ann" selected>환형 (고리)</option><option value="dip">다이폴 x (두 점)</option><option value="quad">쿼드러폴 (+자 네 점)</option><option value="quasar">퀘이사 (× 자 네 점)</option></select></label>
+      <label class="ctrl"><span class="lab">바깥 σ / 극 중심 <output data-o="a"></output></span><input type="range" data-k="a" min="0.2" max="0.98" step="0.02" value="0.9" data-d="2"></label>
+      <label class="ctrl"><span class="lab">안쪽 σ / 극 반지름 <output data-o="b"></output></span><input type="range" data-k="b" min="0.05" max="0.8" step="0.01" value="0.6" data-d="2"></label>
+      <label class="ctrl"><span class="lab">피치 (ArF 액침, NA 1.35) <output data-o="p"></output></span><input type="range" data-k="p" min="72" max="300" step="2" value="96" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">대비</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">NILS (선폭 = 반피치)</span><span class="v" data-r="nils"></span></div>
+      <div class="ro"><span class="k">두 빛(0차 + 1차)이 통과하는 광원 비율</span><span class="v" data-r="f2"></span></div>
+      <div class="ro"><span class="k">k₁</span><span class="v" data-r="k1"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 동공. 검은 점들은 광원(0차)의 자리, 빨간 점들은 ±1차가 밀려 간 자리다. 큰 원 안에 들어온 점(진한 색)만 상을 만든다. 오른쪽: 웨이퍼 위 세기(빨강, 실선 = 최적 초점, 점선 = 초점 이탈 80 nm)와 마스크(회색). 다이폴에서 극 중심을 λ/(2·NA·p)에 맞추면(빨간 점이 반대쪽 검은 자리에 겹침) 대비와 초점 심도가 최고가 된다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🔦</span><b>비스듬한 손전등과 요철</b><span>벽의 미세한 요철은 정면에서 비추면 보이지 않지만, 손전등을 벽에 거의 붙여 비스듬히 비추면 그림자가 생겨 또렷이 보인다. 변형 조명도 같다. 무늬 방향에 맞춰 비스듬히 비추면 정면 조명으로는 놓치던 미세한 주기 정보가 렌즈 안으로 들어온다. 대신 무늬 방향이 바뀌면(세로선 → 가로선) 효과가 사라진다.</span></div>
+
+<h2 id="s2"><span class="n">02</span>피치별 대비와 금지 피치</h2>
+<p>칩에는 한 가지 피치만 있는 것이 아니다. 촘촘한 메모리 셀 옆에 듬성한 주변 회로가 있고, 외딴 선도 있다. 특정 피치에 맞춘 강한 변형 조명은 다른 피치에서 오히려 대비를 망친다. 1차가 동공 가장자리에 걸쳐 일부 광원 점에서만 통과하는 피치에서는 대비와 초점 심도가 급격히 떨어지며, 설계 규칙에서 아예 쓰지 못하게 막는다(<b>금지 피치</b>). 이를 피하려고 광원 모양과 마스크 무늬를 함께 최적화하는 <span class="term">SMO</span>(source-mask optimization)를 쓴다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-2</span><span class="ttl">피치별 대비 곡선 (through-pitch)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">비교 조명 A</span><select data-k="a"><option value="conv">일반 σ 0.7</option><option value="ann">환형 0.6/0.9</option><option value="dip" selected>다이폴 0.8 (r 0.15)</option><option value="quasar">퀘이사 0.8 (r 0.2)</option></select></label>
+      <label class="ctrl"><span class="lab">비교 조명 B</span><select data-k="b"><option value="conv" selected>일반 σ 0.7</option><option value="ann">환형 0.6/0.9</option><option value="dip">다이폴 0.8 (r 0.15)</option><option value="quasar">퀘이사 0.8 (r 0.2)</option></select></label>
+      <label class="ctrl"><span class="lab">초점 이탈 <output data-o="z"></output></span><input type="range" data-k="z" min="0" max="120" step="10" value="90" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">선폭 (고정) <output data-o="w"></output></span><input type="range" data-k="w" min="36" max="80" step="2" value="45" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">A 해상 한계 피치 / 그 위 최저 대비</span><span class="v" data-r="ma"></span></div>
+      <div class="ro"><span class="k">A 금지 피치 (한계 위에서 대비 &lt; 0.3)</span><span class="v" data-r="fa" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">B 해상 한계 / 최저 대비</span><span class="v" data-r="mb"></span></div>
+      <div class="ro"><span class="k">B 금지 피치</span><span class="v" data-r="fb" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 선폭을 고정하고 피치를 넓혀 가며(촘촘 → 외딴) 계산한 대비. 실선 = 조명 A, 점선 = 조명 B. 빨간 띠는 대비 0.3 미만인 금지 피치 구간이다. 다이폴은 가장 작은 피치에서 압도적이지만 중간 피치에서 깊은 골이 생긴다. 일반 조명은 고르지만 작은 피치를 못 찍는다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>높은 NA에서는 편광이 중요해진다</h2>
+<p>NA가 0.9를 넘으면 두 회절 빛이 웨이퍼에 큰 각도로 만난다. 빛의 전기장이 선 무늬와 나란하면(TE, s편광) 두 빛의 전기장이 같은 방향이라 완전히 간섭한다. 전기장이 입사면 안에 있으면(TM, p편광) 두 전기장 사이의 각이 2θ라 간섭이 cos 2θ만큼 약해지고, 2θ = 90°에서는 아예 무늬가 사라진다. 그래서 ArF 액침 스캐너는 선 방향에 맞춘 <b>편광 조명</b>을 쓴다(다이폴 x + y 편광 등).</p>
+<div class="eq">$$I_{TE}(x) \propto 1 + \cos(2k x\sin\theta),\qquad I_{TM}(x) \propto 1 + \cos 2\theta\,\cos(2k x\sin\theta)$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-3</span><span class="ttl">두 빛 간섭과 편광</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">NA (두 빛의 sin θ × n) <output data-o="na"></output></span><input type="range" data-k="na" min="0.2" max="1.35" step="0.01" value="1.2" data-d="2"></label>
+      <label class="ctrl"><span class="lab">감광액 굴절률 <output data-o="n"></output></span><input type="range" data-k="n" min="1.5" max="1.9" step="0.01" value="1.7" data-d="2"></label>
+      <label class="ctrl"><span class="lab">편광</span><select data-k="pol"><option value="te">TE (선과 나란)</option><option value="tm">TM (입사면 안)</option><option value="un" selected>편광 없음 (평균)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">감광액 속 반각 θ</span><span class="v" data-r="th"></span></div>
+      <div class="ro"><span class="k">TE / TM 대비</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">선택한 편광의 대비</span><span class="v" data-r="cs"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 감광액 속에서 만나는 두 빛(노랑)과 각 편광의 전기장 방향(화살표). 아래 띠는 만들어진 간섭무늬. 오른쪽: NA에 따른 대비(초록 = TE, 빨강 = TM, 회색 = 평균). 감광액 굴절률이 높을수록 빛이 덜 기울어져 TM 손실이 줄어든다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 다이폴 x는 세로선을 잘 찍지만 가로선을 거의 못 찍는다. 세로선과 가로선이 섞인 층은 어떻게 할까?</p><p>세 가지 방법이 있다. 쿼드러폴처럼 타협한 조명을 쓰거나, 세로선과 가로선을 두 장의 마스크로 나눠 다이폴 x와 다이폴 y로 두 번 찍거나(이중 다이폴), 설계 자체를 한 방향 선으로만 그리게 강제한다(1D 설계 규칙). 최첨단 로직의 하부 금속층은 세 번째를 택했다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">ArF 액침(193 nm, NA 1.35)에서 다이폴 극 중심을 σ = 0.9에 두면 찍을 수 있는 최소 피치에 가장 가까운 것은?</p><ol><li>143 nm</li><li>75 nm</li><li>57 nm</li><li>40 nm</li></ol>
+<p class="explain">λ/(NA(1+σ)) = 193/(1.35 × 1.9) ≈ 75 nm (반피치 38 nm, k₁ ≈ 0.27).</p></div>
+<div class="quiz" data-a="3"><p class="q">금지 피치가 생기는 원인으로 가장 알맞은 것은?</p><ol><li>마스크 제작 오차</li><li>레이저 출력 흔들림</li><li>감광액이 두꺼워서</li><li>특정 피치에서 1차 회절이 동공 가장자리에 걸려 일부 광원 점에서만 통과하기 때문</li></ol>
+<p class="explain">조명이 특정 피치에 최적화되면 다른 피치에서 0차와 1차가 함께 들어오는 광원 비율이 급감해 대비가 떨어진다.</p></div>
+<div class="quiz" data-a="0"><p class="q">두 빛이 감광액 속에서 반각 45°로 만날 때 TM 편광의 간섭 대비는?</p><ol><li>0</li><li>0.5</li><li>0.71</li><li>1</li></ol>
+<p class="explain">대비 = cos 2θ = cos 90° = 0. 전기장이 서로 수직이라 간섭하지 않는다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const LAM = 193, NA = 1.35, NIM = 1.44;
+const SRC = {conv:() => L.source('conv', 0.7), ann:() => L.source('ann', 0.9, 0.6), dip:() => L.source('dip', 0.8, 0, 0.15, 0.05), quasar:() => L.source('quasar', 0.8, 0, 0.2, 0.05)};
+
+/* 4-1 광원 편집 */
+(function(){
+  const box = J.$('#sim1');
+  J.sim('sim1', v => { let a = v.a, b = v.b; const t = v.t;
+    const src = t === 'conv' ? L.source('conv', a) : t === 'ann' ? L.source('ann', a, Math.min(b, a - 0.05)) : L.source(t, a, 0, Math.min(b, 0.4), 0.05);
+    const p = v.p, coef = L.coefLS(0.5);
+    const I0 = L.image({p, lam:LAM, na:NA, n:NIM, src, coef, N:96}), I1 = L.image({p, lam:LAM, na:NA, n:NIM, src, coef, N:96, z:80});
+    const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); L.drawPupil(ctx, w, h, {src, na:NA, lam:LAM, p, coef});
+    const xs = I => Array.from(I, (y, i) => [(i - 48)/96*p, y]); const xs2 = I => { const a = xs(I); return a.concat(a.map(([x, y]) => [x + p, y])); };
+    const mk = []; for(let i = 0; i < 192; i++){ const x = (i - 48)/96*p, ph = ((x/p) % 1 + 1) % 1; mk.push([x, (ph < 0.25 || ph > 0.75) ? 1 : 0]); }
+    let mx = 0.6; I0.forEach(y => mx = Math.max(mx, y));
+    J.plot(J.$('#cv1b'), {x:[-p/2, 1.5*p], y:[0, mx*1.15], xlab:'위치 (nm)', ylab:'세기', series:[{pts:mk, color:'--ink3', w:1, fill:.12, step:true}, {pts:xs2(I0), color:'--red', w:3}, {pts:xs2(I1), color:'--red', w:1.5, dash:[5, 4]}]});
+    const c = L.contrast(I0), th = c > 0.03 ? L.thFor(I0, p, p/2) : 0, nl = c > 0.03 ? L.nils(I0, p, th) : 0;
+    const fc = NA/LAM; let two = 0; src.forEach(([sx, sy]) => { const f0 = Math.hypot(sx*fc, sy*fc) <= fc, f1 = Math.hypot(sx*fc + 1/p, sy*fc) <= fc || Math.hypot(sx*fc - 1/p, sy*fc) <= fc; if(f0 && f1) two++; });
+    J.out(box, 'c', J.fmt(c*100, 0) + ' %', c > 0.5 ? 'good' : c > 0.25 ? 'warn' : 'bad'); J.out(box, 'nils', J.fmt(nl, 2), nl > 2 ? 'good' : nl > 1.2 ? 'warn' : 'bad');
+    J.out(box, 'f2', J.fmt(two/src.length*100, 0) + ' %'); J.out(box, 'k1', J.fmt(p/2*NA/LAM, 3)); });
+})();
+
+/* 4-2 피치별 대비 */
+(function(){
+  const box = J.$('#sim2'), cache = {};
+  const curve = (t, wd, z) => { const key = t + wd + '_' + z; if(cache[key]) return cache[key]; const src = SRC[t](), pts = [];
+    for(let p = Math.ceil(Math.max(72, wd*1.6)/4)*4; p <= 400; p += 4){ const I = L.image({p, lam:LAM, na:NA, n:NIM, src, coef:L.coefLS(wd/p), N:64, z}); pts.push([p, L.contrast(I)]); }
+    return cache[key] = pts; };
+  const lim = pts => { const q = pts.find(([p, c]) => c >= 0.3); return q ? q[0] : 999; };
+  const forb = pts => { const R = [], p0 = lim(pts); let s = null; pts.forEach(([p, c], i) => { if(p <= p0) return; if(c < 0.3 && s === null) s = p; if((c >= 0.3 || i === pts.length - 1) && s !== null){ R.push([s, p]); s = null; } }); return R; };
+  J.sim('sim2', v => { const A = curve(v.a, v.w, v.z), B = curve(v.b, v.w, v.z), FA = forb(A), FB = forb(B);
+    J.plot(J.$('#cv2'), {x:[60, 400], y:[0, 1], xlab:'피치 (nm)', ylab:'대비', series:[{pts:A, color:'--indigo', w:3}, {pts:B, color:'--gold', w:2.5, dash:[6, 4]}], bands:FA.map(([a, b]) => ({x0:a, x1:b, color:'--red', alpha:.13})), hlines:[{y:0.3, color:'--red', label:'0.3'}]});
+    const mn = P => { const p0 = lim(P), r = P.filter(q => q[0] > p0); return r.length ? Math.min(...r.map(q => q[1])) : 0; }, fs = F => F.length ? F.map(([a, b]) => a === b ? a : a + '–' + b).join(', ') + ' nm' : '없음';
+    J.out(box, 'ma', lim(A) + ' nm / ' + J.fmt(mn(A), 2), mn(A) > 0.3 ? 'good' : 'bad'); J.out(box, 'fa', fs(FA)); J.out(box, 'mb', lim(B) + ' nm / ' + J.fmt(mn(B), 2), mn(B) > 0.3 ? 'good' : 'bad'); J.out(box, 'fb', fs(FB)); });
+})();
+
+/* 4-3 편광 */
+(function(){
+  const box = J.$('#sim3');
+  J.sim('sim3', v => { const s = Math.min(0.999, v.na/v.n), th = Math.asin(s), cTE = 1, cTM = Math.cos(2*th);
+    const cs = v.pol === 'te' ? 1 : v.pol === 'tm' ? Math.abs(cTM) : (1 + cTM)/2;
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h);
+    const cx = w/2, cy = h*0.62, R = h*0.5;
+    ctx.fillStyle = 'rgba(156,123,209,.25)'; ctx.fillRect(0, cy - 10, w, h - cy + 10);
+    [-1, 1].forEach(sg => { const x0 = cx - sg*R*Math.sin(th), y0 = cy - R*Math.cos(th); ctx.strokeStyle = J.c('--gold'); ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(cx, cy); ctx.stroke();
+      const mx = (x0 + cx)/2, my = (y0 + cy)/2;
+      if(v.pol !== 'te'){ const ex = Math.cos(th), ey = sg*Math.sin(th); ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(mx - 18*ex, my - 18*ey); ctx.lineTo(mx + 18*ex, my + 18*ey); ctx.stroke(); }
+      if(v.pol !== 'tm'){ ctx.fillStyle = J.c('--jade'); ctx.beginPath(); ctx.arc(mx, my, 6, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(mx, my, 2, 0, 7); ctx.fill(); } });
+    for(let x = 0; x < w; x++){ const I = 1 + cs*Math.cos(x/w*Math.PI*12); ctx.fillStyle = `rgba(80,40,140,${I/2})`; ctx.fillRect(x, h - 26, 1, 22); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('초록 점: TE (화면 밖 방향), 빨간 선: TM', 8, 16); ctx.fillText('간섭무늬', 8, h - 32);
+    const S = [[], [], []]; for(let a = 0.2; a <= 1.35; a += 0.01){ const t = Math.asin(Math.min(0.999, a/v.n)), c = Math.cos(2*t); S[0].push([a, 1]); S[1].push([a, Math.abs(c)]); S[2].push([a, (1 + c)/2]); }
+    J.plot(J.$('#cv3b'), {x:[0.2, 1.35], y:[0, 1.05], xlab:'NA', ylab:'대비', series:[{pts:S[0], color:'--jade', w:2.5}, {pts:S[1], color:'--red', w:2.5}, {pts:S[2], color:'--ink3', w:2, dash:[5, 4]}], points:[{x:v.na, y:cs, color:'--ink', r:6}]});
+    J.out(box, 'th', J.fmt(th*180/Math.PI, 1) + '°'); J.out(box, 'c', '1.00 / ' + J.fmt(Math.abs(cTM), 2)); J.out(box, 'cs', J.fmt(cs, 2), cs > 0.8 ? 'good' : cs > 0.5 ? 'warn' : 'bad'); });
+})();
+</script>
+</body>
+</html>

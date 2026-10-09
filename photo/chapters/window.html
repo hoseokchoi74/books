@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>공정 창과 CD 균일도 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../lith.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="window">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 08 <span class="hanja">第八章 · 窓</span></div>
+  <h1>공정 창과 CD 균일도</h1>
+  <p class="lead">실험실에서 한 번 예쁜 무늬를 찍는 것과, 하루 수천 장의 웨이퍼 위 수천억 개 선을 모두 규격 안에 찍는 것은 전혀 다른 일이다. 초점은 웨이퍼 평탄도와 렌즈 열 변형으로 ±수십 nm 흔들리고, 노광량은 광원과 감광액 두께로 ±몇 % 흔들린다. 이 흔들림을 모두 견디는 영역이 <span class="term">공정 창</span>(process window)이다. 이 장에서는 보썽 곡선을 그리고, 촘촘한 선과 외딴 선이 함께 살 수 있는 공통 공정 창을 찾고, 여러 오차원이 쌓여 만드는 CD 균일도(CDU) 예산을 몬테카를로로 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>초점·노광량에 따른 CD 변화(보썽 곡선)를 계산하고, 촘촘한 선과 외딴 선의 최적 초점·노광 차이를 본다.</li>
+  <li>노광량–초점(ED) 창에서 노광 관용도(EL)와 초점 심도(DOF)의 맞바꿈 곡선을 읽는다.</li>
+  <li>여러 패턴의 공정 창을 겹쳐 공통 창을 찾고, 외딴 선 바이어스로 창을 넓힌다.</li>
+  <li>노광량·초점·마스크·PEB·확률적 요동의 기여를 제곱합으로 쌓아 CDU 예산을 세운다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>보썽 곡선: 초점과 노광량의 지도</h2>
+<p>여러 초점(가로)과 노광량(곡선별)에서 CD를 측정해 그린 그래프가 <span class="term">보썽 곡선</span>이다(1960년대 IBM의 John Bossung이 처음 그렸다). 곡선이 평평한 초점이 최적 초점이고, 노광량이 바뀌어도 CD가 그대로인 초점이 생기면 그곳을 <b>등초점</b>(isofocal)이라 한다. 촘촘한 선과 외딴 선은 회절 차수 분포가 달라 같은 노광량에서 CD가 다르고(iso–dense 바이어스), 보썽 곡선의 휘는 방향과 정도도 다르다.</p>
+<div class="eq">$$CD(E, z) \approx CD_0 + \frac{\partial CD}{\partial E}(E - E_0) + \frac{1}{2}\frac{\partial^2 CD}{\partial z^2}(z - z_0)^2 + \dots$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-1</span><span class="ttl">보썽 곡선: 촘촘한 선 vs 외딴 선</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">조명</span><select data-k="src"><option value="conv">일반 σ 0.7</option><option value="ann" selected>환형 0.6/0.9</option><option value="quasar">퀘이사 0.8</option></select></label>
+      <label class="ctrl"><span class="lab">외딴 선 마스크 바이어스 <output data-o="b"></output></span><input type="range" data-k="b" min="-10" max="30" step="1" value="0" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">보여줄 패턴</span><select data-k="show"><option value="both" selected>둘 다</option><option value="d">촘촘 (피치 100)</option><option value="i">외딴 (피치 400)</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv1" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">초점 0, 기준 노광의 CD (촘촘 / 외딴)</span><span class="v" data-r="cd"></span></div>
+      <div class="ro"><span class="k">iso–dense 바이어스</span><span class="v" data-r="idb"></span></div>
+      <div class="ro"><span class="k">노광량 1 %당 CD 변화 (촘촘)</span><span class="v" data-r="slope"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 목표 CD 50 nm(트렌치, 감광액이 녹는 곳). 실선 = 촘촘한 트렌치(피치 100 nm), 점선 = 외딴 트렌치(피치 400 nm). 색은 노광량(파랑 −6 %, 남색 −3 %, 빨강 기준, 노랑 +3 %, 초록 +6 %). 초록 띠는 목표 ±10 %. 외딴 트렌치는 같은 노광에서 더 좁게 찍히고(환형 조명에서는 아예 열리지 않고) 초점에 더 민감하다. 마스크 바이어스를 주어 두 패턴을 맞춰 보자.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>ED 창과 공통 공정 창</h2>
+<p>보썽 곡선을 뒤집어 보면, 노광량–초점 평면에서 CD가 규격 안에 드는 영역이 생긴다. 이 영역 안에 넣을 수 있는 직사각형(또는 타원)의 높이가 노광 관용도(EL), 폭이 초점 심도(DOF)다. 직사각형을 납작하게 하면 DOF가 늘고 EL이 줄어든다. 이 맞바꿈을 그린 것이 <b>EL–DOF 곡선</b>이다. 한 층에는 여러 패턴이 있으므로 모든 패턴의 창이 겹치는 <b>공통 창</b>이 실제 공정 창이다. 보통 "EL 5 %에서 DOF ≥ 80 nm" 같은 기준을 쓴다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-2</span><span class="ttl">공정 창 겹치기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">조명</span><select data-k="src"><option value="conv">일반 σ 0.7</option><option value="ann" selected>환형 0.6/0.9</option><option value="quasar">퀘이사 0.8</option></select></label>
+      <label class="ctrl"><span class="lab">외딴 선 마스크 바이어스 <output data-o="b"></output></span><input type="range" data-k="b" min="-10" max="30" step="1" value="14" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">CD 허용 범위 <output data-o="tol"></output></span><input type="range" data-k="tol" min="5" max="15" step="1" value="10" data-d="0" data-u="%"></label>
+      <label class="ctrl"><span class="lab">요구 EL <output data-o="el"></output></span><input type="range" data-k="el" min="2" max="12" step="1" value="5" data-d="0" data-u="%"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">촘촘 DOF @ EL</span><span class="v" data-r="d1"></span></div>
+      <div class="ro"><span class="k">외딴 DOF @ EL</span><span class="v" data-r="d2"></span></div>
+      <div class="ro"><span class="k">공통 DOF @ EL</span><span class="v" data-r="dc"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 가로 = 초점(−150 ~ +150 nm), 세로 = 노광량(기준 대비 −15 ~ +15 %). 파랑 = 촘촘한 선만 규격 안, 노랑 = 외딴 선만, 초록 = 둘 다(공통 창). 빨간 직사각형은 요구 EL에서 가장 넓은 DOF. 오른쪽: EL–DOF 맞바꿈 곡선(파랑 촘촘, 노랑 외딴, 초록 공통).</p>
+</div>
+
+<div class="analogy"><span class="ic">🎯</span><b>바람 부는 날의 양궁</b><span>과녁 한가운데(목표 CD)를 맞히는 것보다 중요한 것은, 바람(초점)과 활 당기는 힘(노광량)이 조금씩 달라져도 여전히 과녁 안에 들어가는 것이다. 공정 창은 "얼마나 흔들려도 괜찮은가"의 지도이고, 엔지니어는 과녁 중앙이 아니라 창의 한가운데를 겨눈다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>CD 균일도 예산</h2>
+<p>웨이퍼 전체의 CD 분포 폭(3σ)을 <span class="term">CDU</span>라 한다. 서로 독립인 오차원들은 제곱합(root-sum-square)으로 쌓인다. 노광량 흔들림은 EL 기울기로, 초점 흔들림은 보썽 곡선의 휨으로, 마스크 CD 오차는 MEEF로, PEB 온도 오차는 감광액 민감도로 CD에 옮겨진다. 여기에 EUV 시대에는 광자 수 요동에서 오는 국부 CDU(LCDU)가 더해진다. 각 항이 CDU에 얼마나 기여하는지 알아야 어디에 돈을 쓸지(더 평평한 척, 더 좋은 마스크, 더 많은 노광량) 결정할 수 있다.</p>
+<div class="eq">$$\sigma_{CD}^2 = \Bigl(\frac{\partial CD}{\partial E}\sigma_E\Bigr)^2 + \Bigl(\frac{\partial^2 CD}{\partial z^2}\Bigr)^2\frac{\sigma_z^4}{2} + \Bigl(\frac{MEEF}{4}\sigma_{mask}\Bigr)^2 + \Bigl(\frac{\partial CD}{\partial T}\sigma_T\Bigr)^2 + \sigma_{LCDU}^2$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-3</span><span class="ttl">몬테카를로 CDU 예산 (목표 CD 20 nm, EUV)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">노광량 σ <output data-o="e"></output></span><input type="range" data-k="e" min="0" max="3" step="0.1" value="1" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">초점 σ <output data-o="z"></output></span><input type="range" data-k="z" min="0" max="40" step="1" value="15" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">마스크 CD σ (4×) <output data-o="m"></output></span><input type="range" data-k="m" min="0" max="2" step="0.05" value="0.6" data-d="2" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">MEEF <output data-o="meef"></output></span><input type="range" data-k="meef" min="1" max="5" step="0.1" value="2" data-d="1"></label>
+      <label class="ctrl"><span class="lab">PEB 온도 σ <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="0.3" step="0.01" value="0.1" data-d="2" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">확률적 LCDU σ <output data-o="s"></output></span><input type="range" data-k="s" min="0" max="1.5" step="0.05" value="0.5" data-d="2" data-u="nm"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b3r">다시 뽑기 (5,000개)</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">CDU 3σ (몬테카를로)</span><span class="v" data-r="mc"></span></div>
+      <div class="ro"><span class="k">평균 CD 이동 (초점 휨 때문)</span><span class="v" data-r="mu"></span></div>
+      <div class="ro"><span class="k">규격(±10 %) 안 비율</span><span class="v" data-r="y"></span></div>
+      <div class="ro"><span class="k">가장 큰 기여</span><span class="v" data-r="top"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 5,000개 선의 CD 분포. 초록 띠는 규격(20 ± 2 nm). 초점 오차는 CD를 한쪽으로만(보썽 곡선이 아래로 휘므로 작게) 밀어 분포가 비대칭이 된다. 오른쪽: 오차원별 분산 기여(%). 가정한 민감도: 노광량 1 %당 −0.5 nm, 초점 휨 −0.0015 nm/nm², PEB 2 nm/°C.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 노광량을 두 배로 높이면 처리량은 떨어진다. 그런데도 EUV 공정에서 노광량을 높이는 이유는?</p><p>광자 수가 두 배가 되면 샷 노이즈가 √2배 줄어 LCDU와 확률적 결함이 줄어든다. 위 예산에서 LCDU가 가장 큰 기여라면, 노광량을 올리는 것이 다른 어떤 개선보다 효과적일 수 있다. 결국 처리량(원가)과 수율 사이의 맞바꿈이다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">보썽 곡선에서 노광량이 달라도 CD가 거의 같은 초점을 무엇이라 하는가?</p><ol><li>최적 노광</li><li>등초점(isofocal) 지점</li><li>금지 피치</li><li>스윙 최소</li></ol>
+<p class="explain">등초점 근처에서 공정하면 노광량 흔들림에 둔감해진다.</p></div>
+<div class="quiz" data-a="3"><p class="q">공통 공정 창(common process window)이란?</p><ol><li>가장 촘촘한 패턴의 공정 창</li><li>모든 웨이퍼의 평균 공정 창</li><li>스캐너가 허용하는 초점 범위</li><li>한 층의 모든 패턴의 공정 창이 겹치는 영역</li></ol>
+<p class="explain">한 번의 노광으로 모든 패턴을 함께 찍으므로 실제로 쓸 수 있는 창은 교집합이다.</p></div>
+<div class="quiz" data-a="0"><p class="q">서로 독립인 CD 오차원 1.2 nm, 0.9 nm(3σ)를 합친 CDU는?</p><ol><li>1.5 nm</li><li>2.1 nm</li><li>1.05 nm</li><li>0.3 nm</li></ol>
+<p class="explain">제곱합: √(1.2² + 0.9²) = 1.5 nm.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const LAM = 193, NA = 1.35, NIM = 1.44, TGT = 50;
+const SRCS = {conv:() => L.source('conv', 0.7), ann:() => L.source('ann', 0.9, 0.6), quasar:() => L.source('quasar', 0.8, 0, 0.2, 0.05)};
+const memo = {};
+/* 촘촘(100) / 외딴(400) 트렌치, 초점별 상 */
+function images(srcKey, bias){
+  const key = srcKey + '_' + bias; if(memo[key]) return memo[key];
+  const src = SRCS[srcKey](), zs = []; for(let z = -150; z <= 150; z += 10) zs.push(z);
+  const mk = (p, w, N) => zs.map(z => L.image({p, lam:LAM, na:NA, n:NIM, src, coef:L.coefLS(w/p), N, z}));
+  const D = mk(100, TGT, 100), I = mk(400, TGT + bias, 400);
+  const th0 = L.thFor(D[15], 100, TGT); // 초점 0에서 촘촘 CD = 50이 되는 문턱 = 기준 노광
+  return memo[key] = {zs, D, I, th0};
+}
+const cdOf = (I, p, th, e) => L.cd(I, p, th/e);
+
+/* 8-1 */
+(function(){
+  const box = J.$('#sim1');
+  J.sim('sim1', v => { const M = images(v.src, v.b), E = [0.94, 0.97, 1, 1.03, 1.06], cols = ['--indigo', '--plum', '--red', '--gold', '--jade'], S = [];
+    E.forEach((e, k) => { if(v.show !== 'i') S.push({pts:M.zs.map((z, j) => [z, cdOf(M.D[j], 100, M.th0, e)]), color:cols[k], w:e === 1 ? 3 : 1.8});
+      if(v.show !== 'd') S.push({pts:M.zs.map((z, j) => [z, cdOf(M.I[j], 400, M.th0, e)]), color:cols[k], w:e === 1 ? 2.5 : 1.4, dash:[6, 4]}); });
+    J.plot(J.$('#cv1'), {x:[-150, 150], y:[20, 80], xlab:'초점 (nm)', ylab:'CD (nm)', series:S, bands:[{y0:TGT*0.9, y1:TGT*1.1, color:'--jade', alpha:.15}]});
+    const cd = cdOf(M.D[15], 100, M.th0, 1), ci = cdOf(M.I[15], 400, M.th0, 1), s1 = (cdOf(M.D[15], 100, M.th0, 1.01) - cdOf(M.D[15], 100, M.th0, 0.99))/2;
+    J.out(box, 'cd', J.fmt(cd, 1) + ' / ' + J.fmt(ci, 1) + ' nm'); J.out(box, 'idb', J.fmt(ci - cd, 1) + ' nm', Math.abs(ci - cd) < 2 ? 'good' : Math.abs(ci - cd) < 5 ? 'warn' : 'bad'); J.out(box, 'slope', J.fmt(s1, 2) + ' nm/%'); });
+})();
+
+/* 8-2 */
+(function(){
+  const box = J.$('#sim2'), ES = []; for(let e = 0.85; e <= 1.1501; e += 0.01) ES.push(+e.toFixed(2));
+  const winDOF = (ok, zs, needEL) => { const n = Math.round(needEL/1) + 1; let best = {dof:-1}; // EL 1 %씩
+    for(let a = 0; a + n <= ES.length; a++){ let run = 0; for(let j = 0; j < zs.length; j++){ let all = true; for(let q = a; q < a + n; q++) if(!ok[j][q]) { all = false; break; } run = all ? run + 1 : 0; const dof = (run - 1)*10; if(run && dof > best.dof) best = {dof, a, j1:j - run + 1, j2:j}; } } return best; };
+  J.sim('sim2', v => { const M = images(v.src, v.b), tol = v.tol/100, zs = M.zs;
+    const okD = zs.map((z, j) => ES.map(e => Math.abs(cdOf(M.D[j], 100, M.th0, e) - TGT) <= TGT*tol)), okI = zs.map((z, j) => ES.map(e => Math.abs(cdOf(M.I[j], 400, M.th0, e) - TGT) <= TGT*tol)), okC = okD.map((r, j) => r.map((x, q) => x && okI[j][q]));
+    const {ctx, w, h} = J.fit(J.$('#cv2a')); ctx.clearRect(0,0,w,h); const Lp = 44, Bp = h - 34, cw = (w - Lp - 10)/zs.length, ch = (Bp - 10)/ES.length;
+    zs.forEach((z, j) => ES.forEach((e, q) => { const a = okD[j][q], b = okI[j][q]; ctx.fillStyle = a && b ? 'rgba(46,160,100,.75)' : a ? 'rgba(70,110,200,.45)' : b ? 'rgba(220,170,40,.45)' : J.c('--paper2'); ctx.fillRect(Lp + j*cw, Bp - (q + 1)*ch, cw + .5, ch + .5); }));
+    const bc = winDOF(okC, zs, v.el);
+    if(bc.dof >= 0){ ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2.5; ctx.strokeRect(Lp + bc.j1*cw, Bp - (bc.a + Math.round(v.el) + 1)*ch, (bc.j2 - bc.j1 + 1)*cw, (Math.round(v.el) + 1)*ch); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign = 'center'; [-150, -75, 0, 75, 150].forEach(z => ctx.fillText(z, Lp + (z + 150)/10*cw + cw/2, Bp + 14));
+    ctx.textAlign = 'right'; [0.85, 1, 1.15].forEach(e => ctx.fillText((e > 1 ? '+' : '') + J.fmt((e - 1)*100, 0) + '%', Lp - 4, Bp - ((e - 0.85)/0.01 + .5)*ch + 4));
+    ctx.textAlign = 'center'; ctx.font = '11px "Noto Sans KR"'; ctx.fillText('초점 (nm)', (Lp + w)/2, h - 4);
+    const curve = ok => { const pts = []; for(let el = 0; el <= 20; el++){ const b = winDOF(ok, zs, el); if(b.dof < 0) break; pts.push([el, b.dof]); } return pts; };
+    J.plot(J.$('#cv2b'), {x:[0, 20], y:[0, 320], xlab:'EL (%)', ylab:'DOF (nm)', series:[{pts:curve(okD), color:'--indigo', w:2}, {pts:curve(okI), color:'--gold', w:2}, {pts:curve(okC), color:'--jade', w:3.5}], vlines:[{x:v.el, color:'--red', label:'요구 EL'}]});
+    const f = b => b.dof >= 0 ? b.dof + ' nm' : '창 없음', b1 = winDOF(okD, zs, v.el), b2 = winDOF(okI, zs, v.el);
+    J.out(box, 'd1', f(b1)); J.out(box, 'd2', f(b2)); J.out(box, 'dc', f(bc), bc.dof >= 80 ? 'good' : bc.dof >= 40 ? 'warn' : 'bad'); });
+})();
+
+/* 8-3 몬테카를로 */
+(function(){
+  const box = J.$('#sim3'); let seed = 1, V = null;
+  const run = () => { const v = V, r = J.rng(seed), N = 5000, cds = [], T = 20, a = -0.5, b = -0.0015, dT = 2;
+    const parts = {노광량:0, 초점:0, 마스크:0, PEB:0, 확률:0};
+    for(let i = 0; i < N; i++){ const e = J.gauss(r)*v.e, z = J.gauss(r)*v.z, m = J.gauss(r)*v.m, t = J.gauss(r)*v.t, s = J.gauss(r)*v.s;
+      const c1 = a*e, c2 = b*z*z, c3 = v.meef*m/4, c4 = dT*t; cds.push(T + c1 + c2 + c3 + c4 + s);
+      parts.노광량 += c1*c1; parts.초점 += c2*c2; parts.마스크 += c3*c3; parts.PEB += c4*c4; parts.확률 += s*s; }
+    const mu = cds.reduce((x, y) => x + y, 0)/N, sd = Math.sqrt(cds.reduce((x, y) => x + (y - mu)*(y - mu), 0)/N), inSpec = cds.filter(c => Math.abs(c - T) <= 2).length/N;
+    const bins = new Array(60).fill(0); cds.forEach(c => { const k = Math.floor((c - 14)/0.2); if(k >= 0 && k < 60) bins[k]++; });
+    const pts = []; bins.forEach((n, k) => { pts.push([14 + k*0.2, n]); pts.push([14 + (k + 1)*0.2, n]); });
+    J.plot(J.$('#cv3a'), {x:[14, 26], y:[0, Math.max(...bins)*1.1 + 1], xlab:'CD (nm)', ylab:'개수', series:[{pts, color:'--indigo', w:1.5, fill:.35}], bands:[{x0:18, x1:22, color:'--jade', alpha:.15}], vlines:[{x:mu, color:'--red', label:'평균'}]});
+    const tot = Object.values(parts).reduce((x, y) => x + y, 0) || 1, keys = Object.keys(parts);
+    const {ctx, w, h} = J.fit(J.$('#cv3b')); ctx.clearRect(0,0,w,h); const bh = (h - 40)/keys.length;
+    keys.forEach((k, i) => { const f = parts[k]/tot, y = 14 + i*bh; ctx.fillStyle = J.c(['--red', '--indigo', '--plum', '--gold', '--jade'][i]); ctx.fillRect(80, y, (w - 140)*f, bh - 10);
+      ctx.fillStyle = J.c('--ink'); ctx.font = '12.5px "Noto Sans KR"'; ctx.textAlign = 'right'; ctx.fillText(k, 72, y + bh/2); ctx.textAlign = 'left'; ctx.font = '12px "JetBrains Mono"'; ctx.fillText(J.fmt(f*100, 0) + '%', 86 + (w - 140)*f, y + bh/2); });
+    const topK = keys.reduce((x, y) => parts[y] > parts[x] ? y : x);
+    J.out(box, 'mc', J.fmt(3*sd, 2) + ' nm', 3*sd < 1.5 ? 'good' : 3*sd < 2.5 ? 'warn' : 'bad'); J.out(box, 'mu', J.fmt(mu - T, 2) + ' nm'); J.out(box, 'y', J.fmt(inSpec*100, 2) + ' %', inSpec > 0.997 ? 'good' : inSpec > 0.95 ? 'warn' : 'bad'); J.out(box, 'top', topK); };
+  J.sim('sim3', v => { V = v; run(); });
+  J.$('#b3r').onclick = () => { seed++; run(); };
+})();
+</script>
+</body>
+</html>

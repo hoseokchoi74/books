@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>계측과 공정 제어 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../lith.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="metrology">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 14 <span class="hanja">第十四章 · 測</span></div>
+  <h1>계측과 공정 제어</h1>
+  <p class="lead">측정할 수 없으면 제어할 수 없다. 노광 공정 뒤에는 거의 매번 측정이 따른다. 선폭과 가장자리 거칠기는 전자빔 현미경(<span class="term">CD-SEM</span>)으로, 3차원 모양은 빛의 반사 스펙트럼을 모형과 맞추는 <span class="term">산란 계측</span>(OCD)으로, 오버레이는 회절 마크로 잰다. 측정값은 곧바로 다음 로트의 노광량·초점·정렬 보정값으로 되돌아간다(<span class="term">APC</span>, 공정 자동 제어). 이 장에서는 거칠기의 스펙트럼을 분석하고, 스펙트럼 맞추기로 보이지 않는 단면을 추정하고, EWMA 제어기로 공정 흔들림을 잡는다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>선 가장자리 거칠기(LER)를 표준 편차와 파워 스펙트럼(PSD)으로 표현하고, SEM 잡음이 측정값을 부풀리는 효과를 안다.</li>
+  <li>막 쌓임 반사 모형과 측정 스펙트럼을 맞춰 선폭·높이·측벽 각도를 추정하는 산란 계측을 해 본다.</li>
+  <li>EWMA 런투런 제어기로 표류(drift)와 계단 변화를 보정하고 가중치 λ의 맞바꿈을 본다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>CD-SEM과 거칠기의 스펙트럼</h2>
+<p>CD-SEM은 전자빔을 선 위로 훑어 가장자리에서 튀어나오는 이차 전자 신호로 선폭을 잰다. 가장자리는 곧지 않고 1~3 nm씩 울퉁불퉁하다. 이 요동의 표준 편차 3배가 LER, 선폭의 요동이 LWR이다. 하지만 같은 σ라도 천천히 크게 휘는지, 잘게 떨리는지에 따라 트랜지스터에 주는 영향이 다르다. 그래서 위치에 따른 요동을 푸리에 변환한 파워 스펙트럼(PSD)으로 본다. PSD는 낮은 주파수에서 평평하고(높이 = σ²·ξ에 비례), 상관 길이 ξ를 지나면 기울기 −(1 + 2α)로 떨어진다. SEM 영상 잡음은 높은 주파수에 평평한 바닥을 깔아 LER을 실제보다 크게 보이게 하므로, 이 바닥을 빼는 "편향 제거"가 필요하다.</p>
+<div class="eq">$$PSD(f) = \frac{2\sigma^2\xi}{\bigl[1 + (2\pi f\xi)^2\bigr]^{0.5 + \alpha}},\qquad \sigma^2_{measured} = \sigma^2_{true} + \sigma^2_{noise}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-1</span><span class="ttl">가상 CD-SEM과 PSD 분석</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">실제 LER 3σ <output data-o="s"></output></span><input type="range" data-k="s" min="0.5" max="6" step="0.1" value="2.5" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">상관 길이 ξ <output data-o="xi"></output></span><input type="range" data-k="xi" min="3" max="60" step="1" value="15" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">거칠기 지수 α <output data-o="a"></output></span><input type="range" data-k="a" min="0.2" max="1" step="0.05" value="0.6" data-d="2"></label>
+      <label class="ctrl"><span class="lab">SEM 영상 잡음 <output data-o="n"></output></span><input type="range" data-k="n" min="0" max="2" step="0.05" value="0.6" data-d="2" data-u="nm"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b1r">다른 선 측정</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">측정 LER 3σ (잡음 포함)</span><span class="v" data-r="m"></span></div>
+      <div class="ro"><span class="k">편향 제거 LER 3σ</span><span class="v" data-r="u"></span></div>
+      <div class="ro"><span class="k">LWR 3σ (두 가장자리 독립)</span><span class="v" data-r="lwr"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 가상 SEM 영상(선 길이 2 µm 중 일부, 밝은 띠 = 가장자리)과 검출한 가장자리(빨강). 오른쪽: 왼쪽 가장자리의 PSD(회색 점 = 측정, 남색 = 이론 곡선, 점선 = 잡음 바닥). 가로·세로 모두 로그 눈금. ξ를 키우면 무릎이 왼쪽으로 옮겨 가고, 잡음을 키우면 높은 주파수 바닥이 올라온다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>산란 계측: 반사 스펙트럼으로 단면 보기</h2>
+<p>SEM은 위에서만 보므로 선의 높이와 측벽 각도를 알기 어렵고, 단면을 자르면 웨이퍼를 버려야 한다. 산란 계측(OCD)은 주기 무늬에 여러 파장의 빛을 비춰 반사율 스펙트럼을 잰다. 무늬의 선폭·높이·측벽 각이 바뀌면 스펙트럼 모양이 미묘하게 바뀐다. 이 관계를 전자기 계산(RCWA)으로 미리 만든 모형과 비교해, 측정 스펙트럼과 가장 잘 맞는 매개변수를 찾는다. 빠르고 비파괴적이라 양산에서 가장 널리 쓰인다. 다만 매개변수끼리 효과가 비슷하면(상관) 하나로 정해지지 않는 문제가 있다.</p>
+<div class="eq">$$\chi^2(\text{CD}, h, \theta) = \sum_\lambda \bigl[R_{측정}(\lambda) - R_{모형}(\lambda; \text{CD}, h, \theta)\bigr]^2 \to \min$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-2</span><span class="ttl">스펙트럼 맞추기 게임</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">모형 선폭 CD <output data-o="cd"></output></span><input type="range" data-k="cd" min="20" max="80" step="0.5" value="45" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">모형 높이 h <output data-o="h"></output></span><input type="range" data-k="h" min="40" max="140" step="1" value="90" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">모형 측벽 각 <output data-o="sw"></output></span><input type="range" data-k="sw" min="75" max="90" step="0.5" value="88" data-d="1" data-u="°"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b2f">자동 맞춤</button><button class="sbtn" id="b2n">새 웨이퍼</button><button class="sbtn" id="b2v">정답 보기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">맞춤 오차 (RMS)</span><span class="v" data-r="rms"></span></div>
+      <div class="ro"><span class="k">정답</span><span class="v" data-r="ans" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 반사율 스펙트럼(파장 250~800 nm). 점 = 측정(잡음 포함), 빨강 = 현재 모형. 오른쪽: 모형 단면(피치 100 nm 감광액 선, 실리콘 위). 슬라이더로 빨간 곡선을 점에 맞춰 보자. 모형은 사다리꼴을 여러 얇은 층으로 쪼개 유효 매질 근사로 계산했다(실제 장비는 엄밀한 RCWA를 쓴다).</p>
+</div>
+
+<div class="analogy"><span class="ic">🔔</span><b>종소리로 종의 모양 맞히기</b><span>눈을 가리고도 종을 쳐 보면 소리(진동수 스펙트럼)로 크기와 두께를 짐작할 수 있다. 산란 계측도 무늬를 직접 보지 않고 빛의 "음색"을 듣는다. 다만 종 두 개가 우연히 같은 소리를 낼 수 있듯, 다른 단면이 비슷한 스펙트럼을 낼 수 있어 측정 설계가 중요하다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>APC: 측정을 다음 노광으로 되먹이기</h2>
+<p>공정은 가만히 있지 않는다. 감광액 로트가 바뀌고, 핫플레이트가 미세하게 식고, 렌즈가 데워진다. 런투런(run-to-run) 제어기는 매 로트의 측정 CD를 보고 다음 로트의 노광량을 고친다. 가장 많이 쓰는 것이 <span class="term">EWMA</span>(지수 가중 이동 평균) 제어기다. 가중치 λ가 크면 최근 측정을 많이 믿어 변화에 빨리 반응하지만 측정 잡음까지 따라 흔들리고, 작으면 잔잔하지만 계단 변화를 늦게 따라간다. 측정 결과가 몇 로트 늦게 도착하면(지연) 제어가 더 어려워진다.</p>
+<div class="eq">$$\hat d_{k} = \lambda\,(y_k - b\,u_k) + (1 - \lambda)\,\hat d_{k-1},\qquad u_{k+1} = \frac{T - \hat d_k}{b}$$<div class="note">y: 측정 CD, u: 노광량 보정, b: 노광량 민감도(nm/%), T: 목표, d̂: 추정한 공정 교란.</div></div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-3</span><span class="ttl">EWMA 런투런 제어기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">가중치 λ <output data-o="l"></output></span><input type="range" data-k="l" min="0.05" max="1" step="0.05" value="0.3" data-d="2"></label>
+      <label class="ctrl"><span class="lab">로트당 표류 <output data-o="dr"></output></span><input type="range" data-k="dr" min="0" max="0.2" step="0.005" value="0.05" data-d="3" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">50번째 로트 계단 변화 <output data-o="st"></output></span><input type="range" data-k="st" min="-4" max="4" step="0.1" value="2" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">측정·공정 잡음 σ <output data-o="n"></output></span><input type="range" data-k="n" min="0" max="1.5" step="0.05" value="0.4" data-d="2" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">측정 지연 <output data-o="lag"></output></span><input type="range" data-k="lag" min="0" max="5" step="1" value="1" data-d="0" data-u="로트"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">제어 없음: 목표 대비 3σ (평균 포함)</span><span class="v" data-r="a"></span></div>
+      <div class="ro"><span class="k">EWMA 제어: 3σ</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">계단 변화 회복 (90 %)</span><span class="v" data-r="rec"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 목표 CD 20 nm, 규격 ±1.5 nm(초록 띠). 회색 = 제어하지 않을 때, 빨강 = EWMA 제어, 파랑 점선 = 제어기가 내린 노광량 보정(오른쪽 축 대신 nm 환산). λ를 1로 하면 잡음을 그대로 따라 흔들리고(과잉 반응), 0.05면 50번째 로트 이후 한참 동안 벗어난다. 지연이 길면 큰 λ에서 진동이 생긴다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 측정 장비 자체가 0.5 nm씩 흔들린다면, 1 nm 공정 변화를 믿고 보정해도 될까?</p><p>측정 시스템의 정밀도(반복성·재현성)가 공정 변동보다 충분히 작아야 한다. 보통 측정 정밀도는 공정 허용 범위의 10~20 % 이하를 요구한다(P/T 비). 그렇지 않으면 제어기가 측정 잡음을 쫓아 공정을 오히려 흔든다. 그래서 계측 장비 개발이 리소그래피만큼 어렵다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">SEM 영상 잡음이 LER 측정에 주는 영향은?</p><ol><li>LER을 작게 보이게 한다</li><li>영향이 없다</li><li>높은 주파수에 바닥을 더해 LER을 크게 보이게 한다</li><li>상관 길이를 늘린다</li></ol>
+<p class="explain">측정 분산 = 실제 분산 + 잡음 분산. PSD의 평평한 바닥을 빼서 편향을 제거한다.</p></div>
+<div class="quiz" data-a="0"><p class="q">산란 계측(OCD)의 장점은?</p><ol><li>비파괴로 빠르게 선폭·높이·측벽 각을 함께 추정</li><li>원자 하나하나를 본다</li><li>모형이 필요 없다</li><li>주기가 없는 무늬도 잘 잰다</li></ol>
+<p class="explain">주기 무늬의 반사 스펙트럼을 모형과 맞추므로 모형과 주기 구조가 필요하다.</p></div>
+<div class="quiz" data-a="3"><p class="q">EWMA 제어기의 λ를 크게 했을 때의 단점은?</p><ol><li>계단 변화를 늦게 따라간다</li><li>표류를 보정하지 못한다</li><li>계산이 느려진다</li><li>측정 잡음에 과잉 반응해 공정이 흔들린다</li></ol>
+<p class="explain">λ가 크면 최근 측정 하나를 크게 믿으므로 잡음까지 보정해 버린다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 14-1 LER */
+(function(){
+  const box = J.$('#sim1'), N = 512, LEN = 2000, dy = LEN/N; let seed = 2;
+  const psdT = (f, s, xi, a) => 2*s*s*xi/Math.pow(1 + Math.pow(2*Math.PI*f*xi, 2), 0.5 + a);
+  const synth = (r, s, xi, a) => { const e = new Float64Array(N); let tot = 0; const amps = [];
+    for(let k = 1; k < N/2; k++){ const f = k/LEN, A = Math.sqrt(2*psdT(f, 1, xi, a)/LEN); amps.push([k, A, r()*2*Math.PI]); tot += A*A/2; }
+    const norm = s/Math.sqrt(tot); amps.forEach(([k, A, ph]) => { for(let i = 0; i < N; i++) e[i] += norm*A*Math.cos(2*Math.PI*k*i/N + ph); }); return e; };
+  const psd = e => { const out = []; for(let k = 1; k < N/2; k++){ let re = 0, im = 0; for(let i = 0; i < N; i++){ const a = 2*Math.PI*k*i/N; re += e[i]*Math.cos(a); im -= e[i]*Math.sin(a); } out.push([k/LEN, (re*re + im*im)*dy/N*2]); } return out; };
+  const sd = a => { const m = a.reduce((x, y) => x + y, 0)/a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m)*(y - m), 0)/a.length); };
+  J.sim('sim1', v => { const r = J.rng(seed), s = v.s/3, eL = synth(r, s, v.xi, v.a), eR = synth(r, s, v.xi, v.a), mL = eL.map(x => x + v.n*J.gauss(r)), mR = eR.map(x => x + v.n*J.gauss(r));
+    const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const rows = Math.min(N, Math.floor(h)), sx = w/80, cx = w/2, CD = 30;
+    const img = ctx.createImageData(Math.floor(w), rows), rr = J.rng(seed + 9);
+    for(let y = 0; y < rows; y++){ const i = Math.floor(y/rows*N*0.4), l = -CD/2 + eL[i], rgt = CD/2 + eR[i];
+      for(let x = 0; x < Math.floor(w); x++){ const xn = (x - cx)/sx, dL = Math.abs(xn - l), dR = Math.abs(xn - rgt); let g = (xn > l && xn < rgt) ? 90 : 40; g += 160*Math.exp(-dL*dL/2) + 160*Math.exp(-dR*dR/2); g += (rr() - 0.5)*v.n*120; const q = (y*Math.floor(w) + x)*4; img.data[q] = img.data[q + 1] = img.data[q + 2] = J.clamp(g, 0, 255); img.data[q + 3] = 255; } }
+    ctx.putImageData(img, 0, 0); ctx.fillStyle = J.c('--red'); for(let y = 0; y < rows; y += 2){ const i = Math.floor(y/rows*N*0.4); ctx.fillRect(cx + (-CD/2 + mL[i])*sx - 1, y, 2, 2); ctx.fillRect(cx + (CD/2 + mR[i])*sx - 1, y, 2, 2); }
+    ctx.fillStyle = '#fff'; ctx.font = '11px "Noto Sans KR"'; ctx.fillText('선 길이 약 ' + Math.round(LEN*0.4) + ' nm 구간 · 가로 확대', 6, 14);
+    let Z = 0; for(let k = 1; k < N/2; k++) Z += psdT(k/LEN, 1, v.xi, v.a)/LEN;
+    const P = psd(mL), th = [], fl = []; P.forEach(([f]) => { th.push([f, psdT(f, 1, v.xi, v.a)*s*s/Z + v.n*v.n*dy*2]); fl.push([f, v.n*v.n*dy*2]); });
+    J.plot(J.$('#cv1b'), {x:[1/LEN, 0.5/dy], y:[1e-3, 1e3], logx:true, logy:true, xlab:'공간 주파수 (1/nm)', ylab:'PSD (nm³)', series:[{pts:P.map(([f, p]) => [f, Math.max(1e-3, p)]), color:'--ink3', w:1}, {pts:th, color:'--indigo', w:3}].concat(v.n > 0 ? [{pts:fl, color:'--red', w:1.5, dash:[5, 4]}] : [])});
+    const meas = 3*sd(Array.from(mL)), unb = 3*Math.sqrt(Math.max(0, sd(Array.from(mL))**2 - v.n*v.n)), lwr = 3*sd(Array.from(mR).map((x, i) => x - mL[i]));
+    J.out(box, 'm', J.fmt(meas, 2) + ' nm', Math.abs(meas - v.s) < 0.3 ? 'good' : 'warn'); J.out(box, 'u', J.fmt(unb, 2) + ' nm', Math.abs(unb - v.s) < 0.3 ? 'good' : 'warn'); J.out(box, 'lwr', J.fmt(lwr, 2) + ' nm (≈ √2 × LER)'); });
+  J.$('#b1r').onclick = () => { seed++; J.redrawAll(); };
+})();
+
+/* 14-2 산란 계측 */
+(function(){
+  const box = J.$('#sim2'), P = 100, NR = 1.6, NSI = [3.9, 0.02]; let truth = null, meas = null, seed = 3, reveal = false;
+  const C = (a, b = 0) => [a, b], add = (a, b) => [a[0] + b[0], a[1] + b[1]], sub = (a, b) => [a[0] - b[0], a[1] - b[1]], mul = (a, b) => [a[0]*b[0] - a[1]*b[1], a[0]*b[1] + a[1]*b[0]], div = (a, b) => { const d = b[0]*b[0] + b[1]*b[1]; return [(a[0]*b[0] + a[1]*b[1])/d, (a[1]*b[0] - a[0]*b[1])/d]; }, ex = a => { const e = Math.exp(a[0]); return [e*Math.cos(a[1]), e*Math.sin(a[1])]; };
+  const model = (cd, h, sw) => { const NL = 8, layers = [], tan = Math.tan((90 - sw)*Math.PI/180);
+    for(let i = 0; i < NL; i++){ const z = (i + .5)/NL*h, wz = J.clamp(cd + 2*tan*(z - h/2), 2, P - 2), f = wz/P, n = Math.sqrt(f*NR*NR + (1 - f)); layers.push([n, h/NL]); } // 위→아래: 위층이 좁음
+    const out = []; for(let l = 250; l <= 800; l += 5){ let G = div(sub(C(layers[NL - 1][0]), NSI), add(C(layers[NL - 1][0]), NSI));
+      for(let i = NL - 1; i >= 0; i--){ const above = i > 0 ? layers[i - 1][0] : 1, me = layers[i][0], r = C((above - me)/(above + me)), ph = ex([0, 4*Math.PI*me*layers[i][1]/l]), GG = mul(G, ph); G = div(add(r, GG), add(C(1), mul(r, GG))); }
+      out.push([l, G[0]*G[0] + G[1]*G[1]]); } return out; };
+  const newWafer = () => { const r = J.rng(seed); truth = {cd:35 + r()*25, h:70 + r()*50, sw:80 + r()*9.5}; const m = model(truth.cd, truth.h, truth.sw); meas = m.map(([l, R]) => [l, R + 0.004*J.gauss(r)]); reveal = false; };
+  const rms = (cd, h, sw) => { const m = model(cd, h, sw); let s = 0; m.forEach(([l, R], i) => s += (R - meas[i][1])**2); return Math.sqrt(s/m.length); };
+  let V = null;
+  const draw = () => { const v = V, m = model(v.cd, v.h, v.sw);
+    J.plot(J.$('#cv2a'), {x:[250, 800], y:[0, 0.7], xlab:'파장 (nm)', ylab:'반사율', series:[{pts:m, color:'--red', w:2.5}], points:meas.filter((_, i) => i % 2 === 0).map(([l, R]) => ({x:l, y:R, color:'--ink3', r:2.5}))});
+    const {ctx, w, h} = J.fit(J.$('#cv2b')); ctx.clearRect(0,0,w,h); const sc = Math.min((w - 40)/(2*P), (h - 60)/150), ox = 20, by = h - 30, tan = Math.tan((90 - v.sw)*Math.PI/180);
+    ctx.fillStyle = '#8f96a3'; ctx.fillRect(ox, by, 2*P*sc, 20);
+    const tr = (cd, hh, sw, col, fill) => { const t = Math.tan((90 - sw)*Math.PI/180); for(let k = 0; k < 2; k++){ const c = ox + (k + .5)*P*sc, bw = (cd + t*hh)/2*sc, tw = (cd - t*hh)/2*sc; ctx.beginPath(); ctx.moveTo(c - bw, by); ctx.lineTo(c - Math.max(0, tw), by - hh*sc); ctx.lineTo(c + Math.max(0, tw), by - hh*sc); ctx.lineTo(c + bw, by); ctx.closePath(); if(fill){ ctx.fillStyle = col; ctx.fill(); } else { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]); } } };
+    tr(v.cd, v.h, v.sw, 'rgba(156,123,209,.8)', true); if(reveal) tr(truth.cd, truth.h, truth.sw, J.c('--jade'), false);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('보라 = 모형' + (reveal ? ', 초록 점선 = 정답' : ''), ox, 14);
+    const e = rms(v.cd, v.h, v.sw); J.out(box, 'rms', J.fmt(e*100, 2) + ' %', e < 0.006 ? 'good' : e < 0.02 ? 'warn' : 'bad');
+    J.out(box, 'ans', reveal ? 'CD ' + J.fmt(truth.cd, 1) + ' / h ' + J.fmt(truth.h, 0) + ' / ' + J.fmt(truth.sw, 1) + '°' : '숨김'); };
+  J.sim('sim2', v => { V = v; if(!truth) newWafer(); draw(); });
+  const setK = (k, val) => { const e = J.$(`#sim2 [data-k="${k}"]`); e.value = val; };
+  J.$('#b2f').onclick = () => { let b = {cd:V.cd, h:V.h, sw:V.sw}, best = rms(b.cd, b.h, b.sw); // 거친 격자 → 좌표 하강
+    for(let cd = 20; cd <= 80; cd += 5) for(let hh = 40; hh <= 140; hh += 10) for(let sw = 76; sw <= 90; sw += 3.5){ const e = rms(cd, hh, sw); if(e < best){ best = e; b = {cd, h:hh, sw}; } }
+    let st = {cd:2.5, h:5, sw:1.75}; for(let it = 0; it < 60; it++){ let moved = false; for(const k of ['cd', 'h', 'sw']) for(const sg of [-1, 1]){ const c = Object.assign({}, b); c[k] += sg*st[k]; c.cd = J.clamp(c.cd, 20, 80); c.h = J.clamp(c.h, 40, 140); c.sw = J.clamp(c.sw, 75, 90); const e = rms(c.cd, c.h, c.sw); if(e < best){ best = e; b = c; moved = true; } } if(!moved){ st.cd /= 2; st.h /= 2; st.sw /= 2; } }
+    setK('cd', b.cd); setK('h', b.h); setK('sw', b.sw); J.$('#sim2 [data-k="cd"]').dispatchEvent(new Event('input')); };
+  J.$('#b2n').onclick = () => { seed++; newWafer(); draw(); };
+  J.$('#b2v').onclick = () => { reveal = !reveal; draw(); };
+})();
+
+/* 14-3 EWMA */
+(function(){
+  const box = J.$('#sim3');
+  J.sim('sim3', v => { const r = J.rng(21), K = 100, T = 20, b = -0.8; // nm per % 노광
+    const dist = []; for(let k = 0; k < K; k++) dist.push(v.dr*k + (k >= 50 ? v.st : 0));
+    const noise = dist.map(() => v.n*J.gauss(r));
+    const open = dist.map((d, k) => T + d + noise[k]);
+    const ctl = [], us = []; let dh = 0; const meas = [];
+    for(let k = 0; k < K; k++){ const u = (0 - dh)/b; us.push(u); const y = T + dist[k] + noise[k] + b*u; ctl.push(y); meas.push(y);
+      const j = k - v.lag; if(j >= 0){ dh = v.l*(meas[j] - T - b*us[j]) + (1 - v.l)*dh; } }
+    J.plot(J.$('#cv3'), {x:[0, K - 1], y:[14, 28], xlab:'로트 번호', ylab:'CD (nm)', series:[{pts:open.map((y, k) => [k, y]), color:'--ink3', w:1.5}, {pts:ctl.map((y, k) => [k, y]), color:'--red', w:2.5}, {pts:us.map((u, k) => [k, T - b*u]), color:'--indigo', w:1.5, dash:[5, 4]}], bands:[{y0:T - 1.5, y1:T + 1.5, color:'--jade', alpha:.15}], vlines:[{x:50, color:'--gold', label:'계단'}]});
+    const s3 = a => { let s = 0; a.forEach(y => s += (y - T)**2); return 3*Math.sqrt(s/a.length); };
+    let rec = '—'; if(Math.abs(v.st) > 0.2){ for(let k = 50; k < K; k++){ const win = ctl.slice(k, k + 3), m = win.reduce((x, y) => x + y, 0)/win.length; if(Math.abs(m - T) < 0.1*Math.abs(v.st) + v.n*0.6){ rec = (k - 50) + ' 로트'; break; } } if(rec === '—') rec = '회복 못 함'; }
+    J.out(box, 'a', J.fmt(s3(open), 2) + ' nm', s3(open) < 1.5 ? 'good' : 'bad'); J.out(box, 'b', J.fmt(s3(ctl), 2) + ' nm', s3(ctl) < 1.5 ? 'good' : s3(ctl) < 2.5 ? 'warn' : 'bad'); J.out(box, 'rec', rec); });
+})();
+</script>
+</body>
+</html>

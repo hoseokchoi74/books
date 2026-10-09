@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>정렬과 오버레이 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../lith.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="overlay">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 09 <span class="hanja">第九章 · 疊</span></div>
+  <h1>정렬과 오버레이</h1>
+  <p class="lead">칩은 수십 층의 무늬를 차곡차곡 쌓아 만든다. 위층의 비아(구멍)가 아래층 금속선 위에 정확히 떨어져야 전기가 통한다. 두 층 무늬가 어긋난 정도를 <span class="term">오버레이</span>라 하며, 최첨단 공정의 허용치는 2 nm 안팎이다. 300 mm 웨이퍼 크기에 비하면 축구장 위에서 머리카락 굵기의 100분의 1을 맞추는 일이다. 웨이퍼는 열로 늘어나고, 이전 공정의 막 응력으로 휘고, 스캐너 렌즈는 미세하게 일그러진다. 이 장은 오버레이 오차를 수학 모형으로 분해하고, 최소 제곱으로 보정하고, 회절 무늬로 0.1 nm 단위까지 재는 방법을 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>웨이퍼 단위 오버레이를 평행 이동·배율·회전과 비선형 성분으로 분해한다.</li>
+  <li>측정점의 오버레이 벡터에 선형 모형을 최소 제곱으로 맞춰 스캐너 보정값을 구한다.</li>
+  <li>필드 안 오차(렌즈 왜곡, 사다리꼴)를 보고 고차 보정의 효과를 확인한다.</li>
+  <li>회절 기반 오버레이(DBO) 측정 원리와 마크 비대칭이 만드는 측정 오차를 이해한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>웨이퍼 단위 오버레이 모형</h2>
+<p>스캐너는 웨이퍼를 척에 올린 뒤 수십 개의 정렬 마크 위치를 재고, 이전 층 무늬가 놓인 격자(grid)를 계산해 그 위에 새 층을 찍는다. 이전 층 이후 웨이퍼가 0.5 ppm 늘어났다면 반지름 150 mm 끝에서 75 nm가 어긋난다. 그래서 오버레이 오차를 웨이퍼 좌표 (X, Y)의 함수로 모형화한다. 평행 이동(T), 배율(M), 회전(R)으로 이루어진 선형 모형 6개 항이 기본이고, 웨이퍼 휨처럼 비선형인 성분은 고차 다항식이나 측정점별 보정(CPE)으로 잡는다.</p>
+<div class="eq">$$\Delta x = T_x + M_x X - R_x Y + \epsilon_x,\qquad \Delta y = T_y + M_y Y + R_y X + \epsilon_y,\qquad \min_{T,M,R}\ \sum_i \bigl(\Delta_i - \text{모형}_i\bigr)^2$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-1</span><span class="ttl">웨이퍼 오버레이 벡터 지도와 선형 보정</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">평행 이동 T_x <output data-o="tx"></output></span><input type="range" data-k="tx" min="-10" max="10" step="0.5" value="3" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">웨이퍼 배율 <output data-o="m"></output></span><input type="range" data-k="m" min="-0.1" max="0.1" step="0.005" value="0.04" data-d="3" data-u="ppm"></label>
+      <label class="ctrl"><span class="lab">회전 <output data-o="r"></output></span><input type="range" data-k="r" min="-0.1" max="0.1" step="0.005" value="-0.03" data-d="3" data-u="µrad"></label>
+      <label class="ctrl"><span class="lab">웨이퍼 휨 (비선형) <output data-o="b"></output></span><input type="range" data-k="b" min="0" max="6" step="0.2" value="2" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">무작위 잡음 σ <output data-o="n"></output></span><input type="range" data-k="n" min="0" max="3" step="0.1" value="0.8" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">보기</span><select data-k="view"><option value="raw">측정 그대로</option><option value="res" selected>선형 보정 후 잔차</option><option value="res3">3차 보정 후 잔차</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="320"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="320"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">보정 전 |평균| + 3σ (x / y)</span><span class="v" data-r="raw"></span></div>
+      <div class="ro"><span class="k">현재 보기 |평균| + 3σ</span><span class="v" data-r="now"></span></div>
+      <div class="ro"><span class="k">추정한 배율 / 회전</span><span class="v" data-r="fit"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 웨이퍼 위 측정점(필드 중심)의 오버레이 벡터. 화살표 길이는 1 nm = 3 px로 크게 키웠다. 배율은 바깥으로 퍼지는 화살표, 회전은 소용돌이, 휨은 가장자리에서 휘는 무늬로 보인다. 오른쪽: x 방향 오차의 분포(회색 = 측정 그대로, 빨강 = 현재 보기). 선형 보정은 배율·회전을 거의 완벽히 지우지만 휨과 잡음은 남긴다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>필드 안 오차: 렌즈와 스캔</h2>
+<p>한 필드(26 × 33 mm) 안에서도 오차가 생긴다. 투영 렌즈가 가장자리에서 상을 조금 더 밀거나 당기면(<b>왜곡</b>, distortion), 필드 배율·회전이 레티클 가열로 변하면, 그리고 스캔 중 마스크와 웨이퍼 스테이지가 완벽히 동기화되지 못하면 무늬가 어긋난다. 스캐너는 렌즈 소자를 움직이고 스캔 속도·각도를 조절해 필드 배율·회전·사다리꼴 같은 항을 필드마다 보정할 수 있지만, 렌즈의 3차 왜곡처럼 고정된 성분은 같은 렌즈(같은 장비)로 찍는 매칭으로 피한다.</p>
+<div class="eq">$$\Delta x = k_1 + k_3 x - k_5 y + k_7 x^2 + k_9 xy + \dots + D_3\,x(x^2 + y^2),\qquad \Delta y = k_2 + k_4 y + k_6 x + \dots$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-2</span><span class="ttl">필드 안 오차 벡터</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">필드 배율 <output data-o="m"></output></span><input type="range" data-k="m" min="-1" max="1" step="0.05" value="0.4" data-d="2" data-u="ppm"></label>
+      <label class="ctrl"><span class="lab">필드 회전 <output data-o="r"></output></span><input type="range" data-k="r" min="-1" max="1" step="0.05" value="-0.3" data-d="2" data-u="µrad"></label>
+      <label class="ctrl"><span class="lab">사다리꼴 (x 방향) <output data-o="t"></output></span><input type="range" data-k="t" min="-3" max="3" step="0.1" value="1" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">렌즈 3차 왜곡 <output data-o="d"></output></span><input type="range" data-k="d" min="-4" max="4" step="0.1" value="2" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">보정 수준</span><select data-k="c"><option value="0">보정 없음</option><option value="1" selected>선형 (배율·회전)</option><option value="2">고차 (사다리꼴 포함)</option><option value="3">렌즈 왜곡까지 (장비 매칭)</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">필드 안 최대 오차 (보정 전)</span><span class="v" data-r="a"></span></div>
+      <div class="ro"><span class="k">보정 후 최대 오차</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">남은 성분</span><span class="v" data-r="left" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 필드 하나(가로 26 mm × 세로 33 mm, 스캔 방향은 세로)를 7 × 9 점으로 본 오버레이 벡터. 회색 = 보정 전, 빨강 = 보정 후. 사다리꼴은 위쪽이 넓고 아래쪽이 좁게 퍼지는 무늬, 3차 왜곡은 가장자리로 갈수록 급격히 커지는 바깥(또는 안쪽) 방향 무늬다.</p>
+</div>
+
+<figure class="fig">
+<svg viewBox="0 0 860 220" role="img" aria-label="오버레이 측정 마크" id="fig1"></svg>
+<figcaption><b>그림 9-1.</b> 오버레이 측정 마크. 왼쪽: 박스 인 박스(BiB), 아래층 큰 상자 안에 위층 작은 상자를 찍고 현미경 영상으로 중심 차이를 잰다. 가운데: 회절 기반 마크(DBO), 위아래 층에 같은 피치의 격자를 겹치되 의도적으로 +d, −d 만큼 어긋나게 한 두 패드. 오른쪽: 실제 칩 안의 작은 마크(in-die)로, 스크라이브 라인과 칩 안의 차이까지 잡는다.</figcaption>
+</figure>
+
+<h2 id="s3"><span class="n">03</span>회절로 0.1 nm를 읽는 법</h2>
+<p>위아래 층 격자가 겹친 마크에 빛을 비추면 +1차와 −1차 회절의 세기가 같아야 한다. 두 격자가 옆으로 어긋나면 구조가 비대칭이 되어 +1차와 −1차 세기가 달라진다. 그 차이 A는 어긋남에 대해 사인 함수처럼 변한다. 비례 상수 K는 막 두께와 재질에 따라 달라 모르므로, 일부러 +d와 −d만큼 더 어긋나게 만든 두 패드를 재서 K를 소거한다. 다만 식각이나 CMP로 격자 자체가 비대칭이 되면(<b>마크 비대칭</b>) 어긋남이 없어도 신호가 생겨 측정이 틀어진다. 이를 잡으려고 여러 파장으로 재어 비교한다.</p>
+<div class="eq">$$A_{\pm} = K\sin\!\frac{2\pi(OV \pm d)}{p} + \delta,\qquad OV_{est} \approx d\,\frac{A_+ + A_-}{A_+ - A_-}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-3</span><span class="ttl">회절 기반 오버레이(DBO) 측정</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">실제 오버레이 <output data-o="ov"></output></span><input type="range" data-k="ov" min="-20" max="20" step="0.1" value="3.5" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">일부러 준 어긋남 d <output data-o="d"></output></span><input type="range" data-k="d" min="5" max="60" step="1" value="20" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">격자 피치 <output data-o="p"></output></span><input type="range" data-k="p" min="300" max="1000" step="10" value="600" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">마크 비대칭 신호 δ <output data-o="as"></output></span><input type="range" data-k="as" min="-0.1" max="0.1" step="0.005" value="0" data-d="3"></label>
+      <label class="ctrl"><span class="lab">측정 잡음 <output data-o="n"></output></span><input type="range" data-k="n" min="0" max="0.02" step="0.001" value="0.003" data-d="3"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b3r">다시 측정</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">측정값 (선형 근사)</span><span class="v" data-r="est"></span></div>
+      <div class="ro"><span class="k">측정 오차</span><span class="v" data-r="err"></span></div>
+      <div class="ro"><span class="k">추정한 K</span><span class="v" data-r="k"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 두 패드의 단면(아래층 격자 = 회색, 위층 = 보라)과 ±1차 회절(화살표 굵기 = 세기). 오른쪽: 어긋남에 따른 신호 A(보라 곡선)와 두 패드의 측정점(빨강 = +d 패드, 파랑 = −d 패드), 그리고 두 점을 잇는 직선이 0을 지나는 곳(추정값). d가 피치에 비해 크면 사인 곡선의 휨 때문에 선형 근사 오차가 커진다. 마크 비대칭 δ는 곡선 전체를 위로 올려 측정을 속인다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 측정 마크는 칩 사이 좁은 길(스크라이브 라인)에 놓는다. 그런데 마크가 2 nm 맞아도 칩 안의 실제 소자는 3 nm 어긋날 수 있다. 왜일까?</p><p>마크는 실제 소자보다 수십 배 큰 무늬라 렌즈 수차의 영향이 다르고(피치에 따라 다른 위치 이동), 식각·CMP 환경도 칩 안과 다르다. 이 차이를 비측정 오프셋이라 하며, 칩 안 작은 마크(in-die)나 전자빔으로 실제 소자를 직접 재서 보정한다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">웨이퍼가 0.2 ppm 늘어났을 때 중심에서 100 mm 떨어진 점의 오버레이 오차는?</p><ol><li>2 nm</li><li>0.2 nm</li><li>20 nm</li><li>200 nm</li></ol>
+<p class="explain">0.2 × 10⁻⁶ × 100 mm = 2 × 10⁻⁵ mm = 20 nm.</p></div>
+<div class="quiz" data-a="0"><p class="q">선형 6항 보정으로 잘 지워지지 않는 성분은?</p><ol><li>웨이퍼 휨에 의한 비선형 변형</li><li>웨이퍼 회전</li><li>x 방향 평행 이동</li><li>웨이퍼 배율</li></ol>
+<p class="explain">휨은 위치의 고차 함수라 고차 모형이나 점별 보정이 필요하다.</p></div>
+<div class="quiz" data-a="1"><p class="q">DBO에서 +d, −d 두 패드를 쓰는 이유는?</p><ol><li>측정 시간을 줄이려고</li><li>모르는 비례 상수 K를 소거하려고</li><li>마크 비대칭을 없애려고</li><li>파장을 두 개 쓰려고</li></ol>
+<p class="explain">두 신호의 합과 차의 비에서 K가 약분되어 OV만 남는다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 3×3 최소 제곱 해: 특징 함수 목록 */
+function lsq(rows, ys){ const n = rows[0].length, A = Array.from({length:n}, () => new Array(n).fill(0)), b = new Array(n).fill(0);
+  rows.forEach((r, i) => { for(let a = 0; a < n; a++){ b[a] += r[a]*ys[i]; for(let c = 0; c < n; c++) A[a][c] += r[a]*r[c]; } });
+  for(let i = 0; i < n; i++){ let p = i; for(let k = i + 1; k < n; k++) if(Math.abs(A[k][i]) > Math.abs(A[p][i])) p = k; [A[i], A[p]] = [A[p], A[i]]; [b[i], b[p]] = [b[p], b[i]];
+    for(let k = i + 1; k < n; k++){ const f = A[k][i]/(A[i][i] || 1e-12); for(let c = i; c < n; c++) A[k][c] -= f*A[i][c]; b[k] -= f*b[i]; } }
+  const x = new Array(n).fill(0); for(let i = n - 1; i >= 0; i--){ let s = b[i]; for(let c = i + 1; c < n; c++) s -= A[i][c]*x[c]; x[i] = s/(A[i][i] || 1e-12); } return x; }
+const stat = a => { const m = a.reduce((x, y) => x + y, 0)/a.length, s = Math.sqrt(a.reduce((x, y) => x + (y - m)*(y - m), 0)/a.length); return Math.abs(m) + 3*s; };
+
+/* 9-1 */
+(function(){
+  const box = J.$('#sim1'), S = [];
+  for(let j = -5; j <= 5; j++) for(let i = -5; i <= 5; i++){ const X = i*26, Y = j*26; if(Math.hypot(X, Y) < 140) S.push([X, Y]); }
+  J.sim('sim1', v => { const r = J.rng(17);
+    const meas = S.map(([X, Y]) => { const R2 = (X*X + Y*Y)/(150*150), bow = v.b*(R2*R2)*2; // 가장자리에서 급해지는 휨
+      return [v.tx + v.m*1e-6*X*1e6 - v.r*1e-6*Y*1e6 + bow*X/150 + v.n*J.gauss(r), 1.2 + v.m*1e-6*Y*1e6 + v.r*1e-6*X*1e6 + bow*Y/150 + v.n*J.gauss(r)]; }); // X mm → nm: ppm × mm = nm
+    const f1 = ([X, Y]) => [1, X, Y], f3 = ([X, Y]) => [1, X, Y, X*X, X*Y, Y*Y, X*X*X, X*X*Y, X*Y*Y, Y*Y*Y].map((t, k) => k ? t/Math.pow(150, [0, 1, 1, 2, 2, 2, 3, 3, 3, 3][k] - 1) : t);
+    const fit = f => { const rows = S.map(f), cx = lsq(rows, meas.map(m => m[0])), cy = lsq(rows, meas.map(m => m[1])); return {cx, cy, res:S.map((s, i) => { const q = f(s); return [meas[i][0] - q.reduce((a, t, k) => a + t*cx[k], 0), meas[i][1] - q.reduce((a, t, k) => a + t*cy[k], 0)]; })}; };
+    const F1 = fit(f1), F3 = fit(f3), show = v.view === 'raw' ? meas : v.view === 'res' ? F1.res : F3.res;
+    const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const cx = w/2, cy = h/2, sc = Math.min(w, h)*0.45/150;
+    ctx.fillStyle = J.c('--paper2'); ctx.beginPath(); ctx.arc(cx, cy, 150*sc, 0, 7); ctx.fill(); ctx.strokeStyle = J.c('--line'); ctx.stroke();
+    S.forEach(([X, Y], i) => { const x = cx + X*sc, y = cy - Y*sc, [dx, dy] = show[i]; ctx.strokeStyle = J.c(v.view === 'raw' ? '--indigo' : '--red'); ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(x, y); const ex = x + dx*3, ey = y - dy*3; ctx.lineTo(ex, ey); ctx.stroke(); const a = Math.atan2(ey - y, ex - x); ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex - 5*Math.cos(a - .4), ey - 5*Math.sin(a - .4)); ctx.lineTo(ex - 5*Math.cos(a + .4), ey - 5*Math.sin(a + .4)); ctx.closePath(); ctx.fillStyle = ctx.strokeStyle; ctx.fill();
+      ctx.fillStyle = J.c('--ink3'); ctx.fillRect(x - 1, y - 1, 2, 2); });
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('화살표 1 nm = 3 px', 8, 14);
+    const hist = arr => { const b = new Array(40).fill(0); arr.forEach(x => { const k = Math.floor((x + 20)); if(k >= 0 && k < 40) b[k]++; }); const pts = []; b.forEach((n, k) => { pts.push([k - 20, n]); pts.push([k - 19, n]); }); return pts; };
+    J.plot(J.$('#cv1b'), {x:[-20, 20], y:[0, S.length*0.6], xlab:'x 방향 오차 (nm)', ylab:'측정점 수', series:[{pts:hist(meas.map(m => m[0])), color:'--ink3', w:1, fill:.3}, {pts:hist(show.map(m => m[0])), color:'--red', w:2, fill:.25}]});
+    const sx = a => stat(a.map(m => m[0])), sy = a => stat(a.map(m => m[1]));
+    J.out(box, 'raw', J.fmt(sx(meas), 1) + ' / ' + J.fmt(sy(meas), 1) + ' nm'); const nw = Math.max(sx(show), sy(show));
+    J.out(box, 'now', J.fmt(sx(show), 1) + ' / ' + J.fmt(sy(show), 1) + ' nm', nw < 3 ? 'good' : nw < 6 ? 'warn' : 'bad');
+    J.out(box, 'fit', J.fmt((F1.cx[1] + F1.cy[2])/2, 3) + ' ppm / ' + J.fmt((F1.cy[1] - F1.cx[2])/2, 3) + ' µrad'); });
+})();
+
+/* 9-2 필드 안 */
+(function(){
+  const box = J.$('#sim2'), P = []; for(let j = 0; j < 9; j++) for(let i = 0; i < 7; i++) P.push([(i/6 - 0.5)*26, (j/8 - 0.5)*33]);
+  J.sim('sim2', v => { const err = ([x, y], c) => { let dx = 0, dy = 0; const r2 = (x*x + y*y)/(16.5*16.5);
+      if(c < 1){ dx += v.m*x; dy += v.m*y; dx += -v.r*y; dy += v.r*x; }
+      if(c < 2){ dx += v.t*x/13*y/16.5; }
+      if(c < 3){ dx += v.d*x/16.5*r2; dy += v.d*y/16.5*r2; }
+      return [dx, dy]; };
+    const {ctx, w, h} = J.fit(J.$('#cv2')); ctx.clearRect(0,0,w,h); const sc = Math.min((w - 40)/26, (h - 40)/33), cx = w/2, cy = h/2;
+    ctx.strokeStyle = J.c('--line'); ctx.strokeRect(cx - 13*sc, cy - 16.5*sc, 26*sc, 33*sc);
+    let a = 0, b = 0; P.forEach(pt => { a = Math.max(a, Math.hypot(...err(pt, 0))); }); const k6 = Math.min(6, 2.2*sc/Math.max(a, 1e-6)); const arrow = (x, y, dx, dy, col) => { ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx*k6, y - dy*k6); ctx.stroke(); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x + dx*k6, y - dy*k6, 2.2, 0, 7); ctx.fill(); };
+    P.forEach(pt => { const x = cx + pt[0]*sc, y = cy - pt[1]*sc, e0 = err(pt, 0), e1 = err(pt, +v.c); a = Math.max(a, Math.hypot(...e0)); b = Math.max(b, Math.hypot(...e1)); arrow(x, y, e0[0], e0[1], 'rgba(120,120,120,.6)'); arrow(x, y, e1[0], e1[1], J.c('--red')); });
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('↕ 스캔 방향 · 화살표 1 nm = ' + J.fmt(k6, 1) + ' px', 8, 14);
+    const left = [+v.c < 1 ? '배율·회전' : '', +v.c < 2 ? '사다리꼴' : '', +v.c < 3 ? '렌즈 3차' : ''].filter(Boolean).join(', ') || '없음';
+    J.out(box, 'a', J.fmt(a, 1) + ' nm'); J.out(box, 'b', J.fmt(b, 1) + ' nm', b < 1 ? 'good' : b < 3 ? 'warn' : 'bad'); J.out(box, 'left', left); });
+})();
+
+/* 그림 9-1 */
+(function(){
+  const s = J.$('#fig1'); if(!s) return;
+  J.live(() => { s.innerHTML = ''; const g = J.c('--ink3'), pl = J.c('--plum');
+    J.svg('rect', {x:60, y:40, width:140, height:140, fill:'none', stroke:g, 'stroke-width':14}, s); J.svg('rect', {x:105, y:83, width:50, height:50, fill:pl, opacity:.8}, s);
+    J.svg('line', {x1:130, y1:110, x2:136, y2:106, stroke:J.c('--red'), 'stroke-width':2}, s);
+    const t1 = J.svg('text', {x:130, y:205, 'text-anchor':'middle', 'font-size':13, fill:J.c('--ink')}, s); t1.textContent = '박스 인 박스 (영상)';
+    [[330, '+d'], [470, '−d']].forEach(([x0, l], k) => { for(let i = 0; i < 6; i++){ J.svg('rect', {x:x0 + i*20, y:110, width:10, height:30, fill:g}, s); J.svg('rect', {x:x0 + i*20 + (k ? -4 : 4), y:75, width:10, height:30, fill:pl, opacity:.85}, s); }
+      const t = J.svg('text', {x:x0 + 55, y:165, 'text-anchor':'middle', 'font-size':12.5, fill:J.c('--ink2')}, s); t.textContent = '패드 ' + l; });
+    const t2 = J.svg('text', {x:460, y:205, 'text-anchor':'middle', 'font-size':13, fill:J.c('--ink')}, s); t2.textContent = '회절 기반 (DBO)';
+    for(let i = 0; i < 4; i++) for(let j = 0; j < 4; j++) J.svg('rect', {x:690 + i*22, y:70 + j*22, width:14, height:14, fill:(i + j) % 2 ? pl : g, opacity:.85}, s);
+    const t3 = J.svg('text', {x:722, y:205, 'text-anchor':'middle', 'font-size':13, fill:J.c('--ink')}, s); t3.textContent = '칩 안 작은 마크 (~5 µm)'; });
+})();
+
+/* 9-3 DBO */
+(function(){
+  const box = J.$('#sim3'); let seed = 5;
+  J.sim('sim3', v => run(v));
+  function run(v){ const r = J.rng(seed), K = 0.3, A = x => K*Math.sin(2*Math.PI*x/v.p) + v.as;
+    const Ap = A(v.ov + v.d) + v.n*J.gauss(r), Am = A(v.ov - v.d) + v.n*J.gauss(r), est = v.d*(Ap + Am)/(Ap - Am), Kest = (Ap - Am)/(2*Math.sin(2*Math.PI*v.d/v.p));
+    const pts = []; for(let x = -v.p/2; x <= v.p/2; x += v.p/200) pts.push([x, A(x)]);
+    const xr = Math.max(80, 2*v.d + 30);
+    J.plot(J.$('#cv3b'), {x:[-xr, xr], y:[-0.35, 0.35], xlab:'총 어긋남 (nm)', ylab:'신호 A = I₊₁ − I₋₁', series:[{pts, color:'--plum', w:3}, {pts:[[v.ov - v.d, Am], [v.ov + v.d, Ap]], color:'--ink3', w:1.5, dash:[5, 4]}], points:[{x:v.ov + v.d, y:Ap, color:'--red', r:6, label:'+d'}, {x:v.ov - v.d, y:Am, color:'--indigo', r:6, label:'−d'}, {x:est, y:0, color:'--jade', r:5, label:'추정'}], vlines:[{x:v.ov, color:'--red', label:'실제'}], hlines:[{y:0, color:'--ink3'}]});
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h);
+    [[1, Ap], [-1, Am]].forEach(([sg, a], k) => { const x0 = 20 + k*(w/2), pw = w/2 - 40, per = pw/5, sh = (v.ov + sg*v.d)/v.p*per;
+      for(let i = 0; i < 5; i++){ ctx.fillStyle = '#8f96a3'; ctx.fillRect(x0 + i*per, h*0.62, per/2, 30); ctx.fillStyle = 'rgba(140,90,210,.85)'; ctx.fillRect(x0 + i*per + sh, h*0.62 - 34, per/2, 30); }
+      const I0 = 0.5, ip = I0 + a, im = I0 - a; ctx.strokeStyle = J.c('--gold'); [[-1, im], [1, ip]].forEach(([s2, I]) => { ctx.lineWidth = Math.max(1, I*14); ctx.beginPath(); ctx.moveTo(x0 + pw/2, h*0.62 - 40); ctx.lineTo(x0 + pw/2 + s2*pw*0.35, 26); ctx.stroke(); });
+      ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText((sg > 0 ? '+d' : '−d') + ' 패드', x0 + pw/2, h - 14); ctx.font = '11px "JetBrains Mono"'; ctx.fillText('−1차', x0 + pw*0.15, 18); ctx.fillText('+1차', x0 + pw*0.85, 18); });
+    if(v.as){ ctx.fillStyle = J.c('--red'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('비대칭 마크', 8, h*0.62 + 46); }
+    const err = est - v.ov;
+    J.out(box, 'est', J.fmt(est, 2) + ' nm'); J.out(box, 'err', (err >= 0 ? '+' : '') + J.fmt(err, 2) + ' nm', Math.abs(err) < 0.3 ? 'good' : Math.abs(err) < 1 ? 'warn' : 'bad'); J.out(box, 'k', J.fmt(Kest, 3) + ' (실제 0.3)'); }
+  J.$('#b3r').onclick = () => { seed++; J.redrawAll(); };
+})();
+</script>
+</body>
+</html>

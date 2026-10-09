@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>포토마스크 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../lith.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="mask">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 05 <span class="hanja">第五章 · 版</span></div>
+  <h1>포토마스크</h1>
+  <p class="lead">마스크(레티클)는 회로 무늬를 4배로 키워 6인치 석영판 위에 그린 원판이다. 한 장에 수억 원, 최첨단 로직 한 제품에 80장 가까이 필요하다. 처음에는 크롬으로 빛을 가리기만 하는 <b>바이너리 마스크</b>였지만, 해상도 한계에 다가가면서 빛의 <b>위상</b>까지 조절하는 <span class="term">위상 반전 마스크</span>(PSM)가 등장했다. 이 장에서는 마스크 종류에 따라 상이 어떻게 달라지는지 계산하고, 마스크 오차가 웨이퍼에서 증폭되는 <span class="term">MEEF</span>, 그리고 먼지로부터 마스크를 지키는 <span class="term">펠리클</span>의 원리를 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>바이너리·감쇠형 PSM·교번형 PSM의 구조와 회절 차수(특히 0차)의 차이를 안다.</li>
+  <li>교번형 PSM이 0차를 지워 해상도를 두 배 가까이 높이는 원리를 계산으로 확인한다.</li>
+  <li>MEEF(마스크 오차 증폭 계수)를 피치별로 계산하고 마스크 CD 허용 오차를 어림한다.</li>
+  <li>펠리클 위 먼지가 초점 밖에서 흐려져 인쇄되지 않는 이유를 기하학으로 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>바이너리, 감쇠형, 교번형</h2>
+<p><b>바이너리 마스크</b>는 석영(투명) 위에 크롬(불투명)을 패턴한 것이다. <b>감쇠형 PSM</b>(attenuated PSM)은 크롬 대신 몰리브덴 실리사이드(MoSi)를 써서 빛을 6 % 정도만 통과시키되 위상을 180° 뒤집는다. 어두운 영역에서 새어 나온 반대 위상의 빛이 가장자리에서 밝은 빛을 상쇄해 경계가 날카로워진다. <b>교번형 PSM</b>(alternating PSM)은 이웃한 투명 틈 중 하나를 석영 식각으로 깊게 파서 위상을 180° 바꾼다. 이웃 틈의 빛이 서로 반대 위상이 되면 0차 회절이 사라지고 ±1차 두 빛만 남아 수직 조명으로도 피치가 절반인 무늬까지 맺힌다.</p>
+<div class="eq">$$\text{바이너리: } c_0 = \frac{w}{p},\qquad \text{감쇠형: } t(x) \in \{1,\ -\sqrt{0.06}\},\qquad \text{교번형: } t(x) \in \{+1,\ -1,\ 0\} \Rightarrow c_0 = 0$$<div class="note">위상을 180° 바꾸는 석영 식각 깊이 = λ / (2(n − 1)) ≈ 193 / (2 × 0.56) ≈ 172 nm.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-1</span><span class="ttl">마스크 종류별 상 비교</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">마스크 종류</span><select data-k="t"><option value="bin">바이너리 (크롬)</option><option value="att">감쇠형 PSM (6 %, 180°)</option><option value="alt" selected>교번형 PSM (0°/180°)</option></select></label>
+      <label class="ctrl"><span class="lab">피치 (웨이퍼 기준) <output data-o="p"></output></span><input type="range" data-k="p" min="60" max="300" step="2" value="110" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">부분 결맞음 σ <output data-o="s"></output></span><input type="range" data-k="s" min="0.1" max="0.8" step="0.05" value="0.3" data-d="2"></label>
+      <label class="ctrl"><span class="lab">초점 이탈 <output data-o="z"></output></span><input type="range" data-k="z" min="0" max="150" step="10" value="0" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">0차 진폭 |c₀|</span><span class="v" data-r="c0"></span></div>
+      <div class="ro"><span class="k">대비</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">NILS</span><span class="v" data-r="nils"></span></div>
+      <div class="ro"><span class="k">k₁ (ArF 액침 NA 1.35)</span><span class="v" data-r="k1"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽 위: 마스크 단면(석영 = 하늘색, 크롬 = 검정, MoSi = 갈색, 파인 홈 = 위상 180°). 왼쪽 아래: 마스크를 지난 빛의 진폭(위 = +, 아래 = −). 오른쪽: 웨이퍼 위 세기. 교번형은 피치 75 nm 근처까지 대비가 남지만, 바이너리는 피치 110 nm 근처에서 이미 상이 사라진다(σ 0.3). 교번형은 σ가 작을수록(결맞을수록) 효과가 크다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 교번형 PSM이 그렇게 좋다면 왜 모든 층에 쓰지 않을까?</p><p>위상 충돌 때문이다. 서로 이웃한 틈은 반드시 반대 위상이어야 하는데, 세 틈이 삼각형으로 모이거나 선이 끝나는 곳에서는 위상을 일관되게 정할 수 없다(홀수 고리). 또 0°와 180° 영역이 만나는 경계에는 원치 않는 어두운 선이 찍혀 두 번째 마스크로 지워야 했다. 이 "색칠 문제"는 11장 다중 패터닝에서 다시 만난다.</p></div>
+
+<h2 id="s2"><span class="n">02</span>MEEF: 마스크 오차는 증폭된다</h2>
+<p>마스크 무늬는 4배로 그려지므로 마스크의 4 nm 오차는 웨이퍼에서 1 nm이어야 한다. 해상도에 여유가 있을 때는 그렇다. 하지만 k₁이 작아지면 마스크 선폭의 작은 변화가 회절 차수의 세기를 크게 바꿔 웨이퍼 선폭이 몇 배나 더 변한다. 이 비율을 <span class="term">MEEF</span>(mask error enhancement factor)라 한다. MEEF가 4이면 마스크의 4 nm 오차가 웨이퍼에서 4 nm가 된다. 그만큼 마스크를 더 정밀하게 만들어야 하므로 마스크 값이 치솟는다.</p>
+<div class="eq">$$MEEF = \frac{\partial\,CD_{wafer}}{\partial\,(CD_{mask}/M)},\qquad M = 4$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-2</span><span class="ttl">MEEF 측정기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">피치 <output data-o="p"></output></span><input type="range" data-k="p" min="80" max="300" step="2" value="96" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">조명</span><select data-k="src"><option value="conv">일반 σ 0.7</option><option value="ann" selected>환형 0.6/0.9</option><option value="dip">다이폴 0.8</option></select></label>
+      <label class="ctrl"><span class="lab">마스크 CD 오차 (마스크 기준) <output data-o="e"></output></span><input type="range" data-k="e" min="-8" max="8" step="0.5" value="4" data-d="1" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">MEEF</span><span class="v" data-r="meef"></span></div>
+      <div class="ro"><span class="k">웨이퍼 CD 변화</span><span class="v" data-r="dcd"></span></div>
+      <div class="ro"><span class="k">웨이퍼 ±1 nm를 위한 마스크 허용 오차</span><span class="v" data-r="tol"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 마스크 CD(웨이퍼 크기로 환산)를 바꿀 때 인쇄 CD(빨강). 회색 점선은 기울기 1(MEEF = 1). 오른쪽: 피치별 MEEF(현재 조명). 해상 한계에 가까운 작은 피치에서 MEEF가 급격히 커진다. 노광량은 각 피치에서 공칭 마스크로 CD = 반피치가 되도록 맞췄다.</p>
+</div>
+
+<figure class="fig">
+<svg viewBox="0 0 860 230" role="img" aria-label="마스크 제작 흐름" id="fig1"></svg>
+<figcaption><b>그림 5-1.</b> 마스크 제작. 석영 블랭크 위의 크롬(또는 MoSi)에 전자빔으로 무늬를 그리고(수 시간 ~ 수십 시간), 식각한 뒤 결함 검사와 수리(집속 이온빔·전자빔)를 거쳐 펠리클을 붙인다. 최첨단 마스크는 수천억 개의 도형을 담아, 여러 개의 빔을 동시에 쏘는 멀티빔 묘화기로 그린다.</figcaption>
+</figure>
+
+<h2 id="s3"><span class="n">03</span>펠리클: 초점 밖으로 먼지를 밀어내기</h2>
+<p>마스크 위의 먼지 하나는 웨이퍼 수천 장의 모든 칩에 똑같은 결함을 찍는다. 그래서 마스크 무늬면 위 6 mm 높이에 얇은 투명막(<span class="term">펠리클</span>)을 액자처럼 씌운다. 먼지는 펠리클 위에 떨어지고, 펠리클은 마스크 초점면에서 멀리 떨어져 있으므로 먼지의 그림자는 커다란 원으로 흐려져 웨이퍼에서 거의 보이지 않는다. EUV에서는 모든 물질이 빛을 흡수하므로 펠리클을 수십 nm 두께의 탄소 나노튜브나 폴리실리콘 막으로 만들어야 하고, 빛이 두 번 지나며 10~20 %를 잃는다.</p>
+<div class="eq">$$D_{blur} \approx 2\,g\,\tan\!\left(\sin^{-1}\frac{\sigma\,NA}{M}\right),\qquad \frac{\Delta I}{I} \approx \left(\frac{d_{particle}}{D_{blur}}\right)^2$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-3</span><span class="ttl">펠리클 위 먼지는 찍힐까?</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">먼지 지름 <output data-o="d"></output></span><input type="range" data-k="d" min="1" max="200" step="1" value="30" data-d="0" data-u="µm"></label>
+      <label class="ctrl"><span class="lab">펠리클 높이 g <output data-o="g"></output></span><input type="range" data-k="g" min="0" max="8" step="0.1" value="6" data-d="1" data-u="mm"></label>
+      <label class="ctrl"><span class="lab">조명 σ × NA <output data-o="sn"></output></span><input type="range" data-k="sn" min="0.1" max="1.3" step="0.05" value="1.2" data-d="2"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">마스크 면에서 흐린 그림자 지름</span><span class="v" data-r="blur"></span></div>
+      <div class="ro"><span class="k">세기 감소</span><span class="v" data-r="di"></span></div>
+      <div class="ro"><span class="k">웨이퍼 CD 영향 (2 %/nm 가정)</span><span class="v" data-r="cd"></span></div>
+      <div class="ro"><span class="k">판정</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 마스크(아래)와 펠리클(위) 단면. 노란 원뿔은 마스크 한 점을 비추는 조명 각도의 범위로, 펠리클 높이에서 이 원뿔의 단면이 먼지가 가릴 수 있는 면적이다. 오른쪽: 웨이퍼 위 세기(마스크 한 점 기준)의 감소. 펠리클 높이를 0으로 내리면(펠리클 없음) 먼지가 그대로 찍힌다.</p>
+</div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">교번형 위상 반전 마스크가 해상도를 높이는 핵심 원리는?</p><ol><li>빛을 6 %만 통과시킨다</li><li>마스크를 8배로 그린다</li><li>이웃 틈의 위상을 반대로 해 0차 회절을 없애고 ±1차만으로 상을 만든다</li><li>EUV 빛을 반사한다</li></ol>
+<p class="explain">0차가 사라지면 ±1차 사이의 각만 맞으면 되므로 수직 조명으로도 피치 λ/(2NA)까지 맺힌다.</p></div>
+<div class="quiz" data-a="1"><p class="q">MEEF = 3인 층에서 웨이퍼 CD 오차를 ±1 nm 이내로 하려면 마스크(4×) CD 오차는?</p><ol><li>±0.33 nm</li><li>±1.33 nm</li><li>±3 nm</li><li>±12 nm</li></ol>
+<p class="explain">웨이퍼 오차 = MEEF × (마스크 오차/4) → 마스크 오차 = 4/3 ≈ 1.33 nm.</p></div>
+<div class="quiz" data-a="0"><p class="q">펠리클 위 먼지가 웨이퍼에 찍히지 않는 이유는?</p><ol><li>펠리클이 마스크 초점면에서 떨어져 있어 먼지 그림자가 크게 흐려지기 때문</li><li>먼지가 레이저에 타 버리기 때문</li><li>펠리클이 먼지를 정전기로 밀어내기 때문</li><li>렌즈가 먼지를 걸러 내기 때문</li></ol>
+<p class="explain">수 mm 떨어진 먼지는 지름 수 mm의 흐린 원이 되어 세기를 백만분의 몇 정도만 줄인다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const LAM = 193, NA = 1.35, NIM = 1.44;
+/* 마스크 모델: 계산 주기 P와 구간 */
+function maskModel(t, p){
+  const du = 0.5;
+  if(t === 'bin') return {P:p, coef:L.coefSeg([[-du/2, du/2, 1, 0]]), segs:[[-0.5, -du/2, 0], [-du/2, du/2, 1], [du/2, 0.5, 0]]};
+  if(t === 'att'){ const a = -Math.sqrt(0.06); return {P:p, coef:L.coefSeg([[-du/2, du/2, 1, 0]], [a, 0]), segs:[[-0.5, -du/2, a], [-du/2, du/2, 1], [du/2, 0.5, a]]}; }
+  const c = du/4; // 두 배 주기 안에서 틈 폭 비율
+  return {P:2*p, coef:L.coefSeg([[-c, c, 1, 0], [0.5 - c, 0.5, -1, 0], [-0.5, -0.5 + c, -1, 0]]), segs:[[-0.5, -0.5 + c, -1], [-0.5 + c, -c, 0], [-c, c, 1], [c, 0.5 - c, 0], [0.5 - c, 0.5, -1]]};
+}
+
+/* 5-1 */
+(function(){
+  const box = J.$('#sim1');
+  J.sim('sim1', v => { const p = v.p, M = maskModel(v.t, p), src = L.source('conv', v.s), N = v.t === 'alt' ? 192 : 96;
+    const I = L.image({p:M.P, lam:LAM, na:NA, n:NIM, src, coef:M.coef, N, z:v.z});
+    // 단면 그림
+    const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h);
+    const X0 = 20, X1 = w - 20, top = 30, th = 50, base = top + th, span = 2*p;
+    const Xf = x => X0 + (x + p/2)/span*(X1 - X0);
+    ctx.fillStyle = '#cfe6f7'; ctx.fillRect(X0, top, X1 - X0, th);
+    const segAt = x => { const P = M.P; let f = ((x/P + 0.5) % 1 + 1) % 1 - 0.5; const s = M.segs.find(([a, b]) => f >= a && f <= b); return s ? s[2] : 0; };
+    for(let px = X0; px < X1; px++){ const x = (px - X0)/(X1 - X0)*span - p/2, t = segAt(x);
+      if(t === 0){ ctx.fillStyle = '#222'; ctx.fillRect(px, top - 8, 1.2, 8); }
+      else if(t < 0 && t > -0.5){ ctx.fillStyle = '#8a5a2b'; ctx.fillRect(px, top - 8, 1.2, 8); }
+      else if(t === -1){ ctx.fillStyle = J.c('--paper'); ctx.fillRect(px, top, 1.2, 16); } }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('석영 (빛은 아래에서 위로 지남 ↑)', X0, top + th + 14);
+    const ay = h*0.68, as = h*0.2; ctx.strokeStyle = J.c('--ink3'); ctx.beginPath(); ctx.moveTo(X0, ay); ctx.lineTo(X1, ay); ctx.stroke();
+    ctx.strokeStyle = J.c('--indigo'); ctx.lineWidth = 2.5; ctx.beginPath(); for(let px = X0; px < X1; px++){ const x = (px - X0)/(X1 - X0)*span - p/2, y = ay - segAt(x)*as; px === X0 ? ctx.moveTo(px, y) : ctx.lineTo(px, y); } ctx.stroke();
+    ctx.fillStyle = J.c('--ink2'); ctx.fillText('투과 진폭 (+1 / 0 / −)', X0, ay - as - 8);
+    // 상
+    const pts = []; for(let i = 0; i < N; i++){ const x = (i - N/2)/N*M.P; pts.push([x, I[i]]); } const all = pts.concat(pts.map(([x, y]) => [x + M.P, y])).filter(([x]) => x >= -p/2 && x <= 1.5*p).sort((a, b) => a[0] - b[0]);
+    let mx = 0.3; I.forEach(y => mx = Math.max(mx, y));
+    J.plot(J.$('#cv1b'), {x:[-p/2, 1.5*p], y:[0, mx*1.15], xlab:'위치 (nm)', ylab:'세기', series:[{pts:all, color:'--red', w:3}]});
+    const c0 = M.coef(0), c = L.contrast(I); let nl = 0; if(c > 0.03){ const Ic = v.t === 'alt' ? I : I; const pp = M.P, tgt = p/2; const th0 = L.thFor(Ic, pp, tgt); nl = L.nils(Ic, pp, th0); }
+    J.out(box, 'c0', J.fmt(Math.hypot(c0[0], c0[1]), 3)); J.out(box, 'c', J.fmt(c*100, 0) + ' %', c > 0.5 ? 'good' : c > 0.25 ? 'warn' : 'bad');
+    J.out(box, 'nils', J.fmt(nl, 2), nl > 2 ? 'good' : nl > 1.2 ? 'warn' : 'bad'); J.out(box, 'k1', J.fmt(p/2*NA/LAM, 3)); });
+})();
+
+/* 5-2 MEEF */
+(function(){
+  const box = J.$('#sim2'), SR = {conv:() => L.source('conv', 0.7), ann:() => L.source('ann', 0.9, 0.6), dip:() => L.source('dip', 0.8, 0, 0.15, 0.05)};
+  const cdFor = (p, src, wm, th) => L.cd(L.image({p, lam:LAM, na:NA, n:NIM, src, coef:L.coefLS(wm/p), N:128}), p, th);
+  const meefAt = (p, src) => { const I0 = L.image({p, lam:LAM, na:NA, n:NIM, src, coef:L.coefLS(0.5), N:128}); if(L.contrast(I0) < 0.03) return NaN; const th = L.thFor(I0, p, p/2), d = 1; return (cdFor(p, src, p/2 + d, th) - cdFor(p, src, p/2 - d, th))/(2*d); };
+  const cache = {};
+  J.sim('sim2', v => { const src = SR[v.src](), p = v.p, I0 = L.image({p, lam:LAM, na:NA, n:NIM, src, coef:L.coefLS(0.5), N:128}), ok = L.contrast(I0) > 0.03;
+    const th = ok ? L.thFor(I0, p, p/2) : 1, pts = [], one = [];
+    for(let e = -3; e <= 3.001; e += 0.25){ const wm = p/2 + e; pts.push([e, ok ? cdFor(p, src, wm, th) - p/2 : 0]); one.push([e, e]); }
+    const dw = v.e/4, dcd = ok ? cdFor(p, src, p/2 + dw, th) - p/2 : NaN;
+    J.plot(J.$('#cv2a'), {x:[-3, 3], y:[-12, 12], xlab:'마스크 CD 오차 ÷ 4 (nm)', ylab:'웨이퍼 CD 변화 (nm)', series:[{pts:one, color:'--ink3', w:1.5, dash:[5, 4]}, {pts, color:'--red', w:3}], points:ok ? [{x:dw, y:dcd, color:'--red', r:6}] : []});
+    if(!cache[v.src]){ const c = []; for(let q = 80; q <= 300; q += 4){ const m = meefAt(q, src); if(isFinite(m) && m < 12) c.push([q, m]); } cache[v.src] = c; }
+    const m = ok ? meefAt(p, src) : NaN;
+    J.plot(J.$('#cv2b'), {x:[80, 300], y:[0, 8], xlab:'피치 (nm)', ylab:'MEEF', series:[{pts:cache[v.src], color:'--plum', w:3}], hlines:[{y:1, color:'--jade', label:'MEEF 1'}], points:isFinite(m) ? [{x:p, y:Math.min(m, 8), color:'--red', r:6}] : []});
+    J.out(box, 'meef', isFinite(m) ? J.fmt(m, 2) : '상 없음', m < 2 ? 'good' : m < 4 ? 'warn' : 'bad');
+    J.out(box, 'dcd', isFinite(dcd) ? (dcd >= 0 ? '+' : '') + J.fmt(dcd, 2) + ' nm' : '—');
+    J.out(box, 'tol', isFinite(m) ? '±' + J.fmt(4/m, 2) + ' nm' : '—'); });
+})();
+
+/* 그림 5-1 */
+(function(){
+  const s = J.$('#fig1'); if(!s) return;
+  J.live(() => { s.innerHTML = ''; const steps = [['블랭크', '석영 + 크롬\n+ 전자빔 레지스트'], ['전자빔 묘화', '멀티빔 수십만 개\n10~20시간'], ['현상·식각', '크롬 건식 식각'], ['결함 검사', '설계 데이터와 비교\n(die-to-database)'], ['수리', '이온빔·전자빔으로\n붙이고 깎기'], ['펠리클 장착', '6 mm 위 투명막']];
+    steps.forEach(([a, b], i) => { const x = 14 + i*141; J.svg('rect', {x, y:40, width:122, height:120, rx:8, fill:J.c(i === 1 ? '--plum-soft' : '--card'), stroke:J.c(i === 1 ? '--plum' : '--line')}, s);
+      const t = J.svg('text', {x:x + 61, y:66, 'text-anchor':'middle', 'font-size':14, 'font-weight':700, fill:J.c('--ink')}, s); t.textContent = a;
+      b.split('\n').forEach((l, k) => { const e = J.svg('text', {x:x + 61, y:92 + k*17, 'text-anchor':'middle', 'font-size':12, fill:J.c('--ink2')}, s); e.textContent = l; });
+      if(i < steps.length - 1){ J.svg('path', {d:`M${x + 124},100 l14,0 m-5,-5 l5,5 l-5,5`, stroke:J.c('--ink3'), fill:'none', 'stroke-width':2}, s); } });
+    const t = J.svg('text', {x:430, y:200, 'text-anchor':'middle', 'font-size':12.5, fill:J.c('--ink3')}, s); t.textContent = '6인치(152 mm) 석영판, 두께 6.35 mm · 무늬 영역 104 × 132 mm (웨이퍼에서 26 × 33 mm)'; });
+})();
+
+/* 5-3 펠리클 */
+(function(){
+  const box = J.$('#sim3');
+  J.sim('sim3', v => { const sinm = v.sn/4, D = 2*v.g*1000*Math.tan(Math.asin(sinm)), dI = v.g < 0.05 ? 1 : Math.min(1, Math.pow(v.d/Math.max(D, 1e-6), 2));
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h);
+    const yM = h - 50, pxmm = (yM - 40)/8, yP = yM - v.g*pxmm, cx = w/2, half = Math.tan(Math.asin(sinm))*v.g*pxmm;
+    ctx.fillStyle = '#cfe6f7'; ctx.fillRect(20, yM, w - 40, 30); ctx.fillStyle = '#222'; for(let x = 20; x < w - 20; x += 14) ctx.fillRect(x, yM - 4, 7, 4);
+    ctx.fillStyle = 'rgba(255,210,60,.45)'; ctx.beginPath(); ctx.moveTo(cx, yM - 4); ctx.lineTo(cx - Math.max(half, 1), yP); ctx.lineTo(cx + Math.max(half, 1), yP); ctx.closePath(); ctx.fill();
+    if(v.g > 0.05){ ctx.strokeStyle = J.c('--jade'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(20, yP); ctx.lineTo(w - 20, yP); ctx.stroke(); ctx.fillStyle = '#888'; ctx.fillRect(20, yP, 8, yM - yP); ctx.fillRect(w - 28, yP, 8, yM - yP); }
+    const pr = Math.max(2, v.d/1000*pxmm*20); ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(cx + half*0.3, yP - pr, pr, 0, 7); ctx.fill();
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('마스크 무늬면', 24, yM + 20); if(v.g > 0.05) ctx.fillText('펠리클 (g = ' + J.fmt(v.g, 1) + ' mm)', 34, yP - 6);
+    ctx.fillText('먼지 (그림은 20배 확대)', cx + half*0.3 + pr + 6, yP - pr);
+    const pts = []; const Rw = Math.max(D/4/1000, v.d/4/1000); for(let x = -3; x <= 3; x += 0.01){ const r = Math.abs(x); pts.push([x, 1 - (v.g < 0.05 ? (r < v.d/4/1000*5 ? 1 : 0) : (r < D/4/1000 ? dI : 0))]); }
+    J.plot(J.$('#cv3b'), {x:[-3, 3], y:[0, 1.1], xlab:'웨이퍼 위 위치 (mm)', ylab:'상대 세기', series:[{pts, color:'--red', w:3}]});
+    const dcd = dI*100/2;
+    J.out(box, 'blur', v.g < 0.05 ? '초점면 (흐려지지 않음)' : J.fmt(D/1000, 2) + ' mm'); J.out(box, 'di', J.sci(dI*100, 2) + ' %');
+    J.out(box, 'cd', J.sci(dcd, 2) + ' nm'); J.out(box, 'ok', dcd < 0.1 ? '찍히지 않음' : dcd < 1 ? '주의' : '결함으로 찍힘', dcd < 0.1 ? 'good' : dcd < 1 ? 'warn' : 'bad'); });
+})();
+</script>
+</body>
+</html>

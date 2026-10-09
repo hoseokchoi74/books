@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>노광 공정 한눈에 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="overview">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 01 <span class="hanja">第一章 · 刻</span></div>
+  <h1>노광 공정 한눈에</h1>
+  <p class="lead">포토리소그래피는 빛으로 웨이퍼 위에 회로 무늬를 "인쇄"하는 공정이다. 웨이퍼에 빛에 반응하는 막(<span class="term">감광액</span>, photoresist)을 바르고, 회로가 그려진 원판(<span class="term">마스크</span>)을 통과한 빛을 렌즈로 4배 축소해 비춘 뒤, 빛 받은 부분만 녹여 낸다. 최첨단 칩은 이 과정을 60~100번 되풀이하며, 노광 장비 한 대 값이 수천억 원에 이른다. 이 장은 책 전체의 지도다: 트랙과 스캐너가 나누어 맡는 단계들, 스핀 코팅, 그리고 장비 한 대가 한 시간에 몇 장을 찍느냐(처리량)가 원가를 정하는 방식을 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>도포 → 베이크 → 노광 → PEB → 현상 → 식각 → 제거로 이어지는 패터닝 흐름을 단면으로 따라간다.</li>
+  <li>스핀 코팅에서 회전 속도와 점도가 감광액 두께를 정하는 관계를 계산한다.</li>
+  <li>스캐너 처리량(WPH)이 노광량·광원 출력·스테이지 속도에 따라 어떻게 제한되는지 본다.</li>
+  <li>노광 원가가 칩 원가에서 차지하는 비중을 어림한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>트랙과 스캐너: 한 층을 새기는 열 단계</h2>
+<p>노광 공정은 두 장비가 한 몸처럼 붙어 일한다. <span class="term">트랙</span>(코터·디벨로퍼)이 감광액을 바르고 굽고 현상하며, 그 사이에 <span class="term">스캐너</span>(노광기)가 빛을 쏜다. 웨이퍼는 트랙에서 스캐너로, 다시 트랙으로 로봇 팔에 실려 1~2분 만에 오간다. 감광액 무늬가 완성되면 식각기로 가서 그 아래 막에 무늬를 옮기고, 감광액은 산소 플라스마로 태워 없앤다(애싱).</p>
+
+<figure class="fig">
+<svg viewBox="0 0 860 210" role="img" aria-label="트랙과 스캐너 구성" id="fig1"></svg>
+<figcaption><b>그림 1-1.</b> 리소 셀(litho cell)의 구성. 트랙의 각 모듈(빨강)과 스캐너(남색)가 하나의 라인처럼 연결된다. 웨이퍼는 화살표 순서로 돌고, 한 장이 셀을 빠져나오는 데 약 2분, 셀 전체는 시간당 200~300장을 처리한다.</figcaption>
+</figure>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-1</span><span class="ttl">한 층 패터닝 단계별 단면</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">감광액 종류</span><select data-k="tone"><option value="pos" selected>양성 (빛 받은 곳이 녹음)</option><option value="neg">음성 (빛 받은 곳이 남음)</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b1p">← 이전</button><button class="sbtn pri" id="b1n">다음 단계 →</button><button class="sbtn" id="b1a">자동 재생</button><span class="hint" id="b1s"></span></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">단계</span><span class="v" data-r="st"></span></div>
+      <div class="ro"><span class="k">장비</span><span class="v" data-r="tool" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">조건</span><span class="v" data-r="cond" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">누적 시간</span><span class="v" data-r="t"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 회색: 실리콘, 하늘색: 무늬를 새길 막(산화막), 검정: 반사 방지막(BARC), 보라: 감광액. 노광 단계의 노란 점은 빛이 만든 산(H⁺)이고, PEB(노광 후 굽기)에서 산이 퍼지며 감광액을 녹는 성질로 바꾼다. 음성 감광액을 고르면 현상 후 남는 부분이 뒤집힌다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🖨️</span><b>사진 인화와 판화의 결합</b><span>노광·현상은 필름 사진의 인화와 같다(빛 받은 곳의 화학 성질이 바뀜). 하지만 그 결과물은 그림이 아니라 "가림막"이고, 식각이라는 칼이 가림막 없는 곳만 파낸다. 리소그래피(lithography)라는 이름 자체가 돌(litho)에 그린 그림(graphy), 곧 석판화에서 왔다.</span></div>
+
+<h2 id="s2"><span class="n">02</span>스핀 코팅: 얇고 고르게 바르기</h2>
+<p>감광액은 용매에 녹은 고분자 용액이다. 웨이퍼 중심에 몇 mL를 떨어뜨리고 수천 rpm으로 돌리면 원심력이 용액을 밖으로 밀어내고, 동시에 용매가 증발해 점도가 높아지며 두께가 굳는다. 둘의 균형에서 두께는 회전 속도의 제곱근에 반비례한다. 떨어뜨린 감광액의 98 % 이상은 웨이퍼 밖으로 튕겨 버려진다. 가장자리에는 두꺼운 테(<b>에지 비드</b>)가 생겨 용매로 따로 씻어 낸다(EBR).</p>
+<div class="eq">$$t \approx K\,\frac{\eta^{0.4}}{\sqrt{\omega}}$$<div class="note">t: 두께, η: 용액 점도, ω: 회전 속도, K: 고형분 농도·용매 증발 속도에 따른 상수. 요즘 ArF 감광액은 80~150 nm, EUV는 30~50 nm.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-2</span><span class="ttl">스핀 코터</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">회전 속도 <output data-o="w"></output></span><input type="range" data-k="w" min="500" max="5000" step="50" value="2000" data-d="0" data-u="rpm"></label>
+      <label class="ctrl"><span class="lab">점도 η <output data-o="eta"></output></span><input type="range" data-k="eta" min="1" max="30" step="0.5" value="5" data-d="1" data-u="cP"></label>
+      <label class="ctrl"><span class="lab">목표 두께 <output data-o="tg"></output></span><input type="range" data-k="tg" min="30" max="300" step="5" value="100" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b2r">다시 떨어뜨리기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">최종 두께</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">목표를 맞추는 회전 속도</span><span class="v" data-r="wneed"></span></div>
+      <div class="ro"><span class="k">가장자리 원심 가속도</span><span class="v" data-r="g"></span></div>
+      <div class="ro"><span class="k">웨이퍼에 남는 비율</span><span class="v" data-r="keep"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 위에서 본 웨이퍼. 보라색 감광액이 중심에서 퍼지고(색이 짙을수록 두꺼움), 튕겨 나가는 방울이 보인다. 오른쪽: 회전 속도별 최종 두께(현재 점도), 초록 띠는 목표 ±5 %. 목표가 얇을수록 빠르게 돌리거나 묽은 용액을 써야 한다. 300 mm 웨이퍼 가장자리는 2000 rpm에서 중력의 약 670배를 느낀다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>스캐너 처리량과 노광 원가</h2>
+<p>스캐너는 웨이퍼 전체를 한 번에 찍지 않는다. 마스크 무늬를 26 × 33 mm 크기의 <span class="term">필드</span>(shot)로 찍고, 웨이퍼를 옮겨 다음 필드를 찍기를 약 100번 되풀이한다. 한 필드를 찍는 동안 마스크와 웨이퍼는 좁은 빛 띠(<b>슬릿</b>) 아래를 반대 방향으로 미끄러진다(4:1 축소이므로 마스크가 4배 빠르다). 스캔 속도는 두 가지 중 느린 쪽이 정한다: 스테이지가 낼 수 있는 최고 속도, 그리고 정해진 노광량을 채우는 데 필요한 속도(빛이 약하면 천천히 지나가야 한다). ArF 액침 스캐너는 빛이 넉넉해 스테이지가 한계이고, EUV는 광원이 약해 노광량이 한계다.</p>
+<div class="eq">$$v_{scan} = \min\!\left(v_{max},\ \frac{P_{wafer}}{D\cdot W_{slit}}\right),\qquad \text{WPH} = \frac{3600}{t_{oh} + N_{f}\left(\dfrac{L_f + h_{slit}}{v_{scan}} + t_{step}\right)}$$<div class="note">P<sub>wafer</sub>: 웨이퍼에 도달하는 빛의 출력, D: 노광량(mJ/cm²), W<sub>slit</sub>: 슬릿 폭(26 mm), N<sub>f</sub>: 필드 수, L<sub>f</sub>: 필드 길이(33 mm), t<sub>oh</sub>: 웨이퍼 교체·정렬 시간.</div></div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-3</span><span class="ttl">스캐너 처리량 계산기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">장비</span><select data-k="tool"><option value="arf" selected>ArF 액침 (NA 1.35)</option><option value="euv">EUV (NA 0.33)</option><option value="hna">High-NA EUV (NA 0.55)</option></select></label>
+      <label class="ctrl"><span class="lab">노광량 D <output data-o="d"></output></span><input type="range" data-k="d" min="10" max="100" step="1" value="30" data-d="0" data-u="mJ/cm²"></label>
+      <label class="ctrl"><span class="lab">EUV 광원 출력 <output data-o="p"></output></span><input type="range" data-k="p" min="100" max="800" step="10" value="300" data-d="0" data-u="W"></label>
+      <label class="ctrl"><span class="lab">웨이퍼당 필드 수 <output data-o="nf"></output></span><input type="range" data-k="nf" min="50" max="130" step="1" value="96" data-d="0"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">처리량</span><span class="v" data-r="wph"></span></div>
+      <div class="ro"><span class="k">스캔 속도 / 제한 요인</span><span class="v" data-r="v" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">웨이퍼 한 장 한 층 노광 원가</span><span class="v" data-r="cost"></span></div>
+      <div class="ro"><span class="k">하루 처리 웨이퍼</span><span class="v" data-r="day"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 웨이퍼 위 필드 배치와 스캔 순서(뱀 모양). 빨간 사각형이 지금 찍는 필드다. 오른쪽: 노광량에 따른 처리량(실선: 현재 장비, 점선: 다른 장비). EUV 곡선이 노광량이 커질수록 꺾여 내려가는 것은 광원이 한계이기 때문이다. 원가는 장비 값(ArF 1,000억, EUV 2,500억, High-NA 5,000억 원)을 5년 감가하고 운영비를 더해 가동률 85 %로 나눈 값.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 노광량을 낮추면 처리량이 오르는데, 왜 EUV 공정은 노광량을 마음껏 낮추지 못할까?</p><p>빛은 광자라는 알갱이로 오기 때문이다. 노광량이 작으면 작은 구멍 하나에 떨어지는 광자 수가 수백 개에 불과해 통계적 흔들림(샷 노이즈)이 커지고, 구멍이 막히거나 선이 끊어지는 확률적 결함이 생긴다. 12장에서 직접 계산한다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">양성 감광액에서 현상 후 남는 부분은?</p><ol><li>빛을 받은 부분</li><li>PEB에서 가장 뜨거웠던 부분</li><li>빛을 받지 않은 부분</li><li>마스크의 투명 부분 아래</li></ol>
+<p class="explain">양성 감광액은 빛 받은 곳이 현상액에 녹으므로, 빛이 닿지 않은(마스크 크롬 아래) 부분이 남는다.</p></div>
+<div class="quiz" data-a="1"><p class="q">스핀 코팅에서 회전 속도를 4배로 올리면 두께는 대략?</p><ol><li>1/4</li><li>1/2</li><li>그대로</li><li>2배</li></ol>
+<p class="explain">t ∝ 1/√ω 이므로 √4 = 2, 두께는 절반이 된다.</p></div>
+<div class="quiz" data-a="3"><p class="q">EUV 스캐너의 처리량을 주로 제한하는 것은?</p><ol><li>트랙의 현상 시간</li><li>마스크 교체 시간</li><li>웨이퍼 스테이지 최고 속도</li><li>광원 출력(노광량을 채우는 데 걸리는 시간)</li></ol>
+<p class="explain">EUV는 웨이퍼까지 오는 빛이 광원의 1 % 안팎이라 노광량을 채우려면 천천히 스캔해야 한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 1-1: 리소 셀 */
+(function(){
+  const s = J.$('#fig1'); if(!s) return;
+  const draw = () => { s.innerHTML = '';
+    const M = [['HMDS\n프라이밍',30,30],['BARC·감광액\n코팅',150,30],['소프트\n베이크',270,30],['냉각',390,30],['PEB',270,140],['현상',150,140],['하드\n베이크',30,140]];
+    J.svg('rect', {x:10, y:12, width:500, height:186, rx:10, fill:'none', stroke:J.c('--line'), 'stroke-dasharray':'6 4'}, s);
+    J.svg('text', {x:20, y:205, 'font-size':12, fill:J.c('--ink3')}, s).textContent = '트랙 (코터·디벨로퍼)';
+    M.forEach(([t, x, y], i) => { J.svg('rect', {x, y, width:100, height:56, rx:6, fill:J.c('--red-soft'), stroke:J.c('--red')}, s);
+      t.split('\n').forEach((l, k) => { const e = J.svg('text', {x:x + 50, y:y + 24 + k*16, 'text-anchor':'middle', 'font-size':13, fill:J.c('--ink')}, s); e.textContent = l; }); });
+    J.svg('rect', {x:570, y:40, width:270, height:130, rx:10, fill:J.c('--indigo-soft'), stroke:J.c('--indigo'), 'stroke-width':2}, s);
+    [['스캐너 (노광기)',80,15,'--indigo'],['정렬 → 초점 측정 → 스캔 노광',110,13,'--ink2'],['필드 약 100개 × 26×33 mm',134,13,'--ink2'],['4:1 축소 투영',156,13,'--ink2']].forEach(([t, y, f, c]) => { const e = J.svg('text', {x:705, y, 'text-anchor':'middle', 'font-size':f, 'font-weight': f > 14 ? 700 : 400, fill:J.c(c)}, s); e.textContent = t; });
+    const ar = (x1, y1, x2, y2) => { J.svg('line', {x1, y1, x2, y2, stroke:J.c('--ink2'), 'stroke-width':2, 'marker-end':'url(#ah1)'}, s); };
+    const d = J.svg('defs', {}, s), m = J.svg('marker', {id:'ah1', viewBox:'0 0 10 10', refX:9, refY:5, markerWidth:7, markerHeight:7, orient:'auto'}, d); J.svg('path', {d:'M0,0L10,5L0,10z', fill:J.c('--ink2')}, m);
+    ar(130, 58, 148, 58); ar(250, 58, 268, 58); ar(370, 58, 388, 58); ar(490, 58, 568, 80); ar(568, 150, 372, 168); ar(268, 168, 252, 168); ar(148, 168, 132, 168);
+  };
+  J.live(draw);
+})();
+
+/* 1-1 단면 단계 */
+(function(){
+  const S = [
+    ['웨이퍼 준비·세정', '세정기', 'SC1 세정, 탈수 베이크', 5],
+    ['HMDS 프라이밍', '트랙', 'HMDS 증기, 120 °C', 1],
+    ['BARC + 감광액 코팅', '트랙 (코터)', '1500~3000 rpm, 30 s', 1.5],
+    ['소프트 베이크', '트랙 (핫플레이트)', '90~110 °C, 60 s', 1.5],
+    ['정렬 + 노광', '스캐너', '193 nm, 30 mJ/cm²', 0.5],
+    ['노광 후 굽기 (PEB)', '트랙 (핫플레이트)', '100~130 °C, 60 s', 1.5],
+    ['현상', '트랙 (디벨로퍼)', 'TMAH 2.38 %, 30~60 s', 1.5],
+    ['하드 베이크 + 검사', 'CD-SEM, 오버레이 계측', '선폭·정렬 측정', 10],
+    ['식각', '플라스마 식각기', 'CF₄/O₂ 플라스마', 4],
+    ['감광액 제거 (애싱)', '애셔 + 세정', 'O₂ 플라스마', 5]];
+  let k = 0, auto = false, acc = 0, tone = 'pos';
+  const sim = J.sim('sim1', v => { tone = v.tone; draw(); });
+  function draw(){
+    const cv = J.$('#cv1'); if(!cv) return; const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const L = 30, R = w - 30, base = h - 40, si = 40, ox = 34, barc = 8, rt0 = 60;
+    const rt = k >= 3 ? rt0*0.9 : rt0, open = [[0.2, 0.32], [0.46, 0.58], [0.72, 0.84]];
+    const X = f => L + f*(R - L);
+    const inOpen = f => open.some(([a, b]) => f >= a && f <= b);
+    const exposed = f => tone === 'pos' ? inOpen(f) : !inOpen(f);
+    ctx.fillStyle = '#8f96a3'; ctx.fillRect(L, base - si, R - L, si);
+    // 산화막
+    const yOx = base - si - ox;
+    for(let px = L; px < R; px++){ const f = (px - L)/(R - L);
+      const keep = !(k >= 8 && inOpen(f));
+      if(keep){ ctx.fillStyle = '#9fd0ea'; ctx.fillRect(px, yOx, 1.2, ox); } }
+    if(k >= 1 && k <= 8){ ctx.fillStyle = J.c('--gold'); ctx.fillRect(L, yOx - 2, R - L, 2); }
+    if(k >= 2 && k <= 8){
+      const yB = yOx - barc, yR = yB - rt;
+      for(let px = L; px < R; px++){ const f = (px - L)/(R - L), opened = inOpen(f);
+        // 현상 후: pos → 노광부 제거 / neg → 비노광부 제거. 둘 다 결과적으로 "개구부" 위치가 같도록 마스크를 반전시켜 그린다
+        const gone = k >= 6 && opened;
+        if(!(k >= 8 && opened)){ ctx.fillStyle = '#2f2f36'; ctx.fillRect(px, yB, 1.2, barc); }
+        if(!gone){ let c = '#9c7bd1'; if(k >= 4 && k < 6 && exposed(f)) c = '#c4a3f2'; if(k === 5 && exposed(f)) c = '#e0c4ff'; ctx.fillStyle = c; ctx.fillRect(px, yR, 1.2, rt); } }
+      // 산 점
+      if(k === 4 || k === 5){ const r = J.rng(7); for(let i = 0; i < 260; i++){ const f = r(), z = r(); if(!exposed(f)) continue; const sp = k === 5 ? 0.012 : 0; const ff = f + (r() - .5)*sp*2;
+        ctx.fillStyle = J.c('--gold'); ctx.beginPath(); ctx.arc(X(ff), yR + z*rt, k === 5 ? 2.4 : 1.8, 0, 7); ctx.fill(); } }
+      if(k === 3){ ctx.fillStyle = J.c('--ink3'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; for(let i = 0; i < 6; i++){ const x = X(0.1 + i*0.16); ctx.fillText('↑', x, yR - 8 - (i % 2)*8); } ctx.fillText('용매 증발 → 막 10 % 얇아짐', w/2, yR - 26); }
+      if(k === 4){ // 마스크와 빛
+        const yM = 22; ctx.fillStyle = 'rgba(160,200,255,.35)'; ctx.fillRect(L, yM, R - L, 8);
+        for(let px = L; px < R; px++){ const f = (px - L)/(R - L); if(!exposed(f)){ ctx.fillStyle = '#333'; ctx.fillRect(px, yM, 1.2, 8); } }
+        ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('마스크 (실제로는 4배 크고 렌즈를 거침)', L, yM - 6);
+        for(let px = L; px < R; px += 3){ const f = (px - L)/(R - L); if(exposed(f)){ ctx.strokeStyle = 'rgba(120,80,255,.35)'; ctx.beginPath(); ctx.moveTo(px, yM + 8); ctx.lineTo(px, yR); ctx.stroke(); } } }
+      if(k === 7){ const a = X(open[1][0]), b = X(open[1][1]); ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(a, yR - 14); ctx.lineTo(b, yR - 14); ctx.stroke(); ctx.fillStyle = J.c('--red'); ctx.font = '12px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.fillText('CD 측정', (a + b)/2, yR - 20); }
+      if(k === 8){ ctx.fillStyle = J.c('--plum'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; open.forEach(([a, b]) => { ctx.fillText('↓ 이온', X((a + b)/2), yR - 8); }); }
+    }
+    if(k === 0 || k === 9){ ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText(k === 0 ? '무늬를 새길 막이 깔린 웨이퍼' : '막에 무늬가 옮겨졌다 → 다음 공정(증착·주입)으로', w/2, yOx - 16); }
+    ctx.fillStyle = J.c('--ink3'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('실리콘', L + 6, base - 14); ctx.fillText('산화막', L + 6, yOx + ox/2 + 4);
+    const box = J.$('#sim1'); let tt = 0; for(let i = 0; i <= k; i++) tt += S[i][3];
+    J.out(box, 'st', (k + 1) + '/10 ' + S[k][0]); J.out(box, 'tool', S[k][1]); J.out(box, 'cond', S[k][2]); J.out(box, 't', J.fmt(tt, 1) + ' 분');
+    J.$('#b1s').textContent = S[k][0];
+  }
+  J.$('#b1n').onclick = () => { k = Math.min(S.length - 1, k + 1); draw(); };
+  J.$('#b1p').onclick = () => { k = Math.max(0, k - 1); draw(); };
+  J.$('#b1a').onclick = e => { auto = !auto; e.target.classList.toggle('on', auto); };
+  J.loop(J.$('#cv1'), dt => { if(!auto) return; acc += dt; if(acc > 1.4){ acc = 0; k = (k + 1) % S.length; draw(); } });
+})();
+
+/* 1-2 스핀 코터 */
+(function(){
+  let T = 0, V = null, ang = 0; const drops = [];
+  const th = (w, eta) => 100*Math.pow(eta/5, 0.4)*Math.sqrt(3000/w);
+  const sim = J.sim('sim2', (v, box) => { V = v;
+    const t = th(v.w, v.eta), wneed = 3000*Math.pow(100*Math.pow(v.eta/5, 0.4)/v.tg, 2);
+    const pts = []; for(let w = 500; w <= 5000; w += 50) pts.push([w, th(w, v.eta)]);
+    J.plot(J.$('#cv2b'), {x:[500, 5000], y:[0, 400], xlab:'회전 속도 (rpm)', ylab:'두께 (nm)', series:[{pts, color:'--plum', w:3}], bands:[{y0:v.tg*0.95, y1:v.tg*1.05, color:'--jade', alpha:.25}], points:[{x:v.w, y:t, color:'--red', r:6, label:J.fmt(t, 0) + ' nm'}]});
+    const om = v.w*2*Math.PI/60, g = om*om*0.15/9.81;
+    J.out(box, 't', J.fmt(t, 0) + ' nm', Math.abs(t - v.tg) <= v.tg*0.05 ? 'good' : 'warn');
+    J.out(box, 'wneed', wneed >= 500 && wneed <= 6000 ? J.fmt(wneed, 0) + ' rpm' : (wneed > 6000 ? '너무 빠름 → 묽은 용액' : '너무 느림 → 진한 용액'), wneed >= 500 && wneed <= 6000 ? '' : 'warn');
+    J.out(box, 'g', J.fmt(g, 0) + ' g'); J.out(box, 'keep', J.fmt(Math.min(4, 1.6*t/100), 1) + ' %');
+  });
+  J.$('#b2r').onclick = () => { T = 0; drops.length = 0; };
+  J.loop(J.$('#cv2a'), dt => { if(!V) return; T += dt; const cv = J.$('#cv2a'); const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const cx = w/2, cy = h/2, R = Math.min(w, h)*0.4, om = V.w/60*2*Math.PI;
+    ang += om*dt*0.02; // 보기용으로 느리게
+    const rf = Math.min(1, Math.sqrt(T*V.w/2500/Math.pow(V.eta/5, 0.5))*0.9 + 0.08), tFinal = th(V.w, V.eta), thick = tFinal*(1 + 3*Math.exp(-T*1.2));
+    ctx.fillStyle = '#b9c0cc'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill();
+    ctx.fillStyle = `rgba(140,90,210,${J.clamp(0.25 + thick/600, 0.25, 0.9)})`; ctx.beginPath(); ctx.arc(cx, cy, R*rf, 0, 7); ctx.fill();
+    if(rf >= 1){ ctx.strokeStyle = 'rgba(110,60,190,.9)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(cx, cy, R - 2, 0, 7); ctx.stroke(); }
+    ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + R*Math.cos(ang), cy + R*Math.sin(ang)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + R*0.95*Math.cos(ang + 0.3), cy + R*0.95*Math.sin(ang + 0.3)); ctx.lineTo(cx + R*Math.cos(ang + 0.3), cy + R*Math.sin(ang + 0.3)); ctx.stroke();
+    if(rf > 0.85 && T < 6 && Math.random() < 0.5) { const a = Math.random()*7; drops.push({x:cx + R*Math.cos(a), y:cy + R*Math.sin(a), vx:Math.cos(a)*60 - Math.sin(a)*om*2, vy:Math.sin(a)*60 + Math.cos(a)*om*2, l:1}); }
+    for(let i = drops.length - 1; i >= 0; i--){ const d = drops[i]; d.x += d.vx*dt; d.y += d.vy*dt; d.l -= dt*1.5; if(d.l <= 0){ drops.splice(i, 1); continue; } ctx.fillStyle = `rgba(140,90,210,${d.l})`; ctx.beginPath(); ctx.arc(d.x, d.y, 2.5, 0, 7); ctx.fill(); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "JetBrains Mono"'; ctx.textAlign = 'left'; ctx.fillText('t = ' + J.fmt(Math.min(T, 99), 1) + ' s   두께 ≈ ' + J.fmt(thick, 0) + ' nm', 10, 18);
+    if(rf >= 1){ ctx.fillText('에지 비드 → EBR로 제거', 10, h - 10); } });
+})();
+
+/* 1-3 처리량 */
+(function(){
+  const TOOL = {arf:{name:'ArF 액침', vmax:800, oh:3.2, step:0.045, cap:1000, op:60, pw:() => 26}, euv:{name:'EUV', vmax:450, oh:4.5, step:0.08, cap:2500, op:150, pw:p => p*0.008}, hna:{name:'High-NA', vmax:600, oh:5, step:0.07, cap:5000, op:250, pw:p => p*0.0065, half:true}};
+  const calc = (T, d, p, nf) => { const W = 2.6, Lf = T.half ? 1.65 : 3.3, slit = 0.8; const nfe = T.half ? nf*2 : nf;
+    const vd = T.pw(p)/(d*1e-3*W)*10; // mm/s
+    const v = Math.min(T.vmax, vd), tf = (Lf*10 + slit*10)/v + T.step, tw = T.oh + nfe*tf; return {v, lim: vd < T.vmax ? '광원(노광량)' : '스테이지', wph:3600/tw, nfe}; };
+  let anim = 0, V = null;
+  J.sim('sim3', (v, box) => { V = v; const T = TOOL[v.tool], r = calc(T, v.d, v.p, v.nf);
+    const S = Object.keys(TOOL).map(k => ({pts:Array.from({length:91}, (_, i) => { const d = 10 + i; return [d, calc(TOOL[k], d, v.p, v.nf).wph]; }), color:k === 'arf' ? '--jade' : k === 'euv' ? '--indigo' : '--plum', w:k === v.tool ? 3 : 1.5, dash:k === v.tool ? [] : [5, 4]}));
+    J.plot(J.$('#cv3b'), {x:[10, 100], y:[0, 350], xlab:'노광량 (mJ/cm²)', ylab:'처리량 (장/시간)', series:S, points:[{x:v.d, y:r.wph, color:'--red', r:6, label:J.fmt(r.wph, 0)}]});
+    const yr = r.wph*8760*0.85, cost = (T.cap*1e8/5 + T.op*1e8)/yr;
+    J.out(box, 'wph', J.fmt(r.wph, 0) + ' 장/h', r.wph > 200 ? 'good' : r.wph > 100 ? 'warn' : 'bad');
+    J.out(box, 'v', J.fmt(r.v, 0) + ' mm/s · ' + r.lim + (T.half ? ' · 반쪽 필드 ' + r.nfe + '번' : ''));
+    J.out(box, 'cost', J.fmt(cost, 0) + ' 원'); J.out(box, 'day', J.fmt(r.wph*24*0.85, 0) + ' 장'); });
+  J.loop(J.$('#cv3a'), dt => { if(!V) return; const cv = J.$('#cv3a'), {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h);
+    const cx = w/2, cy = h/2, R = Math.min(w, h)*0.44, fw = 26/150*R, fh = 33/150*R, F = [];
+    const nx = Math.ceil(300/26), ny = Math.ceil(300/33);
+    for(let j = 0; j < ny; j++){ const row = []; for(let i = 0; i < nx; i++){ const x = cx + (i - nx/2)*fw, y = cy + (j - ny/2)*fh; const cs = [[x, y], [x + fw, y], [x, y + fh], [x + fw, y + fh]]; if(cs.filter(([a, b]) => Math.hypot(a - cx, b - cy) < R).length >= 2) row.push([x, y]); } if(j % 2) row.reverse(); F.push(...row); }
+    const T = TOOL[V.tool], r = calc(T, V.d, V.p, V.nf); anim += dt*r.wph/3600*F.length*6; const cur = Math.floor(anim) % F.length;
+    ctx.fillStyle = '#c9ced8'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill();
+    F.forEach(([x, y], i) => { ctx.fillStyle = i < cur ? 'rgba(80,60,160,.45)' : 'rgba(255,255,255,.25)'; ctx.fillRect(x + .5, y + .5, fw - 1, fh - 1); });
+    const [x, y] = F[cur]; ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2.5; ctx.strokeRect(x, y, fw, fh);
+    const sy = y + ((anim % 1)*fh); ctx.fillStyle = 'rgba(255,220,60,.8)'; ctx.fillRect(x, sy - 2, fw, 4);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('필드 ' + F.length + '개 (화면은 6배속)', 8, 16); });
+})();
+</script>
+</body>
+</html>

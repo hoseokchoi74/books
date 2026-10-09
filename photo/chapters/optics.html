@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>빛과 회절 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="optics">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 02 <span class="hanja">第二章 · 波</span></div>
+  <h1>빛과 회절</h1>
+  <p class="lead">빛이 직진만 한다면 마스크 그림자를 그대로 찍으면 될 것이다. 하지만 빛은 파동이라 좁은 틈을 지나면 퍼진다(<span class="term">회절</span>). 무늬가 파장만큼 작아지면 퍼짐이 무늬 자체보다 커지고, 렌즈는 그 퍼진 빛 중 일부만 붙잡을 수 있다. 리소그래피의 모든 한계와 모든 묘수는 이 사실에서 출발한다. 이 장에서는 슬릿과 격자의 회절을 눈으로 보고, 마스크 → 회절 스펙트럼 → 렌즈 필터 → 상(image)으로 이어지는 <span class="term">푸리에 광학</span>의 그림을 직접 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>호이겐스 원리로 단일 슬릿 회절 무늬와 첫 어두운 줄의 각도(sin θ = λ/a)를 확인한다.</li>
+  <li>회절 격자의 차수 각도 sin θ<sub>m</sub> = mλ/p와 렌즈 개구수(NA)의 관계를 본다.</li>
+  <li>렌즈가 공간 주파수의 저역 통과 필터라는 것, 그래서 상이 흐려진다는 것을 계산으로 확인한다.</li>
+  <li>4:1 축소 투영 노광기의 광학 구성(광원·조명계·마스크·투영 렌즈·동공·웨이퍼)을 안다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>틈을 지난 빛은 퍼진다</h2>
+<p>호이겐스는 파면 위의 모든 점이 새로운 작은 원형파를 낸다고 보았다. 폭 a인 틈의 각 점에서 나온 원형파가 멀리서 합쳐질 때, 틈 양 끝에서 온 파동의 경로차가 정확히 한 파장이 되는 방향에서는 틈의 위쪽 절반과 아래쪽 절반이 서로 상쇄되어 어두워진다. 그래서 틈이 좁을수록(λ/a가 클수록) 빛은 더 넓게 퍼진다. 틈이 파장보다 좁으면 거의 반원으로 퍼져 버린다.</p>
+<div class="eq">$$I(\theta) = I_0\left[\frac{\sin(\pi a\sin\theta/\lambda)}{\pi a\sin\theta/\lambda}\right]^2,\qquad \sin\theta_{1} = \frac{\lambda}{a}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-1</span><span class="ttl">호이겐스 물결 탱크: 단일 슬릿과 이중 슬릿</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">틈 폭 a / λ <output data-o="a"></output></span><input type="range" data-k="a" min="0.5" max="8" step="0.1" value="2.5" data-d="1"></label>
+      <label class="ctrl"><span class="lab">틈 개수</span><select data-k="n"><option value="1" selected>1 (단일 슬릿)</option><option value="2">2 (이중 슬릿)</option><option value="5">5 (작은 격자)</option></select></label>
+      <label class="ctrl"><span class="lab">틈 간격 d / λ <output data-o="d"></output></span><input type="range" data-k="d" min="2" max="10" step="0.1" value="5" data-d="1"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">첫 어두운 줄 각도 (단일 틈)</span><span class="v" data-r="t1"></span></div>
+      <div class="ro"><span class="k">밝은 줄 간격 각도 (여러 틈)</span><span class="v" data-r="tm"></span></div>
+      <div class="ro"><span class="k">NA 0.5 렌즈가 모으는 빛</span><span class="v" data-r="cap"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 아래에서 올라오는 평면파가 벽(검정)의 틈을 지나 퍼지는 모습(색 = 순간 파동 높이, 실시간 애니메이션). 오른쪽: 멀리서 본 세기 분포(가로축 = sin θ). 회색 점선 안(|sin θ| ≤ 0.5)이 NA 0.5 렌즈가 모을 수 있는 범위다. 틈을 좁히면 빛이 렌즈 밖으로 새어 나간다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>회절 격자: 무늬의 피치가 빛의 방향을 정한다</h2>
+<p>틈이 일정한 간격 p로 수없이 늘어서면(격자), 퍼진 빛들이 서로 간섭해 특정 방향으로만 강하게 나간다. 이웃한 틈에서 온 빛의 경로차 p sin θ가 파장의 정수배일 때다. 이 빛줄기들을 <span class="term">회절 차수</span>(0차, ±1차, ±2차 …)라 부른다. 0차는 곧장 나가는 빛이고 무늬에 대한 정보는 없다. 무늬의 간격 정보는 ±1차 이상에 담겨 있다. 렌즈가 0차와 적어도 1차 하나를 함께 모아야 웨이퍼 위에 무늬가 다시 맺힌다.</p>
+<div class="eq">$$p\,\sin\theta_m = m\,\lambda,\qquad NA = n\sin\theta_{max}$$<div class="note">NA(개구수): 렌즈가 받아들이는 최대 각의 사인값에 매질 굴절률 n을 곱한 것. 공기 중 렌즈는 NA &lt; 1, 물 속(액침)은 최대 1.35까지.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-2</span><span class="ttl">회절 차수와 렌즈의 입</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">마스크 피치 (웨이퍼 기준) <output data-o="p"></output></span><input type="range" data-k="p" min="60" max="600" step="2" value="320" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">파장</span><select data-k="l"><option value="436">g선 436 nm</option><option value="365">i선 365 nm</option><option value="248">KrF 248 nm</option><option value="193" selected>ArF 193 nm</option><option value="13.5">EUV 13.5 nm</option></select></label>
+      <label class="ctrl"><span class="lab">NA <output data-o="na"></output></span><input type="range" data-k="na" min="0.1" max="1.35" step="0.01" value="0.75" data-d="2"></label>
+      <label class="ctrl"><span class="lab">선 : 간격 비율 (듀티) <output data-o="du"></output></span><input type="range" data-k="du" min="0.1" max="0.9" step="0.05" value="0.5" data-d="2"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">1차 회절각 θ₁</span><span class="v" data-r="t1"></span></div>
+      <div class="ro"><span class="k">렌즈에 들어온 차수</span><span class="v" data-r="no"></span></div>
+      <div class="ro"><span class="k">수직 조명 해상 한계 피치 λ/NA</span><span class="v" data-r="pm"></span></div>
+      <div class="ro"><span class="k">상 모양</span><span class="v" data-r="img" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 마스크(아래 줄무늬)에서 나간 회절 차수(화살표, 굵기 = 세기)와 렌즈가 받아들이는 원뿔(초록). 화살표가 초록 안에 들어오면 렌즈를 통과한다. 오른쪽: 들어온 차수만으로 다시 합성한 웨이퍼 위 세기(빨강)와 원래 마스크 투과(회색). 듀티 0.5에서는 짝수 차수가 0이 된다(사라진 차수). EUV(13.5 nm)는 아주 작은 피치에서도 많은 차수를 모은다.</p>
+</div>
+
+<figure class="fig">
+<svg viewBox="0 0 860 250" role="img" aria-label="투영 노광기 광학계" id="fig1"></svg>
+<figcaption><b>그림 2-1.</b> 축소 투영 노광기의 광학 사슬. 광원 빛을 조명계(콘덴서)가 고르게 펴서 마스크를 비추고, 마스크에서 회절된 빛을 투영 렌즈가 모아 웨이퍼에 4배 축소해 맺는다. 렌즈 한가운데의 <b>동공(pupil)</b> 면에는 마스크의 회절 스펙트럼(푸리에 변환)이 펼쳐지며, 동공의 지름이 NA를 정한다. ArF 액침 렌즈는 렌즈알 20~30장, 높이 1 m 이상, 무게 1톤에 이른다.</figcaption>
+</figure>
+
+<h2 id="s3"><span class="n">03</span>렌즈는 공간 주파수 필터다</h2>
+<p>어떤 마스크 무늬도 여러 주기의 사인파(공간 주파수)의 합으로 쓸 수 있다(푸리에 급수). 렌즈의 동공은 주파수 NA/λ보다 높은 성분을 잘라 버리는 <b>저역 통과 필터</b>다. 날카로운 모서리와 가는 선은 높은 주파수 성분을 많이 품고 있으므로, 잘려 나가면 모서리가 둥글어지고 가는 선이 흐려진다. 결맞은(coherent) 조명에서 상의 세기는 걸러진 진폭을 다시 합성해 제곱한 것이다.</p>
+<div class="eq">$$I(x) = \Bigl|\,\mathcal{F}^{-1}\bigl\{\,\tilde{M}(f)\,P(f)\,\bigr\}\Bigr|^2,\qquad P(f) = \begin{cases}1 & |f| \le NA/\lambda\\ 0 & \text{그 밖}\end{cases}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-3</span><span class="ttl">마스크 → 스펙트럼 → 동공 → 상 (1차원 푸리에 광학)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">마스크 무늬</span><select data-k="m"><option value="ls" selected>선·간격 5개</option><option value="iso">외딴 선 하나</option><option value="two">가까운 두 틈</option><option value="mix">촘촘한 무리 + 외딴 선</option><option value="chirp">점점 좁아지는 선</option></select></label>
+      <label class="ctrl"><span class="lab">선폭 (웨이퍼 기준) <output data-o="cd"></output></span><input type="range" data-k="cd" min="30" max="200" step="2" value="90" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">차단 주파수 NA/λ <output data-o="fc"></output></span><input type="range" data-k="fc" min="1" max="15" step="0.1" value="6.5" data-d="1" data-u="µm⁻¹"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">이 차단 주파수의 예 (ArF)</span><span class="v" data-r="ex"></span></div>
+      <div class="ro"><span class="k">통과한 에너지 비율</span><span class="v" data-r="en"></span></div>
+      <div class="ro"><span class="k">상의 대비 (중앙 부근)</span><span class="v" data-r="c"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 마스크 진폭 스펙트럼 |M(f)| (가로축 = 공간 주파수, µm⁻¹). 초록 띠가 동공을 통과하는 범위, 회색 부분은 잘려 나간다. 오른쪽: 마스크(회색 띠)와 상의 세기(빨강). 차단 주파수를 낮추면(NA를 줄이거나 파장을 늘리면) 무늬가 하나둘 뭉개져 사라진다. ArF 액침(NA 1.35)의 차단 주파수는 7 µm⁻¹, EUV(NA 0.33)는 24 µm⁻¹이다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🎚️</span><b>음악의 이퀄라이저</b><span>높은음을 잘라 낸 음악이 웅웅거리듯, 높은 공간 주파수를 잘라 낸 상은 뭉개진다. 리소그래피 엔지니어는 렌즈라는 이퀄라이저의 상한선(NA/λ)을 올리려(파장을 줄이고 NA를 키우려) 50년을 싸웠고, 상한선을 못 올릴 때는 남은 대역 안에 정보를 최대한 담는 묘수(조명 설계, 위상 반전 마스크, OPC)를 개발했다.</span></div>
+
+<div class="think"><p><b>생각해 보기.</b> 0차 빛은 무늬 정보가 없다. 그렇다면 0차를 아예 막아 버리면 어떻게 될까?</p><p>±1차 두 빛만 간섭하면 주기가 p/2인 무늬가 생긴다(주파수가 두 배). 실제로 교번형 위상 반전 마스크(5장)는 0차를 없애고 ±1차만으로 상을 만들어 해상도를 두 배 가까이 끌어올린다. 다만 이 원리를 쓰려면 이웃 틈의 위상을 180° 뒤집어야 한다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">단일 슬릿의 폭을 절반으로 줄이면 첫 어두운 줄의 sin θ는?</p><ol><li>절반이 된다</li><li>두 배가 된다</li><li>그대로다</li><li>네 배가 된다</li></ol>
+<p class="explain">sin θ₁ = λ/a 이므로 a가 절반이면 두 배로 넓게 퍼진다.</p></div>
+<div class="quiz" data-a="0"><p class="q">ArF(193 nm), NA 0.75, 수직 조명에서 무늬가 맺히려면 피치가 적어도?</p><ol><li>약 257 nm</li><li>약 145 nm</li><li>약 129 nm</li><li>약 96 nm</li></ol>
+<p class="explain">±1차가 렌즈에 들어오려면 λ/p ≤ NA → p ≥ λ/NA = 257 nm.</p></div>
+<div class="quiz" data-a="2"><p class="q">투영 렌즈의 동공 면에 펼쳐지는 것은?</p><ol><li>마스크 무늬의 축소된 그림</li><li>웨이퍼의 반사 영상</li><li>마스크 무늬의 회절 스펙트럼(푸리에 변환)</li><li>광원의 스펙트럼(파장 분포)</li></ol>
+<p class="explain">동공은 푸리에 면이다. 여기에 필터(조리개, 위상판)를 놓아 상을 조작할 수 있다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 2-1 물결 탱크 */
+(function(){
+  let V = null, T = 0, field = null, fw = 0, fh = 0;
+  const box = J.$('#sim1');
+  const sources = v => { const lam = 12, a = v.a*lam, d = v.d*lam, n = +v.n, S = [];
+    for(let k = 0; k < n; k++){ const c = (k - (n - 1)/2)*d; const m = Math.max(2, Math.round(a/2)); for(let j = 0; j < m; j++) S.push(c - a/2 + (j + .5)*a/m); } return S; };
+  const prep = () => { if(!V) return; const cv = J.$('#cv1a'); const W = Math.max(120, Math.round((cv.parentElement.clientWidth || 400)/3)), H = 100; fw = W; fh = H;
+    const lam = 12, k = 2*Math.PI/lam, S = sources(V), wall = 22; field = {amp:new Float32Array(W*H), ph:new Float32Array(W*H), wall, S};
+    for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){ const i = y*W + x;
+      if(y > H - wall){ field.amp[i] = 1; field.ph[i] = -k*(y - (H - wall)); continue; }
+      let re = 0, im = 0; const yy = (H - wall) - y; S.forEach(sx => { const dx = x - W/2 - sx, r = Math.hypot(dx, yy) + 0.5; const a = 1/Math.sqrt(r)*(yy/r + 0.2); re += a*Math.cos(k*r); im += a*Math.sin(k*r); });
+      const A = Math.hypot(re, im)*2.4/Math.sqrt(S.length); field.amp[i] = A; field.ph[i] = Math.atan2(im, re); } };
+  J.sim('sim1', v => { V = v; prep();
+    const a = v.a, n = +v.n, pts = []; let inside = 0, tot = 0;
+    for(let s = -1; s <= 1.0001; s += 0.004){ const b = Math.PI*a*s, sinc = Math.abs(b) < 1e-6 ? 1 : Math.sin(b)/b; let arr = 1; if(n > 1){ const g = Math.PI*v.d*s; arr = Math.abs(Math.sin(g)) < 1e-6 ? n : Math.sin(n*g)/Math.sin(g); arr /= n; }
+      const I = sinc*sinc*arr*arr; pts.push([s, I]); tot += I; if(Math.abs(s) <= 0.5) inside += I; }
+    J.plot(J.$('#cv1b'), {x:[-1, 1], y:[0, 1.05], xlab:'sin θ', ylab:'세기 (상대)', series:[{pts, color:'--indigo', w:2.5, fill:.15}], vlines:[{x:-0.5, color:'--ink3'}, {x:0.5, color:'--ink3', label:'NA 0.5'}]});
+    J.out(box, 't1', 1/a <= 1 ? J.fmt(Math.asin(1/a)*180/Math.PI, 1) + '°' : '없음 (반원으로 퍼짐)', 1/a <= 1 ? '' : 'warn');
+    J.out(box, 'tm', n > 1 ? (1/v.d <= 1 ? J.fmt(Math.asin(1/v.d)*180/Math.PI, 1) + '°' : '—') : '—');
+    J.out(box, 'cap', J.fmt(inside/tot*100, 0) + ' %', inside/tot > 0.8 ? 'good' : inside/tot > 0.5 ? 'warn' : 'bad'); });
+  J.loop(J.$('#cv1a'), dt => { if(!field) return; T += dt*2.2; const cv = J.$('#cv1a'), {ctx, w, h} = J.fit(cv);
+    const img = ctx.createImageData(fw, fh), D = img.data;
+    for(let i = 0; i < fw*fh; i++){ const y = Math.floor(i/fw), x = i % fw; let val = field.amp[i]*Math.cos(field.ph[i] - T*3);
+      let r = 128 + val*110, g = 128 + val*40, b = 128 - val*110;
+      if(y === fh - field.wall || y === fh - field.wall + 1){ const sx = x - fw/2, lam = 12; const n = +V.n, a = V.a*lam, d = V.d*lam; let open = false; for(let k = 0; k < n; k++){ const c = (k - (n - 1)/2)*d; if(Math.abs(sx - c) <= a/2) open = true; } if(!open){ r = g = b = 20; } }
+      D[i*4] = J.clamp(r, 0, 255); D[i*4 + 1] = J.clamp(g, 0, 255); D[i*4 + 2] = J.clamp(b, 0, 255); D[i*4 + 3] = 255; }
+    const off = document.createElement('canvas'); off.width = fw; off.height = fh; off.getContext('2d').putImageData(img, 0, 0);
+    ctx.imageSmoothingEnabled = true; ctx.drawImage(off, 0, 0, w, h);
+    ctx.fillStyle = '#fff'; ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('평면파 ↑', 8, h - 8); ctx.fillText('λ = 화면의 짧은 눈금 하나', 8, 16);
+    ctx.fillRect(8, 24, 12/fw*w, 3); });
+})();
+
+/* 그림 2-1 */
+(function(){
+  const s = J.$('#fig1'); if(!s) return;
+  J.live(() => { s.innerHTML = ''; const ink = J.c('--ink'), ink2 = J.c('--ink2');
+    const lens = (x, h, lab, c) => { J.svg('ellipse', {cx:x, cy:125, rx:9, ry:h, fill:J.c('--indigo-soft'), stroke:J.c('--indigo')}, s); const t = J.svg('text', {x, y:125 + h + 18, 'text-anchor':'middle', 'font-size':12.5, fill:c || ink2}, s); t.textContent = lab; };
+    J.svg('rect', {x:16, y:105, width:60, height:40, rx:6, fill:J.c('--red-soft'), stroke:J.c('--red')}, s); const t0 = J.svg('text', {x:46, y:170, 'text-anchor':'middle', 'font-size':12.5, fill:ink2}, s); t0.textContent = '광원 (레이저)';
+    lens(140, 55, '조명계 (콘덴서)');
+    J.svg('rect', {x:226, y:62, width:8, height:126, fill:'#333'}, s); for(let i = 0; i < 9; i++) J.svg('rect', {x:226, y:68 + i*13, width:8, height:6, fill:'#cfe3ff'}, s);
+    const tm = J.svg('text', {x:230, y:210, 'text-anchor':'middle', 'font-size':12.5, fill:ink}, s); tm.textContent = '마스크 (4×)';
+    lens(330, 70, ''); lens(400, 80, ''); lens(560, 80, ''); lens(640, 60, '');
+    const tp = J.svg('text', {x:485, y:232, 'text-anchor':'middle', 'font-size':12.5, fill:ink2}, s); tp.textContent = '투영 렌즈 (20~30장의 렌즈알)';
+    J.svg('line', {x1:480, y1:40, x2:480, y2:80, stroke:J.c('--red'), 'stroke-width':4}, s); J.svg('line', {x1:480, y1:170, x2:480, y2:210, stroke:J.c('--red'), 'stroke-width':4}, s);
+    const tq = J.svg('text', {x:480, y:32, 'text-anchor':'middle', 'font-size':12.5, fill:J.c('--red')}, s); tq.textContent = '동공 (조리개, NA 결정)';
+    [[-1, J.c('--gold')], [0, J.c('--ink3')], [1, J.c('--gold')]].forEach(([m, c]) => { J.svg('path', {d:`M76,125 L140,125 L230,125 L330,${125 + m*40} L480,${125 + m*55} L640,${125 + m*25} L790,125`, fill:'none', stroke:c, 'stroke-width':2, opacity:.8}, s); });
+    J.svg('rect', {x:790, y:70, width:10, height:110, fill:'#8f96a3'}, s); J.svg('rect', {x:786, y:70, width:4, height:110, fill:'#9c7bd1'}, s);
+    const tw = J.svg('text', {x:795, y:200, 'text-anchor':'middle', 'font-size':12.5, fill:ink}, s); tw.textContent = '웨이퍼';
+    const tl = J.svg('text', {x:560, y:20, 'text-anchor':'start', 'font-size':11.5, fill:J.c('--gold')}, s); tl.textContent = '노랑: ±1차, 회색: 0차'; });
+})();
+
+/* 2-2 격자 차수 */
+(function(){
+  const box = J.$('#sim2');
+  J.sim('sim2', v => { const lam = +v.l, p = v.p, na = Math.min(v.na, lam < 20 ? 0.55 : v.na), du = v.du;
+    const am = m => m === 0 ? du : Math.sin(Math.PI*m*du)/(Math.PI*m);
+    const ords = []; for(let m = -12; m <= 12; m++){ const s = m*lam/p; if(Math.abs(s) >= 1) continue; ords.push({m, s, a:am(m), inL:Math.abs(s) <= Math.min(na, 0.999)}); }
+    const {ctx, w, h} = J.fit(J.$('#cv2a')); ctx.clearRect(0,0,w,h);
+    const ox = w/2, oy = h - 40, R = h - 70, thM = Math.asin(Math.min(na, 0.999));
+    ctx.fillStyle = 'rgba(60,160,110,.18)'; ctx.beginPath(); ctx.moveTo(ox, oy); ctx.arc(ox, oy, R, -Math.PI/2 - thM, -Math.PI/2 + thM); ctx.closePath(); ctx.fill();
+    for(let i = 0; i < 16; i++){ ctx.fillStyle = i % 2 ? '#333' : '#cfe3ff'; ctx.fillRect(ox - 80 + i*10, oy, 10, 8); }
+    ords.forEach(o => { const th = Math.asin(o.s), x = ox + R*Math.sin(th), y = oy - R*Math.cos(th), A = Math.abs(o.a); if(A < 1e-3) return;
+      ctx.strokeStyle = J.c(o.inL ? (o.m === 0 ? '--ink' : '--red') : '--ink3'); ctx.globalAlpha = o.inL ? 1 : .45; ctx.lineWidth = 1 + A*14; ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(x, y); ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.fillStyle = J.c('--ink'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.fillText((o.m > 0 ? '+' : '') + o.m, ox + (R + 12)*Math.sin(th), oy - (R + 12)*Math.cos(th)); });
+    ctx.fillStyle = J.c('--jade'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('렌즈가 받는 범위 (NA ' + J.fmt(na, 2) + ')', 8, 16);
+    if(lam < 20 && v.na > 0.55){ ctx.fillStyle = J.c('--red'); ctx.fillText('EUV는 NA 0.55까지로 제한', 8, 32); }
+    const N = 300, pts = [], mpts = []; let mx = 0, mn = 9;
+    for(let i = 0; i < N; i++){ const x = i/N*3*p; let re = 0; ords.forEach(o => { if(o.inL) re += o.a*Math.cos(2*Math.PI*o.m*x/p); }); const I = re*re; pts.push([x, I]); mx = Math.max(mx, I); mn = Math.min(mn, I);
+      const ph = (x/p) % 1; mpts.push([x, (ph < du/2 || ph > 1 - du/2) ? 1 : 0]); }
+    J.plot(J.$('#cv2b'), {x:[0, 3*p], y:[0, 1.3], xlab:'위치 (nm)', ylab:'세기', series:[{pts:mpts, color:'--ink3', w:1, fill:.12, step:true}, {pts, color:'--red', w:3}]});
+    const nin = ords.filter(o => o.inL && Math.abs(o.a) > 1e-3).length, has1 = ords.some(o => o.inL && o.m !== 0 && Math.abs(o.a) > 1e-3);
+    J.out(box, 't1', lam/p < 1 ? J.fmt(Math.asin(lam/p)*180/Math.PI, 1) + '°' : '없음 (전파 안 됨)');
+    J.out(box, 'no', nin + '개 (' + ords.filter(o => o.inL && Math.abs(o.a) > 1e-3).map(o => o.m).join(', ') + ')', has1 ? 'good' : 'bad');
+    J.out(box, 'pm', J.fmt(lam/na, 0) + ' nm');
+    J.out(box, 'img', has1 ? (nin <= 3 ? '사인파 (선명도 부족)' : '모서리가 살아남') : '평평함 (무늬 없음)', has1 ? (nin <= 3 ? 'warn' : 'good') : 'bad'); });
+})();
+
+/* 2-3 푸리에 광학 */
+(function(){
+  const box = J.$('#sim3'), N = 512, Lx = 4000; // nm 창
+  const mkMask = (m, cd) => { const M = new Float64Array(N), dx = Lx/N, put = (c, wdt) => { for(let i = 0; i < N; i++){ const x = i*dx - Lx/2; if(Math.abs(x - c) <= wdt/2) M[i] = 1; } };
+    if(m === 'ls') for(let k = -2; k <= 2; k++) put(k*2*cd, cd);
+    if(m === 'iso') put(0, cd);
+    if(m === 'two'){ put(-cd*0.8, cd); put(cd*0.8, cd); }
+    if(m === 'mix'){ for(let k = 0; k < 4; k++) put(-1300 + k*2*cd, cd); put(900, cd); }
+    if(m === 'chirp'){ let x = -1700, wd = cd*2; while(x < 1700 && wd > 8){ put(x, wd/2); x += wd; wd *= 0.85; } }
+    return M; };
+  J.sim('sim3', v => { const M = mkMask(v.m, v.cd), dx = Lx/N, df = 1/Lx*1000; // µm⁻¹
+    const nf = N/2, re = new Float64Array(N), im = new Float64Array(N);
+    for(let k = 0; k < N; k++){ const kk = k < nf ? k : k - N; let r = 0, s = 0; for(let i = 0; i < N; i++){ if(!M[i]) continue; const a = -2*Math.PI*kk*i/N; r += Math.cos(a); s += Math.sin(a); } re[k] = r/N; im[k] = s/N; }
+    const spec = [], kc = v.fc/df; let eAll = 0, eIn = 0;
+    for(let k = -nf + 1; k < nf; k++){ const j = (k + N) % N, A = Math.hypot(re[j], im[j]); spec.push([k*df, A]); eAll += A*A; if(Math.abs(k) <= kc) eIn += A*A; }
+    const smax = Math.max(...spec.map(p => p[1]));
+    const P = J.plot(J.$('#cv3a'), {x:[-25, 25], y:[0, smax*1.1], xlab:'공간 주파수 (µm⁻¹)', ylab:'|M(f)|', series:[{pts:spec, color:'--indigo', w:1.6}], bands:[{x0:-v.fc, x1:v.fc, color:'--jade', alpha:.2}], vlines:[{x:-v.fc, color:'--jade'}, {x:v.fc, color:'--jade', label:'NA/λ'}]});
+    const I = new Float64Array(N);
+    for(let i = 0; i < N; i++){ let r = 0, s = 0; for(let k = -nf + 1; k < nf; k++){ if(Math.abs(k) > kc) continue; const j = (k + N) % N, a = 2*Math.PI*k*i/N, c = Math.cos(a), sn = Math.sin(a); r += re[j]*c - im[j]*sn; s += re[j]*sn + im[j]*c; } I[i] = r*r + s*s; }
+    const pts = [], mp = []; for(let i = 0; i < N; i++){ const x = i*dx - Lx/2; pts.push([x, I[i]]); mp.push([x, M[i]]); }
+    J.plot(J.$('#cv3b'), {x:[-2000, 2000], y:[0, 1.4], xlab:'위치 (nm)', ylab:'세기', series:[{pts:mp, color:'--ink3', w:1, fill:.15, step:true}, {pts, color:'--red', w:2.5}], hlines:[{y:0.3, color:'--plum', label:'감광액 문턱(예)'}]});
+    let mx = 0, mn = 9; const xr = Math.max(2*v.cd, 200); for(let i = 0; i < N; i++){ if(Math.abs(i*dx - Lx/2) > xr) continue; mx = Math.max(mx, I[i]); mn = Math.min(mn, I[i]); }
+    const c = (mx - mn)/(mx + mn + 1e-9);
+    J.out(box, 'ex', 'NA ' + J.fmt(v.fc*0.193, 2) + (v.fc*0.193 > 1.35 ? ' (불가능: EUV 필요)' : ''), v.fc*0.193 > 1.35 ? 'warn' : '');
+    J.out(box, 'en', J.fmt(eIn/eAll*100, 0) + ' %'); J.out(box, 'c', J.fmt(c*100, 0) + ' %', c > 0.5 ? 'good' : c > 0.2 ? 'warn' : 'bad'); });
+})();
+</script>
+</body>
+</html>

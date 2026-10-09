@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EUV 리소그래피 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../lith.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="euv">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 12 <span class="hanja">第十二章 · 極</span></div>
+  <h1>EUV 리소그래피</h1>
+  <p class="lead">13.5 nm 극자외선(EUV)은 공기는 물론 모든 유리를 통과하지 못한다. 그래서 EUV 스캐너는 진공 속에서 렌즈 대신 거울만으로 빛을 나르고, 마스크마저 거울이다. 빛은 초당 5만 번 떨어지는 지름 25 µm의 주석 방울을 고출력 CO₂ 레이저로 두 번 때려 만든 수십만 도의 플라스마에서 나온다. 거울 하나가 반사하는 빛은 70 %가 안 되고, 거울 열 개를 지나면 광원 빛의 2 % 정도만 웨이퍼에 닿는다. 이 장은 EUV를 가능하게 한 Mo/Si 다층 거울의 간섭, 비스듬히 비추는 반사 마스크의 3D 그림자 효과, 그리고 광자가 모자라서 생기는 확률적 결함을 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>몰리브덴/실리콘 40쌍 다층막이 브래그 반사로 13.5 nm에서 약 70 %를 반사하는 원리를 계산한다.</li>
+  <li>6° 비스듬한 조명과 두꺼운 흡수체가 만드는 마스크 그림자와 수평–수직 바이어스를 본다.</li>
+  <li>광자 수의 푸아송 요동이 접촉 구멍의 크기 산포와 막힘 결함을 만드는 과정을 시뮬레이션한다.</li>
+</ul></div>
+
+<figure class="fig">
+<svg viewBox="0 0 860 260" role="img" aria-label="EUV 스캐너 구성" id="fig1"></svg>
+<figcaption><b>그림 12-1.</b> EUV 스캐너의 빛 경로. 주석 방울(초당 5만 개)을 예비 펄스로 납작하게 편 뒤 주 펄스로 플라스마를 만든다. 집광 거울이 빛을 중간 초점(IF)에 모으고, 조명계 거울들이 마스크를 6° 기울여 비추며, 투영 거울 6장이 4배 축소해 웨이퍼에 맺는다. 모든 것이 진공 속에 있고, 수소 기체가 주석 찌꺼기로부터 거울을 지킨다.</figcaption>
+</figure>
+
+<h2 id="s1"><span class="n">01</span>다층 거울: 약한 반사를 80번 겹치기</h2>
+<p>13.5 nm에서 모든 물질의 굴절률은 1에 매우 가깝다(몰리브덴 0.924, 실리콘 0.999). 경계 하나의 반사율은 0.1 %도 안 된다. 그러나 반사가 일어나는 경계를 반 파장(약 6.9 nm) 간격으로 80개 쌓으면, 각 경계에서 반사된 약한 빛들이 같은 위상으로 더해져(브래그 조건) 70 % 가까이 반사된다. 대신 파장이 조금만 달라져도 위상이 어긋나 반사율이 급격히 떨어지므로 대역폭은 약 0.5 nm로 좁다. 모든 거울의 주기가 정확히 맞아야 하고, 경계의 원자 단위 거칠기도 반사율을 깎는다.</p>
+<div class="eq">$$2d\cos\theta = m\lambda,\qquad r_{Mo/Si} = \frac{\tilde n_{Si} - \tilde n_{Mo}}{\tilde n_{Si} + \tilde n_{Mo}} \approx 0.04,\qquad R_N \propto N^2|r|^2\ (N\text{이 작을 때})$$<div class="note">d: 한 쌍의 두께(≈ 6.9 nm), Γ = d<sub>Mo</sub>/d ≈ 0.4, N: 쌍의 수. N이 커지면 흡수 때문에 포화한다. 실제 계산은 아래 실험처럼 경계마다 프레넬 반사를 차례로 합성한다.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-1</span><span class="ttl">Mo/Si 다층 거울 반사율</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">쌍의 수 N <output data-o="n"></output></span><input type="range" data-k="n" min="1" max="80" step="1" value="40" data-d="0"></label>
+      <label class="ctrl"><span class="lab">주기 d <output data-o="d"></output></span><input type="range" data-k="d" min="6.5" max="7.4" step="0.01" value="6.95" data-d="2" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">Mo 비율 Γ <output data-o="g"></output></span><input type="range" data-k="g" min="0.15" max="0.8" step="0.01" value="0.4" data-d="2"></label>
+      <label class="ctrl"><span class="lab">입사각 (수직 기준) <output data-o="a"></output></span><input type="range" data-k="a" min="0" max="20" step="0.5" value="6" data-d="1" data-u="°"></label>
+      <label class="ctrl"><span class="lab">경계 거칠기 σ <output data-o="s"></output></span><input type="range" data-k="s" min="0" max="0.8" step="0.02" value="0.2" data-d="2" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">최대 반사율 / 파장</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">13.5 nm에서 반사율</span><span class="v" data-r="r135"></span></div>
+      <div class="ro"><span class="k">대역폭 (반치폭)</span><span class="v" data-r="bw"></span></div>
+      <div class="ro"><span class="k">거울 10장 + 마스크 통과율</span><span class="v" data-r="t"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 파장에 따른 반사율(빨강). 회색 띠는 13.5 nm ± 2 %(광원 대역). 오른쪽: 쌍의 수에 따른 13.5 nm 반사율. 처음에는 N²에 비례해 늘다가, 빛이 깊이 들어가기 전에 흡수되므로 40쌍 근처에서 포화한다. 몰리브덴 비율 Γ는 흡수(Mo가 더 흡수)와 반사 대비의 타협점이다. 굴절률: Mo 0.9238 + 0.0064i, Si 0.9990 + 0.0018i.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>마스크 3D 효과: 비스듬한 빛이 드리우는 그림자</h2>
+<p>반사 마스크는 들어오는 빛과 나가는 빛이 겹치지 않도록 수직에서 약 6° 기울여 비춘다. 마스크 위의 흡수체(탄탈럼 화합물)는 두께가 60 nm로, 무늬 폭(웨이퍼 기준 16 nm면 마스크에서 64 nm)과 비슷하다. 비스듬한 빛은 흡수체 옆으로 그림자를 드리우는데, 그림자는 조명 방향에 수직인 선에만 생긴다. 그래서 같은 마스크 선폭이라도 가로선과 세로선이 다르게 찍히고(<b>수평–수직 바이어스</b>), 최적 초점이 피치마다 달라지며, 무늬 위치가 초점에 따라 옆으로 밀린다(텔레센트릭 오차). 해결책은 더 얇게도 빛을 잘 막는 고흡수 물질이나, 위상을 이용하는 저굴절률(low-n) 흡수체다.</p>
+<div class="eq">$$w_{shadow} \approx h_{abs}\tan\theta_{CRA}\times 2\ (\text{입사·반사}),\qquad \Delta CD_{HV} \approx \frac{w_{shadow}}{M}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-2</span><span class="ttl">반사 마스크 그림자</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">흡수체 두께 <output data-o="h"></output></span><input type="range" data-k="h" min="20" max="90" step="1" value="60" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">주광선 입사각 <output data-o="a"></output></span><input type="range" data-k="a" min="0" max="12" step="0.1" value="6" data-d="1" data-u="°"></label>
+      <label class="ctrl"><span class="lab">마스크 무늬 폭 (4×) <output data-o="w"></output></span><input type="range" data-k="w" min="40" max="200" step="2" value="64" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">선 방향</span><select data-k="o"><option value="v" selected>입사면에 수직 (그림자 생김)</option><option value="h">입사면에 나란 (그림자 없음)</option></select></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">마스크 위 그림자 폭</span><span class="v" data-r="sh"></span></div>
+      <div class="ro"><span class="k">웨이퍼에서 유효 틈 폭</span><span class="v" data-r="eff"></span></div>
+      <div class="ro"><span class="k">수평–수직 CD 차이 (웨이퍼)</span><span class="v" data-r="hv"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 마스크 단면: 아래는 Mo/Si 다층막(줄무늬), 위의 검은 기둥은 흡수체, 그 사이 틈이 반사되는 "밝은 무늬"다. 노란 선은 비스듬히 들어와 반사되는 빛, 회색 영역은 흡수체에 가려 반사되지 못하는 그림자다. 선 방향을 바꾸면 그림자가 사라진다. 실제로는 빛이 다층막 속 수십 nm 깊이에서 반사되어 그림자가 더 커진다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🏙️</span><b>해 질 녘 빌딩 그림자</b><span>한낮(수직 조명)에는 빌딩 사이 골목 바닥까지 햇빛이 들지만, 해가 기울면 빌딩 그림자가 골목을 덮는다. 골목이 해를 향해 남북으로 나 있으면(빛과 나란) 그림자가 안 생기고, 동서로 나 있으면(빛과 수직) 그림자가 생긴다. EUV 마스크의 흡수체는 골목 폭에 비해 너무 높은 빌딩이다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>광자가 모자라다: 확률적 결함</h2>
+<p>EUV 광자 하나의 에너지는 92 eV로 ArF의 14배다. 같은 노광량에서 광자 수가 14분의 1이고, 그중 감광액이 흡수하는 것은 20 % 남짓이다. 20 nm 접촉 구멍 하나가 흡수하는 광자는 수백 개에 불과하고, 푸아송 요동은 √N이므로 구멍마다 크기가 5~10 % 흔들린다. 수백억 개 중 몇 개는 광자를 아주 적게 받아 아예 열리지 않는다(막힘). 칩 하나에 구멍이 10¹⁰개라면 구멍 하나의 실패 확률은 10⁻¹²보다 작아야 한다. 확률 꼬리를 줄이려면 노광량을 올리거나(처리량 손해), 흡수가 큰 감광액을 써야 한다.</p>
+<div class="eq">$$\bar N = \frac{D\,A\,\eta_{abs}}{E_{ph}},\qquad P(\text{막힘}) = P(N < N_{th}) = \sum_{k < N_{th}} \frac{\bar N^k e^{-\bar N}}{k!},\qquad \frac{\sigma_{CD}}{CD} \approx \frac{1}{2\sqrt{\bar N}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-3</span><span class="ttl">접촉 구멍 샷 노이즈</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">노광량 <output data-o="d"></output></span><input type="range" data-k="d" min="10" max="120" step="1" value="40" data-d="0" data-u="mJ/cm²"></label>
+      <label class="ctrl"><span class="lab">구멍 지름 <output data-o="cd"></output></span><input type="range" data-k="cd" min="12" max="40" step="1" value="20" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">감광액 흡수율 <output data-o="ab"></output></span><input type="range" data-k="ab" min="0.05" max="0.5" step="0.01" value="0.2" data-d="2"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b3r">다른 웨이퍼</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">구멍당 평균 흡수 광자</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">구멍 크기 산포 3σ (LCDU)</span><span class="v" data-r="lcdu"></span></div>
+      <div class="ro"><span class="k">구멍 하나의 막힘 확률</span><span class="v" data-r="p"></span></div>
+      <div class="ro"><span class="k">칩 하나(10¹⁰개)의 막힌 구멍</span><span class="v" data-r="chip"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 구멍 192개(실제 크기 비례로 그림). 원 크기는 흡수한 광자 수에 비례하고, 빨간 ×는 열리지 않은 구멍이다. 광자 외에 산·퀜처 분자 수의 요동까지 반영하려고 흡수 광자의 15 %를 "유효 사건 수"로 세고, 열림 문턱은 기준 조건(40 mJ/cm², 흡수 0.2) 평균의 60 %로 고정했다. 오른쪽: 노광량에 따른 막힘 확률(로그 눈금). 빨간 선은 칩당 1개 수준(10⁻¹⁰). 노광량을 조금만 바꿔도 확률이 수십 자릿수 변한다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> EUV 광원 출력을 두 배로 올리면 무엇을 얻을까?</p><p>같은 노광량이면 처리량이 오르고, 같은 처리량이면 노광량을 두 배로 올려 확률적 결함을 수십 자릿수 줄일 수 있다. 실제로 팹은 광원 출력이 오를 때마다 처리량과 노광량 사이에서 균형을 다시 잡는다. 광원 출력 250 W에서 600 W 이상으로 가는 개발이 계속되는 이유다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">EUV 노광기가 렌즈 대신 거울을 쓰는 이유는?</p><ol><li>거울이 더 싸서</li><li>NA를 키우기 쉬워서</li><li>13.5 nm 빛을 통과시키는 투명한 물질이 없어서</li><li>마스크를 4배로 키우기 위해</li></ol>
+<p class="explain">모든 물질이 13.5 nm를 강하게 흡수하므로 반사 광학만 가능하다. 공기도 흡수하므로 진공이 필요하다.</p></div>
+<div class="quiz" data-a="0"><p class="q">Mo/Si 다층막 한 쌍의 두께가 약 6.9 nm인 이유는?</p><ol><li>반 파장 간격으로 쌓아야 반사가 같은 위상으로 더해지기 때문(브래그 조건)</li><li>몰리브덴 원자 크기 때문</li><li>마스크를 4배 축소하기 때문</li><li>흡수를 최대로 하려고</li></ol>
+<p class="explain">2d cos θ = λ → d ≈ 13.5/2 ≈ 6.8~7 nm.</p></div>
+<div class="quiz" data-a="3"><p class="q">평균 400개의 광자를 흡수하는 구멍의 광자 수 상대 요동 σ/N은?</p><ol><li>0.25 %</li><li>2.5 %</li><li>20 %</li><li>5 %</li></ol>
+<p class="explain">√400/400 = 20/400 = 5 %.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 복소수 (간단) */
+const C = (re, im = 0) => ({re, im}), ca = (a, b) => C(a.re + b.re, a.im + b.im), cs = (a, b) => C(a.re - b.re, a.im - b.im), cm = (a, b) => C(a.re*b.re - a.im*b.im, a.re*b.im + a.im*b.re);
+const cd = (a, b) => { const d = b.re*b.re + b.im*b.im; return C((a.re*b.re + a.im*b.im)/d, (a.im*b.re - a.re*b.im)/d); }, ce = a => { const e = Math.exp(a.re); return C(e*Math.cos(a.im), e*Math.sin(a.im)); };
+const csqrt = a => { const r = Math.hypot(a.re, a.im), t = Math.atan2(a.im, a.re)/2, s = Math.sqrt(r); return C(s*Math.cos(t), s*Math.sin(t)); };
+const NMO = C(0.9238, 0.0064), NSI = C(0.9990, 0.0018);
+function mlR(lam, N, d, g, ang, sig){ const s0 = Math.sin(ang*Math.PI/180), cosj = n => csqrt(cs(C(1), cm(C(s0*s0), cd(C(1), cm(n, n))))); // cosθ_j = sqrt(1 − sin²θ₀/n²)
+  const layers = []; for(let i = 0; i < N; i++){ layers.push({n:NSI, t:d*(1 - g)}); layers.push({n:NMO, t:d*g}); } // 위에서부터 Si, Mo ... (맨 위 Si 캡)
+  const sub = NSI; let G = C(0); const k0 = 2*Math.PI/lam, rough = Math.exp(-2*Math.pow(k0*sig*Math.cos(ang*Math.PI/180), 2));
+  const q = n => cm(n, cosj(n)); // s편광 유효 굴절률
+  // 아래(기판)부터
+  let below = sub; G = C(0);
+  for(let i = layers.length - 1; i >= -1; i--){ const above = i >= 0 ? layers[i].n : C(1), me = i + 1 < layers.length ? layers[i + 1].n : sub;
+    let r = cd(cs(q(above), q(me)), ca(q(above), q(me))); r = C(r.re*rough, r.im*rough);
+    if(i + 1 >= layers.length){ G = r; continue; }
+    const t = layers[i + 1].t, ph = ce(cm(C(0, 2*k0*t), q(me))), GG = cm(G, ph); G = cd(ca(r, GG), ca(C(1), cm(r, GG))); }
+  return G.re*G.re + G.im*G.im; }
+
+/* 그림 12-1 */
+(function(){
+  const s = J.$('#fig1'); if(!s) return;
+  J.live(() => { s.innerHTML = ''; const ink2 = J.c('--ink2');
+    const lab = (x, y, t, a = 'middle') => { const e = J.svg('text', {x, y, 'text-anchor':a, 'font-size':12, fill:ink2}, s); e.textContent = t; };
+    J.svg('circle', {cx:70, cy:180, r:10, fill:J.c('--plum')}, s); lab(70, 215, '주석 플라스마');
+    J.svg('path', {d:'M30,150 Q70,120 110,150', fill:'none', stroke:J.c('--indigo'), 'stroke-width':4}, s); lab(70, 135, '집광 거울');
+    J.svg('line', {x1:5, y1:180, x2:58, y2:180, stroke:J.c('--red'), 'stroke-width':2, 'stroke-dasharray':'4 3'}, s); lab(10, 196, 'CO₂ 레이저', 'start');
+    const path = [[70, 180], [190, 80], [300, 160], [400, 60], [500, 30], [560, 200], [640, 80], [700, 190], [760, 70], [820, 230]];
+    J.svg('polyline', {points:path.map(p => p.join(',')).join(' '), fill:'none', stroke:J.c('--gold'), 'stroke-width':2.5, opacity:.9}, s);
+    J.svg('circle', {cx:190, cy:80, r:4, fill:J.c('--red')}, s); lab(190, 68, '중간 초점');
+    [[300, 160, '조명 거울'], [400, 60, '조명 거울']].forEach(([x, y, t]) => { J.svg('rect', {x:x - 22, y:y - 4, width:44, height:8, fill:J.c('--indigo'), rx:2}, s); lab(x, y + (y > 100 ? 24 : -12), t); });
+    J.svg('rect', {x:470, y:18, width:70, height:10, fill:'#333'}, s); lab(505, 12, '반사 마스크 (6° 조명)');
+    [[560, 200], [640, 80], [700, 190], [760, 70]].forEach(([x, y]) => J.svg('rect', {x:x - 18, y:y - 4, width:36, height:8, fill:J.c('--jade'), rx:2}, s)); lab(660, 240, '투영 거울 6장 (4× 축소)');
+    J.svg('rect', {x:790, y:232, width:60, height:8, fill:'#8f96a3'}, s); lab(820, 254, '웨이퍼');
+    J.svg('rect', {x:2, y:2, width:856, height:256, rx:12, fill:'none', stroke:J.c('--line'), 'stroke-dasharray':'6 4'}, s); lab(850, 18, '진공 + 수소', 'end'); });
+})();
+
+/* 12-1 */
+(function(){
+  const box = J.$('#sim1');
+  J.sim('sim1', v => { const pts = []; let best = {r:0, l:0};
+    for(let l = 12.6; l <= 14.4; l += 0.01){ const r = mlR(l, v.n, v.d, v.g, v.a, v.s); pts.push([l, r]); if(r > best.r) best = {r, l}; }
+    let lo = null, hi = null; pts.forEach(([l, r]) => { if(r >= best.r/2){ if(lo === null) lo = l; hi = l; } });
+    J.plot(J.$('#cv1a'), {x:[12.6, 14.4], y:[0, 0.8], xlab:'파장 (nm)', ylab:'반사율', series:[{pts, color:'--red', w:3, fill:.12}], bands:[{x0:13.5*0.99, x1:13.5*1.01, color:'--ink3', alpha:.15}], vlines:[{x:13.5, color:'--ink3'}]});
+    const np = []; for(let n = 1; n <= 80; n += 1) np.push([n, mlR(13.5, n, v.d, v.g, v.a, v.s)]);
+    J.plot(J.$('#cv1b'), {x:[0, 80], y:[0, 0.8], xlab:'쌍의 수 N', ylab:'13.5 nm 반사율', series:[{pts:np, color:'--indigo', w:3}], points:[{x:v.n, y:mlR(13.5, v.n, v.d, v.g, v.a, v.s), color:'--red', r:6}]});
+    const r135 = mlR(13.5, v.n, v.d, v.g, v.a, v.s);
+    J.out(box, 'r', J.fmt(best.r*100, 1) + ' % @ ' + J.fmt(best.l, 2) + ' nm'); J.out(box, 'r135', J.fmt(r135*100, 1) + ' %', r135 > 0.65 ? 'good' : r135 > 0.5 ? 'warn' : 'bad');
+    J.out(box, 'bw', lo !== null ? J.fmt(hi - lo, 2) + ' nm' : '—'); J.out(box, 't', J.sci(Math.pow(r135, 11)*100, 2) + ' %'); });
+})();
+
+/* 12-2 그림자 */
+(function(){
+  const box = J.$('#sim2');
+  J.sim('sim2', v => { const a = v.a*Math.PI/180, sh = v.o === 'v' ? 2*v.h*Math.tan(a) : 0, eff = Math.max(0, v.w - sh), hv = 2*v.h*Math.tan(a)/4;
+    const {ctx, w, h} = J.fit(J.$('#cv2')); ctx.clearRect(0,0,w,h);
+    const span = 3*v.w + 2*120, sc = (w - 40)/span, ox = 20, base = h - 70, X = x => ox + x*sc, hh = v.h*sc;
+    for(let i = 0; i < 12; i++){ ctx.fillStyle = i % 2 ? '#c9b48a' : '#9fb7d6'; ctx.fillRect(ox, base + i*4, span*sc, 4); }
+    const abs = []; for(let i = 0; i <= 3; i++) abs.push([i*(v.w + 120) - 120 + 0, i*(v.w + 120)]); // 흡수체 [x0, x1]
+    abs.forEach(([a0, a1]) => { const x0 = Math.max(0, a0), x1 = Math.min(span, a1); if(x1 > x0){ ctx.fillStyle = '#2a2a30'; ctx.fillRect(X(x0), base - hh, (x1 - x0)*sc, hh); } });
+    // 틈마다 그림자와 광선
+    for(let i = 0; i < 3; i++){ const g0 = i*(v.w + 120), g1 = g0 + v.w;
+      if(v.o === 'v'){ ctx.fillStyle = 'rgba(60,60,60,.35)'; ctx.fillRect(X(g0), base - hh, Math.min(sh, v.w)*sc, hh + 2); }
+      ctx.strokeStyle = 'rgba(240,190,40,.85)'; ctx.lineWidth = 1.4;
+      for(let x = g0 + 3; x < g1; x += Math.max(4, v.w/10)){ const t = v.o === 'v' ? Math.tan(a) : 0, xin = x - t*(base - 20)/sc*1, blockedIn = v.o === 'v' && x - g0 < v.h*Math.tan(a), blockedOut = v.o === 'v' && x - g0 < 2*v.h*Math.tan(a) && !blockedIn;
+        ctx.globalAlpha = blockedIn ? 0.25 : 1; ctx.beginPath(); ctx.moveTo(X(x) - t*(base - 20), 20); ctx.lineTo(X(x), base); ctx.stroke();
+        if(!blockedIn){ ctx.globalAlpha = blockedOut ? 0.25 : 1; ctx.beginPath(); ctx.moveTo(X(x), base); ctx.lineTo(X(x) + t*(base - 20), 20); ctx.stroke(); } ctx.globalAlpha = 1; } }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('Mo/Si 다층막', ox + 4, base + 62); ctx.fillText('흡수체 ' + v.h + ' nm', ox + 4, base - hh - 6);
+    J.out(box, 'sh', J.fmt(sh, 1) + ' nm'); J.out(box, 'eff', J.fmt(eff/4, 1) + ' nm (설계 ' + J.fmt(v.w/4, 1) + ')', sh/4 < 1 ? 'good' : sh/4 < 3 ? 'warn' : 'bad'); J.out(box, 'hv', J.fmt(hv, 2) + ' nm', hv < 1 ? 'good' : hv < 2.5 ? 'warn' : 'bad'); });
+})();
+
+/* 12-3 샷 노이즈 */
+(function(){
+  const box = J.$('#sim3'); let seed = 3;
+  const lnP = (k, lam) => { let s = -lam + k*Math.log(lam); for(let i = 2; i <= k; i++) s -= Math.log(i); return s; };
+  const cdf = (nth, lam) => { // P(N < nth)
+    if(nth <= 0) return 0; let m = -Infinity; const terms = []; for(let k = 0; k < nth; k++){ const t = lnP(k, lam); terms.push(t); m = Math.max(m, t); } return Math.exp(m)*terms.reduce((a, t) => a + Math.exp(t - m), 0); };
+  const nbar = (d, cdv, ab) => d*0.68*Math.PI*cdv*cdv/4*ab*0.15; // 유효 사건 수 = 흡수 광자 × 0.15
+  J.sim('sim3', v => { const N = nbar(v.d, v.cd, v.ab), Nth = Math.round(0.6*nbar(40, v.cd, 0.2)), r = J.rng(seed), cols = 16, rows = 12;
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const pitch = Math.min((w - 20)/cols, (h - 20)/rows), ox = (w - pitch*cols)/2, oy = (h - pitch*rows)/2;
+    let miss = 0; for(let j = 0; j < rows; j++) for(let i = 0; i < cols; i++){ const n = Math.max(0, Math.round(N + Math.sqrt(N)*J.gauss(r))), x = ox + (i + .5)*pitch, y = oy + (j + .5)*pitch;
+      if(n < Nth){ miss++; ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 6, y - 6); ctx.lineTo(x + 6, y + 6); ctx.moveTo(x + 6, y - 6); ctx.lineTo(x - 6, y + 6); ctx.stroke(); continue; }
+      const rr = pitch*0.32*Math.sqrt(n/Math.max(N, 1)); ctx.fillStyle = J.c('--indigo'); ctx.beginPath(); ctx.arc(x, y, Math.min(rr, pitch*0.48), 0, 7); ctx.fill(); }
+    const pts = []; for(let d = 5; d <= 120; d += 1){ const p = cdf(Nth, nbar(d, v.cd, v.ab)); pts.push([d, Math.log10(Math.max(1e-30, p))]); }
+    const P = cdf(Nth, N);
+    J.plot(J.$('#cv3b'), {x:[5, 120], y:[-30, 0], xlab:'노광량 (mJ/cm²)', ylab:'막힘 확률 (log₁₀)', yf:t => '10^' + t, series:[{pts, color:'--plum', w:3}], hlines:[{y:-10, color:'--red', label:'칩당 1개'}], points:[{x:v.d, y:Math.log10(Math.max(1e-30, P)), color:'--red', r:6}]});
+    const lcdu = 3*v.cd/(2*Math.sqrt(Math.max(N, 1)));
+    J.out(box, 'n', J.fmt(N/0.15, 0) + ' 개 → 유효 ' + J.fmt(N, 0) + ' (σ ' + J.fmt(100/Math.sqrt(Math.max(N, 1)), 1) + ' %)'); J.out(box, 'lcdu', J.fmt(lcdu, 2) + ' nm', lcdu < 2 ? 'good' : lcdu < 3.5 ? 'warn' : 'bad');
+    J.out(box, 'p', J.sci(P, 2), P < 1e-12 ? 'good' : P < 1e-6 ? 'warn' : 'bad'); J.out(box, 'chip', J.sci(P*1e10, 2) + ' 개', P*1e10 < 0.1 ? 'good' : P*1e10 < 10 ? 'warn' : 'bad'); });
+  J.$('#b3r').onclick = () => { seed++; J.redrawAll(); };
+})();
+</script>
+</body>
+</html>

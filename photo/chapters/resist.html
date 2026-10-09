@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>감광액 화학 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../lith.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="resist">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 06 <span class="hanja">第六章 · 膜</span></div>
+  <h1>감광액 화학</h1>
+  <p class="lead">렌즈가 만든 흐릿한 빛의 무늬(공간 상)를 날카로운 계단으로 바꾸는 것이 감광액(레지스트)이다. KrF 시대 이후 거의 모든 감광액은 <span class="term">화학 증폭형</span>(CAR)이다. 광자 하나가 산(H⁺) 하나를 만들고, 노광 후 굽기(PEB) 동안 그 산이 촉매처럼 돌아다니며 고분자 사슬의 보호기 수백 개를 떼어 낸다. 보호기가 떨어진 고분자는 알칼리 현상액에 녹는다. 증폭 덕분에 적은 빛으로도 노광되지만, 산이 퍼지는 만큼 상이 흐려지고, 광자와 산의 수가 적으면 가장자리가 울퉁불퉁해진다. 이 장은 해상도·감도·거칠기의 삼각 관계(RLS)를 시뮬레이션한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>광산 발생제(PAG) → 산 → PEB 탈보호 → 현상으로 이어지는 화학 증폭 과정을 안다.</li>
+  <li>산 확산 길이와 염기(퀜처)가 상의 선명도와 선 가장자리 거칠기(LER)에 주는 영향을 확률 시뮬레이션으로 본다.</li>
+  <li>대비 곡선(γ)으로 공간 상이 감광액 측벽 형상으로 바뀌는 과정을 계산한다.</li>
+  <li>현상 속도 모형(맥 모형)으로 현상 전선이 감광액을 파고드는 모습을 본다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>화학 증폭과 산의 산책</h2>
+<p>CAR 감광액은 세 가지 재료로 이루어진다. 보호기(t-BOC 등)가 붙어 현상액에 녹지 않는 <b>고분자</b>, 빛을 받으면 강산을 내놓는 <b>광산 발생제(PAG)</b>, 그리고 빛을 덜 받은 곳에 생긴 소량의 산을 잡아먹는 <b>퀜처(염기)</b>. 노광 직후에는 산만 생기고 아무 변화가 없다. 100 °C 안팎의 PEB에서 산이 수 nm를 확산하며 보호기를 떼어 내고(탈보호), 산 자신은 다시 살아나 반응을 되풀이한다. 산이 너무 멀리 가면 무늬가 흐려지고, 너무 덜 가면 광자 수의 요동이 가장자리에 그대로 새겨진다.</p>
+<div class="eq">$$[A](\mathbf r) = \bigl(\,\text{Poisson}(\phi\, D\, I(\mathbf r)) - [Q]\,\bigr) * G_{L_d},\qquad m = e^{-k[A]t_{PEB}},\qquad \text{녹음} \iff m < m_{th}$$<div class="note">φ: 광자당 산 생성 수율, D: 노광량, G<sub>L_d</sub>: 확산 길이 L<sub>d</sub>의 가우스 흐림, m: 남은 보호기 비율. EUV 광자 한 개의 에너지(92 eV)는 ArF(6.4 eV)의 14배라, 같은 노광량이면 광자 수가 14분의 1이다.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-1</span><span class="ttl">화학 증폭 확률 시뮬레이터 (선·간격 30 nm)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">광원</span><select data-k="src"><option value="arf">ArF (광자 6.4 eV)</option><option value="euv" selected>EUV (광자 92 eV)</option></select></label>
+      <label class="ctrl"><span class="lab">노광량 <output data-o="d"></output></span><input type="range" data-k="d" min="5" max="100" step="1" value="30" data-d="0" data-u="mJ/cm²"></label>
+      <label class="ctrl"><span class="lab">산 확산 길이 L_d <output data-o="ld"></output></span><input type="range" data-k="ld" min="1" max="12" step="0.5" value="4" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">퀜처 양 <output data-o="q"></output></span><input type="range" data-k="q" min="0" max="0.6" step="0.02" value="0.2" data-d="2" data-u="× 산"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b1r">다른 웨이퍼 (새 난수)</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">흡수 광자 (밝은 곳)</span><span class="v" data-r="ph"></span></div>
+      <div class="ro"><span class="k">평균 CD (트렌치)</span><span class="v" data-r="cd"></span></div>
+      <div class="ro"><span class="k">LER 3σ</span><span class="v" data-r="ler"></span></div>
+      <div class="ro"><span class="k">결함 (끊김·붙음)</span><span class="v" data-r="def"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 위에서 본 감광액(가로 120 nm × 세로 120 nm, 1 칸 = 1 nm). 노란 점은 흡수된 광자(일부만 표시), 색은 PEB 후 탈보호 정도(밝을수록 녹음), 흰 선은 현상 경계. 오른쪽: 가로 방향 평균 탈보호 정도(보라)와 공간 상(회색 점선). 노광량을 낮추면 광자 수가 줄어 경계가 거칠어지고, 확산을 늘리면 매끈해지지만 대비가 떨어진다. 이것이 RLS 삼각 관계다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🧪</span><b>효소와 촉매</b><span>산은 반응에 쓰이고도 사라지지 않는 촉매다. 하나의 산이 PEB 1분 동안 수백 개의 보호기를 떼어 낸다. 마치 효소 하나가 수많은 분자를 분해하는 것과 같다. 덕분에 감도가 100배 좋아졌지만, 공기 중 미량의 아민(염기)이 표면의 산을 중화해 무늬 윗부분이 녹지 않는 "T-top" 문제가 생겨 팹 공기를 화학 필터로 거르게 되었다.</span></div>
+
+<h2 id="s2"><span class="n">02</span>대비 곡선: 흐린 상을 계단으로</h2>
+<p>균일한 노광량으로 감광액을 노광하고 현상한 뒤 남은 두께를 노광량(로그)에 대해 그리면 <span class="term">대비 곡선</span>이 된다. 노광량이 D₀보다 작으면 거의 녹지 않고, D<sub>E</sub>(dose-to-clear) 이상이면 완전히 녹는다. 그 사이 기울기가 감광액 대비 γ다. γ가 클수록 흐린 공간 상도 가파른 측벽으로 바뀐다. 감광액이 받는 실제 노광량은 공간 상 I(x)에 비례하므로, 공간 상의 로그 기울기(NILS)와 γ의 곱이 측벽의 가파름을 정한다.</p>
+<div class="eq">$$\frac{T}{T_0} = \gamma\,\log_{10}\!\frac{D_E}{D}\quad (D_0 < D < D_E),\qquad \gamma = \frac{1}{\log_{10}(D_E/D_0)}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-2</span><span class="ttl">대비 곡선과 측벽</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">감광액 대비 γ <output data-o="g"></output></span><input type="range" data-k="g" min="1" max="15" step="0.5" value="6" data-d="1"></label>
+      <label class="ctrl"><span class="lab">공간 상 NILS <output data-o="n"></output></span><input type="range" data-k="n" min="0.5" max="4" step="0.1" value="2" data-d="1"></label>
+      <label class="ctrl"><span class="lab">노광량 / D_E <output data-o="e"></output></span><input type="range" data-k="e" min="0.8" max="2.5" step="0.05" value="1.4" data-d="2"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">D₀ / D_E</span><span class="v" data-r="d0"></span></div>
+      <div class="ro"><span class="k">바닥 CD / 윗면 CD (피치 80 nm)</span><span class="v" data-r="cd"></span></div>
+      <div class="ro"><span class="k">측벽 기울기</span><span class="v" data-r="swa"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 대비 곡선(가로 = 노광량 로그). 오른쪽: 위 = 공간 상(사인 모양, NILS로 진폭 조절), 아래 = 현상 후 남은 감광액 단면(보라). γ가 크고 NILS가 클수록 측벽이 수직에 가깝다. 노광량을 높이면 트렌치(녹은 부분)가 넓어진다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>현상: 녹는 속도의 지도</h2>
+<p>현상은 한순간에 일어나지 않는다. 감광액의 각 지점은 탈보호 정도에 따라 정해진 속도로 녹고, 현상액은 표면에서 아래로, 옆으로 파고든다. 감광액이 빛을 흡수하므로 아래쪽은 노광량이 적어 덜 녹는다. 그래서 현상 시간이 짧으면 바닥이 남고(스컴), 길면 윗부분이 깎여 측벽이 기운다. 이 과정을 맥(Mack) 현상 속도 모형과 최단 도달 시간 계산으로 재현한다.</p>
+<div class="eq">$$R(m) = R_{max}\,\frac{(a+1)(1-m)^n}{a + (1-m)^n} + R_{min},\qquad m(x,z) = \exp\!\bigl(-C\,D\,I(x)\,e^{-\alpha z}\bigr)$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-3</span><span class="ttl">현상 전선 애니메이션</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">흡수 계수 α <output data-o="a"></output></span><input type="range" data-k="a" min="0" max="12" step="0.5" value="4" data-d="1" data-u="/µm"></label>
+      <label class="ctrl"><span class="lab">현상 선택성 n <output data-o="n"></output></span><input type="range" data-k="n" min="2" max="24" step="1" value="14" data-d="0"></label>
+      <label class="ctrl"><span class="lab">노광량 (상대) <output data-o="d"></output></span><input type="range" data-k="d" min="0.4" max="2.5" step="0.05" value="0.75" data-d="2"></label>
+      <label class="ctrl"><span class="lab">현상 시간 <output data-o="t"></output></span><input type="range" data-k="t" min="1" max="90" step="1" value="30" data-d="0" data-u="s"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b3p">현상 재생</button><span class="hint" id="b3s"></span></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">바닥이 뚫리는 시간</span><span class="v" data-r="tc"></span></div>
+      <div class="ro"><span class="k">바닥 CD / 윗면 CD</span><span class="v" data-r="cd"></span></div>
+      <div class="ro"><span class="k">상태</span><span class="v" data-r="st"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 감광액 단면(가로 160 nm, 두께 100 nm). 색은 녹는 속도(밝을수록 빠름), 진한 보라는 아직 남은 감광액, 흰 선은 현재 현상 전선. 오른쪽: 현상 속도 곡선 R(m). n이 클수록 문턱처럼 급격히 바뀌어 측벽이 수직에 가까워진다. 흡수가 크면 바닥이 늦게 뚫려 측벽이 기운다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> EUV 감광액은 왜 금속 산화물(주석 등)로 바꾸려 할까?</p><p>EUV 광자는 수가 적어서, 흡수를 늘려 한 개라도 더 붙잡아야 한다. 탄소·수소 위주 고분자는 13.5 nm를 잘 흡수하지 못하지만 주석(Sn), 하프늄 같은 금속은 흡수가 몇 배 크다. 금속 산화물 감광액(MOR)은 산 확산 대신 직접 결합이 바뀌는 방식이라 흐림도 작다. 대신 음성 톤이고 금속 오염 관리가 필요하다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">화학 증폭형 감광액에서 실제로 고분자를 녹게 만드는 반응이 주로 일어나는 단계는?</p><ol><li>노광 중</li><li>노광 후 굽기(PEB) 중</li><li>현상 후</li><li>소프트 베이크 중</li></ol>
+<p class="explain">노광은 산만 만들고, PEB의 열에서 산이 촉매로 탈보호 반응을 일으킨다.</p></div>
+<div class="quiz" data-a="3"><p class="q">산 확산 길이를 늘리면 일반적으로?</p><ol><li>LER과 해상도가 모두 좋아진다</li><li>LER과 해상도가 모두 나빠진다</li><li>감도가 떨어진다</li><li>LER은 줄지만 상이 흐려져 해상도가 나빠진다</li></ol>
+<p class="explain">확산은 요동을 평균해 거칠기를 줄이지만 동시에 상을 흐리게 한다(RLS 삼각 관계).</p></div>
+<div class="quiz" data-a="2"><p class="q">같은 노광량 30 mJ/cm²에서 EUV 광자 수는 ArF 광자 수의 약 몇 분의 1인가?</p><ol><li>2</li><li>7</li><li>14</li><li>100</li></ol>
+<p class="explain">광자 에너지 비 92 eV / 6.4 eV ≈ 14. 그래서 EUV는 샷 노이즈가 훨씬 크다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 6-1 확률 시뮬레이터 */
+(function(){
+  const box = J.$('#sim1'), W = 120, H = 120, P = 60; let seed = 3;
+  const gblur = (A, s) => { if(s < 0.3) return A; const R = Math.ceil(2.5*s), k = []; let S = 0; for(let j = -R; j <= R; j++){ const v = Math.exp(-j*j/(2*s*s)); k.push(v); S += v; } k.forEach((v, i) => k[i] = v/S);
+    const T = new Float32Array(W*H), O = new Float32Array(W*H);
+    for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){ let a = 0; for(let j = -R; j <= R; j++) a += A[y*W + ((x + j) % W + W) % W]*k[j + R]; T[y*W + x] = a; }
+    for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){ let a = 0; for(let j = -R; j <= R; j++) a += T[((y + j) % H + H) % H*W + x]*k[j + R]; O[y*W + x] = a; }
+    return O; };
+  const pois = (r, lam) => { if(lam > 30) return Math.max(0, Math.round(lam + Math.sqrt(lam)*J.gauss(r))); let L0 = Math.exp(-lam), k = 0, p = 1; do{ k++; p *= r(); } while(p > L0); return k - 1; };
+  const aer = L.image({p:P, lam:13.5, na:0.33, src:L.source('dip', 0.6, 0, 0.25, 0.05), coef:L.coefLS(0.5), N:P}); // 1 nm 간격
+  let mx = 0; aer.forEach(v => mx = Math.max(mx, v)); const Ix = Array.from(aer, v => v/mx);
+  function run(v){
+    const r = J.rng(seed), ppm = v.src === 'euv' ? 0.68*0.1 : 9.7*0.05, yieldAcid = v.src === 'euv' ? 2.2 : 0.35;
+    const ph = new Float32Array(W*H), A = new Float32Array(W*H), dots = [];
+    for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){ const I = Ix[(x + P/2) % P], n = pois(r, v.d*ppm*I); ph[y*W + x] = n; if(n && dots.length < 1800 && r() < 0.3) dots.push([x, y]);
+      A[y*W + x] = n ? pois(r, n*yieldAcid) : 0; }
+    const meanA = v.d*ppm*yieldAcid; // 밝은 곳 평균 산
+    for(let i = 0; i < W*H; i++) A[i] -= pois(r, v.q*meanA);
+    const B = gblur(A, v.ld), m = new Float32Array(W*H), k = 2.3/meanA;
+    for(let i = 0; i < W*H; i++) m[i] = 1 - Math.exp(-k*Math.max(0, B[i]));
+    return {m, dots, ppm};
+  }
+  let V = null;
+  const draw = () => { const v = V, {m, dots, ppm} = run(v), th = 0.5;
+    const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const s = Math.min(w, h)/W, ox = (w - s*W)/2;
+    const img = ctx.createImageData(W, H); for(let i = 0; i < W*H; i++){ const t = m[i]; img.data[i*4] = 60 + 190*t; img.data[i*4 + 1] = 30 + 120*t*t; img.data[i*4 + 2] = 120 + 60*t; img.data[i*4 + 3] = 255; }
+    const off = document.createElement('canvas'); off.width = W; off.height = H; off.getContext('2d').putImageData(img, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(off, ox, 0, s*W, s*H);
+    ctx.fillStyle = 'rgba(255,220,60,.75)'; dots.forEach(([x, y]) => ctx.fillRect(ox + x*s, y*s, Math.max(1, s*0.7), Math.max(1, s*0.7)));
+    // 경계와 LER: 각 행에서 트렌치(가운데 x=0, 60) 왼쪽·오른쪽 가장자리
+    const edges = [[], [], [], []]; let def = 0, cds = [];
+    for(let y = 0; y < H; y++){ const row = i => m[y*W + ((i % W) + W) % W] > th;
+      ctx.fillStyle = '#fff'; for(let x = 0; x < W; x++) if(row(x) !== row(x + 1)) ctx.fillRect(ox + (x + 1)*s - 1, y*s, 2, s + .5);
+      [0, P].forEach((c, t) => { if(!row(c)){ def++; return; } let a = c, b = c; while(row(a - 1) && c - a < P - 2) a--; while(row(b + 1) && b - c < P - 2) b++; if(b - a >= P - 3){ def++; return; } edges[2*t].push(a); edges[2*t + 1].push(b); cds.push(b - a + 1); }); }
+    const sd = arr => { if(arr.length < 5) return NaN; const mu = arr.reduce((a, b) => a + b, 0)/arr.length; return Math.sqrt(arr.reduce((a, b) => a + (b - mu)*(b - mu), 0)/arr.length); };
+    const ler = edges.map(sd).filter(isFinite), L3 = ler.length ? 3*ler.reduce((a, b) => a + b, 0)/ler.length : NaN, cd = cds.length ? cds.reduce((a, b) => a + b, 0)/cds.length : 0;
+    const prof = []; for(let x = 0; x < W; x++){ let a = 0; for(let y = 0; y < H; y++) a += m[y*W + x]; prof.push([x - W/2, a/H]); }
+    const ai = []; for(let x = 0; x < W; x++) ai.push([x - W/2, Ix[(x + P/2) % P]]);
+    J.plot(J.$('#cv1b'), {x:[-60, 60], y:[0, 1.05], xlab:'위치 (nm)', ylab:'탈보호 정도 / 세기', series:[{pts:ai, color:'--ink3', w:1.5, dash:[5, 4]}, {pts:prof, color:'--plum', w:3}], hlines:[{y:th, color:'--red', label:'현상 문턱'}]});
+    J.out(box, 'ph', J.fmt(v.d*ppm, 1) + ' 개/nm²'); J.out(box, 'cd', J.fmt(cd, 1) + ' nm', Math.abs(cd - 30) < 3 ? 'good' : 'warn');
+    J.out(box, 'ler', isFinite(L3) ? J.fmt(L3, 1) + ' nm' : '—', L3 < 3 ? 'good' : L3 < 5 ? 'warn' : 'bad'); J.out(box, 'def', def ? def + ' 줄' : '없음', def ? 'bad' : 'good'); };
+  J.sim('sim1', v => { V = v; draw(); });
+  J.$('#b1r').onclick = () => { seed = (seed*7 + 11) % 9973; draw(); };
+})();
+
+/* 6-2 대비 곡선 */
+(function(){
+  const box = J.$('#sim2');
+  J.sim('sim2', v => { const g = v.g, d0 = Math.pow(10, -1/g), T = D => D <= d0 ? 1 : D >= 1 ? 0 : g*Math.log10(1/D);
+    const pts = []; for(let e = -1.2; e <= 0.6; e += 0.01){ const D = Math.pow(10, e); pts.push([D, T(D)]); }
+    J.plot(J.$('#cv2a'), {x:[0.06, 4], y:[0, 1.1], logx:true, xlab:'노광량 / D_E (로그)', ylab:'남은 두께 비율', series:[{pts, color:'--plum', w:3}], vlines:[{x:d0, color:'--ink3', label:'D₀'}, {x:1, color:'--red', label:'D_E'}]});
+    // 공간 상: I = 1 + a cos(2πx/p), NILS at edge (x=p/4): NILS = w*|dI/dx|/I with w=p/2 → π*a/... → a = NILS/π
+    const p = 80, a = Math.min(0.98, v.n/Math.PI), I = x => (1 + a*Math.cos(2*Math.PI*x/p))/(1 + a);
+    const {ctx, w, h} = J.fit(J.$('#cv2b')); ctx.clearRect(0,0,w,h);
+    const L0 = 20, R0 = w - 20, X = x => L0 + (x + p)/(2*p)*(R0 - L0), top = 20, ih = h*0.32, rb = h - 24, rt = rb - h*0.42;
+    ctx.strokeStyle = J.c('--ink3'); ctx.lineWidth = 2; ctx.beginPath(); for(let x = -p; x <= p; x += 1){ const y = top + ih*(1 - I(x)); x === -p ? ctx.moveTo(X(x), y) : ctx.lineTo(X(x), y); } ctx.stroke();
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('공간 상', L0, top - 6);
+    ctx.fillStyle = '#8f96a3'; ctx.fillRect(L0, rb, R0 - L0, 10);
+    ctx.fillStyle = '#9c7bd1'; ctx.beginPath(); ctx.moveTo(L0, rb); for(let x = -p; x <= p; x += 0.5){ const t = T(v.e*I(x)); ctx.lineTo(X(x), rb - t*(rb - rt)); } ctx.lineTo(R0, rb); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = J.c('--ink2'); ctx.fillText('현상 후 감광액 (트렌치 = 밝은 곳)', L0, rt - 8);
+    const width = frac => { let c = 0; for(let x = -p/2; x < p/2; x += 0.1) if(T(v.e*I(x)) <= frac) c += 0.1; return c; };
+    const wb = width(0.02), wt = width(0.98), sw = wb > 0 && wt > wb ? Math.atan(100/((wt - wb)/2))*180/Math.PI : 90;
+    J.out(box, 'd0', J.fmt(d0, 2)); J.out(box, 'cd', J.fmt(wb, 1) + ' / ' + J.fmt(wt, 1) + ' nm', wb > 0 ? '' : 'bad'); J.out(box, 'swa', wb > 0 ? J.fmt(sw, 0) + '° (두께 100 nm 가정)' : '바닥 막힘', sw > 80 ? 'good' : sw > 70 ? 'warn' : 'bad'); });
+})();
+
+/* 6-3 현상 전선 */
+(function(){
+  const box = J.$('#sim3'), NX = 80, NZ = 50, dx = 2, p = 160; let V = null, T = null, tPlay = -1;
+  const heap = () => { const a = []; return {push(k, v){ a.push([k, v]); let i = a.length - 1; while(i > 0){ const j = (i - 1) >> 1; if(a[j][0] <= a[i][0]) break; [a[i], a[j]] = [a[j], a[i]]; i = j; } }, pop(){ const t = a[0], l = a.pop(); if(a.length){ a[0] = l; let i = 0; for(;;){ let s = i; const L = 2*i + 1, R = L + 1; if(L < a.length && a[L][0] < a[s][0]) s = L; if(R < a.length && a[R][0] < a[s][0]) s = R; if(s === i) break; [a[i], a[s]] = [a[s], a[i]]; i = s; } } return t; }, get n(){ return a.length; } }; };
+  const R = (m, n) => { const a = (n + 1)/(n - 1)*Math.pow(1 - 0.28, n), Rmax = 100, Rmin = 0.05; const u = Math.pow(1 - m, n); return Rmax*(a + 1)*u/(a + u) + Rmin; }; // nm/s
+  const aer = x => { const a = 0.9; return (1 + a*Math.cos(2*Math.PI*x/p*2))/(1 + a); }; // 한 창에 트렌치 1개(가운데) — 주기 p/2
+  function solve(v){ const rate = new Float32Array(NX*NZ), t = new Float64Array(NX*NZ).fill(1e9);
+    for(let k = 0; k < NZ; k++) for(let i = 0; i < NX; i++){ const x = (i + .5)*dx - p/2, z = (k + .5)*dx, m = Math.exp(-2*v.d*aer(x)*Math.exp(-v.a*z/1000)); rate[k*NX + i] = R(m, v.n); }
+    const H = heap(); for(let i = 0; i < NX; i++){ t[i] = dx/2/rate[i]; H.push(t[i], i); }
+    const nb = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [-1, 1, 1.414], [1, -1, 1.414], [-1, -1, 1.414]];
+    while(H.n){ const [tt, id] = H.pop(); if(tt > t[id]) continue; const i = id % NX, k = (id - i)/NX;
+      for(const [di, dk, d] of nb){ const ii = i + di, kk = k + dk; if(ii < 0 || ii >= NX || kk < 0 || kk >= NZ) continue; const j = kk*NX + ii, nt = tt + d*dx*2/(rate[id] + rate[j]); if(nt < t[j]){ t[j] = nt; H.push(nt, j); } } }
+    return {rate, t}; }
+  const draw = tNow => { const {rate, t} = T, {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h);
+    const s = Math.min((w - 20)/NX, (h - 30)/NZ), ox = (w - s*NX)/2, oy = 10;
+    for(let k = 0; k < NZ; k++) for(let i = 0; i < NX; i++){ const id = k*NX + i, gone = t[id] <= tNow, r = Math.log10(rate[id] + 0.01)/2;
+      ctx.fillStyle = gone ? `rgba(120,200,255,${0.12 + 0.2*J.clamp(r, 0, 1)})` : `rgb(${Math.round(90 + 90*J.clamp(r, 0, 1))},${Math.round(50 + 60*J.clamp(r, 0, 1))},${Math.round(150 + 60*J.clamp(r, 0, 1))})`; ctx.fillRect(ox + i*s, oy + k*s, s + .5, s + .5); }
+    ctx.fillStyle = '#fff'; for(let k = 0; k < NZ; k++) for(let i = 0; i < NX - 1; i++){ const a = t[k*NX + i] <= tNow, b = t[k*NX + i + 1] <= tNow; if(a !== b) ctx.fillRect(ox + (i + 1)*s - 1, oy + k*s, 2, s + .5); }
+    for(let i = 0; i < NX; i++) for(let k = 0; k < NZ - 1; k++){ const a = t[k*NX + i] <= tNow, b = t[(k + 1)*NX + i] <= tNow; if(a !== b) ctx.fillRect(ox + i*s, oy + (k + 1)*s - 1, s + .5, 2); }
+    ctx.fillStyle = '#8f96a3'; ctx.fillRect(ox, oy + NZ*s, NX*s, 10);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "JetBrains Mono"'; ctx.textAlign = 'right'; ctx.fillText('t = ' + J.fmt(tNow, 0) + ' s', w - 10, h - 6);
+    const wAt = k => { let c = 0; for(let i = NX/4; i < 3*NX/4; i++) if(t[k*NX + i] <= tNow) c++; return c*dx; };
+    const c = Math.floor(NX/2), tc = t[(NZ - 1)*NX + c], wb = wAt(NZ - 1), wt = wAt(2);
+    J.out(box, 'tc', tc < 1e8 ? J.fmt(tc, 1) + ' s' : '뚫리지 않음', tc < 60 ? 'good' : 'warn'); J.out(box, 'cd', J.fmt(wb, 0) + ' / ' + J.fmt(wt, 0) + ' nm');
+    const st = wb === 0 ? '바닥이 덜 녹음 (스컴)' : wt > 56 ? '과현상 (윗면 깎임)' : wt - wb > 14 ? '측벽이 기욺' : '양호';
+    J.out(box, 'st', st, st === '양호' ? 'good' : 'warn'); J.$('#b3s').textContent = tPlay >= 0 ? '재생 중…' : ''; };
+  J.sim('sim3', v => { V = v; T = solve(v); tPlay = -1; draw(v.t);
+    const pts = []; for(let m = 0; m <= 1.0001; m += 0.01) pts.push([m, R(m, v.n)]);
+    J.plot(J.$('#cv3b'), {x:[0, 1], y:[0.05, 200], logy:true, xlab:'남은 보호기 비율 m', ylab:'현상 속도 (nm/s)', series:[{pts, color:'--plum', w:3}]}); });
+  J.$('#b3p').onclick = () => { tPlay = 0; };
+  J.loop(J.$('#cv3a'), dt => { if(tPlay < 0 || !T) return; tPlay += dt*20; if(tPlay >= V.t){ tPlay = -1; draw(V.t); return; } draw(tPlay); });
+})();
+</script>
+</body>
+</html>

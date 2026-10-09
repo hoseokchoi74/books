@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OPC와 계산 리소그래피 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../lith.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="opc">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 10 <span class="hanja">第十章 · 算</span></div>
+  <h1>OPC와 계산 리소그래피</h1>
+  <p class="lead">해상 한계 근처에서는 마스크에 그린 대로 찍히지 않는다. 선 끝은 짧아지고, 모서리는 둥글어지고, 외딴 선과 촘촘한 선은 다른 굵기로 찍힌다. 그렇다면 거꾸로, 찍혔을 때 원하는 모양이 되도록 마스크를 <b>일부러 틀리게</b> 그리면 된다. 이것이 <span class="term">광 근접 보정</span>(OPC)이다. 처음에는 "피치가 이 정도면 2 nm 굵게" 같은 규칙으로 했고, 지금은 칩 전체의 수천억 개 가장자리를 물리 모형으로 시뮬레이션하며 하나하나 옮긴다(모형 기반 OPC). 그 끝에는 마스크를 픽셀 단위로 자유롭게 최적화하는 <span class="term">역 리소그래피</span>(ILT)가 있다. 계산량은 슈퍼컴퓨터 수천 대 분량이고, 요즘은 GPU와 머신러닝이 쓰인다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>피치에 따라 같은 마스크 선폭이 다르게 찍히는 근접 효과를 계산하고 규칙 기반 바이어스 표를 만든다.</li>
+  <li>가장자리를 조각내 EPE(가장자리 위치 오차)만큼 반복해서 옮기는 모형 기반 OPC를 직접 돌린다.</li>
+  <li>비용 함수의 기울기로 마스크 픽셀을 최적화하는 ILT가 곡선 마스크를 만들어 내는 과정을 본다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>근접 효과와 규칙 기반 OPC</h2>
+<p>같은 45 nm 트렌치라도 이웃이 가까이 있으면 이웃의 회절 빛이 겹쳐 더 밝게 찍히고, 혼자 있으면 더 어둡게(좁게) 찍힌다. 조명이 특정 피치에 맞춰져 있으면 피치에 따라 CD가 오르내린다. 가장 단순한 OPC는 피치별로 필요한 마스크 바이어스를 미리 계산해 표로 만들고, 설계를 훑으며 이웃까지 거리에 따라 선폭을 조정하는 것이다(규칙 기반 OPC). 1D 패턴에는 잘 맞지만 2D 모양(선 끝, 모서리)이 복잡해지면 규칙이 폭발한다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-1</span><span class="ttl">피치별 근접 효과와 바이어스 표</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">조명</span><select data-k="src"><option value="conv">일반 σ 0.7</option><option value="ann" selected>환형 0.6/0.9</option><option value="quasar">퀘이사 0.8</option></select></label>
+      <label class="ctrl"><span class="lab">초점 이탈 (OPC는 초점 0에서 계산) <output data-o="z"></output></span><input type="range" data-k="z" min="0" max="100" step="10" value="0" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">OPC 없이 CD 범위 (피치 90~500)</span><span class="v" data-r="r0"></span></div>
+      <div class="ro"><span class="k">OPC 후 CD 범위 (현재 초점)</span><span class="v" data-r="r1"></span></div>
+      <div class="ro"><span class="k">필요한 최대 바이어스</span><span class="v" data-r="bmax"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 목표: 모든 피치에서 트렌치 CD 45 nm (ArF 액침, 피치 90 nm에서 노광량을 맞춤). 왼쪽: 피치별 인쇄 CD. 회색 = 마스크 45 nm 그대로, 빨강 = 피치별 바이어스를 적용한 마스크. 초점을 벗어나면 OPC 결과도 흐트러진다(OPC는 한 조건에서만 정확하다). 오른쪽: 피치별 필요 마스크 바이어스(웨이퍼 기준 nm) = 규칙 표.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>모형 기반 OPC: 가장자리를 조각내 옮기기</h2>
+<p>모형 기반 OPC는 설계 도형의 가장자리를 수십 nm 길이의 조각(fragment)으로 나누고, 각 조각 가운데에 평가점을 둔다. 리소그래피 모형으로 상을 계산해 각 평가점에서 인쇄된 윤곽이 목표에서 얼마나 벗어났는지(<span class="term">EPE</span>, edge placement error)를 재고, 그 반대 방향으로 조각을 옮긴다. 이를 수렴할 때까지 10~20번 되풀이한다. 결과로 선 끝에는 망치머리(hammerhead), 모서리에는 세리프(serif)가 저절로 생긴다.</p>
+<div class="eq">$$\Delta x_j^{(k+1)} = \Delta x_j^{(k)} - \mu\,EPE_j^{(k)},\qquad EPE_j = x_{\text{인쇄}}(j) - x_{\text{목표}}(j)$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-2</span><span class="ttl">조각 OPC 반복기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">광학 흐림 (λ/NA 비례) <output data-o="b"></output></span><input type="range" data-k="b" min="12" max="32" step="1" value="22" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">조각 길이 <output data-o="f"></output></span><input type="range" data-k="f" min="8" max="48" step="4" value="12" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">이동 비율 μ <output data-o="mu"></output></span><input type="range" data-k="mu" min="0.2" max="1.4" step="0.1" value="0.7" data-d="1"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b2s">1회 반복</button><button class="sbtn" id="b2a">자동 반복</button><button class="sbtn warn" id="b2r">처음으로</button><span class="hint" id="b2h"></span></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">반복 횟수</span><span class="v" data-r="it"></span></div>
+      <div class="ro"><span class="k">EPE RMS</span><span class="v" data-r="rms"></span></div>
+      <div class="ro"><span class="k">EPE 최대</span><span class="v" data-r="max"></span></div>
+      <div class="ro"><span class="k">조각 수</span><span class="v" data-r="n"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 마스크(검정), 목표 윤곽(초록), 인쇄 윤곽(빨강), 평가점의 EPE(주황 막대, 5배 확대). 1 칸 = 4 nm. 반복할수록 선 끝이 망치 모양으로, 모서리가 귀 모양으로 튀어나오며 빨간 윤곽이 초록에 붙는다. μ가 너무 크면 진동한다. 오른쪽: 반복에 따른 EPE RMS(파랑)와 최대(빨강).</p>
+</div>
+
+<div class="analogy"><span class="ic">✏️</span><b>번지는 붓으로 글씨 쓰기</b><span>먹이 잘 번지는 화선지에 작은 글씨를 쓴다고 하자. 획 끝은 번져서 짧고 뭉툭해 보이므로 획 끝을 일부러 크게 꺾어 주고, 획이 몰린 곳은 가늘게, 혼자 있는 획은 굵게 쓴다. 숙련된 서예가가 머릿속으로 하는 보정을 OPC는 수천억 번의 물리 계산으로 한다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>역 리소그래피(ILT): 마스크를 처음부터 계산하기</h2>
+<p>OPC는 설계 모양에서 출발해 조금씩 고친다. ILT는 질문을 뒤집는다. "웨이퍼에 이 모양이 찍히게 하는 마스크는 무엇인가?" 마스크를 수많은 픽셀로 두고, 인쇄 결과와 목표의 차이(비용 함수)를 줄이는 방향(기울기)으로 모든 픽셀을 동시에 바꾼다. 결과 마스크는 곡선투성이에 원래 설계와 닮지 않은 보조 무늬까지 생기지만 공정 창이 가장 넓다. 곡선 마스크는 전자빔 묘화 시간이 길어 오랫동안 쓰기 어려웠으나, 멀티빔 묘화기 덕분에 최근 실용화되었다(curvilinear mask).</p>
+<div class="eq">$$\min_{\theta}\ F = \sum_{\mathbf r}\Bigl[\mathrm{sig}\bigl(a(I(\mathbf r) - t)\bigr) - Z_{\text{목표}}(\mathbf r)\Bigr]^2,\qquad I = |K * m|^2,\quad m = \mathrm{sig}(\theta)$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-3</span><span class="ttl">픽셀 ILT 경사 하강</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">목표 패턴</span><select data-k="t"><option value="c">접촉 구멍 배열</option><option value="l" selected>선 끝과 꺾인 선</option><option value="h">한글 "ㅂ"</option></select></label>
+      <label class="ctrl"><span class="lab">광학 흐림 <output data-o="b"></output></span><input type="range" data-k="b" min="12" max="32" step="1" value="22" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">학습률 <output data-o="lr"></output></span><input type="range" data-k="lr" min="1" max="20" step="1" value="8" data-d="0"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b3a">최적화 시작/멈춤</button><button class="sbtn warn" id="b3r">처음으로</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">반복</span><span class="v" data-r="it"></span></div>
+      <div class="ro"><span class="k">비용 F</span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">목표와 다른 픽셀</span><span class="v" data-r="px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 마스크 투과율(흰색 = 투명, 검정 = 불투명; 처음엔 목표 그대로)과 목표 윤곽(초록). 오른쪽: 공간 상(색)과 인쇄 윤곽(빨강). 최적화가 진행되면 마스크 가장자리가 부풀고 꺾이며 바깥에 희미한 보조 무늬가 생긴다. 마지막에 0.5에서 잘라 이진 마스크로 만든다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> OPC는 한 초점·노광 조건에서 목표를 맞춘다. 공정 창 전체에서 좋으려면 어떻게 해야 할까?</p><p>비용 함수에 여러 조건(초점 ±50 nm, 노광량 ±3 %)의 결과를 함께 넣는다(공정 창 OPC/ILT). 한 조건에서는 조금 덜 정확해지지만 흔들림에 강해진다. 외딴 선 옆에 찍히지 않을 만큼 가는 보조선(SRAF)을 두는 것도 같은 목적이다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">선 끝이 짧아지는 것을 막기 위해 OPC가 선 끝에 덧붙이는 모양은?</p><ol><li>세리프</li><li>망치머리(hammerhead)</li><li>보조선(SRAF)</li><li>위상 반전 영역</li></ol>
+<p class="explain">선 끝은 빛이 사방에서 덜 모여 짧아지므로 끝을 넓게 키운다. 세리프는 모서리 보정이다.</p></div>
+<div class="quiz" data-a="2"><p class="q">모형 기반 OPC에서 반복할 때 조각을 옮기는 기준은?</p><ol><li>마스크 묘화 시간</li><li>설계 규칙 표</li><li>평가점에서 계산한 EPE(인쇄 윤곽 − 목표)</li><li>웨이퍼 오버레이 측정값</li></ol>
+<p class="explain">EPE의 반대 방향으로 μ배만큼 옮기기를 수렴할 때까지 되풀이한다.</p></div>
+<div class="quiz" data-a="0"><p class="q">ILT 마스크가 오랫동안 양산에 쓰이기 어려웠던 주된 이유는?</p><ol><li>곡선 모양을 그리는 전자빔 묘화 시간이 매우 길어서</li><li>공정 창이 좁아서</li><li>EUV에서만 작동해서</li><li>감광액이 곡선을 찍지 못해서</li></ol>
+<p class="explain">가변 사각형 빔으로 곡선을 그리려면 도형 수가 폭증한다. 멀티빔 묘화기가 이를 해결했다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const LAM = 193, NA = 1.35, NIM = 1.44;
+/* 10-1 */
+(function(){
+  const box = J.$('#sim1'), SR = {conv:() => L.source('conv', 0.7, 0, 0, 0.14), ann:() => L.source('ann', 0.9, 0.6, 0, 0.12), quasar:() => L.source('quasar', 0.8, 0, 0.2, 0.08)}, memo = {};
+  const PS = []; for(let p = 90; p <= 500; p += 10) PS.push(p);
+  const img = (src, p, w, z) => L.image({p, lam:LAM, na:NA, n:NIM, src, coef:L.coefLS(w/p), N:Math.max(64, Math.round(p/3)), z});
+  J.sim('sim1', v => { if(!memo[v.src]){ const src = SR[v.src](), th = L.thFor(img(src, 90, 45, 0), 90, 45);
+      const bias = PS.map(p => { let lo = 20, hi = Math.min(p - 10, 120); for(let k = 0; k < 15; k++){ const m = (lo + hi)/2; if(L.cd(img(src, p, m, 0), p, th) < 45) lo = m; else hi = m; } return (lo + hi)/2 - 45; });
+      memo[v.src] = {src, th, bias}; }
+    const M = memo[v.src], c0 = PS.map(p => L.cd(img(M.src, p, 45, v.z), p, M.th)), c1 = PS.map((p, i) => L.cd(img(M.src, p, 45 + M.bias[i], v.z), p, M.th));
+    J.plot(J.$('#cv1a'), {x:[90, 500], y:[0, 80], xlab:'피치 (nm)', ylab:'인쇄 CD (nm)', series:[{pts:PS.map((p, i) => [p, c0[i]]), color:'--ink3', w:2}, {pts:PS.map((p, i) => [p, c1[i]]), color:'--red', w:3}], bands:[{y0:40.5, y1:49.5, color:'--jade', alpha:.15}]});
+    J.plot(J.$('#cv1b'), {x:[90, 500], y:[-10, 40], xlab:'피치 (nm)', ylab:'마스크 바이어스 (nm)', series:[{pts:PS.map((p, i) => [p, M.bias[i]]), color:'--plum', w:3, step:true}], hlines:[{y:0, color:'--ink3'}]});
+    const rg = a => J.fmt(Math.min(...a), 1) + ' ~ ' + J.fmt(Math.max(...a), 1) + ' nm', sp = a => Math.max(...a) - Math.min(...a);
+    J.out(box, 'r0', rg(c0), sp(c0) < 4.5 ? 'good' : 'bad'); J.out(box, 'r1', rg(c1), sp(c1) < 4.5 ? 'good' : sp(c1) < 9 ? 'warn' : 'bad'); J.out(box, 'bmax', '+' + J.fmt(Math.max(...M.bias), 1) + ' nm'); });
+})();
+
+/* 2D 결상: 진폭 가우스 흐림의 제곱 (결맞은 근사) */
+function blur2(A, W, H, s){ const R = Math.ceil(2.6*s), k = []; let S = 0; for(let j = -R; j <= R; j++){ const v = Math.exp(-j*j/(2*s*s)); k.push(v); S += v; } for(let j = 0; j < k.length; j++) k[j] /= S;
+  const T = new Float32Array(W*H), O = new Float32Array(W*H);
+  for(let y = 0; y < H; y++){ const o = y*W; for(let x = 0; x < W; x++){ let a = 0; for(let j = -R; j <= R; j++){ const q = x + j; if(q >= 0 && q < W) a += A[o + q]*k[j + R]; } T[o + x] = a; } }
+  for(let x = 0; x < W; x++) for(let y = 0; y < H; y++){ let a = 0; for(let j = -R; j <= R; j++){ const q = y + j; if(q >= 0 && q < H) a += T[q*W + x]*k[j + R]; } O[y*W + x] = a; }
+  return O; }
+const TH = 0.25;
+function drawContour(ctx, I, W, H, s, ox, oy, th, col){ ctx.fillStyle = col;
+  for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){ const a = I[y*W + x] > th; if(x < W - 1 && a !== (I[y*W + x + 1] > th)) ctx.fillRect(ox + (x + 1)*s - 1, oy + y*s, 2, s + .5); if(y < H - 1 && a !== (I[(y + 1)*W + x] > th)) ctx.fillRect(ox + x*s, oy + (y + 1)*s - 1, s + .5, 2); } }
+
+/* 10-2 조각 OPC */
+(function(){
+  const box = J.$('#sim2'), W = 120, H = 90, PX = 4;
+  // 목표 직사각형 [x0, y0, x1, y1] (픽셀, 끝 미포함)
+  const R = [[8, 8, 18, 60], [26, 8, 36, 60], [44, 8, 54, 60], [70, 8, 80, 38], [70, 50, 80, 82], [92, 20, 112, 30], [102, 30, 112, 70], [8, 70, 54, 80]];
+  let frags = [], it = 0, hist = [], auto = false, V = null, acc = 0;
+  const build = f => { frags = []; R.forEach((r, ri) => { const [x0, y0, x1, y1] = r;
+      const inOther = (x, y) => R.some((q, qi) => qi !== ri && x >= q[0] && x < q[2] && y >= q[1] && y < q[3]);
+      const add = (side, a0, a1) => { const n = Math.max(1, Math.round((a1 - a0)/f)); for(let k = 0; k < n; k++){ const b0 = Math.round(a0 + (a1 - a0)*k/n), b1 = Math.round(a0 + (a1 - a0)*(k + 1)/n), m = (b0 + b1)/2;
+        const out = side === 'L' ? [x0 - 1, m] : side === 'R' ? [x1, m] : side === 'T' ? [m, y0 - 1] : [m, y1]; if(inOther(out[0], out[1])) continue; frags.push({ri, side, a0:b0, a1:b1, o:0, epe:0}); } };
+      add('L', y0, y1); add('R', y0, y1); add('T', x0, x1); add('B', x0, x1); }); it = 0; hist = []; };
+  const raster = () => { const M = new Float32Array(W*H);
+    R.forEach(([x0, y0, x1, y1]) => { for(let y = y0; y < y1; y++) for(let x = x0; x < x1; x++) M[y*W + x] = 1; });
+    frags.forEach(g => { const [x0, y0, x1, y1] = R[g.ri], o = g.o; if(Math.abs(o) < 1e-3) return; const dep = Math.abs(o), full = Math.floor(dep), fr = dep - full;
+      for(let d = 0; d <= full; d++){ const val = d < full ? 1 : fr; if(val <= 0) break;
+        for(let q = g.a0; q < g.a1; q++){ let x, y;
+          if(g.side === 'L'){ x = o > 0 ? x0 - 1 - d : x0 + d; y = q; } if(g.side === 'R'){ x = o > 0 ? x1 + d : x1 - 1 - d; y = q; }
+          if(g.side === 'T'){ y = o > 0 ? y0 - 1 - d : y0 + d; x = q; } if(g.side === 'B'){ y = o > 0 ? y1 + d : y1 - 1 - d; x = q; }
+          if(x < 0 || y < 0 || x >= W || y >= H) continue; const i = y*W + x; M[i] = o > 0 ? Math.max(M[i], val) : Math.min(M[i], 1 - val); } } });
+    return M; };
+  const image = M => { const A = blur2(M, W, H, V.b/PX/1.4), I = new Float32Array(W*H); for(let i = 0; i < W*H; i++) I[i] = A[i]*A[i]; return I; };
+  const samp = (I, x, y) => { const xi = Math.floor(x), yi = Math.floor(y); if(xi < 0 || yi < 0 || xi >= W - 1 || yi >= H - 1) return 0; const fx = x - xi, fy = y - yi; return I[yi*W + xi]*(1 - fx)*(1 - fy) + I[yi*W + xi + 1]*fx*(1 - fy) + I[(yi + 1)*W + xi]*(1 - fx)*fy + I[(yi + 1)*W + xi + 1]*fx*fy; };
+  const measure = I => { frags.forEach(g => { const [x0, y0, x1, y1] = R[g.ri], m = (g.a0 + g.a1)/2; let px, py, nx, ny;
+      if(g.side === 'L'){ px = x0; py = m; nx = -1; ny = 0; } if(g.side === 'R'){ px = x1; py = m; nx = 1; ny = 0; } if(g.side === 'T'){ px = m; py = y0; nx = 0; ny = -1; } if(g.side === 'B'){ px = m; py = y1; nx = 0; ny = 1; }
+      // 안쪽 −4에서 바깥 +8까지 문턱 교차
+      let e = -4; let prev = samp(I, px - 0.5 + nx*(-4) + (nx ? 0 : 0), py - 0.5 + ny*(-4)); let found = false;
+      for(let t = -4 + 0.25; t <= 8; t += 0.25){ const cur = samp(I, px - 0.5 + nx*t, py - 0.5 + ny*t); if(prev > TH && cur <= TH){ e = t - 0.25 + 0.25*(prev - TH)/(prev - cur); found = true; break; } prev = cur; }
+      g.epe = found ? e : (samp(I, px - 0.5 - nx*2, py - 0.5 - ny*2) > TH ? 8 : -4); }); };
+  const stats = () => { const e = frags.map(g => g.epe*PX); return {rms:Math.sqrt(e.reduce((a, b) => a + b*b, 0)/e.length), max:Math.max(...e.map(Math.abs))}; };
+  const step = () => { frags.forEach(g => { g.o = J.clamp(g.o - V.mu*g.epe, -4, 10); }); it++; };
+  function render(){ const M = raster(), I = image(M); measure(I); const st = stats(); if(!hist.length || hist[hist.length - 1][0] !== it) hist.push([it, st.rms, st.max]);
+    const {ctx, w, h} = J.fit(J.$('#cv2a')); ctx.clearRect(0,0,w,h); const s = Math.min(w/W, h/H), ox = (w - s*W)/2;
+    ctx.fillStyle = '#f4f1ea'; ctx.fillRect(ox, 0, W*s, H*s); for(let y = 0; y < H; y++) for(let x = 0; x < W; x++) if(M[y*W + x] > 0.02){ ctx.fillStyle = 'rgba(34,34,34,' + M[y*W + x] + ')'; ctx.fillRect(ox + x*s, y*s, s + .4, s + .4); }
+    ctx.strokeStyle = J.c('--jade'); ctx.lineWidth = 2; R.forEach(([x0, y0, x1, y1]) => ctx.strokeRect(ox + x0*s, y0*s, (x1 - x0)*s, (y1 - y0)*s));
+    drawContour(ctx, I, W, H, s, ox, 0, TH, J.c('--red'));
+    ctx.fillStyle = 'rgba(255,140,0,.9)'; frags.forEach(g => { const [x0, y0, x1, y1] = R[g.ri], m = (g.a0 + g.a1)/2, L5 = g.epe*5*s/1;
+      if(g.side === 'L') ctx.fillRect(ox + x0*s - Math.max(0, L5), m*s - 1, Math.abs(L5), 2); if(g.side === 'R') ctx.fillRect(ox + x1*s + Math.min(0, L5), m*s - 1, Math.abs(L5), 2);
+      if(g.side === 'T') ctx.fillRect(ox + m*s - 1, y0*s - Math.max(0, L5), 2, Math.abs(L5)); if(g.side === 'B') ctx.fillRect(ox + m*s - 1, y1*s + Math.min(0, L5), 2, Math.abs(L5)); });
+    J.plot(J.$('#cv2b'), {x:[0, Math.max(10, it)], y:[0, Math.max(5, ...hist.map(q => q[2]))*1.1], xlab:'반복', ylab:'EPE (nm)', series:[{pts:hist.map(q => [q[0], q[1]]), color:'--indigo', w:3}, {pts:hist.map(q => [q[0], q[2]]), color:'--red', w:2}]});
+    J.out(box, 'it', it); J.out(box, 'rms', st.rms < 0.01 ? '0.01 nm 미만' : J.fmt(st.rms, 2) + ' nm', st.rms < 1.5 ? 'good' : st.rms < 4 ? 'warn' : 'bad'); J.out(box, 'max', st.max < 0.05 ? '0.05 nm 미만' : J.fmt(st.max, 1) + ' nm'); J.out(box, 'n', frags.length); J.$('#b2h').textContent = auto ? '자동 반복 중…' : ''; }
+  J.sim('sim2', v => { const re = !V || V.f !== v.f; V = v; if(re) build(v.f); else { it = 0; hist = []; frags.forEach(g => g.o = 0); } render(); });
+  J.$('#b2s').onclick = () => { step(); render(); };
+  J.$('#b2r').onclick = () => { build(V.f); auto = false; J.$('#b2a').classList.remove('on'); render(); };
+  J.$('#b2a').onclick = e => { auto = !auto; e.target.classList.toggle('on', auto); render(); };
+  J.loop(J.$('#cv2a'), dt => { if(!auto || !V) return; acc += dt; if(acc < 0.25) return; acc = 0; step(); render(); if(it >= 30){ auto = false; J.$('#b2a').classList.remove('on'); render(); } });
+})();
+
+/* 10-3 ILT */
+(function(){
+  const box = J.$('#sim3'), W = 96, H = 72, PX = 4; let th = null, Z = null, it = 0, run = false, V = null, cost = 0, bad = 0, acc = 0;
+  const target = t => { const T = new Float32Array(W*H), rect = (x0, y0, x1, y1) => { for(let y = y0; y < y1; y++) for(let x = x0; x < x1; x++) T[y*W + x] = 1; };
+    if(t === 'c'){ for(let j = 0; j < 3; j++) for(let i = 0; i < 4; i++) rect(14 + i*20, 14 + j*18, 24 + i*20, 24 + j*18); rect(14, 66 - 4, 24, 70 - 4); }
+    if(t === 'l'){ rect(10, 10, 20, 60); rect(30, 10, 40, 40); rect(30, 48, 40, 62); rect(52, 14, 86, 24); rect(76, 24, 86, 60); rect(52, 50, 70, 60); }
+    if(t === 'h'){ rect(28, 10, 38, 62); rect(58, 10, 68, 62); rect(38, 30, 58, 39); rect(38, 53, 58, 62); }
+    return T; };
+  const sig = x => 1/(1 + Math.exp(-x));
+  const reset = () => { Z = target(V.t); th = new Float32Array(W*H); for(let i = 0; i < W*H; i++) th[i] = Z[i] ? 2 : -2; it = 0; };
+  const forward = () => { const m = new Float32Array(W*H); for(let i = 0; i < W*H; i++) m[i] = sig(th[i]); const A = blur2(m, W, H, V.b/PX/2.2), I = new Float32Array(W*H); for(let i = 0; i < W*H; i++) I[i] = A[i]*A[i]; return {m, A, I}; };
+  const step = () => { const {m, A, I} = forward(), a = 30, G = new Float32Array(W*H); cost = 0;
+    for(let i = 0; i < W*H; i++){ const p = sig(a*(I[i] - TH)), d = p - Z[i]; cost += d*d; G[i] = 2*d*p*(1 - p)*a*2*A[i]; }
+    const B = blur2(G, W, H, V.b/PX/2.2); for(let i = 0; i < W*H; i++) th[i] = J.clamp(th[i] - V.lr*B[i]*m[i]*(1 - m[i])*4, -6, 6); it++; };
+  function render(){ const {m, I} = forward(); bad = 0; cost = 0; for(let i = 0; i < W*H; i++){ if((I[i] > TH) !== (Z[i] > 0.5)) bad++; const d = sig(30*(I[i] - TH)) - Z[i]; cost += d*d; }
+    { const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const s = Math.min(w/W, h/H), ox = (w - s*W)/2;
+      const img = ctx.createImageData(W, H); for(let i = 0; i < W*H; i++){ const g = 255*(1 - m[i]); img.data[i*4] = g; img.data[i*4 + 1] = g; img.data[i*4 + 2] = g; img.data[i*4 + 3] = 255; }
+      const off = document.createElement('canvas'); off.width = W; off.height = H; off.getContext('2d').putImageData(img, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(off, ox, 0, W*s, H*s);
+      drawContour(ctx, Z, W, H, s, ox, 0, 0.5, J.c('--jade')); ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('마스크 (검정 = 빛 통과하는 무늬)', ox + 4, H*s - 6); }
+    { const {ctx, w, h} = J.fit(J.$('#cv3b')); ctx.clearRect(0,0,w,h); const s = Math.min(w/W, h/H), ox = (w - s*W)/2; let mx = 0; I.forEach(v => mx = Math.max(mx, v));
+      const img = ctx.createImageData(W, H); for(let i = 0; i < W*H; i++){ const t = I[i]/mx; img.data[i*4] = 40 + 215*t; img.data[i*4 + 1] = 20 + 150*t*t; img.data[i*4 + 2] = 100 + 60*(1 - t); img.data[i*4 + 3] = 255; }
+      const off = document.createElement('canvas'); off.width = W; off.height = H; off.getContext('2d').putImageData(img, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(off, ox, 0, W*s, H*s);
+      drawContour(ctx, Z, W, H, s, ox, 0, 0.5, 'rgba(60,200,120,.8)'); drawContour(ctx, I, W, H, s, ox, 0, TH, '#ff5040'); }
+    J.out(box, 'it', it); J.out(box, 'f', J.fmt(cost, 1)); J.out(box, 'px', bad + ' (' + J.fmt(bad*PX*PX, 0) + ' nm²)', bad < 60 ? 'good' : bad < 200 ? 'warn' : 'bad'); }
+  J.sim('sim3', v => { const re = !V || V.t !== v.t || V.b !== v.b; V = v; if(re) reset(); render(); });
+  J.$('#b3a').onclick = e => { run = !run; e.target.classList.toggle('on', run); };
+  J.$('#b3r').onclick = () => { reset(); render(); };
+  J.loop(J.$('#cv3a'), dt => { if(!run || !V) return; acc += dt; if(acc < 0.06) return; acc = 0; for(let k = 0; k < 3; k++) step(); render(); if(it > 400){ run = false; J.$('#b3a').classList.remove('on'); } });
+})();
+</script>
+</body>
+</html>

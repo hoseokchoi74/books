@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>다중 패터닝 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../lith.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="multi">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 11 <span class="hanja">第十一章 · 分</span></div>
+  <h1>다중 패터닝</h1>
+  <p class="lead">EUV가 늦어지는 동안 업계는 ArF 액침(반피치 약 40 nm) 하나로 10 nm 세대까지 버텼다. 비결은 한 층을 여러 번 나눠 찍는 <span class="term">다중 패터닝</span>이다. 촘촘한 무늬를 두 장의 마스크로 나눠 번갈아 찍거나(LELE), 한 번 찍은 선의 양옆에 막을 입혀 선의 수를 두 배, 네 배로 불린다(SADP, SAQP). 대가는 혹독하다. 마스크와 공정 단계가 몇 배로 늘고, 나눠 찍은 무늬끼리의 오버레이가 선 간격 오차가 되며, 설계는 "두 가지 색으로 칠할 수 있는" 모양으로 제한된다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>LELE 분해를 그래프 색칠 문제로 이해하고, 홀수 고리가 왜 분해를 불가능하게 하는지 직접 칠해 본다.</li>
+  <li>SADP·SAQP 공정 단계를 단면으로 따라가며 피치가 1/2, 1/4로 줄어드는 원리와 피치 워킹을 계산한다.</li>
+  <li>LELE와 SADP에서 오버레이·CD 오차가 선 간격 오차로 옮겨지는 방식을 몬테카를로로 비교한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>LELE: 두 색으로 칠하기</h2>
+<p>LELE(litho-etch-litho-etch)는 무늬를 마스크 A와 B로 나누어 찍고 식각하기를 두 번 한다. 같은 마스크 안의 무늬끼리는 한 번에 찍을 수 있는 최소 간격(d<sub>min</sub>)보다 멀어야 한다. 무늬를 점으로, d<sub>min</sub>보다 가까운 무늬 쌍을 선으로 이으면 <b>충돌 그래프</b>가 된다. 분해는 이 그래프를 이웃끼리 색이 다르게 두 색으로 칠하는 문제다. 고리가 홀수 개의 점으로 이루어지면 두 색으로는 절대 칠할 수 없다(홀수 고리). 그러면 설계를 고치거나, 세 번 나눠 찍어야(LELELE) 한다.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-1</span><span class="ttl">분해 색칠 게임</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">같은 마스크 최소 간격 d_min <output data-o="d"></output></span><input type="range" data-k="d" min="30" max="80" step="2" value="44" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">마스크 수</span><select data-k="k"><option value="2" selected>2 (LELE)</option><option value="3">3 (LELELE)</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b1a">자동 색칠</button><button class="sbtn" id="b1n">새 배치</button><button class="sbtn warn" id="b1c">색 지우기</button><span class="hint">무늬를 눌러 색을 바꿔 보세요</span></div>
+    <div class="canvas-box"><canvas id="cv1" data-h="340"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">무늬 / 충돌 쌍</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">같은 색 충돌</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">홀수 고리</span><span class="v" data-r="odd"></span></div>
+      <div class="ro"><span class="k">판정</span><span class="v" data-r="ok" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 사각형은 접촉 구멍(1 칸 = 20 nm). 회색 선은 d<sub>min</sub>보다 가까워 같은 마스크에 둘 수 없는 쌍이다. 같은 색으로 이어지면 빨간 굵은 선으로 표시된다. 자동 색칠은 너비 우선 탐색(2색) 또는 되추적(3색)으로 칠한다. 홀수 고리가 있으면 2색으로는 반드시 충돌이 남는다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 네 무늬가 서로 모두 가까운 정사각형 배치(완전 그래프 K₄)는 몇 장의 마스크가 필요할까?</p><p>모든 쌍이 충돌하므로 네 무늬가 모두 다른 색이어야 해서 마스크 4장이 필요하다. 그래서 설계 규칙은 이런 배치 자체를 금지하고, 설계 도구가 색칠 가능성을 미리 검사한다(분해 인식 설계).</p></div>
+
+<h2 id="s2"><span class="n">02</span>SADP와 SAQP: 스페이서로 선을 불리기</h2>
+<p><span class="term">자기 정렬 이중 패터닝</span>(SADP)은 오버레이 문제를 피하는 영리한 방법이다. 먼저 넓은 피치로 희생 선(맨드릴)을 찍고, 그 위에 막을 고르게(등각) 입힌 뒤 위에서 깎아 맨드릴 양옆 벽에만 막(스페이서)을 남긴다. 맨드릴을 녹여 내면 맨드릴 하나당 스페이서 두 개, 곧 피치가 절반인 선이 생긴다. 스페이서 두께는 원자층 증착(ALD)으로 1 Å 단위까지 조절되므로 선폭이 매우 고르다. 이를 한 번 더 반복하면 피치 1/4(SAQP)이다. 대신 마스크의 선폭 오차가 두 종류의 간격(α, β)을 다르게 만들어 <b>피치 워킹</b>이 생긴다.</p>
+<div class="eq">$$\text{SADP 간격: } \alpha = W_{m},\quad \beta = P - W_{m} - 2s,\qquad \text{피치 워킹} = \frac{|\alpha - \beta|}{2}$$<div class="note">P: 맨드릴 피치, W<sub>m</sub>: 맨드릴 선폭, s: 스페이서 두께(= 최종 선폭). α = β가 되려면 W<sub>m</sub> = (P − 2s)/2.</div></div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-2</span><span class="ttl">SADP/SAQP 공정 단계</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">방식</span><select data-k="m"><option value="d">SADP (피치 ½)</option><option value="q" selected>SAQP (피치 ¼)</option></select></label>
+      <label class="ctrl"><span class="lab">맨드릴 선폭 <output data-o="w"></output></span><input type="range" data-k="w" min="10" max="100" step="1" value="60" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">1차 스페이서 두께 <output data-o="s1"></output></span><input type="range" data-k="s1" min="8" max="40" step="0.5" value="20" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">2차 스페이서 두께 (SAQP) <output data-o="s2"></output></span><input type="range" data-k="s2" min="8" max="30" step="0.5" value="20" data-d="1" data-u="nm"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b2p">← 이전</button><button class="sbtn pri" id="b2n">다음 단계 →</button><span class="hint" id="b2s"></span></div>
+    <div class="canvas-box"><canvas id="cv2" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">맨드릴 피치 (ArF 한 번 노광)</span><span class="v" data-r="p"></span></div>
+      <div class="ro"><span class="k">최종 선 피치 (평균)</span><span class="v" data-r="pf"></span></div>
+      <div class="ro"><span class="k">간격 종류</span><span class="v" data-r="sp" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">피치 워킹</span><span class="v" data-r="pw"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 단면 그림. 노랑 = 맨드릴(감광액·탄소막), 파랑 = 1차 스페이서, 초록 = 2차 스페이서, 회색 = 무늬를 옮겨 받을 하드마스크와 기판. SAQP의 맨드릴 피치는 160 nm(최종 40 nm), SADP는 80 nm(최종 40 nm). 간격들이 모두 같으면 초록색 판정이 뜬다. 이상값은 SAQP: 맨드릴 60, 스페이서 20/20 nm, SADP: 맨드릴 20, 스페이서 20 nm. 실제 공정에서는 마지막에 불필요한 선을 자르는 <b>컷 마스크</b> 노광이 추가된다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>오차의 행방: LELE vs SADP</h2>
+<p>LELE에서 A선과 B선 사이 간격은 두 노광의 오버레이 오차를 그대로 받는다. 오버레이가 3 nm 흔들리면 간격이 3 nm 흔들린다. 그래서 LELE는 오버레이 허용치가 매우 빡빡하다. SADP는 모든 선이 한 번의 노광(맨드릴)에서 나오므로 오버레이 영향이 없지만, 맨드릴 CD 오차가 β 간격에 고스란히 실리고 스페이서 두께 오차가 두 배로 실린다. 어떤 오차를 잡기 쉬운지가 방식 선택을 가른다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-3</span><span class="ttl">간격 CD 분포 비교 (목표 간격 20 nm, 피치 40 nm)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">LELE 오버레이 σ <output data-o="ov"></output></span><input type="range" data-k="ov" min="0" max="4" step="0.1" value="1.5" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">노광 CD σ (각 노광/맨드릴) <output data-o="cd"></output></span><input type="range" data-k="cd" min="0" max="2" step="0.1" value="0.8" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">스페이서 두께 σ <output data-o="sp"></output></span><input type="range" data-k="sp" min="0" max="1" step="0.05" value="0.3" data-d="2" data-u="nm"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="300"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">LELE 간격 3σ</span><span class="v" data-r="a"></span></div>
+      <div class="ro"><span class="k">SADP α 간격 3σ</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">SADP β 간격 3σ</span><span class="v" data-r="c"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 각 방식으로 만든 선 간격 2만 개의 분포. 빨강 = LELE(A–B 간격), 파랑 = SADP α(맨드릴 자리, 맨드릴 CD만 영향), 초록 = SADP β(스페이서 사이, 맨드릴 CD와 스페이서 두께 두 배가 영향). LELE는 오버레이를 줄이지 않으면 분포가 넓다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🍰</span><b>케이크 띠 두르기</b><span>SADP는 케이크(맨드릴) 둘레에 일정한 두께의 띠(스페이서)를 두른 뒤 케이크만 쏙 빼내는 것과 같다. 띠 두께는 아주 고르지만, 케이크 크기가 들쭉날쭉하면 띠 사이 간격이 들쭉날쭉해진다.</span></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="3"><p class="q">LELE 분해가 불가능한 충돌 그래프의 특징은?</p><ol><li>무늬가 100개 이상이다</li><li>선이 하나도 없다</li><li>짝수 고리가 있다</li><li>홀수 고리가 있다</li></ol>
+<p class="explain">그래프가 2색 칠하기 가능 ⇔ 홀수 고리가 없음(이분 그래프).</p></div>
+<div class="quiz" data-a="1"><p class="q">맨드릴 피치 80 nm로 SADP를 하면 최종 선 피치는?</p><ol><li>80 nm</li><li>40 nm</li><li>20 nm</li><li>160 nm</li></ol>
+<p class="explain">맨드릴 하나당 스페이서 선 두 개 → 피치 절반.</p></div>
+<div class="quiz" data-a="0"><p class="q">SADP에서 피치 워킹을 일으키는 주된 원인은?</p><ol><li>맨드릴 선폭이 이상값 (P − 2s)/2에서 벗어남</li><li>LELE 오버레이</li><li>컷 마스크의 위치</li><li>감광액 두께</li></ol>
+<p class="explain">α = W<sub>m</sub>, β = P − W<sub>m</sub> − 2s 이므로 W<sub>m</sub>가 어긋나면 α ≠ β.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 11-1 색칠 게임 */
+(function(){
+  const box = J.$('#sim1'), CELL = 20; let F = [], E = [], col = [], seed = 4, V = null;
+  const COLS = ['#d65a4a', '#3d7fd0', '#3aa36a'];
+  const layout = () => { const r = J.rng(seed); F = []; for(let j = 0; j < 5; j++) for(let i = 0; i < 7; i++){ if(r() < 0.18) continue; F.push({x:40 + i*60 + Math.round((r() - .5)*30), y:30 + j*58 + Math.round((r() - .5)*26)}); } col = F.map(() => -1); };
+  const graph = () => { E = []; for(let a = 0; a < F.length; a++) for(let b = a + 1; b < F.length; b++){ const dx = Math.max(0, Math.abs(F[a].x - F[b].x) - CELL), dy = Math.max(0, Math.abs(F[a].y - F[b].y) - CELL); if(Math.hypot(dx, dy) < V.d) E.push([a, b]); } };
+  const adj = () => { const A = F.map(() => []); E.forEach(([a, b]) => { A[a].push(b); A[b].push(a); }); return A; };
+  const oddCycle = () => { const A = adj(), c = F.map(() => -1); for(let s = 0; s < F.length; s++){ if(c[s] >= 0) continue; c[s] = 0; const q = [s]; while(q.length){ const u = q.shift(); for(const w of A[u]){ if(c[w] < 0){ c[w] = 1 - c[u]; q.push(w); } else if(c[w] === c[u]) return true; } } } return false; };
+  const auto = () => { const A = adj(), k = +V.k;
+    if(k === 2){ col = F.map(() => -1); for(let s = 0; s < F.length; s++){ if(col[s] >= 0) continue; col[s] = 0; const q = [s]; while(q.length){ const u = q.shift(); for(const w of A[u]) if(col[w] < 0){ col[w] = 1 - col[u]; q.push(w); } } } return; }
+    const order = F.map((_, i) => i).sort((a, b) => A[b].length - A[a].length), c = F.map(() => -1); let steps = 0;
+    const bt = i => { if(i === order.length) return true; if(++steps > 3000000) return false; const u = order[i]; for(let t = 0; t < k; t++){ if(A[u].some(w => c[w] === t)) continue; c[u] = t; if(bt(i + 1)) return true; c[u] = -1; } return false; };
+    if(bt(0)) col = c; else { col = F.map(() => -1); } };
+  const draw = () => { const {ctx, w, h} = J.fit(J.$('#cv1')); ctx.clearRect(0,0,w,h); const sc = Math.min(w/460, h/320), ox = (w - 460*sc)/2;
+    let conf = 0; E.forEach(([a, b]) => { const same = col[a] >= 0 && col[a] === col[b]; if(same) conf++; ctx.strokeStyle = same ? J.c('--red') : J.c('--line2'); ctx.lineWidth = same ? 4 : 1.5; ctx.beginPath(); ctx.moveTo(ox + F[a].x*sc, F[a].y*sc); ctx.lineTo(ox + F[b].x*sc, F[b].y*sc); ctx.stroke(); });
+    F.forEach((f, i) => { ctx.fillStyle = col[i] >= 0 ? COLS[col[i]] : '#999'; ctx.fillRect(ox + (f.x - CELL/2)*sc, (f.y - CELL/2)*sc, CELL*sc, CELL*sc); ctx.strokeStyle = J.c('--ink'); ctx.lineWidth = 1; ctx.strokeRect(ox + (f.x - CELL/2)*sc, (f.y - CELL/2)*sc, CELL*sc, CELL*sc); });
+    const odd = oddCycle(), uncol = col.filter(c => c < 0).length, k = +V.k;
+    J.out(box, 'n', F.length + ' / ' + E.length); J.out(box, 'c', conf, conf ? 'bad' : 'good'); J.out(box, 'odd', odd ? '있음' : '없음', odd ? 'warn' : 'good');
+    J.out(box, 'ok', uncol ? (k === 3 && col.every(c => c < 0) && F.length ? '3색으로도 불가 → 설계 수정' : '아직 덜 칠함') : conf ? '충돌 있음' : '분해 성공 (' + k + '장)', uncol ? 'warn' : conf ? 'bad' : 'good'); };
+  J.$('#cv1').addEventListener('click', e => { const cv = J.$('#cv1'), rc = cv.getBoundingClientRect(), w = rc.width, h = rc.height, sc = Math.min(w/460, h/320), ox = (w - 460*sc)/2, x = (e.clientX - rc.left - ox)/sc, y = (e.clientY - rc.top)/sc;
+    const i = F.findIndex(f => Math.abs(f.x - x) <= CELL/2 + 3 && Math.abs(f.y - y) <= CELL/2 + 3); if(i < 0) return; col[i] = (col[i] + 1) % +V.k; draw(); });
+  J.sim('sim1', v => { V = v; if(!F.length) layout(); graph(); col = col.map(c => c >= +v.k ? -1 : c); draw(); });
+  J.$('#b1a').onclick = () => { auto(); draw(); }; J.$('#b1n').onclick = () => { seed = seed*3 + 7; layout(); graph(); draw(); }; J.$('#b1c').onclick = () => { col = F.map(() => -1); draw(); };
+})();
+
+/* 11-2 SADP/SAQP */
+(function(){
+  const box = J.$('#sim2'); let k = 0, V = null;
+  const STEPS = {d:['맨드릴 노광·식각 (피치 80 nm)', '1차 스페이서 증착 (ALD, 등각)', '스페이서 에치백 (윗면·바닥 제거)', '맨드릴 제거 → 피치 40 nm', '하드마스크로 전사 식각'],
+    q:['맨드릴 노광·식각 (피치 160 nm)', '1차 스페이서 증착', '1차 에치백', '맨드릴 제거 → 1차 스페이서가 새 맨드릴 (피치 80)', '2차 스페이서 증착', '2차 에치백', '1차 스페이서 제거 → 피치 40 nm', '하드마스크로 전사 식각']};
+  // 선 구간 계산
+  const geom = v => { const q = v.m === 'q', P = q ? 160 : 80, n = q ? 2 : 4, mand = [], sp1 = [], sp2 = [];
+    for(let i = 0; i < n; i++){ const c = i*P + P/2; mand.push([c - v.w/2, c + v.w/2]); sp1.push([c - v.w/2 - v.s1, c - v.w/2]); sp1.push([c + v.w/2, c + v.w/2 + v.s1]); }
+    if(q) sp1.forEach(([a, b]) => { sp2.push([a - v.s2, a]); sp2.push([b, b + v.s2]); });
+    return {P, n, mand, sp1, sp2, span:n*P}; };
+  const draw = () => { const v = V, G = geom(v), S = STEPS[v.m], {ctx, w, h} = J.fit(J.$('#cv2')); ctx.clearRect(0,0,w,h);
+    const X = x => 20 + x/G.span*(w - 40), base = h - 60, hm = 18, H1 = 70;
+    ctx.fillStyle = '#8f96a3'; ctx.fillRect(20, base + hm, w - 40, 40); ctx.fillStyle = '#b9c0cc'; ctx.fillRect(20, base, w - 40, hm);
+    const rect = (a, b, y0, y1, c) => { ctx.fillStyle = c; ctx.fillRect(X(a), y0, X(b) - X(a), y1 - y0); };
+    const q = v.m === 'q', blue = '#4a86d0', green = '#3aa36a', gold = '#e0b040', last = S.length - 1;
+    const conf = (lines, t, c) => { rect(0, G.span, base - t, base, c); lines.forEach(([a, b]) => rect(a - t, b + t, base - H1 - t, base, c)); };
+    if(k === last){ const fin = q ? G.sp2 : G.sp1; ctx.fillStyle = J.c('--paper'); ctx.fillRect(20, base, w - 40, hm); fin.forEach(([a, b]) => rect(a, b, base, base + hm, '#6d7686')); }
+    else {
+      if(k === 1) conf(G.mand, v.s1, blue);
+      if(q && k === 4) conf(G.sp1, v.s2, green);
+      if(k <= 2) G.mand.forEach(([a, b]) => rect(a, b, base - H1, base, gold));
+      if(k >= 2 && (q ? k <= 5 : true)) G.sp1.forEach(([a, b]) => rect(a, b, base - H1 + 4, base, blue));
+      if(q && (k === 5 || k === 6)) G.sp2.forEach(([a, b]) => rect(a, b, base - H1 + 8, base, green));
+    }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText((k + 1) + '/' + S.length + ' ' + S[k], 20, 18);
+    // 간격 분석
+    const lines = (q ? G.sp2 : G.sp1).slice().sort((a, b) => a[0] - b[0]), gaps = []; for(let i = 0; i + 1 < lines.length; i++) gaps.push(lines[i + 1][0] - lines[i][1]);
+    const uniq = [...new Set(gaps.map(g => Math.round(g*2)/2))], mn = Math.min(...gaps), mx = Math.max(...gaps), pf = G.span/lines.length;
+    J.out(box, 'p', G.P + ' nm'); J.out(box, 'pf', J.fmt(pf, 1) + ' nm (선폭 ' + J.fmt(q ? v.s2 : v.s1, 1) + ')');
+    J.out(box, 'sp', mn < 0 ? '선이 겹침!' : uniq.slice(0, 4).map(g => J.fmt(g, 1)).join(' / ') + ' nm', mn < 0 ? 'bad' : ''); J.out(box, 'pw', J.fmt((mx - mn)/2, 1) + ' nm', mx - mn < 1 ? 'good' : mx - mn < 4 ? 'warn' : 'bad');
+    J.$('#b2s').textContent = S[k]; };
+  J.sim('sim2', v => { const ch = V && V.m !== v.m; V = v; if(ch) k = 0; k = Math.min(k, STEPS[v.m].length - 1); draw(); });
+  J.$('#b2n').onclick = () => { k = Math.min(STEPS[V.m].length - 1, k + 1); draw(); }; J.$('#b2p').onclick = () => { k = Math.max(0, k - 1); draw(); };
+})();
+
+/* 11-3 */
+(function(){
+  const box = J.$('#sim3');
+  J.sim('sim3', v => { const r = J.rng(9), N = 20000, A = [], B = [], C = [];
+    for(let i = 0; i < N; i++){ // LELE: 간격 = 20 − (CD오차A/2 + CD오차B/2) + 오버레이
+      A.push(20 + J.gauss(r)*v.ov - J.gauss(r)*v.cd/2 - J.gauss(r)*v.cd/2);
+      const dm = J.gauss(r)*v.cd, s1 = J.gauss(r)*v.sp, s2 = J.gauss(r)*v.sp; B.push(20 + dm); C.push(20 - dm - s1 - s2); }
+    const hist = (a, c) => { const b = new Array(80).fill(0); a.forEach(x => { const k = Math.floor((x - 10)/0.25); if(k >= 0 && k < 80) b[k]++; }); const pts = []; b.forEach((n, k) => { pts.push([10 + k*0.25, n]); pts.push([10 + (k + 1)*0.25, n]); }); return {pts, color:c, w:2, fill:.15}; };
+    const sd = a => { const m = a.reduce((x, y) => x + y, 0)/a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m)*(y - m), 0)/a.length); };
+    const H = [hist(A, '--red'), hist(B, '--indigo'), hist(C, '--jade')], ym = Math.max(...H.map(s => Math.max(...s.pts.map(p => p[1]))));
+    J.plot(J.$('#cv3'), {x:[10, 30], y:[0, ym*1.1], xlab:'선 간격 (nm)', ylab:'개수', series:H, bands:[{x0:18, x1:22, color:'--gold', alpha:.12}]});
+    const f = a => J.fmt(3*sd(a), 2) + ' nm', cl = a => 3*sd(a) < 2 ? 'good' : 3*sd(a) < 4 ? 'warn' : 'bad';
+    J.out(box, 'a', f(A), cl(A)); J.out(box, 'b', f(B), cl(B)); J.out(box, 'c', f(C), cl(C)); });
+})();
+</script>
+</body>
+</html>

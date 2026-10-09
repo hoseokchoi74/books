@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>스캐너 놀이터 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../lith.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="playground">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 15 <span class="hanja">第十五章 · 戱</span></div>
+  <h1>스캐너 놀이터</h1>
+  <p class="lead">이제 여러분이 리소그래피 엔지니어다. 장비를 고르고, NA와 조명 모양을 정하고, 마스크 종류와 선폭 바이어스, 감광액 흐림, 노광량과 초점을 맞춰 목표 무늬를 찍어 보자. 이 책에서 다룬 모형(아베 결상, 감광액 흐림, 노광 관용도와 초점 심도, 샷 노이즈, 처리량과 원가)이 모두 한 화면에서 함께 돌아간다. 임무마다 통과 조건이 있고, 조건을 모두 만족하면 별을 얻는다. 같은 조건을 맞추는 길이 여러 개라는 것, 그리고 하나를 좋게 하면 다른 것이 나빠지는 맞바꿈이 리소그래피의 본질이라는 것을 느껴 보자.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>파장·NA·조명·마스크·감광액·노광량·초점을 함께 조정해 목표 CD와 공정 창을 맞춘다.</li>
+  <li>해상도(DOF·NILS), 거칠기(LER), 원가(처리량)가 서로 맞바꿈 관계임을 체험한다.</li>
+  <li>임무를 통해 각 노광 세대가 어떤 기술 조합으로 한계를 넘었는지 되짚는다.</li>
+</ul></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 15-1</span><span class="ttl">스캐너 놀이터</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">임무</span><select data-k="ms"><option value="0" selected>① KrF로 피치 300 nm</option><option value="1">② ArF 건식으로 피치 150 nm</option><option value="2">③ 액침의 한계: 피치 80 nm</option><option value="3">④ EUV 피치 36 nm, LER 관리</option><option value="4">⑤ High-NA 피치 24 nm</option><option value="5">⑥ EUV 피치 40 nm를 싸게</option></select></label>
+    </div>
+    <div id="mdesc" class="note" style="margin:6px 0 12px; padding:10px 14px; border-radius:6px; background:var(--gold-soft); font-size:14.5px"></div>
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">장비</span><select data-k="tool"><option value="krf" selected>KrF 248 nm 건식</option><option value="arf">ArF 193 nm 건식</option><option value="imm">ArF 193 nm 액침</option><option value="euv">EUV 13.5 nm (0.33)</option><option value="hna">High-NA EUV (0.55)</option></select></label>
+      <label class="ctrl"><span class="lab">NA (장비 최대 이하) <output data-o="na"></output></span><input type="range" data-k="na" min="0.2" max="1.35" step="0.01" value="0.7" data-d="2"></label>
+      <label class="ctrl"><span class="lab">조명</span><select data-k="src"><option value="conv" selected>일반</option><option value="ann">환형 (안쪽 = 바깥 − 0.3)</option><option value="dip">다이폴 x (극 반지름 0.15)</option><option value="quasar">퀘이사 (극 반지름 0.2)</option></select></label>
+      <label class="ctrl"><span class="lab">σ (바깥 / 극 중심) <output data-o="s"></output></span><input type="range" data-k="s" min="0.2" max="0.95" step="0.01" value="0.6" data-d="2"></label>
+      <label class="ctrl"><span class="lab">마스크</span><select data-k="mk"><option value="bin" selected>바이너리</option><option value="att">감쇠형 PSM 6 %</option></select></label>
+      <label class="ctrl"><span class="lab">마스크 틈 폭 / 피치 <output data-o="du"></output></span><input type="range" data-k="du" min="0.3" max="0.7" step="0.01" value="0.5" data-d="2"></label>
+      <label class="ctrl"><span class="lab">감광액 흐림 (확산) <output data-o="bl"></output></span><input type="range" data-k="bl" min="1" max="30" step="0.5" value="10" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">BARC</span><select data-k="barc"><option value="1" selected>있음</option><option value="0">없음</option></select></label>
+      <label class="ctrl"><span class="lab">노광량 <output data-o="d"></output></span><input type="range" data-k="d" min="5" max="120" step="1" value="30" data-d="0" data-u="mJ/cm²"></label>
+      <label class="ctrl"><span class="lab">초점 오프셋 <output data-o="z"></output></span><input type="range" data-k="z" min="-150" max="150" step="5" value="0" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">인쇄 CD (목표)</span><span class="v" data-r="cd"></span></div>
+      <div class="ro"><span class="k">DOF (CD ±10 %, 노광량 ±5 %)</span><span class="v" data-r="dof"></span></div>
+      <div class="ro"><span class="k">NILS</span><span class="v" data-r="nils"></span></div>
+      <div class="ro"><span class="k">LER 3σ (추정)</span><span class="v" data-r="ler"></span></div>
+      <div class="ro"><span class="k">처리량 / 노광 원가</span><span class="v" data-r="cost" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">임무 판정</span><span class="v" data-r="ok" style="font-size:15px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽 위: 두 주기의 공간 상(빨강, 감광액 흐림 포함)과 노광량이 정한 현상 문턱(보라 점선). 왼쪽 아래: 현상 후 감광액 단면(트렌치 = 빛 받은 곳). 오른쪽: 초점에 따른 CD(노광량 −5 %, 기준, +5 %)와 목표 ±10 % 띠, 노란 띠는 DOF 구간. 노광량이 높을수록 문턱이 낮아져 트렌치가 넓어진다. 임무 별은 이 브라우저에 저장된다.</p>
+</div>
+
+<div id="stars" style="margin:10px 0 24px; font-size:15px"></div>
+
+<div class="think"><p><b>생각해 보기.</b> 임무 ③(피치 80 nm, ArF 액침)은 왜 일반 조명으로 안 될까? 임무 ⑥에서 원가를 낮추려 노광량을 줄이면 무엇이 무너지는가?</p><p>③: λ/(NA(1 + σ)) = 193/(1.35 × 1.95) ≈ 73 nm라서 σ를 거의 1까지 써야 하는데, 일반 조명은 그만큼 기울어진 빛의 비중이 작다. 다이폴로 기울어진 빛만 남기면 대비가 산다. ⑥: 노광량을 낮추면 처리량이 오르지만 광자 수가 줄어 LER이 커진다. 감광액 흐림을 키우면 LER은 줄지만 NILS가 떨어져 DOF가 줄어든다. 정답은 하나가 아니다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">감광액 흐림(산 확산)을 키웠을 때 일반적으로 일어나는 일은?</p><ol><li>NILS와 LER이 모두 좋아진다</li><li>LER은 줄지만 NILS가 떨어진다</li><li>처리량이 오른다</li><li>DOF가 커지고 NILS도 커진다</li></ol>
+<p class="explain">흐림은 광자 요동을 평균해 LER을 줄이지만 공간 상의 기울기도 함께 낮춘다.</p></div>
+<div class="quiz" data-a="2"><p class="q">EUV 노광 원가를 낮추는 가장 직접적인 방법은?</p><ol><li>NA를 키운다</li><li>BARC를 없앤다</li><li>감광액 감도를 높여 노광량을 낮춘다(LER과 맞바꿈)</li><li>마스크를 바이너리로 바꾼다</li></ol>
+<p class="explain">EUV는 광원이 처리량을 제한하므로 노광량이 곧 원가다. 대신 확률적 결함이 늘어난다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const TOOLS = {krf:{lam:248, n:1, max:0.85, ppm:12.5*0.08, vmax:700, oh:3, cap:300, op:30, pw:() => 40},
+  arf:{lam:193, n:1, max:0.93, ppm:9.7*0.08, vmax:750, oh:3, cap:600, op:40, pw:() => 30},
+  imm:{lam:193, n:1.44, max:1.35, ppm:9.7*0.08, vmax:800, oh:3.2, cap:1000, op:60, pw:() => 26},
+  euv:{lam:13.5, n:1, max:0.33, ppm:0.68*0.2, vmax:450, oh:4.5, cap:2500, op:150, pw:() => 300*0.008},
+  hna:{lam:13.5, n:1, max:0.55, ppm:0.68*0.2, vmax:600, oh:5, cap:5000, op:250, pw:() => 500*0.0065, half:true}};
+const MISSIONS = [
+  {p:300, cd:150, dof:250, ler:99, cost:1e9, t:'KrF(248 nm)로 피치 300 nm 선·간격을 찍자. 트렌치 CD 150 nm ± 10 %, DOF ≥ 250 nm. 1990년대 후반 0.25 µm 세대의 일이다.'},
+  {p:150, cd:75, dof:150, ler:99, cost:1e9, t:'ArF 건식(NA ≤ 0.93)으로 피치 150 nm. CD 75 nm ± 10 %, DOF ≥ 150 nm. 조명을 바꿔야 할지도 모른다.'},
+  {p:80, cd:40, dof:100, ler:99, cost:1e9, t:'ArF 액침(NA ≤ 1.35)의 한계, 피치 80 nm (k₁ ≈ 0.28). CD 40 nm ± 10 %, DOF ≥ 100 nm. 일반 조명으로는 상이 안 맺힌다.'},
+  {p:36, cd:18, dof:100, ler:1.9, cost:1e9, t:'EUV 0.33 NA로 피치 36 nm. CD 18 nm ± 10 %, DOF ≥ 100 nm, LER ≤ 1.9 nm. 노광량을 올리려면 마스크 틈을 좁혀야 CD가 유지된다. 노광량과 흐림의 균형을 찾자.'},
+  {p:24, cd:12, dof:50, ler:1.9, cost:1e9, t:'High-NA EUV로 피치 24 nm. CD 12 nm ± 10 %, DOF ≥ 50 nm, LER ≤ 1.9 nm. 초점 심도가 매우 얕다.'},
+  {p:40, cd:20, dof:100, ler:3.2, cost:45000, t:'EUV 0.33 NA로 피치 40 nm를 웨이퍼 한 장 노광 원가 4만 5천 원 이하로. 노광량을 낮추고 마스크 틈을 넓혀 CD를 맞추자. CD 20 nm ± 10 %, DOF ≥ 100 nm, LER ≤ 3.2 nm.'}];
+let stars = []; try{ stars = JSON.parse(localStorage.getItem('photo-play-stars') || '[]'); }catch(e){ stars = []; }
+const showStars = () => { const el = J.$('#stars'); if(el) el.innerHTML = '<b>획득한 별</b> ' + MISSIONS.map((m, i) => stars.includes(i) ? '⭐' : '☆').join(' ') + ' (' + stars.length + '/6)'; };
+showStars();
+(function(){
+  const box = J.$('#sim1'); let lastMs = null;
+  const src = (t, s) => t === 'conv' ? L.source('conv', s, 0, 0, 0.1) : t === 'ann' ? L.source('ann', s, Math.max(0, s - 0.3), 0, 0.1) : t === 'dip' ? L.source('dip', s, 0, 0.15, 0.05) : L.source('quasar', s, 0, 0.2, 0.06);
+  J.sim('sim1', v => { const M = MISSIONS[+v.ms], T = TOOLS[v.tool], na = Math.min(v.na, T.max), p = M.p;
+    if(lastMs !== v.ms){ lastMs = v.ms; J.$('#mdesc').textContent = M.t; }
+    const S = src(v.src, v.s), coef = v.mk === 'att' ? L.coefSeg([[-v.du/2, v.du/2, 1, 0]], [-Math.sqrt(0.06), 0]) : L.coefLS(v.du);
+    const img = z => L.image({p, lam:T.lam, na, n:T.n, src:S, coef, N:96, z, blur:v.bl/2.355});
+    const th0 = 0.3*30/v.d, I0 = img(v.z), cd = L.cd(I0, p, th0), nl = L.nils(I0, p, th0);
+    // DOF
+    const zs = []; for(let z = -200; z <= 200; z += 10) zs.push(z); const Iz = zs.map(z => img(z)), D = [0.95, 1, 1.05];
+    const C = D.map(d => Iz.map((I, j) => [zs[j], L.cd(I, p, th0/d)])), okZ = zs.map((z, j) => C.every(c => Math.abs(c[j][1] - M.cd) <= 0.1*M.cd));
+    let best = 0, bestR = [0, 0]; { let run = 0, st = 0; okZ.forEach((o, j) => { if(o){ if(!run) st = j; run++; if((run - 1)*10 > best){ best = (run - 1)*10; bestR = [zs[st], zs[j]]; } } else run = 0; }); if(okZ.some(x => x) && best === 0){ const j = okZ.indexOf(true); bestR = [zs[j], zs[j]]; } }
+    const dofv = okZ.some(x => x) ? best : 0;
+    // LER: σx = CD/(NILS·√N_eff) × 2 (화학 잡음), N_eff = 흡수 광자/nm² × π·흐림²
+    const Neff = v.d*T.ppm*Math.PI*Math.pow(Math.max(v.bl, 1.5), 2), ler = nl > 0.05 ? 3*2*Math.max(cd, 1)/(nl*Math.sqrt(Neff)) : 99;
+    // 처리량·원가
+    const fieldsN = T.half ? 192 : 96, W = 2.6, Lf = T.half ? 1.65 : 3.3, vd = T.pw()/(v.d*1e-3*W)*10, vs = Math.min(T.vmax, vd), wph = 3600/(T.oh + fieldsN*((Lf + 0.8)*10/vs + 0.05)), cost = (T.cap*1e8/5 + T.op*1e8)/(wph*8760*0.85);
+    // 그림 왼쪽
+    { const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const L0 = 40, R0 = w - 10, top = 14, ih = h*0.52, X = x => L0 + (x + p)/(2*p)*(R0 - L0); let mx = 0.5; I0.forEach(y => mx = Math.max(mx, y)); const Y = y => top + ih*(1 - y/(mx*1.1));
+      ctx.strokeStyle = J.c('--line'); ctx.strokeRect(L0, top, R0 - L0, ih);
+      ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2.5; ctx.beginPath(); for(let i = 0; i <= 192; i++){ const x = -p + i/192*2*p, k = ((Math.round((x/p)*96) + 48) % 96 + 96) % 96, y = Y(I0[k]); i ? ctx.lineTo(X(x), y) : ctx.moveTo(X(x), y); } ctx.stroke();
+      ctx.strokeStyle = J.c('--plum'); ctx.setLineDash([6, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(L0, Y(th0)); ctx.lineTo(R0, Y(th0)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('공간 상 (2주기 = ' + 2*p + ' nm)', L0 + 4, top + 12);
+      const rb = h - 18, rt = top + ih + 30; ctx.fillStyle = v.barc === '1' ? '#2f2f36' : '#8f96a3'; ctx.fillRect(L0, rb, R0 - L0, 8);
+      ctx.fillStyle = '#9c7bd1'; for(let px = L0; px < R0; px++){ const x = -p + (px - L0)/(R0 - L0)*2*p, k = ((Math.round((x/p)*96) + 48) % 96 + 96) % 96; if(I0[k] <= th0) ctx.fillRect(px, rt, 1.2, rb - rt); }
+      ctx.fillStyle = J.c('--ink2'); ctx.fillText('현상 후 감광액', L0 + 4, rt - 5); }
+    J.plot(J.$('#cv1b'), {x:[-200, 200], y:[0, Math.min(p, M.cd*2.2)], xlab:'초점 (nm)', ylab:'CD (nm)', series:C.map((c, i) => ({pts:c, color:['--indigo', '--red', '--gold'][i], w:i === 1 ? 3 : 1.6})), bands:[{y0:M.cd*0.9, y1:M.cd*1.1, color:'--jade', alpha:.18}].concat(dofv > 0 ? [{x0:bestR[0], x1:bestR[1], color:'--gold', alpha:.15}] : []), vlines:[{x:v.z, color:'--ink3'}]});
+    const cOK = Math.abs(cd - M.cd) <= 0.1*M.cd, dOK = dofv >= M.dof, lOK = ler <= M.ler, kOK = cost <= M.cost, barcOK = v.barc === '1' || p > 200;
+    const toolOK = {0:['krf'], 1:['arf'], 2:['imm'], 3:['euv'], 4:['hna'], 5:['euv']}[v.ms].includes(v.tool);
+    J.out(box, 'cd', J.fmt(cd, 1) + ' nm (' + M.cd + ')', cOK ? 'good' : 'bad'); J.out(box, 'dof', dofv + ' nm (≥ ' + M.dof + ')', dOK ? 'good' : 'bad');
+    J.out(box, 'nils', J.fmt(nl, 2), nl > 2 ? 'good' : nl > 1.2 ? 'warn' : 'bad'); J.out(box, 'ler', ler > 50 ? '—' : J.fmt(ler, 2) + ' nm' + (M.ler < 50 ? ' (≤ ' + M.ler + ')' : ''), M.ler < 50 ? (lOK ? 'good' : 'bad') : (ler < 4 ? '' : 'warn'));
+    J.out(box, 'cost', J.fmt(wph, 0) + ' 장/h · ' + J.fmt(cost, 0) + ' 원' + (M.cost < 1e8 ? ' (≤ ' + J.fmt(M.cost, 0) + ')' : ''), M.cost < 1e8 ? (kOK ? 'good' : 'bad') : '');
+    const all = cOK && dOK && lOK && kOK && toolOK && barcOK, why = !toolOK ? '임무에 맞는 장비를 고르세요' : !barcOK ? 'BARC 없이 스윙이 너무 큼' : all ? '⭐ 임무 성공!' : '조건 미달';
+    J.out(box, 'ok', why, all ? 'good' : 'warn');
+    if(all && !stars.includes(+v.ms)){ stars.push(+v.ms); try{ localStorage.setItem('photo-play-stars', JSON.stringify(stars)); }catch(e){} showStars(); } });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>High-NA와 그 너머 · 포토 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%234b3a7c'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E光%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../lith.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="highna">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 13 <span class="hanja">第十三章 · 越</span></div>
+  <h1>High-NA와 그 너머</h1>
+  <p class="lead">EUV의 NA를 0.33에서 0.55로 키우면 해상도가 1.7배 좋아져 반피치 8 nm까지 한 번에 찍을 수 있다. 하지만 렌즈가 아닌 거울로 NA를 키우는 일은 간단하지 않다. 마스크 쪽 빛 원뿔이 커져 반사 마스크의 6° 조명과 부딪히기 때문이다. 해법은 가로와 세로의 축소 배율을 다르게 하는 <span class="term">애너모픽</span> 광학(4× / 8×)이었고, 그 대가로 한 번에 찍는 필드가 절반이 되었다. 큰 칩은 두 번 찍어 이어 붙여야 한다(<span class="term">스티칭</span>). 이 장은 High-NA의 설계 제약을 계산하고, 빛 대신 분자의 자기 조립(DSA)과 도장 찍기(나노임프린트)라는 다른 길도 들여다본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>마스크 쪽 NA = 웨이퍼 NA / 배율이 조명 각도와 충돌하는 조건을 계산하고 애너모픽 배율이 필요한 이유를 안다.</li>
+  <li>반쪽 필드 두 개를 이어 붙일 때 경계에서 생기는 위치·선폭 어긋남을 본다.</li>
+  <li>블록 공중합체가 스스로 줄무늬를 만들고 화학 가이드에 정렬되는 DSA 과정을 상 분리 방정식으로 시뮬레이션한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>애너모픽 광학: 가로 4배, 세로 8배</h2>
+<p>웨이퍼 쪽 NA가 0.55이면, 4배 축소 광학의 마스크 쪽 빛 원뿔의 반각은 sin⁻¹(0.55/4) ≈ 7.9°다. 그런데 마스크는 수직에서 6° 기울여 비추므로, 들어오는 원뿔과 반사되어 나가는 원뿔이 겹쳐 버린다. 조명 각도를 키우면 앞 장에서 본 그림자 효과가 심해지고 다층막 반사율도 떨어진다. 해결책은 조명이 기울어진 방향(스캔 방향, y)으로만 8배 축소하는 것이다. 그러면 그 방향 마스크 쪽 각도가 절반이 되어 충돌이 사라진다. 대신 6인치 마스크에 담을 수 있는 웨이퍼 필드가 26 × 33 mm에서 26 × 16.5 mm로 절반이 된다.</p>
+<div class="eq">$$\sin\theta_{mask,x} = \frac{NA}{M_x},\qquad \sin\theta_{mask,y} = \frac{NA}{M_y},\qquad \text{충돌 없음} \iff \theta_{CRA} > \theta_{mask,y}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-1</span><span class="ttl">마스크 쪽 빛 원뿔과 필드 크기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">웨이퍼 쪽 NA <output data-o="na"></output></span><input type="range" data-k="na" min="0.2" max="0.75" step="0.01" value="0.55" data-d="2"></label>
+      <label class="ctrl"><span class="lab">x 배율 (스캔에 수직) <output data-o="mx"></output></span><input type="range" data-k="mx" min="4" max="8" step="1" value="4" data-d="0" data-u="×"></label>
+      <label class="ctrl"><span class="lab">y 배율 (스캔 방향) <output data-o="my"></output></span><input type="range" data-k="my" min="4" max="10" step="1" value="8" data-d="0" data-u="×"></label>
+      <label class="ctrl"><span class="lab">조명 주광선 각 CRA <output data-o="cra"></output></span><input type="range" data-k="cra" min="3" max="12" step="0.1" value="5.4" data-d="1" data-u="°"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">마스크 쪽 반각 x / y</span><span class="v" data-r="ang"></span></div>
+      <div class="ro"><span class="k">입사·반사 원뿔</span><span class="v" data-r="ov"></span></div>
+      <div class="ro"><span class="k">웨이퍼 필드 크기</span><span class="v" data-r="fld"></span></div>
+      <div class="ro"><span class="k">반피치 (k₁ = 0.3)</span><span class="v" data-r="hp"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 마스크(아래 수평선) 위에서 본 스캔 방향 단면. 노랑 = 들어오는 빛 원뿔, 파랑 = 반사되어 투영 광학으로 가는 원뿔. 두 원뿔이 겹치면(빨강) 거울을 배치할 수 없다. 오른쪽: 6인치 마스크의 무늬 영역(104 × 132 mm)이 웨이퍼에 만드는 필드 크기와, 300 mm 웨이퍼에 필요한 필드 수. 4×/8×는 필드가 절반이라 같은 칩을 찍는 데 노광 횟수가 두 배다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>스티칭: 반쪽 필드 이어 붙이기</h2>
+<p>GPU나 AI 가속기처럼 큰 칩(약 26 × 33 mm까지)은 High-NA의 반쪽 필드에 들어가지 않는다. 칩을 두 장의 마스크로 나눠 위아래로 이어 찍어야 한다. 경계를 가로지르는 배선은 두 노광의 오버레이 오차만큼 어긋나고, 두 마스크의 선폭 차이만큼 굵기가 계단처럼 바뀐다. 게다가 경계 부근은 두 노광의 빛이 일부 겹쳐(이중 노광) 선폭이 변한다. 설계자는 경계에 민감한 회로를 두지 않고, 배선을 넓혀 여유를 둔다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-2</span><span class="ttl">경계를 가로지르는 배선</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">경계 오버레이 x <output data-o="dx"></output></span><input type="range" data-k="dx" min="-4" max="4" step="0.1" value="1.2" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">위·아래 마스크 CD 차이 <output data-o="dc"></output></span><input type="range" data-k="dc" min="-3" max="3" step="0.1" value="0.8" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">경계 겹침 폭 <output data-o="ov"></output></span><input type="range" data-k="ov" min="0" max="40" step="1" value="12" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">배선 폭 <output data-o="w"></output></span><input type="range" data-k="w" min="8" max="30" step="1" value="12" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv2" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">선 어긋남</span><span class="v" data-r="sh"></span></div>
+      <div class="ro"><span class="k">경계의 최소 선폭 (끊김 위험)</span><span class="v" data-r="min"></span></div>
+      <div class="ro"><span class="k">최대 선폭 (붙음 위험)</span><span class="v" data-r="max"></span></div>
+      <div class="ro"><span class="k">판정</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 경계(가로 점선) 근처를 크게 확대한 그림. 위쪽 반 필드(보라)와 아래쪽 반 필드(파랑)가 같은 배선 세 줄(피치 24 nm)을 찍는다. 겹침 영역에서는 두 노광이 모두 일부씩 들어가 선폭이 부풀거나(이중 노광) 오버레이 때문에 잘록해진다. 최소 선폭이 설계값의 70 % 아래면 끊김, 이웃과 간격이 4 nm 미만이면 붙음으로 판정한다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>빛이 아닌 길: DSA와 나노임프린트</h2>
+<p><span class="term">유도 자기 조립</span>(DSA)은 서로 섞이지 않는 두 고분자(예: PS와 PMMA)를 한 사슬로 이은 블록 공중합체를 쓴다. 기름과 물처럼 서로 피하려 하지만 사슬로 묶여 멀리 갈 수 없으므로, 분자 길이로 정해지는 일정한 주기(L₀ ≈ 10~40 nm)의 줄무늬를 스스로 만든다. 그대로 두면 지문처럼 제멋대로 휘지만, 노광으로 만든 성긴 화학 가이드(피치 = 2L₀, 3L₀ …)를 깔면 그 사이를 고른 줄무늬로 메워 피치를 2~4배로 늘린다(밀도 증배). 문제는 수십억 개 중 하나라도 생기는 결함이다. <span class="term">나노임프린트</span>(NIL)는 무늬가 새겨진 도장(템플릿)을 액체 레진에 눌러 굳히는 방식으로, 광학 한계가 없고 장비가 싸지만 결함과 오버레이, 처리량이 과제다.</p>
+<div class="eq">$$\frac{\partial\psi}{\partial t} = r\psi - \bigl(q_0^2 + \nabla^2\bigr)^2\psi - \psi^3 + h_{guide}(\mathbf r),\qquad L_0 = \frac{2\pi}{q_0}$$<div class="note">스위프트–호엔버그 방정식: ψ는 두 블록의 국소 조성 차이. r이 클수록 상 분리가 강하다. 블록 공중합체의 실제 모형(오타–가와사키)과 같은 줄무늬 해를 갖는 간단한 모형이다.</div></div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-3</span><span class="ttl">자기 조립 줄무늬 시뮬레이터</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">화학 가이드</span><select data-k="g"><option value="0">없음 (지문 무늬)</option><option value="1">가이드 피치 = L₀ (1×)</option><option value="2">가이드 피치 = 2L₀ (2×)</option><option value="3" selected>가이드 피치 = 3L₀ (3×)</option><option value="5">가이드 피치 = 5L₀ (5×)</option></select></label>
+      <label class="ctrl"><span class="lab">상 분리 세기 r <output data-o="r"></output></span><input type="range" data-k="r" min="0.05" max="0.6" step="0.01" value="0.3" data-d="2"></label>
+      <label class="ctrl"><span class="lab">가이드 세기 <output data-o="h"></output></span><input type="range" data-k="h" min="0" max="0.6" step="0.02" value="0.25" data-d="2"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b3a">어닐링 시작/멈춤</button><button class="sbtn warn" id="b3r">새로 뿌리기</button><span class="hint" id="b3s"></span></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">어닐링 시간 (무차원)</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">세로 줄 정렬도</span><span class="v" data-r="ord"></span></div>
+      <div class="ro"><span class="k">결함 추정 (줄 끊김·갈래)</span><span class="v" data-r="def"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 위에서 본 박막(주황 = PS 블록, 청록 = PMMA 블록). 바닥의 화학 가이드 줄은 흰 점선으로 표시했다. 처음엔 무작위로 섞여 있다가 어닐링하면 주기 L₀ = 8칸의 줄무늬로 갈라진다. 가이드가 없으면 지문처럼 휘고, 가이드 배수가 너무 크면 가이드 사이에서 결함이 남는다. 오른쪽: 시간에 따른 정렬도(파랑)와 결함 수(빨강, 오른쪽 눈금은 정규화).</p>
+</div>
+
+<div class="tbwrap"><table class="tb">
+<tr><th>기술</th><th>해상도(반피치)</th><th>장점</th><th>과제</th></tr>
+<tr><td>EUV 0.33 NA</td><td>~13 nm (단일 노광)</td><td>양산 검증, 생태계</td><td>확률적 결함, 3D 마스크</td></tr>
+<tr><td>High-NA EUV 0.55</td><td>~8 nm</td><td>다중 패터닝 대체</td><td>반쪽 필드·스티칭, 얕은 DOF, 장비 값</td></tr>
+<tr><td>Hyper-NA (0.75 이상, 연구)</td><td>~5 nm</td><td>추가 축소</td><td>편광 손실, 거울 크기, 감광액 두께</td></tr>
+<tr><td>DSA</td><td>~5~10 nm</td><td>값싼 밀도 증배, 낮은 LER</td><td>결함 밀도, 설계 자유도</td></tr>
+<tr><td>나노임프린트</td><td>&lt; 10 nm</td><td>광학 한계 없음, 장비 저가</td><td>결함, 오버레이, 템플릿 수명</td></tr>
+</table></div>
+
+<div class="think"><p><b>생각해 보기.</b> High-NA의 초점 심도는 0.33 NA의 몇 분의 1일까? 그래서 무엇이 달라져야 할까?</p><p>DOF ∝ λ/NA² 이므로 (0.33/0.55)² ≈ 0.36, 약 3분의 1이다. 감광액이 30 nm보다 얇아져야 하고(그러면 흡수 광자가 줄어 확률적 결함이 늘고), 웨이퍼 평탄도와 초점 제어가 훨씬 정밀해져야 한다. 해상도 하나를 얻으면 다른 세 개가 어려워지는 것이 리소그래피의 역사다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">High-NA EUV가 애너모픽(4×/8×) 배율을 쓰는 주된 이유는?</p><ol><li>마스크를 더 싸게 만들려고</li><li>스캔 방향 마스크 쪽 빛 원뿔을 줄여 입사·반사 원뿔의 충돌을 피하려고</li><li>처리량을 두 배로 올리려고</li><li>편광을 바꾸려고</li></ol>
+<p class="explain">NA 0.55를 4×로 하면 마스크 쪽 반각이 조명 각(약 6°)보다 커져 원뿔이 겹친다.</p></div>
+<div class="quiz" data-a="3"><p class="q">4×/8× 애너모픽 광학에서 6인치 마스크로 찍는 웨이퍼 필드 크기는?</p><ol><li>26 × 33 mm</li><li>13 × 33 mm</li><li>52 × 66 mm</li><li>26 × 16.5 mm</li></ol>
+<p class="explain">마스크 무늬 영역 104 × 132 mm를 x는 4, y는 8로 나눈다.</p></div>
+<div class="quiz" data-a="2"><p class="q">DSA에서 성긴 화학 가이드 위에 촘촘한 줄무늬가 생기는 원리는?</p><ol><li>빛의 간섭</li><li>식각 선택비</li><li>블록 공중합체가 분자 길이로 정해진 주기로 스스로 상 분리하고 가이드에 정렬</li><li>전자빔 묘화</li></ol>
+<p class="explain">주기 L₀는 분자가 정하고, 가이드는 방향과 위치만 잡아 준다(밀도 증배).</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 13-1 */
+(function(){
+  const box = J.$('#sim1');
+  J.sim('sim1', v => { const ax = Math.asin(Math.min(1, v.na/v.mx))*180/Math.PI, ay = Math.asin(Math.min(1, v.na/v.my))*180/Math.PI, cra = v.cra, overlap = ay >= cra;
+    const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const cx = w/2, by = h - 40, R = h - 70, rad = d => d*Math.PI/180;
+    ctx.fillStyle = '#333'; ctx.fillRect(30, by, w - 60, 6); ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('반사 마스크', cx, by + 22);
+    const cone = (c, half, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(cx, by); ctx.lineTo(cx + R*Math.sin(rad(c - half)), by - R*Math.cos(rad(c - half))); ctx.lineTo(cx + R*Math.sin(rad(c + half)), by - R*Math.cos(rad(c + half))); ctx.closePath(); ctx.fill(); };
+    cone(-cra, ay, 'rgba(240,190,40,.5)'); cone(cra, ay, 'rgba(70,130,210,.45)');
+    if(overlap){ const o = ay - cra; ctx.fillStyle = 'rgba(220,50,40,.6)'; ctx.beginPath(); ctx.moveTo(cx, by); ctx.lineTo(cx + R*Math.sin(rad(-o)), by - R*Math.cos(rad(-o))); ctx.lineTo(cx + R*Math.sin(rad(o)), by - R*Math.cos(rad(o))); ctx.closePath(); ctx.fill(); }
+    ctx.strokeStyle = J.c('--ink3'); ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(cx, by); ctx.lineTo(cx, by - R - 8); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = J.c('--ink2'); ctx.textAlign = 'left'; ctx.fillText('입사 (조명)', 12, 18); ctx.textAlign = 'right'; ctx.fillText('반사 (투영 광학으로)', w - 12, 18);
+    const fx = 104/v.mx, fy = 132/v.my, nF = (() => { let n = 0; for(let x = -150; x < 150; x += fx) for(let y = -150; y < 150; y += fy){ const cs = [[x, y], [x + fx, y], [x, y + fy], [x + fx, y + fy]]; if(cs.some(([a, b]) => Math.hypot(a, b) < 147)) n++; } return n; })();
+    const c2 = J.fit(J.$('#cv1b')), g = c2.ctx, W2 = c2.w, H2 = c2.h; g.clearRect(0, 0, W2, H2); const cc = [W2/2, H2/2], sc = Math.min(W2, H2)*0.44/150;
+    g.fillStyle = '#c9ced8'; g.beginPath(); g.arc(cc[0], cc[1], 150*sc, 0, 7); g.fill();
+    g.strokeStyle = 'rgba(80,60,160,.6)'; g.lineWidth = 1; for(let x = -150; x < 150; x += fx) for(let y = -150; y < 150; y += fy){ const cs = [[x, y], [x + fx, y], [x, y + fy], [x + fx, y + fy]]; if(cs.some(([a, b]) => Math.hypot(a, b) < 147)) g.strokeRect(cc[0] + x*sc, cc[1] + y*sc, fx*sc, fy*sc); }
+    g.strokeStyle = J.c('--red'); g.lineWidth = 2.5; g.strokeRect(cc[0] - 13*sc, cc[1] - 16.5*sc, 26*sc, 33*sc); g.fillStyle = J.c('--ink2'); g.font = '11px "Noto Sans KR"'; g.textAlign = 'left'; g.fillText('빨간 틀: 26 × 33 mm 칩', 6, 14);
+    J.out(box, 'ang', J.fmt(ax, 1) + '° / ' + J.fmt(ay, 1) + '°'); J.out(box, 'ov', overlap ? '겹침 → 불가' : '분리됨 (여유 ' + J.fmt(cra - ay, 1) + '°)', overlap ? 'bad' : 'good');
+    J.out(box, 'fld', J.fmt(fx, 1) + ' × ' + J.fmt(fy, 1) + ' mm (' + nF + '개)', fx*fy >= 26*33*0.99 ? 'good' : 'warn'); J.out(box, 'hp', J.fmt(0.3*13.5/v.na, 1) + ' nm'); });
+})();
+
+/* 13-2 스티칭 */
+(function(){
+  const box = J.$('#sim2');
+  J.sim('sim2', v => { const {ctx, w, h} = J.fit(J.$('#cv2')); ctx.clearRect(0,0,w,h); const nmW = 80, sc = (w - 40)/nmW, ox = 20, yB = h/2, Hn = (h - 20)/sc;
+    const p = 24, xs = [16, 40, 64]; let mn = 1e9, mx = 0, minGap = 1e9;
+    // 각 높이 y (nm, 경계=0, 위쪽 +)에서 선폭: 위 노광 비중 a(y)
+    for(let py = 10; py < h - 10; py += 1){ const y = (yB - py)/sc, a = v.ov > 0 ? J.clamp(0.5 + y/v.ov, 0, 1) : (y >= 0 ? 1 : 0);
+      const edges = xs.map(xc => { // 두 노광의 선: 위 = xc, 폭 w + dc/2 / 아래 = xc + dx, 폭 w − dc/2 ; 겹침에서 선량 합 → 문턱 0.5
+        const wt = v.w + v.dc/2, wb = v.w - v.dc/2; let L = null, R = null;
+        for(let x = xc - 20; x <= xc + 20; x += 0.1){ const inT = Math.abs(x - xc) <= wt/2 ? 1 : 0, inB = Math.abs(x - xc - v.dx) <= wb/2 ? 1 : 0, dose = a*inT + (1 - a)*inB + (v.ov > 0 ? 0.25*Math.min(a, 1 - a)*4*(inT + inB)/2 : 0);
+          if(dose >= 0.5){ if(L === null) L = x; R = x; } }
+        return L === null ? null : [L, R + 0.1]; });
+      edges.forEach(e => { if(!e) { mn = 0; return; } const wd = e[1] - e[0]; mn = Math.min(mn, wd); mx = Math.max(mx, wd); ctx.fillStyle = py < yB ? 'rgba(140,90,210,.8)' : 'rgba(70,130,210,.8)'; if(Math.abs(py - yB) < v.ov*sc/2) ctx.fillStyle = 'rgba(110,110,200,.85)'; ctx.fillRect(ox + e[0]*sc, py, (e[1] - e[0])*sc, 1.2); });
+      for(let i = 0; i + 1 < edges.length; i++) if(edges[i] && edges[i + 1]) minGap = Math.min(minGap, edges[i + 1][0] - edges[i][1]); }
+    ctx.strokeStyle = J.c('--red'); ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(ox, yB); ctx.lineTo(w - 20, yB); ctx.stroke(); ctx.setLineDash([]);
+    if(v.ov > 0){ ctx.fillStyle = 'rgba(220,170,40,.12)'; ctx.fillRect(ox, yB - v.ov*sc/2, w - 40, v.ov*sc); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('위쪽 반 필드 (마스크 A)', ox, 24); ctx.fillText('아래쪽 반 필드 (마스크 B)', ox, h - 14); ctx.textAlign = 'right'; ctx.fillText('경계', w - 22, yB - 4);
+    const ok = mn >= 0.7*v.w && minGap >= 4;
+    J.out(box, 'sh', J.fmt(Math.abs(v.dx), 1) + ' nm'); J.out(box, 'min', J.fmt(mn, 1) + ' nm', mn >= 0.7*v.w ? 'good' : 'bad'); J.out(box, 'max', J.fmt(mx, 1) + ' nm (간격 ' + J.fmt(minGap, 1) + ')', minGap >= 4 ? 'good' : 'bad');
+    J.out(box, 'ok', ok ? '통과' : mn < 0.7*v.w ? '끊김 위험' : '붙음 위험', ok ? 'good' : 'bad'); });
+})();
+
+/* 13-3 DSA */
+(function(){
+  const box = J.$('#sim3'), W = 128, H = 80, L0 = 8, q0 = 2*Math.PI/L0, dt = 0.03; let psi, guide, T = 0, run = false, V = null, hist = [], acc = 0, seed = 1;
+  const init = () => { const r = J.rng(seed); psi = new Float32Array(W*H); for(let i = 0; i < W*H; i++) psi[i] = (r() - 0.5)*0.2; T = 0; hist = []; mkGuide(); };
+  const mkGuide = () => { guide = new Float32Array(W*H); const g = +V.g; if(!g) return; const P = g*L0; for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){ const ph = ((x % P) + P) % P; if(ph < L0/2 - 1 || ph > P - 1) guide[y*W + x] = 1; } };
+  const lap = (A, B) => { for(let y = 0; y < H; y++){ const ym = ((y - 1 + H) % H)*W, yp = ((y + 1) % H)*W, yo = y*W; for(let x = 0; x < W; x++){ const xm = (x - 1 + W) % W, xp = (x + 1) % W; B[yo + x] = A[yo + xm] + A[yo + xp] + A[ym + x] + A[yp + x] - 4*A[yo + x]; } } };
+  const L1 = new Float32Array(W*H), L2 = new Float32Array(W*H);
+  const step = () => { lap(psi, L1); lap(L1, L2); const r = V.r, hg = V.h, q2 = q0*q0, q4 = q2*q2;
+    for(let i = 0; i < W*H; i++){ const p = psi[i]; psi[i] = p + dt*(r*p - (q4*p + 2*q2*L1[i] + L2[i]) - p*p*p + hg*(guide[i] ? 1 : 0)); } T += dt; };
+  const measure = () => { let gx = 0, gy = 0, def = 0;
+    for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){ const i = y*W + x, dx = psi[y*W + (x + 1) % W] - psi[i], dy = psi[((y + 1) % H)*W + x] - psi[i]; gx += dx*dx; gy += dy*dy; }
+    // 결함: 각 행의 부호 바뀜 수가 이상값(W/L0*2)과 다른 정도 + 세로 연속성
+    const ideal = 2*W/L0; let rowsBad = 0; for(let y = 0; y < H; y += 2){ let c = 0; for(let x = 0; x < W; x++) if((psi[y*W + x] > 0) !== (psi[y*W + (x + 1) % W] > 0)) c++; rowsBad += Math.abs(c - ideal); }
+    for(let y = 0; y < H - 1; y += 2) for(let x = 0; x < W; x++){ if((psi[y*W + x] > 0) !== (psi[(y + 1)*W + x] > 0)) def++; }
+    return {ord:gx/(gx + gy + 1e-9), def:Math.round(def/6 + rowsBad/4)}; };
+  const draw = () => { const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const s = Math.min(w/W, h/H), ox = (w - s*W)/2;
+    const img = ctx.createImageData(W, H); for(let i = 0; i < W*H; i++){ const t = J.clamp(0.5 + psi[i]*1.2, 0, 1); img.data[i*4] = 40 + 200*t; img.data[i*4 + 1] = 150 - 30*t; img.data[i*4 + 2] = 170 - 140*t; img.data[i*4 + 3] = 255; }
+    const off = document.createElement('canvas'); off.width = W; off.height = H; off.getContext('2d').putImageData(img, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(off, ox, 0, W*s, H*s);
+    if(+V.g){ ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.setLineDash([3, 4]); ctx.lineWidth = 1.2; const P = +V.g*L0; for(let x = 0; x < W; x += P){ ctx.beginPath(); ctx.moveTo(ox + (x + 0.5)*s, 0); ctx.lineTo(ox + (x + 0.5)*s, H*s); ctx.stroke(); } ctx.setLineDash([]); }
+    const m = measure(); if(!hist.length || T - hist[hist.length - 1][0] > 0.6) hist.push([T, m.ord, m.def]);
+    const md = Math.max(10, ...hist.map(q => q[2]));
+    J.plot(J.$('#cv3b'), {x:[0, Math.max(30, T)], y:[0, 1], xlab:'어닐링 시간', ylab:'정렬도 / 결함(정규화)', series:[{pts:hist.map(q => [q[0], q[1]]), color:'--indigo', w:3}, {pts:hist.map(q => [q[0], q[2]/md]), color:'--red', w:2}]});
+    J.out(box, 't', J.fmt(T, 1)); J.out(box, 'ord', J.fmt(m.ord*100, 0) + ' %', m.ord > 0.9 ? 'good' : m.ord > 0.7 ? 'warn' : 'bad'); J.out(box, 'def', m.def + ' 곳', m.def < 3 ? 'good' : m.def < 15 ? 'warn' : 'bad');
+    J.$('#b3s').textContent = run ? '어닐링 중…' : ''; };
+  J.sim('sim3', v => { const re = !V || V.g !== v.g; V = v; if(!psi) init(); else if(re) mkGuide(); draw(); });
+  J.$('#b3a').onclick = e => { run = !run; e.target.classList.toggle('on', run); draw(); };
+  J.$('#b3r').onclick = () => { seed++; init(); draw(); };
+  J.loop(J.$('#cv3a'), dt2 => { if(!run || !V) return; for(let k = 0; k < 25; k++) step(); acc += dt2; if(acc > 0.08){ acc = 0; draw(); } if(T > 300){ run = false; J.$('#b3a').classList.remove('on'); draw(); } });
+})();
+</script>
+</body>
+</html>
