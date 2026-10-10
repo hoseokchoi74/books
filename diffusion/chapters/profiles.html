@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>확산 프로파일과 접합 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="profiles">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 04 <span class="hanja">第四章 · 型</span></div>
+  <h1>확산 프로파일과 접합</h1>
+  <p class="lead">이온 주입이 나오기 전, 도펀트는 모두 고온 확산로에서 기체나 유리막으로부터 넣었다. 그 고전적 2단계 공정, 곧 표면 농도를 고정한 채 얇게 넣는 <span class="term">선증착</span>과, 공급을 끊고 넣은 양을 안으로 밀어 넣는 <span class="term">드라이브인</span>은 오늘날에도 확산의 두 기본 해(erfc와 가우스)를 가르쳐 준다. 넣은 도펀트가 기판 도핑과 같아지는 깊이가 <span class="term">접합 깊이</span> x<sub>j</sub>, 그 층의 전기 저항이 <span class="term">면저항</span> R<sub>s</sub>다. 이 장은 두 해와 접합, 면저항을 계산하고, 마스크 가장자리 아래로 도펀트가 옆으로 퍼지는 2차원 모습을 본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>선증착(erfc)과 드라이브인(가우스) 해의 모양과 도즈 보존을 이해한다.</li>
+  <li>접합 깊이 x<sub>j</sub>와 면저항 R<sub>s</sub>를 계산하고 어빈 곡선으로 읽는다.</li>
+  <li>마스크 창 가장자리 아래의 측면 확산(약 0.75 x<sub>j</sub>)을 2차원 계산으로 확인한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>선증착과 드라이브인</h2>
+<p><b>선증착</b>: 표면에 도펀트가 넘치게 공급되어 표면 농도가 고용도 C<sub>s</sub>로 고정된다. 분포는 여오차함수 erfc이고, 넣은 양(도즈)은 √t에 비례해 늘어난다. 보통 낮은 온도·짧은 시간으로 정밀한 양을 넣는다. <b>드라이브인</b>: 공급을 끊고(표면을 산화막으로 덮고) 더 높은 온도에서 오래 가열한다. 도즈는 고정이고 분포는 가우스로 바뀌며, 표면 농도는 내려가고 접합은 깊어진다. 두 단계로 나누면 "얼마나(도즈)"와 "얼마나 깊이(x<sub>j</sub>)"를 따로 조절할 수 있다.</p>
+<div class="eq">$$\text{선증착: } C = C_s\,\mathrm{erfc}\frac{x}{2\sqrt{D_1t_1}},\ \ Q = \frac{2C_s\sqrt{D_1t_1}}{\sqrt\pi}\qquad \text{드라이브인: } C = \frac{Q}{\sqrt{\pi D_2t_2}}\,e^{-x^2/4D_2t_2}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-1</span><span class="ttl">2단계 확산 설계기 (붕소 → n형 기판)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">선증착 온도 <output data-o="t1"></output></span><input type="range" data-k="t1" min="850" max="1050" step="5" value="950" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">선증착 시간 <output data-o="m1"></output></span><input type="range" data-k="m1" min="5" max="120" step="5" value="30" data-d="0" data-u="분"></label>
+      <label class="ctrl"><span class="lab">드라이브인 온도 <output data-o="t2"></output></span><input type="range" data-k="t2" min="1000" max="1200" step="5" value="1100" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">드라이브인 시간 <output data-o="m2"></output></span><input type="range" data-k="m2" min="0" max="300" step="5" value="60" data-d="0" data-u="분"></label>
+      <label class="ctrl"><span class="lab">기판 인 농도 N_B <output data-o="nb"></output></span><input type="range" data-k="nb" min="14" max="17" step="0.1" value="15" data-log="1" data-d="1" data-u="cm⁻³"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">도즈 Q</span><span class="v" data-r="q"></span></div>
+      <div class="ro"><span class="k">드라이브인 후 표면 농도</span><span class="v" data-r="cs"></span></div>
+      <div class="ro"><span class="k">접합 깊이 x_j</span><span class="v" data-r="xj"></span></div>
+      <div class="ro"><span class="k">면저항 R_s</span><span class="v" data-r="rs"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 선증착 직후(주황, erfc)와 드라이브인 후(빨강, 가우스) 붕소 분포(로그 눈금), 기판 농도(회색 점선). 두 곡선 아래 넓이(도즈)는 같다. 오른쪽: 단면 그림. 노란 띠가 p형 영역, 빨간 선이 접합. 드라이브인을 늘릴수록 접합은 깊어지고 표면 농도는 내려간다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🍯</span><b>꿀 바르고 스며들게 하기</b><span>빵에 꿀을 계속 부어 두면(선증착) 표면은 늘 꿀로 젖어 있고 스며드는 양이 점점 늘어난다. 꿀을 닦아 내고 그냥 두면(드라이브인) 이미 스며든 꿀이 더 깊이 퍼지면서 표면은 덜 달아진다.</span></div>
+
+<h2 id="s2"><span class="n">02</span>면저항과 어빈 곡선</h2>
+<p>도핑층의 저항은 깊이마다 농도와 이동도가 달라 적분으로 구한다. 측정에서는 정사각형 하나의 저항인 면저항 R<sub>s</sub>(Ω/□)를 쓴다. 같은 표면 농도와 접합 깊이라도 분포 모양(erfc/가우스)과 기판 농도에 따라 R<sub>s</sub>가 달라지므로, 예전 엔지니어들은 이것을 미리 계산한 그래프(<b>어빈 곡선</b>)로 읽었다. 이동도는 농도가 높을수록 불순물 산란으로 떨어진다(붕소 10²⁰ cm⁻³에서 약 50 cm²/Vs).</p>
+<div class="eq">$$R_s = \left[\,q\int_0^{x_j}\mu\bigl(N(x)\bigr)\,\bigl(N(x) - N_B\bigr)\,dx\right]^{-1},\qquad \bar\sigma = \frac{1}{R_s x_j}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-2</span><span class="ttl">어빈 곡선 계산기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">표면 농도 C_s <output data-o="cs"></output></span><input type="range" data-k="cs" min="16" max="21" step="0.05" value="19.5" data-log="1" data-d="1" data-u="cm⁻³"></label>
+      <label class="ctrl"><span class="lab">접합 깊이 x_j <output data-o="xj"></output></span><input type="range" data-k="xj" min="20" max="3000" step="10" value="500" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">분포 모양</span><select data-k="sh"><option value="g" selected>가우스 (드라이브인)</option><option value="e">erfc (선증착)</option></select></label>
+      <label class="ctrl"><span class="lab">층 종류</span><select data-k="ty"><option value="p" selected>p형 (붕소)</option><option value="n">n형 (인·비소)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">면저항 R_s</span><span class="v" data-r="rs"></span></div>
+      <div class="ro"><span class="k">평균 전도도 1/(R_s x_j)</span><span class="v" data-r="sg"></span></div>
+      <div class="ro"><span class="k">층 안 도즈</span><span class="v" data-r="q"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 어빈 곡선. 표면 농도에 따른 평균 전도도(기판 농도 10¹⁴~10¹⁸ cm⁻³ 곡선), 점은 현재 조건. 오른쪽: 깊이에 따른 순 도핑(파랑)과 이동도(초록, 오른쪽 눈금 대신 ×10¹⁵). 고농도 표면은 운반자가 많지만 이동도가 낮아, 깊은 쪽 저농도 층이 전도에 의외로 많이 기여한다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>마스크 가장자리 아래의 측면 확산</h2>
+<p>산화막 창을 열어 도펀트를 넣으면, 도펀트는 아래로만이 아니라 옆으로도 퍼져 마스크 가장자리 밑으로 들어간다. 측면 확산 거리는 수직 접합 깊이의 약 75~85 %다. 소스·드레인이 게이트 밑으로 얼마나 파고드는지(오버랩), 소자 사이 간격을 얼마나 둬야 하는지가 이것으로 정해진다. 2차원 확산 방정식을 직접 풀어 보자.</p>
+<div class="eq">$$\frac{\partial C}{\partial t} = D\left(\frac{\partial^2 C}{\partial x^2} + \frac{\partial^2 C}{\partial y^2}\right),\qquad x_{lat} \approx 0.75\sim0.85\,x_j$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 4-3</span><span class="ttl">2차원 확산 단면</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">마스크 창 폭 <output data-o="w"></output></span><input type="range" data-k="w" min="0.2" max="3" step="0.1" value="1.2" data-d="1" data-u="µm"></label>
+      <label class="ctrl"><span class="lab">공급 방식</span><select data-k="s"><option value="c" selected>선증착 (표면 농도 고정)</option><option value="g">드라이브인 (도즈 고정)</option></select></label>
+      <label class="ctrl"><span class="lab">확산 시간 (1,100 °C) <output data-o="t"></output></span><input type="range" data-k="t" min="5" max="240" step="5" value="60" data-d="0" data-u="분"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">수직 접합 깊이</span><span class="v" data-r="xj"></span></div>
+      <div class="ro"><span class="k">측면 확산 (마스크 밑)</span><span class="v" data-r="lat"></span></div>
+      <div class="ro"><span class="k">측면 / 수직</span><span class="v" data-r="r"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 단면 농도 지도(로그, 밝을수록 진함)와 접합선(흰 선), 위의 검은 띠는 산화막 마스크. 오른쪽: 표면을 따라 잰 농도(가로)와 창 가운데에서 깊이로 잰 농도(세로 방향) 비교. 창이 좁으면 옆으로 빠져나가는 비율이 커서 수직 접합이 얕아진다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 오늘날 선증착 대신 이온 주입을 쓰는 가장 큰 이유는?</p><p>도즈 정밀도와 독립성이다. 선증착의 도즈는 고용도와 √(Dt)로 정해져 ±10 % 맞추기도 어렵지만, 이온 주입은 전류 적분으로 도즈를 ±1 % 이내로 맞추고, 깊이는 에너지로 따로 정하며, 감광액을 마스크로 쓸 수 있어 낮은 온도에서 끝난다. 확산로는 이제 주로 드라이브인과 산화, 어닐에 쓴다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="0"><p class="q">드라이브인 중에 일정하게 유지되는 것은?</p><ol><li>도즈(총량)</li><li>표면 농도</li><li>접합 깊이</li><li>확산 계수</li></ol>
+<p class="explain">공급이 끊겨 총량은 보존되고 분포만 퍼진다.</p></div>
+<div class="quiz" data-a="2"><p class="q">선증착 시간을 4배로 늘리면 도즈는?</p><ol><li>4배</li><li>16배</li><li>2배</li><li>그대로</li></ol>
+<p class="explain">Q ∝ √t.</p></div>
+<div class="quiz" data-a="1"><p class="q">접합 깊이 1 µm로 확산했을 때 마스크 가장자리 밑으로 들어가는 측면 확산은 대략?</p><ol><li>0.1 µm</li><li>0.8 µm</li><li>2 µm</li><li>0</li></ol>
+<p class="explain">측면 확산은 수직의 약 75~85 %.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 4-1 2단계 확산 */
+(function(){
+  const box = J.$('#sim1');
+  J.sim('sim1', v => { const D1 = DF.D('B', v.t1), D2 = DF.D('B', v.t2), t1 = v.m1*60, t2 = v.m2*60, Cs = DF.solub('B', v.t1), Q = 2*Cs*Math.sqrt(D1*t1/Math.PI);
+    const Nx = 400, L = Math.max(11*Math.sqrt(D1*t1 + D2*t2), 2e-5), dx = L/Nx, C1 = new Float64Array(Nx), C2 = new Float64Array(Nx);
+    for(let i = 0; i < Nx; i++){ const x = i*dx; C1[i] = Cs*DF.erfc(x/(2*Math.sqrt(D1*t1))); }
+    const C2n = t2 > 0 ? DF.solve(C1, dx, t2, () => D2, {type:'refl'}, 'refl', 300) : C1;
+    const xj = DF.xj(C2n, dx, v.nb), xj1 = DF.xj(C1, dx, v.nb), rs = DF.rs(C2n, dx, v.nb, 'p');
+    const S1 = [], S2 = []; for(let i = 0; i < Nx; i += 2){ S1.push([i*dx*1e4, Math.max(C1[i], 1e12)]); S2.push([i*dx*1e4, Math.max(C2n[i], 1e12)]); }
+    J.plot(J.$('#cv1a'), {x:[0, L*1e4], y:[1e13, 1e21], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (µm)', ylab:'붕소 농도 (cm⁻³)', series:[{pts:S1, color:'--gold', w:2.5}, {pts:S2, color:'--red', w:3}], hlines:[{y:v.nb, color:'--ink3', label:'N_B'}], vlines:xj > 0 ? [{x:xj*1e4, color:'--red', label:'x_j'}] : []});
+    const {ctx, w, h} = J.fit(J.$('#cv1b')); ctx.clearRect(0,0,w,h); const sc = (h - 40)/(L*1e4), top = 20;
+    ctx.fillStyle = '#c9d6ea'; ctx.fillRect(20, top, w - 40, h - 40); ctx.fillStyle = 'rgba(240,200,80,.85)'; ctx.fillRect(20, top, w - 40, xj*1e4*sc);
+    for(let i = 0; i < Nx; i += 4){ const c = C2n[i]; if(c < v.nb) break; ctx.fillStyle = `rgba(214,90,74,${J.clamp((Math.log10(c) - Math.log10(v.nb))/5, 0, 0.8)})`; ctx.fillRect(20, top + i*dx*1e4*sc, w - 40, 4*dx*1e4*sc + .5); }
+    ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(20, top + xj*1e4*sc); ctx.lineTo(w - 20, top + xj*1e4*sc); ctx.stroke();
+    ctx.fillStyle = J.c('--ink'); ctx.font = '12px "Noto Sans KR"'; ctx.fillText('p⁺ (붕소)', 28, top + 16); ctx.fillText('n 기판', 28, h - 26); ctx.fillText('접합 x_j = ' + J.fmt(xj*1e4, 3) + ' µm', w*0.45, top + xj*1e4*sc - 6);
+    J.out(box, 'q', J.sci(Q, 2) + ' cm⁻²'); J.out(box, 'cs', J.sci(C2n[0], 2) + ' cm⁻³'); J.out(box, 'xj', J.fmt(xj1*1e4, 3) + ' → ' + J.fmt(xj*1e4, 3) + ' µm'); J.out(box, 'rs', isFinite(rs) ? J.fmt(rs, 0) + ' Ω/□' : '—'); });
+})();
+
+/* 4-2 어빈 */
+(function(){
+  const box = J.$('#sim2');
+  const prof = (cs, xj, nb, sh) => { const Nx = 300, dx = xj*1e-7*1.6/Nx, C = new Float64Array(Nx); // x_j에서 C = nb가 되도록 폭 결정
+    const u = sh === 'g' ? Math.sqrt(Math.log(cs/nb)) : (() => { let lo = 0, hi = 6; for(let k = 0; k < 50; k++){ const m = (lo + hi)/2; if(cs*DF.erfc(m) > nb) lo = m; else hi = m; } return (lo + hi)/2; })();
+    const Ld = xj*1e-7/u; for(let i = 0; i < Nx; i++){ const x = i*dx; C[i] = sh === 'g' ? cs*Math.exp(-Math.pow(x/Ld, 2)) : cs*DF.erfc(x/Ld); } return {C, dx}; };
+  J.sim('sim2', v => { const NBs = [1e14, 1e15, 1e16, 1e17, 1e18], S = NBs.map((nb, k) => ({pts:Array.from({length:50}, (_, i) => { const cs = Math.pow(10, 16.2 + i*0.1); if(cs <= nb*3) return null; const {C, dx} = prof(cs, 1000, nb, v.sh); return [cs, 1/(DF.rs(C, dx, nb, v.ty)*1e-4)]; }).filter(Boolean), color:['--ink3', '--indigo', '--jade', '--gold', '--red'][k], w:1.8}));
+    const nb = v.ty === 'p' ? 1e15 : 1e15, {C, dx} = prof(v.cs, v.xj, nb, v.sh), rs = DF.rs(C, dx, nb, v.ty), sg = 1/(rs*v.xj*1e-7);
+    J.plot(J.$('#cv2a'), {x:[1e16, 1e21], y:[0.01, 1e4], logx:true, logy:true, xf:t => '10^' + Math.round(Math.log10(t)), yf:t => J.fmt(t, 2), xlab:'표면 농도 (cm⁻³)', ylab:'평균 전도도 (S/cm)', series:S, points:[{x:v.cs, y:sg, color:'--ink', r:6}]});
+    const P1 = [], P2 = []; let q = 0; for(let i = 0; i < C.length; i += 2){ const n = C[i] - nb; if(n <= 0) break; P1.push([i*dx*1e7, n]); P2.push([i*dx*1e7, DF.mob(C[i], v.ty)*1e15]); q += n*dx*2; }
+    J.plot(J.$('#cv2b'), {x:[0, v.xj*1.05], y:[1e14, 1e21], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (nm)', ylab:'순 도핑 (cm⁻³)', series:[{pts:P1, color:'--indigo', w:3}, {pts:P2, color:'--jade', w:2, dash:[5, 4]}]});
+    J.out(box, 'rs', J.fmt(rs, rs < 10 ? 2 : 0) + ' Ω/□'); J.out(box, 'sg', J.sci(sg, 2) + ' S/cm'); J.out(box, 'q', J.sci(q, 2) + ' cm⁻²'); });
+})();
+
+/* 4-3 2차원 */
+(function(){
+  const box = J.$('#sim3'), NX = 120, NY = 60, Lx = 4e-4, Ly = 2e-4, dx = Lx/NX, dy = Ly/NY, NB = 1e15;
+  J.sim('sim3', v => { const D = DF.D('B', 1100), T = v.t*60, Cs = 1e20, half = v.w*1e-4/2, open = i => Math.abs((i + .5)*dx - Lx/2) <= half;
+    let G = new Float64Array(NX*NY); if(v.s === 'g'){ const Qd = 1e15; for(let i = 0; i < NX; i++) if(open(i)) G[i] = Qd/dy; }
+    const ns = 60, dt = T/ns;
+    for(let k = 0; k < ns; k++){ // ADI: 가로 → 세로
+      for(let j = 0; j < NY; j++){ const row = G.slice(j*NX, (j + 1)*NX); const r2 = DF.step(row, dx, dt/2, () => D, {type:'refl'}, 'refl'); G.set(r2, j*NX); }
+      for(let i = 0; i < NX; i++){ const col = new Float64Array(NY); for(let j = 0; j < NY; j++) col[j] = G[j*NX + i]; const top = v.s === 'c' && open(i) ? {type:'fixed', Cs} : {type:'refl'}; const c2 = DF.step(col, dy, dt/2, () => D, top, 'refl'); for(let j = 0; j < NY; j++) G[j*NX + i] = c2[j]; } }
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const s = Math.min(w/NX, (h - 14)/NY), ox = (w - s*NX)/2, oy = 12;
+    const img = ctx.createImageData(NX, NY); for(let j = 0; j < NY; j++) for(let i = 0; i < NX; i++){ const c = G[j*NX + i], t = J.clamp((Math.log10(Math.max(c, 1e13)) - 13)/7.3, 0, 1), q = (j*NX + i)*4; img.data[q] = 40 + 210*t; img.data[q + 1] = 30 + 170*t*t; img.data[q + 2] = 120 - 60*t; img.data[q + 3] = 255; }
+    const off = document.createElement('canvas'); off.width = NX; off.height = NY; off.getContext('2d').putImageData(img, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(off, ox, oy, NX*s, NY*s);
+    ctx.fillStyle = '#fff'; for(let j = 0; j < NY; j++) for(let i = 0; i < NX - 1; i++){ const a = G[j*NX + i] > NB, b = G[j*NX + i + 1] > NB; if(a !== b) ctx.fillRect(ox + (i + 1)*s - 1, oy + j*s, 2, s); }
+    for(let i = 0; i < NX; i++) for(let j = 0; j < NY - 1; j++){ const a = G[j*NX + i] > NB, b = G[(j + 1)*NX + i] > NB; if(a !== b) ctx.fillRect(ox + i*s, oy + (j + 1)*s - 1, s, 2); }
+    ctx.fillStyle = '#222'; for(let i = 0; i < NX; i++) if(!open(i)) ctx.fillRect(ox + i*s, oy - 8, s + .5, 8);
+    // 접합 깊이와 측면
+    const ic = Math.floor(NX/2); let xj = 0; for(let j = 0; j < NY; j++) if(G[j*NX + ic] > NB) xj = (j + 1)*dy;
+    let edge = 0; for(let i = ic; i < NX; i++) if(G[i] > NB) edge = (i + 1)*dx; const lat = Math.max(0, edge - (Lx/2 + half));
+    const sx = [], sy = []; for(let i = 0; i < NX; i++) sx.push([((i + .5)*dx - Lx/2)*1e4, Math.max(G[i], 1e13)]); for(let j = 0; j < NY; j++) sy.push([(j + .5)*dy*1e4, Math.max(G[j*NX + ic], 1e13)]);
+    J.plot(J.$('#cv3b'), {x:[-2, 2], y:[1e13, 2e20], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'위치 (µm) · 빨강 = 표면 가로, 파랑 = 깊이', ylab:'농도', series:[{pts:sx, color:'--red', w:2.5}, {pts:sy, color:'--indigo', w:2.5}], hlines:[{y:NB, color:'--ink3'}], vlines:[{x:-v.w/2, color:'--ink3'}, {x:v.w/2, color:'--ink3'}]});
+    J.out(box, 'xj', J.fmt(xj*1e4, 2) + ' µm'); J.out(box, 'lat', J.fmt(lat*1e4, 2) + ' µm'); J.out(box, 'r', xj ? J.fmt(lat/xj, 2) : '—'); });
+})();
+</script>
+</body>
+</html>

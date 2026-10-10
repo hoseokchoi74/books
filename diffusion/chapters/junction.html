@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>얕은 접합 설계 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="junction">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 13 <span class="hanja">第十三章 · 界</span></div>
+  <h1>얕은 접합 설계</h1>
+  <p class="lead">앞의 장들에서 다룬 주입, 활성화, 확산은 결국 트랜지스터의 소스·드레인 접합 하나를 만들기 위한 것이다. 접합은 얕을수록 게이트가 채널을 잘 통제해 짧은 채널 효과가 줄어든다. 하지만 얕을수록 저항이 커져 전류가 줄어든다. 여기에 채널 쪽으로 반대형 도펀트를 국소적으로 심는 할로(포켓)가 더해지고, 접합 농도가 너무 급해지면 띠 사이 터널링 누설이 생긴다. 이 장은 접합 깊이–면저항, 할로–문턱 전압, 급준도–누설이라는 세 가지 맞바꿈을 실험으로 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>소스/드레인 확장부의 x<sub>j</sub>–R<sub>s</sub> 맞바꿈과 고용도 한계를 계산한다.</li>
+  <li>할로 주입이 문턱 전압 감소(roll-off)와 DIBL을 줄이는 원리를 2D 도핑 지도로 본다.</li>
+  <li>접합이 급해질수록 전기장이 커져 띠 사이 터널링(BTBT) 누설이 지수적으로 커짐을 확인한다.</li>
+</ul></div>
+
+<figure class="fig">
+<svg viewBox="0 0 860 240" role="img" aria-label="MOSFET 접합 구조" id="fig1"></svg>
+<figcaption><b>그림 13-1.</b> 평면 MOSFET의 접합 구성. 깊고 진한 소스/드레인(n⁺)은 금속 접촉과 낮은 저항을 맡고, 얕은 확장부(SDE, n⁺ ext)는 게이트 아래 채널과 이어져 짧은 채널 효과를 결정한다. 확장부 아래 채널 쪽에 기울여 심은 할로(p 포켓)는 소스와 드레인의 공핍층이 서로 닿지 않게 막는다. 게이트 옆 스페이서는 깊은 S/D 주입을 채널에서 떨어뜨리는 자 역할을 한다.</figcaption>
+</figure>
+
+<h2 id="s1"><span class="n">01</span>x<sub>j</sub>–R<sub>s</sub> 맞바꿈</h2>
+<p>확장부의 저항은 면저항 R<sub>s</sub>로 표현한다. 도펀트가 모두 활성화되어 고르게 분포한다면 R<sub>s</sub> ≈ 1/(qμN<sub>act</sub>x<sub>j</sub>)이다. 접합을 절반으로 얕게 하면 저항은 두 배가 되므로, 같은 저항을 지키려면 활성 농도를 두 배로 올려야 한다. 하지만 활성 농도는 고용도(어닐 온도에서 격자 자리에 들어갈 수 있는 최대 농도)에서 막힌다. 그래서 얕은 접합의 역사는 "확산은 적게, 활성화는 많이"를 위한 어닐 기술(스파이크 → 플래시 → 레이저)의 역사다.</p>
+<div class="eq">$$R_s = \frac{1}{q\int_0^{x_j}\mu(N)\,\big[N_{act}(x) - N_B\big]\,dx}\ \ \ge\ \ \frac{1}{q\,\mu(N_{sol})\,N_{sol}\,x_j}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-1</span><span class="ttl">소스/드레인 확장부 레시피</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">As 에너지 <output data-o="E"></output></span><input type="range" data-k="E" min="-0.3" max="1" step="0.02" value="0.3" data-log="1" data-d="1" data-u="keV"></label>
+      <label class="ctrl"><span class="lab">도즈 <output data-o="Q"></output></span><input type="range" data-k="Q" min="14" max="15.6" step="0.05" value="15" data-log="1" data-d="1" data-u="cm⁻²"></label>
+      <label class="ctrl"><span class="lab">어닐</span><select data-k="a"><option value="spike" selected>스파이크 RTA</option><option value="laser">밀리초 레이저 (Si 녹지 않음)</option></select></label>
+      <label class="ctrl"><span class="lab">최고 온도 <output data-o="T"></output></span><input type="range" data-k="T" min="950" max="1350" step="5" value="1050" data-d="0" data-u="°C"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b1k">이 점 기록</button><button class="sbtn" id="b1c">기록 지우기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">접합 깊이 x<sub>j</sub> (N<sub>B</sub> = 10¹⁸)</span><span class="v" data-r="xj"></span></div>
+      <div class="ro"><span class="k">면저항 R<sub>s</sub></span><span class="v" data-r="rs"></span></div>
+      <div class="ro"><span class="k">목표 (x<sub>j</sub> &lt; 15 nm, R<sub>s</sub> &lt; 500 Ω/□)</span><span class="v" data-r="ok"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 주입 직후(회색 점선), 어닐 후 전체 비소(초록), 그중 활성화된 비소(진한 초록 채움), 기판 도핑(가로 점선). 오른쪽: 가로 x<sub>j</sub>, 세로 R<sub>s</sub>. 회색 곡선은 활성 농도가 각각 10²⁰, 3×10²⁰, 10²¹ cm⁻³인 상자형 분포의 한계선이다. 왼쪽 아래 초록 상자가 목표 영역이다. 스파이크는 온도를 올리면 활성화는 늘지만 확산도 늘어 곡선을 따라 미끄러진다. 레이저는 확산 없이 고용도를 높여 곡선 자체를 아래로 옮긴다. 스파이크 최고 온도는 1,100 °C에서 멈춘다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>할로와 짧은 채널 효과</h2>
+<p>채널이 짧아지면 소스와 드레인 접합의 공핍 영역이 채널 전하의 상당 부분을 대신 떠맡아, 게이트가 통제해야 할 전하가 줄어든다. 그래서 문턱 전압이 떨어지고(V<sub>t</sub> roll-off), 드레인 전압이 소스 쪽 장벽까지 낮추는 DIBL이 생긴다. 이 효과의 크기는 특성 길이 l<sub>t</sub>로 정해지는데, 산화막이 얇고 접합이 얕고 공핍층이 얇을수록 l<sub>t</sub>가 짧아진다. 할로는 접합 가장자리만 국소적으로 진하게 도핑해 공핍층을 얇게 만든다. 짧은 채널에서는 두 할로가 겹쳐 평균 도핑이 높아지므로 V<sub>t</sub>가 다시 올라가 roll-off를 메운다. 지나치면 중간 길이에서 V<sub>t</sub>가 오히려 올라가는 역 단채널 효과(RSCE)가 생긴다.</p>
+<div class="eq">$$\Delta V_t^{SCE} \approx \big(2(V_{bi}-\phi_s) + V_{DS}\big)\Big[e^{-L/2l_t} + 2e^{-L/l_t}\Big],\qquad l_t = \sqrt{\frac{\varepsilon_{Si}}{\varepsilon_{ox}}\,t_{ox}\,W_d}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-2</span><span class="ttl">할로 주입과 V<sub>t</sub> roll-off</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">게이트 길이 <output data-o="L"></output></span><input type="range" data-k="L" min="1.3" max="2.5" step="0.02" value="1.6" data-log="1" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">할로 도즈 <output data-o="H"></output></span><input type="range" data-k="H" min="0" max="5" step="0.1" value="2" data-d="1" data-u="×10¹³ cm⁻²"></label>
+      <label class="ctrl"><span class="lab">주입 기울기 <output data-o="tl"></output></span><input type="range" data-k="tl" min="0" max="45" step="1" value="30" data-d="0" data-u="°"></label>
+      <label class="ctrl"><span class="lab">확장부 깊이 <output data-o="xj"></output></span><input type="range" data-k="xj" min="10" max="50" step="1" value="25" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">V<sub>t</sub> (V<sub>DS</sub> = 0.05 V)</span><span class="v" data-r="vt"></span></div>
+      <div class="ro"><span class="k">DIBL (mV/V)</span><span class="v" data-r="dibl"></span></div>
+      <div class="ro"><span class="k">채널 평균 도핑</span><span class="v" data-r="n"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 게이트 아래 단면의 순 도핑 지도(파랑 n형, 빨강 p형, 진할수록 고농도). 할로 포켓이 확장부 끝을 감싼다. 기울기를 키우면 포켓이 게이트 밑으로 더 들어간다. 오른쪽: 게이트 길이에 따른 V<sub>t</sub>. 회색 = 할로 없음, 빨강 = 현재 할로(V<sub>DS</sub> 0.05 V), 주황 점선 = V<sub>DS</sub> 1 V. 두 빨강·주황 선의 간격이 DIBL이다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🏰</span><b>성벽 모서리의 보강</b><span>두 성(소스·드레인) 사이의 들판(채널)이 좁아지면 양쪽 성의 영향권이 들판 전체를 덮어, 들판 지기(게이트)가 할 일이 없어진다. 성벽 모서리마다 반대 성질의 흙(할로)을 덧쌓으면 영향권이 짧아져 들판을 지킬 수 있다. 너무 많이 쌓으면 들판이 좁지 않을 때도 길이 막힌다(RSCE, 누설 증가).</span></div>
+
+<h2 id="s3"><span class="n">03</span>급준한 접합의 대가: 띠 사이 터널링</h2>
+<p>할로와 확장부가 모두 진하면 접합의 공핍층이 아주 얇아지고 그 안의 전기장이 커진다. 전기장이 10⁶ V/cm에 가까워지면 띠가 급하게 휘어져, p쪽 가전자대의 전자가 금지대를 가로질러 n쪽 전도대로 곧장 터널링한다. 이 띠 사이 터널링(BTBT) 전류는 전기장에 지수적으로 민감해, 도핑을 조금만 올려도 누설이 몇 자릿수 뛴다. 꺼져 있을 때의 누설(대기 전력), DRAM 유지 시간, 드레인 쪽 GIDL이 이 현상에 묶여 있다. 그래서 접합 설계는 "충분히 급하게, 그러나 너무 급하지 않게"를 찾는 일이다.</p>
+<div class="eq">$$W = \sqrt{\frac{2\varepsilon_s(V_{bi}+V_R)}{qN_A}},\qquad E_{max} = \frac{qN_AW}{\varepsilon_s},\qquad J_{BTBT} \propto E^2\,(V_{bi}+V_R)\,\exp\!\Big(-\frac{B\,E_g^{3/2}}{E}\Big)$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 13-3</span><span class="ttl">n⁺/p 접합의 전기장과 누설</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">p쪽 도핑 (할로) <output data-o="NA"></output></span><input type="range" data-k="NA" min="16.5" max="19.3" step="0.05" value="18" data-log="1" data-d="1" data-u="cm⁻³"></label>
+      <label class="ctrl"><span class="lab">역바이어스 <output data-o="VR"></output></span><input type="range" data-k="VR" min="0" max="3" step="0.05" value="1" data-d="2" data-u="V"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">공핍 폭 W</span><span class="v" data-r="W"></span></div>
+      <div class="ro"><span class="k">최대 전기장</span><span class="v" data-r="E"></span></div>
+      <div class="ro"><span class="k">누설 (SRH + BTBT)</span><span class="v" data-r="J"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 접합의 에너지 띠 그림(위 = 전도대, 아래 = 가전자대, 회색 띠 = 공핍 영역). 공핍층이 얇아져 띠가 가파르면 노란 화살표(터널링)가 굵어진다. 오른쪽: p쪽 도핑에 따른 누설 전류 밀도. 파랑 = 열 생성(SRH), 빨강 = BTBT, 검정 = 합. 10¹⁸ cm⁻³ 근처에서 주인이 바뀐다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 핀펫(FinFET)과 GAA에서는 할로가 거의 사라졌다. 왜일까?</p><p>게이트가 채널을 세 면 또는 네 면에서 감싸면 특성 길이 l<sub>t</sub>가 채널 두께(핀 폭)로 정해져, 도핑 없이도 짧은 채널 효과를 억제할 수 있다. 그래서 채널은 거의 도핑하지 않아(무작위 도펀트 변동도 줄어듦) 할로가 필요 없다. 대신 소스/드레인은 에피로 기르며 그 자리에서 도핑하고(12장), 접합 위치는 확산이 아닌 에피와 식각의 형상으로 정한다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">접합 깊이를 절반으로 줄이면서 면저항을 유지하려면?</p><ol><li>도즈를 절반으로</li><li>어닐 시간을 두 배로</li><li>활성 농도를 약 두 배로</li><li>기판 도핑을 낮춘다</li></ol>
+<p class="explain">R<sub>s</sub> ≈ 1/(qμN<sub>act</sub>x<sub>j</sub>).</p></div>
+<div class="quiz" data-a="0"><p class="q">할로 주입의 주된 목적은?</p><ol><li>짧은 채널의 V<sub>t</sub> 감소와 DIBL 억제</li><li>면저항 감소</li><li>게이트 누설 감소</li><li>접합 커패시턴스 감소</li></ol>
+<p class="explain">접합 가장자리의 공핍층을 얇게 해 l<sub>t</sub>를 줄인다.</p></div>
+<div class="quiz" data-a="3"><p class="q">p쪽 도핑을 높일 때 BTBT 누설이 급격히 커지는 이유는?</p><ol><li>이동도가 줄어서</li><li>n<sub>i</sub>가 커져서</li><li>공핍층이 넓어져서</li><li>전기장이 커지고 터널링 확률이 exp(−B/E)로 커져서</li></ol>
+<p class="explain">E<sub>max</sub> ∝ √N<sub>A</sub>, 터널링은 E에 지수적으로 민감.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 13-1 */
+(function(){
+  const s = J.$('#fig1'); if(!s) return;
+  J.live(() => { s.innerHTML = ''; const lab = (x, y, t, c = '--ink2', a = 'middle') => { const e = J.svg('text', {x, y, 'text-anchor':a, 'font-size':12.5, fill:J.c(c)}, s); e.textContent = t; };
+    J.svg('rect', {x:60, y:80, width:740, height:150, fill:J.c('--red'), opacity:.08}, s);
+    J.svg('rect', {x:370, y:40, width:120, height:34, fill:J.c('--ink3')}, s); J.svg('rect', {x:370, y:74, width:120, height:6, fill:J.c('--gold')}, s);
+    J.svg('path', {d:'M370,80 L345,80 Q340,45 370,40 Z', fill:J.c('--line2')}, s); J.svg('path', {d:'M490,80 L515,80 Q520,45 490,40 Z', fill:J.c('--line2')}, s);
+    J.svg('path', {d:'M60,80 L335,80 Q350,160 300,170 L60,170 Z', fill:J.c('--indigo'), opacity:.55}, s); J.svg('path', {d:'M800,80 L525,80 Q510,160 560,170 L800,170 Z', fill:J.c('--indigo'), opacity:.55}, s);
+    J.svg('path', {d:'M330,80 L385,80 Q385,104 340,106 Z', fill:J.c('--indigo'), opacity:.8}, s); J.svg('path', {d:'M530,80 L475,80 Q475,104 520,106 Z', fill:J.c('--indigo'), opacity:.8}, s);
+    J.svg('ellipse', {cx:385, cy:108, rx:26, ry:14, fill:J.c('--red'), opacity:.45}, s); J.svg('ellipse', {cx:475, cy:108, rx:26, ry:14, fill:J.c('--red'), opacity:.45}, s);
+    J.svg('line', {x1:300, y1:20, x2:372, y2:96, stroke:J.c('--red'), 'stroke-width':2, 'stroke-dasharray':'5 4'}, s); J.svg('line', {x1:560, y1:20, x2:488, y2:96, stroke:J.c('--red'), 'stroke-width':2, 'stroke-dasharray':'5 4'}, s);
+    lab(430, 32, '게이트', '--ink'); lab(180, 130, '소스 n⁺ (깊음)', '--paper'); lab(680, 130, '드레인 n⁺', '--paper'); lab(290, 60, '기울인 할로 주입', '--red', 'end'); lab(430, 150, 'p 웰 (채널)', '--red'); lab(430, 210, '할로 포켓 (p⁺) · 확장부 (n⁺ ext) · 스페이서', '--ink2'); });
+})();
+
+/* 13-1 SDE 레시피 */
+(function(){
+  const box = J.$('#sim1'), dx = 0.5e-7, N = 240, NB = 1e18, hist = []; let cur = null;
+  const run = v => { const keV = v.E, dose = v.Q, C0 = new Float64Array(N); for(let i = 0; i < N; i++) C0[i] = DF.implant('As', keV, dose, (i + .5)*0.5, 0.02);
+    const laser = v.a === 'laser', T = laser ? v.T : Math.min(v.T, 1100), teff = laser ? 5e-4 : 1.5, ted = laser ? 1 : 1 + 6*Math.sqrt(dose/1e15)*Math.exp(-(T - 950)/60), ni = DF.ni(T);
+    const C = DF.solve(C0, dx, teff, c => DF.D('As', T)*(1 + c/ni)*ted, {type:'flux', h:2e-6, Ceq:0}, 'refl', 60);
+    const sol = laser ? 6e20*Math.exp((T - 1300)/300) : 2.5e20*Math.exp((T - 1100)/120), act = C.map(c => Math.min(c, sol*(1 - Math.exp(-c/sol)) + 0*c));
+    return {C0, C, act, T, sol, xj:DF.xj(C, dx, NB)*1e7, rs:DF.rs(act, dx, NB, 'n')}; };
+  const draw = (v, r) => { const xs = i => (i + .5)*0.5;
+    J.plot(J.$('#cv1a'), {x:[0, 60], y:[1e17, 1e22], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (nm)', ylab:'농도 (cm⁻³)', series:[
+      {pts:Array.from(r.C0, (c, i) => [xs(i), Math.max(c, 1e16)]), color:'--ink3', w:1.5, dash:[5, 4]}, {pts:Array.from(r.act, (c, i) => [xs(i), Math.max(c, 1e16)]), color:'#2c7a50', w:0, fill:'rgba(58,163,106,.35)'}, {pts:Array.from(r.C, (c, i) => [xs(i), Math.max(c, 1e16)]), color:'#3aa36a', w:3}], hlines:[{y:NB, color:'--ink3'}, {y:r.sol, color:'--gold'}]});
+    const S = [1e20, 3e20, 1e21].map(n => ({pts:Array.from({length:60}, (_, i) => { const xj = 5 + i*1.2; return [xj, 1/(DF.Q*DF.mob(n, 'n')*n*xj*1e-7)]; }), color:'--line2', w:1.5}));
+    const P = J.plot(J.$('#cv1b'), {x:[5, 70], y:[50, 5000], logy:true, yf:t => J.fmt(t, 0), xlab:'x_j (nm)', ylab:'R_s (Ω/□)', series:S, bands:[], points:hist.map(p => ({x:p[0], y:p[1], color:'--ink3', r:4})).concat(isFinite(r.rs) ? [{x:Math.min(r.xj, 70), y:J.clamp(r.rs, 50, 5000), color:'--red', r:7}] : [])});
+    P.ctx.fillStyle = 'rgba(58,163,106,.15)'; P.ctx.fillRect(P.X(5), P.Y(500), P.X(15) - P.X(5), P.Y(50) - P.Y(500)); P.ctx.font = '11px "Noto Sans KR"'; P.ctx.fillStyle = J.c('--ink3');
+    [1e20, 3e20, 1e21].forEach(n => { const xj = 60, y = 1/(DF.Q*DF.mob(n, 'n')*n*xj*1e-7); P.ctx.fillText(J.sci(n, 0), P.X(xj), P.Y(y) - 4); });
+    const ok = r.xj < 15 && r.rs < 500; J.out(box, 'xj', J.fmt(r.xj, 1) + ' nm', r.xj < 15 ? 'good' : r.xj < 25 ? 'warn' : 'bad'); J.out(box, 'rs', isFinite(r.rs) ? J.fmt(r.rs, 0) + ' Ω/□' : '∞', r.rs < 500 ? 'good' : r.rs < 900 ? 'warn' : 'bad');
+    J.out(box, 'ok', ok ? '달성 ✓' : '미달', ok ? 'good' : 'bad'); };
+  J.sim('sim1', v => { cur = run(v); draw(v, cur); box._v = v; });
+  J.$('#b1k').onclick = () => { if(cur && isFinite(cur.rs)){ hist.push([cur.xj, J.clamp(cur.rs, 50, 5000)]); draw(box._v, cur); } };
+  J.$('#b1c').onclick = () => { hist.length = 0; if(cur) draw(box._v, cur); };
+})();
+
+/* 13-2 할로 */
+(function(){
+  const box = J.$('#sim2'), eps = 1.04e-12, tox = 1.5e-7, Cox = 3.45e-13/tox, Nch = 2e17;
+  const vt = (L, Hd, tl, xj, Vds) => { const Lh = (8 + 0.6*tl)*1e-7, Np = Hd*1e13/(30e-7)*0.08, Lc = L*1e-7;
+    const Neff = Nch + Np*Math.min(1, 2*Lh/Lc), pf = 0.0259*Math.log(Neff/1e10), Wd = Math.sqrt(2*eps*2*pf/(1.6e-19*Neff));
+    const xjc = xj*1e-7, lt = Math.sqrt(3*tox*1.6*Wd*xjc/(Wd + xjc)), g = Math.exp(-Lc/(2*lt)) + 2*Math.exp(-Lc/lt), Qd = Math.sqrt(2*1.6e-19*eps*Neff*2*pf);
+    return {vt:-0.68 + 2*pf + Qd/Cox - (2*0.45 + Vds)*g, Neff}; };
+  J.sim('sim2', v => { const Ls = Array.from({length:61}, (_, i) => Math.pow(10, 1.3 + i*0.02));
+    J.plot(J.$('#cv2b'), {x:[20, 316], y:[-0.3, 0.7], logx:true, xf:t => J.fmt(t, 0), xlab:'게이트 길이 (nm)', ylab:'V_t (V)', series:[
+      {pts:Ls.map(L => [L, vt(L, 0, v.tl, v.xj, 0.05).vt]), color:'--ink3', w:2}, {pts:Ls.map(L => [L, vt(L, v.H, v.tl, v.xj, 0.05).vt]), color:'--red', w:3}, {pts:Ls.map(L => [L, vt(L, v.H, v.tl, v.xj, 1).vt]), color:'#d98b3a', w:2, dash:[6, 4]}],
+      vlines:[{x:v.L, color:'--ink'}], hlines:[{y:0, color:'--line2'}]});
+    const a = vt(v.L, v.H, v.tl, v.xj, 0.05), b = vt(v.L, v.H, v.tl, v.xj, 1), dibl = (a.vt - b.vt)/0.95*1000;
+    J.out(box, 'vt', J.fmt(a.vt, 3) + ' V', a.vt > 0.2 ? 'good' : a.vt > 0.05 ? 'warn' : 'bad'); J.out(box, 'dibl', String(Math.round(dibl)), dibl < 100 ? 'good' : dibl < 200 ? 'warn' : 'bad'); J.out(box, 'n', J.sci(a.Neff, 2) + ' cm⁻³');
+    /* 2D 도핑 지도 */
+    const {ctx, w, h} = J.fit(J.$('#cv2a')); ctx.clearRect(0,0,w,h); const span = v.L + 120, dep = 80, nx = 120, ny = 60, cw = w/nx, ch = (h - 20)/ny, xg0 = 60, xg1 = 60 + v.L;
+    const Lh = 8 + 0.6*v.tl, Np = v.H*1e13/12e-7;
+    for(let i = 0; i < nx; i++) for(let j = 0; j < ny; j++){ const x = (i + .5)/nx*span, y = (j + .5)/ny*dep;
+      const ext = (xx => 2e20*0.5*DF.erfc((xx)/4)*Math.exp(-Math.pow(y/v.xj, 4)));
+      const deep = (xx => 1e20*0.5*DF.erfc(xx/6)*0.5*DF.erfc((y - 45)/6));
+      const nd = ext(x - xg0 - 5) + ext(xg1 - 5 - x) + deep(x - xg0 + 20) + deep(xg1 + 20 - x);
+      const halo = c => Np*Math.exp(-Math.pow((x - c)/(Lh*0.8), 2) - Math.pow((y - v.xj*0.9)/(v.xj*0.55 + 4), 2));
+      const na = Nch + (v.H > 0 ? halo(xg0 + Lh*0.6) + halo(xg1 - Lh*0.6) : 0), net = nd - na, lg = J.clamp((Math.log10(Math.abs(net) + 1) - 16)/4.5, 0, 1);
+      ctx.fillStyle = net > 0 ? `rgba(61,127,208,${0.12 + 0.85*lg})` : `rgba(214,90,74,${0.08 + 0.8*lg})`; ctx.fillRect(i*cw, 20 + j*ch, cw + .5, ch + .5); }
+    ctx.fillStyle = J.c('--ink3'); ctx.fillRect(xg0/span*w, 4, v.L/span*w, 14); ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('L = ' + J.fmt(v.L, 0) + ' nm', xg0/span*w + 2, 15); ctx.fillText('소스', 4, h - 6); ctx.textAlign = 'right'; ctx.fillText('드레인', w - 4, h - 6); ctx.textAlign = 'left'; });
+})();
+
+/* 13-3 BTBT */
+(function(){
+  const box = J.$('#sim3'), eps = 1.04e-12, q = 1.6e-19, ND = 1e20;
+  const calc = (NA, VR) => { const Vbi = 0.0259*Math.log(NA*ND/1e20), W = Math.sqrt(2*eps*(Vbi + VR)/(q*NA)), E = q*NA*W/eps, Jsrh = q*1e10*W/(2*1e-6), Jb = 1.0*Math.pow(E/1e6, 2)*(Vbi + VR)*Math.exp(-2.2e7/E); return {Vbi, W, E, Jsrh, Jb}; };
+  J.sim('sim3', v => { const r = calc(v.NA, v.VR), Ns = Array.from({length:81}, (_, i) => Math.pow(10, 16.5 + i*0.035));
+    J.plot(J.$('#cv3b'), {x:[3e16, 2e19], y:[1e-12, 1e2], logx:true, logy:true, xf:t => '10^' + Math.round(Math.log10(t)), yf:t => '10^' + Math.round(Math.log10(t)), xlab:'p쪽 도핑 N_A (cm⁻³)', ylab:'누설 (A/cm²)', series:[
+      {pts:Ns.map(n => [n, calc(n, v.VR).Jsrh]), color:'--indigo', w:2, dash:[5, 4]}, {pts:Ns.map(n => [n, Math.max(calc(n, v.VR).Jb, 1e-13)]), color:'--red', w:2, dash:[5, 4]}, {pts:Ns.map(n => { const c = calc(n, v.VR); return [n, c.Jsrh + c.Jb]; }), color:'--ink', w:3}],
+      points:[{x:v.NA, y:r.Jsrh + r.Jb, color:'--red', r:7}]});
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const Wn = r.W*1e7, span = 80, X = nm => w*0.1 + (nm + 20)/(span + 20)*w*0.88, xp = Math.min(Wn, span), V = r.Vbi + v.VR, sc = h*0.55/5.2, yb = h*0.62;
+    const Ec = nm => { if(nm <= 0) return 0; if(nm >= xp) return V; const f = nm/Wn; return V*(2*f - f*f); };
+    ctx.fillStyle = 'rgba(150,150,150,.18)'; ctx.fillRect(X(0), 10, X(xp) - X(0), h - 30);
+    ctx.lineWidth = 2.5; [[0, '#3d7fd0'], [1.12, '#d65a4a']].forEach(([off, col]) => { ctx.strokeStyle = col; ctx.beginPath(); for(let k = 0; k <= 200; k++){ const nm = -20 + k*(span + 20)/200, y = yb - (Ec(nm) - off)*sc; k ? ctx.lineTo(X(nm), y) : ctx.moveTo(X(nm), y); } ctx.stroke(); });
+    /* 터널링 경로: 가전자대 높이(Ec(0)+1.12)와 같은 전도대 지점 */
+    const target = 1.12; let nmT = null; for(let k = 0; k <= 400; k++){ const nm = k*xp/400; if(Ec(nm) >= target){ nmT = nm; break; } }
+    if(nmT !== null && v.VR + r.Vbi > 1.12){ const d = nmT, th = J.clamp(Math.log10(r.Jb + 1e-14) + 10, 0.5, 8); ctx.strokeStyle = J.c('--gold'); ctx.lineWidth = th; ctx.beginPath(); ctx.moveTo(X(0), yb); ctx.lineTo(X(d), yb); ctx.stroke();
+      ctx.fillStyle = J.c('--gold'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('터널 거리 ' + J.fmt(d, 1) + ' nm', X(d) + 6, yb + 14); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('n⁺ (10²⁰)', X(-18), 22); ctx.textAlign = 'right'; ctx.fillText('p (N_A)', X(span), 22); ctx.textAlign = 'left'; ctx.fillText('E_c', 6, yb - 4); ctx.fillText('E_v', 6, yb + 1.12*sc + 14);
+    J.out(box, 'W', J.fmt(Wn, 1) + ' nm'); J.out(box, 'E', J.sci(r.E, 2) + ' V/cm', r.E < 7e5 ? 'good' : r.E < 1.2e6 ? 'warn' : 'bad'); const Jt = r.Jsrh + r.Jb; J.out(box, 'J', J.sci(Jt, 2) + ' A/cm²', Jt < 1e-7 ? 'good' : Jt < 1e-4 ? 'warn' : 'bad'); });
+})();
+</script>
+</body>
+</html>

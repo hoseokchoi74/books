@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>농도 의존 확산과 전계 효과 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="nonideal">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 05 <span class="hanja">第五章 · 異</span></div>
+  <h1>농도 의존 확산과 전계 효과</h1>
+  <p class="lead">교과서의 erfc와 가우스는 확산 계수가 일정할 때만 맞는다. 실제 소스·드레인처럼 도핑이 10²⁰ cm⁻³ 근처로 높으면, 도펀트가 실리콘의 전자·정공 농도를 바꾸고, 그것이 다시 점결함의 전하 상태와 수를 바꿔 확산 계수가 농도에 따라 달라진다. 그 결과 비소는 끝이 가파른 "상자" 모양으로, 인은 표면은 평평하고 꺾인 뒤 긴 꼬리를 늘어뜨린 모양으로 퍼진다. 또 이온화된 도펀트가 만드는 내부 전기장이 확산을 밀어 준다. 이 장은 엔진의 수치 해로 이런 비이상 프로파일을 직접 만든다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>진성(n &lt; n<sub>i</sub>)과 외인성(n &gt; n<sub>i</sub>) 확산 영역을 n<sub>i</sub>(T)로 구별한다.</li>
+  <li>농도 의존 확산 계수와 전계 증강 인자로 비소의 상자형 프로파일을 계산한다.</li>
+  <li>인 확산의 꺾임(kink)과 꼬리(tail) 구조를 모형으로 재현한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>진성인가, 외인성인가</h2>
+<p>고온의 실리콘에는 열로 만들어진 전자와 정공이 n<sub>i</sub>만큼 있다. 1,000 °C에서 n<sub>i</sub> ≈ 7 × 10¹⁸ cm⁻³이다. 도펀트 농도가 이보다 낮으면 실리콘은 여전히 "진성"처럼 행동해 확산 계수가 일정하다. 이보다 높으면 전자(또는 정공)가 넘쳐 음(또는 양)으로 대전된 점결함이 많아지고, 도펀트가 그 결함과 짝을 지어 빨리 움직인다. 게다가 이온화된 도펀트와 운반자의 확산 속도 차이로 내부 전기장이 생겨, 도펀트를 깊은 쪽으로 밀어 준다(전계 증강, 최대 2배).</p>
+<div class="eq">$$D = D_i\,\frac{1 + \beta\,(n/n_i)}{1 + \beta},\qquad h = 1 + \frac{C}{\sqrt{C^2 + 4n_i^2}},\qquad n = \frac{C}{2} + \sqrt{\frac{C^2}{4} + n_i^2}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-1</span><span class="ttl">진성–외인성 지도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="800" max="1200" step="5" value="1000" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">도펀트 농도 <output data-o="c"></output></span><input type="range" data-k="c" min="16" max="21" step="0.05" value="19.5" data-log="1" data-d="1" data-u="cm⁻³"></label>
+      <label class="ctrl"><span class="lab">β (하전 결함 기여) <output data-o="b"></output></span><input type="range" data-k="b" min="0" max="10" step="0.5" value="3" data-d="1"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">n_i (이 온도)</span><span class="v" data-r="ni"></span></div>
+      <div class="ro"><span class="k">전자 농도 n / n_i</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">확산 증강 D/D_i × 전계 h</span><span class="v" data-r="e"></span></div>
+      <div class="ro"><span class="k">영역</span><span class="v" data-r="z"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 온도에 따른 n<sub>i</sub>(빨강)와 현재 도핑 농도(점선). 농도가 곡선 위에 있으면 외인성 영역이다. 오른쪽: 도핑 농도에 따른 확산 증강(파랑 = 농도 의존, 초록 = 전계 인자, 빨강 = 둘의 곱). 진성 영역에서는 1, 외인성 영역에서는 농도에 비례해 커진다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>비소의 상자형 프로파일</h2>
+<p>비소처럼 확산 계수가 농도에 비례해 커지면, 표면 쪽 고농도 영역은 빨리, 꼬리 쪽 저농도 영역은 느리게 퍼진다. 앞쪽 원자들이 빨리 달려가다 뒤쪽에서 막히는 셈이라, 분포는 표면이 평평하고 끝이 절벽처럼 가파른 "상자" 모양이 된다. 이는 얕고 날카로운 n⁺ 접합에 오히려 유리하다. 같은 표면 농도의 erfc(상수 D)와 비교해 보자.</p>
+<div class="eq">$$\frac{\partial C}{\partial t} = \frac{\partial}{\partial x}\left[D(C)\,h(C)\,\frac{\partial C}{\partial x}\right]$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-2</span><span class="ttl">비소 고농도 확산 (수치 해)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">표면 농도 <output data-o="cs"></output></span><input type="range" data-k="cs" min="18" max="21" step="0.05" value="20.5" data-log="1" data-d="1" data-u="cm⁻³"></label>
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="950" max="1150" step="5" value="1050" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">시간 <output data-o="t"></output></span><input type="range" data-k="t" min="5" max="180" step="5" value="60" data-d="0" data-u="분"></label>
+      <label class="ctrl"><span class="lab">β <output data-o="b"></output></span><input type="range" data-k="b" min="0" max="10" step="0.5" value="5" data-d="1"></label>
+      <label class="ctrl"><span class="lab">전계 효과</span><select data-k="f"><option value="1" selected>켬</option><option value="0">끔</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">접합 깊이 (N_B = 10¹⁶)</span><span class="v" data-r="xj"></span></div>
+      <div class="ro"><span class="k">상수 D 대비 깊이</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">접합 앞 가파름 (nm/decade)</span><span class="v" data-r="s"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 농도 의존 수치 해(빨강)와 같은 표면 농도의 상수 D erfc(회색 점선, D = D<sub>i</sub>). 로그 눈금. 오른쪽: 깊이에 따른 실효 확산 계수(로그). 표면 근처에서 수십 배 크고 꼬리에서 진성 값으로 떨어진다. 가파름이 작을수록(한 자릿수 떨어지는 거리) 접합이 날카롭다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🚗</span><b>고속도로의 정체 끝</b><span>도심(표면)은 차가 빽빽하지만 차선이 넓어 빨리 빠져나가고, 외곽(꼬리)으로 갈수록 좁은 길이라 느려진다. 그 결과 차들은 외곽 경계에서 한꺼번에 막혀 뚜렷한 정체 끝을 만든다. 비소 프로파일의 가파른 앞면이 이런 정체 끝이다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>인의 꺾임과 꼬리</h2>
+<p>인을 고농도로 확산하면 세 구역이 생긴다. 표면 고농도 구역은 거의 평평하고, 어느 농도(약 10²⁰ cm⁻³)에서 갑자기 꺾이고, 그 아래로 기대보다 훨씬 깊이 꼬리가 늘어진다. 고농도 구역에서 인–결함 쌍이 풀리며 틈새 원자를 대량으로 방출하고, 이 과포화된 틈새 원자가 깊은 곳의 인 확산을 수십 배 가속하기 때문이다. 같은 원리로 인 확산 아래 묻힌 붕소층도 빨리 퍼진다(이미터 푸시 효과). 정밀한 모형은 결함 방정식을 함께 풀어야 하지만, 여기서는 "꺾임 아래 확산 증강" 한 숫자로 근사한다.</p>
+<div class="eq">$$D_P(C) = \begin{cases} D_i\bigl[1 + (n/n_i)\bigr]h & C > C_e\ (\text{표면})\\ D_i\,(1 + K_{tail}) & C < C_e\ (\text{꼬리})\end{cases}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 5-3</span><span class="ttl">인 꺾임–꼬리 모형</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">표면 농도 <output data-o="cs"></output></span><input type="range" data-k="cs" min="19" max="21" step="0.05" value="20.7" data-log="1" data-d="1" data-u="cm⁻³"></label>
+      <label class="ctrl"><span class="lab">꼬리 증강 K_tail <output data-o="k"></output></span><input type="range" data-k="k" min="0" max="60" step="1" value="20" data-d="0"></label>
+      <label class="ctrl"><span class="lab">꺾임 농도 C_e <output data-o="ce"></output></span><input type="range" data-k="ce" min="19" max="20.5" step="0.05" value="19.9" data-log="1" data-d="1" data-u="cm⁻³"></label>
+      <label class="ctrl"><span class="lab">시간 (1,000 °C) <output data-o="t"></output></span><input type="range" data-k="t" min="5" max="120" step="5" value="30" data-d="0" data-u="분"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">꺾임 깊이</span><span class="v" data-r="xk"></span></div>
+      <div class="ro"><span class="k">접합 깊이 (N_B = 10¹⁵)</span><span class="v" data-r="xj"></span></div>
+      <div class="ro"><span class="k">꼬리가 없을 때 접합</span><span class="v" data-r="x0"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 빨강 = 꺾임–꼬리 모형, 회색 점선 = 꼬리 증강이 없을 때(K = 0). 노란 띠는 꺾임 농도 아래의 꼬리 구역. 꼬리 증강이 크면 접합이 몇 배 깊어진다. 그래서 얕은 n⁺ 접합에는 인 대신 비소를 쓴다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 고농도 비소층의 표면 쪽 일부는 전기적으로 활성화되지 않는다. 왜일까?</p><p>비소 농도가 수 × 10²⁰ cm⁻³을 넘으면 비소 원자들이 빈자리와 뭉쳐(As₄V 같은 클러스터) 격자 자리를 떠난다. 원자는 있지만 전자를 내놓지 않아 면저항이 기대만큼 낮아지지 않는다. 그래서 SIMS로 잰 화학적 농도와 전기적 농도가 다르고, 8장의 활성화 어닐이 중요하다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">1,000 °C에서 n<sub>i</sub> ≈ 7 × 10¹⁸ cm⁻³일 때, 10¹⁷ cm⁻³ 붕소의 확산은?</p><ol><li>외인성, 크게 증강</li><li>진성, D ≈ D<sub>i</sub></li><li>확산하지 않는다</li><li>전계 효과로 2배</li></ol>
+<p class="explain">농도가 n<sub>i</sub>보다 훨씬 낮으면 진성 영역이다.</p></div>
+<div class="quiz" data-a="3"><p class="q">비소 고농도 확산의 프로파일 모양은?</p><ol><li>완벽한 가우스</li><li>긴 꼬리</li><li>표면에서 0</li><li>평평한 표면과 가파른 앞면의 상자형</li></ol>
+<p class="explain">D가 농도에 비례해 앞쪽이 막힌다.</p></div>
+<div class="quiz" data-a="0"><p class="q">인 확산의 꼬리가 깊게 늘어지는 원인은?</p><ol><li>고농도 구역에서 방출된 틈새 원자 과포화</li><li>인이 가벼워서</li><li>산화막</li><li>측정 오차</li></ol>
+<p class="explain">과포화된 틈새 원자가 깊은 곳의 확산을 가속한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const nOf = (C, ni) => C/2 + Math.sqrt(C*C/4 + ni*ni);
+const hOf = (C, ni) => 1 + C/Math.sqrt(C*C + 4*ni*ni);
+/* 5-1 */
+(function(){
+  const box = J.$('#sim1');
+  J.sim('sim1', v => { const ni = DF.ni(v.T), S = [], pts = []; for(let T = 700; T <= 1250; T += 5) S.push([T, DF.ni(T)]);
+    J.plot(J.$('#cv1a'), {x:[700, 1250], y:[1e16, 1e21], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'온도 (°C)', ylab:'농도 (cm⁻³)', series:[{pts:S, color:'--red', w:3}], hlines:[{y:v.c, color:'--ink', label:'도핑'}], points:[{x:v.T, y:ni, color:'--red', r:6}]});
+    const A = [], H = [], P = []; for(let lc = 16; lc <= 21; lc += 0.05){ const C = Math.pow(10, lc), n = nOf(C, ni), d = (1 + v.b*n/ni)/(1 + v.b), h = hOf(C, ni); A.push([C, d]); H.push([C, h]); P.push([C, d*h]); }
+    const n = nOf(v.c, ni), d = (1 + v.b*n/ni)/(1 + v.b), h = hOf(v.c, ni);
+    J.plot(J.$('#cv1b'), {x:[1e16, 1e21], y:[0.8, 500], logx:true, logy:true, xf:t => '10^' + Math.round(Math.log10(t)), xlab:'도핑 농도 (cm⁻³)', ylab:'확산 증강', series:[{pts:A, color:'--indigo', w:2}, {pts:H, color:'--jade', w:2}, {pts:P, color:'--red', w:3}], vlines:[{x:ni, color:'--ink3', label:'n_i'}], points:[{x:v.c, y:d*h, color:'--ink', r:6}]});
+    J.out(box, 'ni', J.sci(ni, 2) + ' cm⁻³'); J.out(box, 'r', J.fmt(n/ni, 2)); J.out(box, 'e', J.fmt(d, 2) + ' × ' + J.fmt(h, 2) + ' = ' + J.fmt(d*h, 2)); J.out(box, 'z', v.c < ni/3 ? '진성' : v.c > 3*ni ? '외인성' : '경계', v.c < ni/3 ? 'good' : 'warn'); });
+})();
+
+/* 5-2 비소 */
+(function(){
+  const box = J.$('#sim2'), NB = 1e16;
+  J.sim('sim2', v => { const ni = DF.ni(v.T), Di = DF.D('As', v.T), t = v.t*60, Dmax = Di*(1 + v.b*nOf(v.cs, ni)/ni)/(1 + v.b)*2, L = 3*Math.sqrt(Dmax*t), Nx = 300, dx = L/Nx;
+    const Dfun = C => { const n = nOf(C, ni); return Di*(1 + v.b*n/ni)/(1 + v.b)*(v.f === '1' ? hOf(C, ni) : 1); };
+    const C = DF.solve(new Float64Array(Nx), dx, t, Dfun, {type:'fixed', Cs:v.cs}, 'refl', 400);
+    const S = [], R = [], Dp = []; for(let i = 0; i < Nx; i++){ const x = i*dx; S.push([x*1e7, Math.max(C[i], 1e14)]); R.push([x*1e7, Math.max(v.cs*DF.erfc(x/(2*Math.sqrt(Di*t))), 1e14)]); Dp.push([x*1e7, Dfun(Math.max(C[i], 1))]); }
+    const xj = DF.xj(C, dx, NB); const R0 = new Float64Array(Nx); for(let i = 0; i < Nx; i++) R0[i] = v.cs*DF.erfc(i*dx/(2*Math.sqrt(Di*t))); const xj0 = DF.xj(R0, dx, NB);
+    let i1 = 0, i2 = 0; for(let i = 0; i < Nx; i++){ if(C[i] >= 1e19) i1 = i; if(C[i] >= 1e18) i2 = i; }
+    J.plot(J.$('#cv2a'), {x:[0, L*1e7], y:[1e15, v.cs*2], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (nm)', ylab:'비소 농도 (cm⁻³)', series:[{pts:R, color:'--ink3', w:1.5, dash:[5, 4]}, {pts:S, color:'--red', w:3}], hlines:[{y:NB, color:'--ink3', label:'N_B'}]});
+    J.plot(J.$('#cv2b'), {x:[0, L*1e7], y:[Di*0.5, Di*500], logy:true, yf:t => J.sci(t, 1), xlab:'깊이 (nm)', ylab:'실효 D (cm²/s)', series:[{pts:Dp, color:'--indigo', w:3}], hlines:[{y:Di, color:'--ink3', label:'D_i'}]});
+    J.out(box, 'xj', J.fmt(xj*1e7, 0) + ' nm'); J.out(box, 'r', J.fmt(xj/Math.max(xj0, 1e-12), 2) + ' ×'); J.out(box, 's', J.fmt((i2 - i1)*dx*1e7, 1), (i2 - i1)*dx*1e7 < 15 ? 'good' : 'warn'); });
+})();
+
+/* 5-3 인 꺾임 */
+(function(){
+  const box = J.$('#sim3'), NB = 1e15, T = 1000;
+  J.sim('sim3', v => { const ni = DF.ni(T), Di = DF.D('P', T), t = v.t*60;
+    const Df = K => C => C > v.ce ? Di*(1 + nOf(C, ni)/ni)*hOf(C, ni) : Di*(1 + K)*(1 + 0.3*C/ni);
+    const Ds = Di*(1 + nOf(v.cs, ni)/ni)*2, L = 3.5*Math.sqrt(Ds*t) + 8*Math.sqrt(Di*(1 + v.k)*t), Nx = 400, dx = L/Nx;
+    const C1 = DF.solve(new Float64Array(Nx), dx, t, Df(v.k), {type:'fixed', Cs:v.cs}, 'refl', 400), C0 = DF.solve(new Float64Array(Nx), dx, t, Df(0), {type:'fixed', Cs:v.cs}, 'refl', 400);
+    const S1 = [], S0 = []; for(let i = 0; i < Nx; i += 2){ S1.push([i*dx*1e4, Math.max(C1[i], 1e13)]); S0.push([i*dx*1e4, Math.max(C0[i], 1e13)]); }
+    let ik = 0; for(let i = 0; i < Nx; i++) if(C1[i] >= v.ce) ik = i; const xj = DF.xj(C1, dx, NB), x0 = DF.xj(C0, dx, NB);
+    J.plot(J.$('#cv3'), {x:[0, L*1e4], y:[1e14, v.cs*2], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (µm)', ylab:'인 농도 (cm⁻³)', series:[{pts:S0, color:'--ink3', w:1.5, dash:[5, 4]}, {pts:S1, color:'--red', w:3}], bands:[{y0:1e14, y1:v.ce, color:'--gold', alpha:.12}], hlines:[{y:v.ce, color:'--gold', label:'C_e'}, {y:NB, color:'--ink3', label:'N_B'}], vlines:[{x:ik*dx*1e4, color:'--gold'}]});
+    J.out(box, 'xk', J.fmt(ik*dx*1e7, 0) + ' nm'); J.out(box, 'xj', J.fmt(xj*1e4, 3) + ' µm'); J.out(box, 'x0', J.fmt(x0*1e4, 3) + ' µm'); });
+})();
+</script>
+</body>
+</html>

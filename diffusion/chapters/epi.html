@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>에피택시와 계면 확산 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="epi">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 12 <span class="hanja">第十二章 · 積</span></div>
+  <h1>에피택시와 계면 확산</h1>
+  <p class="lead">에피택시는 단결정 웨이퍼 위에 같은 결정 방향을 이어받은 새 실리콘 층을 쌓는 공정이다. 도펀트는 성장하면서 기체로 넣으므로 이온 주입이나 확산으로는 만들 수 없는 분포를 얻는다. 예를 들어 고농도 기판 위의 저농도 층, 깊이 묻힌 층(매몰층), 계단처럼 급격한 경계가 그렇다. 하지만 성장은 1,000 °C 이상에서 이루어지는 일이 많아, 기판 도펀트가 새 층으로 거꾸로 확산하고 기체 중으로 날아가 다시 박히기도 한다. 이 장에서는 성장 속도의 두 영역, 계면 도핑이 번지는 과정, SiGe처럼 격자 크기가 다른 층의 임계 두께를 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>성장 속도가 표면 반응 지배 영역과 물질 전달 지배 영역으로 나뉘는 이유를 안다.</li>
+  <li>기판 외확산과 자동 도핑(autodoping)이 만드는 계면 천이 폭을 계산한다.</li>
+  <li>SiGe 변형층의 임계 두께(Matthews–Blakeslee, People–Bean)와 준안정 영역을 이해한다.</li>
+</ul></div>
+
+<figure class="fig">
+<svg viewBox="0 0 860 230" role="img" aria-label="에피 반응기" id="fig1"></svg>
+<figcaption><b>그림 12-1.</b> 매엽식 에피 반응기의 단면. 램프가 위아래에서 서셉터와 웨이퍼를 1,000~1,150 °C로 가열하고, 수소에 섞인 실리콘 원료 기체(SiH₂Cl₂, SiHCl₃)와 도펀트 기체(PH₃, B₂H₆, AsH₃)가 웨이퍼 위로 옆에서 흘러간다. 웨이퍼 표면 바로 위에는 기체 속도가 느린 경계층이 있어, 원료는 이 층을 확산으로 건너야 표면에 닿는다.</figcaption>
+</figure>
+
+<h2 id="s1"><span class="n">01</span>두 영역의 성장 속도</h2>
+<p>원료 분자가 표면에 붙어 실리콘이 되려면 두 단계를 거친다. 경계층을 건너는 <b>물질 전달</b>(속도 계수 h<sub>g</sub>)과 표면에서의 <b>화학 반응</b>(속도 계수 k<sub>s</sub>)이다. 둘은 직렬 저항처럼 더 느린 쪽이 전체를 결정한다. 낮은 온도에서는 반응이 느려 온도에 지수적으로 민감하고(반응 지배), 높은 온도에서는 반응이 충분히 빨라 기체 공급이 한계가 된다(전달 지배). 전달 지배 영역은 온도 불균일에 둔감해 대부분의 양산 에피는 이 영역에서 한다. 대신 기체 흐름 방향으로 원료가 소모되는 효과가 두께 불균일을 만든다.</p>
+<div class="eq">$$G = \frac{C_g}{N_{Si}}\,\frac{k_s\,h_g}{k_s + h_g},\qquad k_s = k_0\,e^{-E_a/k_BT},\qquad h_g \propto \frac{D_g}{\delta} \propto \frac{T^{1.75}}{P}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-1</span><span class="ttl">성장 속도와 두께 균일도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">원료 기체</span><select data-k="g"><option value="0">SiH₄</option><option value="1" selected>SiH₂Cl₂ (DCS)</option><option value="2">SiHCl₃ (TCS)</option><option value="3">SiCl₄</option></select></label>
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="550" max="1250" step="5" value="1000" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">압력 <output data-o="P"></output></span><input type="range" data-k="P" min="10" max="760" step="10" value="760" data-d="0" data-u="Torr"></label>
+      <label class="ctrl"><span class="lab">웨이퍼 온도 편차 <output data-o="dT"></output></span><input type="range" data-k="dT" min="0" max="10" step="0.5" value="3" data-d="1" data-u="°C"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">성장 속도</span><span class="v" data-r="G"></span></div>
+      <div class="ro"><span class="k">지배 영역</span><span class="v" data-r="reg"></span></div>
+      <div class="ro"><span class="k">두께 불균일 (최대−최소)/평균</span><span class="v" data-r="u"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 원료별 성장 속도의 아레니우스 그림. 왼쪽 위 평평한 부분이 전달 지배, 오른쪽 아래 급경사가 반응 지배다. 염소가 많은 원료일수록 반응 지배가 더 높은 온도까지 이어진다. 압력을 낮추면 경계층 확산이 빨라져 전달 한계는 위로 올라가지만 원료 분압이 줄어 반응 속도는 내려간다. 그래서 저압 에피는 반응 지배 쪽으로 옮겨 간다. 오른쪽: 웨이퍼 두께 지도(기체는 왼쪽에서 오른쪽으로 흐름, 온도는 가장자리가 편차만큼 낮음). 반응 지배에서는 동심원(온도) 무늬, 전달 지배에서는 흐름 방향의 기울기가 보인다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>계면의 번짐: 외확산과 자동 도핑</h2>
+<p>고농도 n⁺ 기판(Sb, As) 위에 저농도 n⁻ 에피층을 기르는 전력 소자나 바이폴라 매몰층을 생각하자. 이상적으로는 계면에서 농도가 계단처럼 떨어져야 하지만 두 가지 효과가 경계를 번지게 한다. <b>외확산</b>: 성장하는 동안과 이후 열처리 동안 기판 도펀트가 고체 확산으로 에피층에 올라온다. <b>자동 도핑</b>: 기판 표면과 뒷면, 가장자리에서 증발한 도펀트가 기체를 거쳐 성장하는 층에 다시 박힌다. 자동 도핑은 성장 초기에 가장 크고, 기판이 덮일수록 줄어든다. 뒷면을 산화막으로 막고(backseal), 휘발성이 낮은 Sb를 쓰고, 낮은 압력에서 기르면 줄일 수 있다.</p>
+<div class="eq">$$C_{epi}(h) = N_{epi} + C_{sub}\,\left[\,\kappa_{f}\,e^{-h/h_a} + \kappa_{b}\,\right],\qquad L_{out} = 2\sqrt{\textstyle\sum D t}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-2</span><span class="ttl">n⁺ 기판 위 n⁻ 에피의 천이 영역</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">기판 도펀트</span><select data-k="d"><option value="Sb" selected>Sb 2×10¹⁸</option><option value="As">As 2×10¹⁹</option><option value="B">B 1×10¹⁹ (p⁺/p⁻)</option></select></label>
+      <label class="ctrl"><span class="lab">성장 온도 <output data-o="T"></output></span><input type="range" data-k="T" min="950" max="1200" step="5" value="1100" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">에피 두께 <output data-o="h"></output></span><input type="range" data-k="h" min="2" max="12" step="0.5" value="5" data-d="1" data-u="µm"></label>
+      <label class="ctrl"><span class="lab">성장 속도 <output data-o="G"></output></span><input type="range" data-k="G" min="0.2" max="5" step="0.1" value="1.5" data-d="1" data-u="µm/min"></label>
+      <label class="ctrl"><span class="lab">후속 열처리 (1,100 °C) <output data-o="ta"></output></span><input type="range" data-k="ta" min="0" max="600" step="10" value="60" data-d="0" data-u="분"></label>
+      <label class="ctrl"><span class="lab">뒷면 산화막 봉인</span><select data-k="bs"><option value="1" selected>있음</option><option value="0">없음</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b2g">성장 재생</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2" data-h="320"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">천이 폭 (90 % → 10 %, log)</span><span class="v" data-r="w"></span></div>
+      <div class="ro"><span class="k">평탄 영역 (C &lt; 1.5 N<sub>epi</sub>)</span><span class="v" data-r="flat"></span></div>
+      <div class="ro"><span class="k">표면 농도 / 목표</span><span class="v" data-r="s"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 가로축은 기판 계면에서 위로 잰 높이(오른쪽 끝이 웨이퍼 표면), 세로축은 로그 농도. 회색 점선은 이상적 계단, 빨강은 성장 직후, 파랑은 후속 열처리 뒤. "성장 재생"을 누르면 층이 자라는 모습이 보인다. 붕소는 확산이 빠르고 Sb는 느리며 휘발도 적다. 뒷면 봉인이 없으면 표면까지 바닥 농도가 올라간다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🎨</span><b>젖은 수채화 위에 덧칠하기</b><span>진한 물감(기판)이 마르기 전에 연한 색(에피)을 덧칠하면 경계가 번진다(외확산). 붓을 씻은 물(기체)에 진한 색이 섞여 있으면 새로 칠하는 색 전체가 탁해진다(자동 도핑). 물통을 갈고(뒷면 봉인, 수소 퍼지), 빨리 마르는 물감(Sb)을 쓰면 경계가 선명해진다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>SiGe: 늘어난 격자의 임계 두께</h2>
+<p>게르마늄 원자는 실리콘보다 4.2 % 크다. Si 기판 위에 Si<sub>1−x</sub>Ge<sub>x</sub>를 기르면 얇을 때는 옆으로 눌려 기판 격자에 맞춰지고(압축 변형), 대신 위아래로 늘어난다. 이 변형은 정공 이동도를 높이고 띠틈을 줄여 PMOS 채널, 소스/드레인 스트레서, HBT 베이스에 쓰인다. 하지만 층이 두꺼워질수록 쌓인 탄성 에너지가 커져, 어느 두께(임계 두께) 이상에서는 계면에 어긋남 전위(misfit dislocation)가 생기며 변형이 풀린다. 이론적 평형 한계(Matthews–Blakeslee)와 실제 저온 성장에서 관찰되는 준안정 한계(People–Bean) 사이에서는 당장은 변형이 유지되지만 이후 고온 공정에서 풀릴 수 있다. 또 Ge는 고온에서 계면으로 상호 확산해 조성 분포가 무뎌진다.</p>
+<div class="eq">$$h_c^{MB} = \frac{b\,(1-\nu\cos^2\alpha)}{8\pi f\,(1+\nu)\cos\lambda}\left[\ln\frac{h_c}{b}+1\right],\qquad f = 0.042\,x$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 12-3</span><span class="ttl">SiGe 임계 두께 지도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">Ge 조성 x <output data-o="x"></output></span><input type="range" data-k="x" min="0.05" max="0.6" step="0.01" value="0.25" data-d="2"></label>
+      <label class="ctrl"><span class="lab">층 두께 <output data-o="h"></output></span><input type="range" data-k="h" min="0" max="3" step="0.02" value="1.5" data-log="1" data-d="0" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">이후 열처리 최고 온도 <output data-o="T"></output></span><input type="range" data-k="T" min="500" max="1100" step="10" value="700" data-d="0" data-u="°C"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">불일치 변형 f</span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">h<sub>c</sub> (MB / PB)</span><span class="v" data-r="hc"></span></div>
+      <div class="ro"><span class="k">상태</span><span class="v" data-r="st"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 가로 = Ge 조성, 세로 = 층 두께(로그). 초록 영역은 안정, 노란 영역은 준안정, 빨간 영역은 완화. 점이 현재 조건이다. 준안정 영역에 있는 층은 이후 열처리가 높을수록 완화되기 쉽다(경계가 열처리 온도에 따라 내려온다). 오른쪽: 원자 격자 그림. 변형된 층은 옆으로 기판에 맞추고 위아래로 늘어나며, 완화되면 계면에 여분의 반평면(⊥)이 생긴다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 매몰층 위에 에피를 기르면 웨이퍼 표면의 정렬 마크 무늬는 어떻게 될까?</p><p>매몰층을 만들 때 생긴 표면 단차는 에피 성장 중 옆으로 이동하고(패턴 이동) 모양이 비틀어진다(패턴 왜곡). 이동량은 결정 방향, 온도, 압력, 원료에 따라 달라서 다음 사진 공정의 정렬에서 보정해야 한다. 고온·저압·염소가 많은 원료일수록 단차가 무뎌진다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">양산 에피를 주로 물질 전달 지배 영역에서 하는 이유는?</p><ol><li>원료가 적게 들어서</li><li>결함이 없어서</li><li>웨이퍼 온도 불균일에 성장 속도가 둔감해서</li><li>도핑이 필요 없어서</li></ol>
+<p class="explain">반응 지배에서는 G가 온도에 지수적으로 민감하다.</p></div>
+<div class="quiz" data-a="1"><p class="q">자동 도핑을 줄이는 방법이 아닌 것은?</p><ol><li>뒷면 산화막 봉인</li><li>후속 열처리 시간 늘리기</li><li>저압 성장</li><li>휘발성이 낮은 Sb 기판</li></ol>
+<p class="explain">열처리를 늘리면 외확산이 커질 뿐이다.</p></div>
+<div class="quiz" data-a="3"><p class="q">Ge 조성을 두 배로 올리면 임계 두께는?</p><ol><li>변하지 않는다</li><li>두 배가 된다</li><li>약간 늘어난다</li><li>절반 이하로 줄어든다</li></ol>
+<p class="explain">h<sub>c</sub> ∝ 1/f (로그 보정 포함), PB는 1/f²에 가깝다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 12-1 */
+(function(){
+  const s = J.$('#fig1'); if(!s) return;
+  J.live(() => { s.innerHTML = ''; const lab = (x, y, t, c = '--ink2', a = 'middle') => { const e = J.svg('text', {x, y, 'text-anchor':a, 'font-size':12.5, fill:J.c(c)}, s); e.textContent = t; };
+    J.svg('rect', {x:180, y:40, width:500, height:150, rx:14, fill:'none', stroke:J.c('--ink3'), 'stroke-width':3}, s);
+    for(let i = 0; i < 9; i++){ J.svg('circle', {cx:240 + i*48, cy:22, r:9, fill:J.c('--gold'), opacity:.8}, s); J.svg('circle', {cx:240 + i*48, cy:208, r:9, fill:J.c('--gold'), opacity:.8}, s); }
+    J.svg('rect', {x:300, y:140, width:260, height:16, fill:'#6b6b6b'}, s); J.svg('rect', {x:320, y:132, width:220, height:8, fill:J.c('--indigo')}, s);
+    J.svg('rect', {x:320, y:118, width:220, height:14, fill:J.c('--jade'), opacity:.18}, s);
+    for(let i = 0; i < 4; i++) J.svg('path', {d:`M190,${70 + i*14} C330,${70 + i*14} 520,${70 + i*12} 670,${66 + i*12}`, fill:'none', stroke:J.c('--jade'), 'stroke-width':2, opacity:.7}, s);
+    lab(170, 90, 'H₂ + SiH₂Cl₂ + PH₃ →', '--jade', 'end'); lab(690, 84, '→ 배기 (HCl)', '--ink3', 'start');
+    lab(430, 178, '서셉터 (SiC 코팅 흑연)', '--ink2'); lab(560, 114, '경계층 δ', '--jade', 'start'); lab(430, 128, '웨이퍼', '--paper'); lab(760, 26, '할로겐 램프 (위·아래)', '--gold', 'end'); });
+})();
+
+/* 12-1 성장 속도 */
+(function(){
+  const box = J.$('#sim1'), GAS = [{n:'SiH₄', T0:720, Ea:1.8, Gt:2.2, c:'#8a5ac8'}, {n:'DCS', T0:930, Ea:1.8, Gt:3.5, c:'#3d7fd0'}, {n:'TCS', T0:1030, Ea:1.8, Gt:5, c:'#3aa36a'}, {n:'SiCl₄', T0:1110, Ea:1.8, Gt:4, c:'#d65a4a'}];
+  const rate = (g, T, P) => { const q = GAS[g], TK = T + 273.15, T0K = q.T0 + 273.15, ks = q.Gt*Math.exp(-q.Ea/DF.kB*(1/TK - 1/T0K))*Math.pow(P/760, 0.5), hg = q.Gt*Math.pow(TK/T0K, 1.75)*Math.pow(760/P, 0.5); return {G:ks*hg/(ks + hg), ks, hg}; };
+  J.sim('sim1', v => { const g = +v.g, S = GAS.map((q, k) => ({pts:Array.from({length:141}, (_, i) => { const T = 550 + i*5; return [1e4/(T + 273.15), rate(k, T, v.P).G]; }), color:q.c, w:k === g ? 3.5 : 1.5}));
+    const r = rate(g, v.T, v.P), P = J.plot(J.$('#cv1a'), {x:[6.3, 12.2], y:[1e-3, 20], logy:true, yf:t => J.fmt(t, t < 1 ? 3 : 0), xlab:'10⁴ / T (K⁻¹)', ylab:'성장 속도 (µm/min)', series:S, points:[{x:1e4/(v.T + 273.15), y:r.G, color:'--ink', r:6}]});
+    GAS.forEach((q, k) => { P.ctx.fillStyle = q.c; P.ctx.font = '11px "Noto Sans KR"'; P.ctx.fillText(q.n, P.X(1e4/(q.T0 + 273.15)) + 4, P.Y(rate(k, q.T0, v.P).G*0.12)); });
+    /* 두께 지도 */
+    const {ctx, w, h} = J.fit(J.$('#cv1b')); ctx.clearRect(0,0,w,h); const R = Math.min(w, h)/2 - 18, cx = w/2, cy = h/2, n = 44, vals = [];
+    const kdep = r.hg/(r.ks + r.hg)*0.06; // 전달 지배일수록 원료 소모 기울기
+    for(let i = 0; i < n; i++) for(let j = 0; j < n; j++){ const x = (i + .5)/n*2 - 1, y = (j + .5)/n*2 - 1, rr = x*x + y*y; if(rr > 1) continue; const T = v.T - v.dT*rr, G = rate(g, T, v.P).G*(1 - kdep*(x + 1)); vals.push([i, j, G]); }
+    const mn = Math.min(...vals.map(a => a[2])), mxv = Math.max(...vals.map(a => a[2])), av = vals.reduce((a, b) => a + b[2], 0)/vals.length, sp = Math.max(mxv - mn, av*0.004);
+    vals.forEach(([i, j, G]) => { const f = (G - mn)/sp; ctx.fillStyle = `hsl(${220 - 200*f},65%,${48 + 10*Math.sin(f*3)}%)`; ctx.fillRect(cx - R + i/n*2*R, cy - R + j/n*2*R, 2*R/n + .6, 2*R/n + .6); });
+    ctx.strokeStyle = J.c('--ink'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke(); ctx.fillStyle = J.c('--jade'); ctx.font = '12px "Noto Sans KR"'; ctx.fillText('기체 →', 8, 16);
+    ctx.fillStyle = J.c('--ink2'); ctx.fillText('파랑 얇음 · 빨강 두꺼움', 8, h - 6);
+    const u = (mxv - mn)/av*100, reacFrac = r.hg/(r.ks + r.hg);
+    J.out(box, 'G', J.fmt(r.G, r.G < 0.1 ? 3 : 2) + ' µm/min'); J.out(box, 'reg', reacFrac > 0.75 ? '반응 지배' : reacFrac < 0.25 ? '전달 지배' : '전이 영역', reacFrac < 0.25 ? 'good' : reacFrac > 0.75 ? 'bad' : 'warn');
+    J.out(box, 'u', J.fmt(u, 2) + ' %', u < 3 ? 'good' : u < 8 ? 'warn' : 'bad'); });
+})();
+
+/* 12-2 계면 천이 */
+(function(){
+  const box = J.$('#sim2'), dx = 0.02e-4, Nsub = 150; let anim = null, V = null;
+  const SUB = {Sb:2e18, As:2e19, B:1e19}, VOL = {Sb:0.4, As:1.4, B:1}, Ne = 1e15;
+  function grow(v, upto){ const d = v.d, Cs = SUB[d], hTot = v.h*1e-4, tg = v.h/v.G*60, nE = Math.round(hTot/dx), steps = 60, Dg = DF.D(d, v.T), kf = 3e-4*VOL[d]*Math.exp((v.T - 1100)/120), kb = v.bs === '1' ? 2e-6*VOL[d] : 4e-4*VOL[d];
+    let C = new Float64Array(Nsub).fill(Cs); const lim = Math.min(steps, upto);
+    for(let k = 1; k <= lim; k++){ const nNow = Math.round(nE*k/steps), add = nNow - (C.length - Nsub), old = C;
+      C = new Float64Array(old.length + add); C.set(old); for(let i = old.length; i < C.length; i++){ const hh = (i - Nsub)*dx*1e4; C[i] = Ne + Cs*(kf*Math.exp(-hh/0.6) + kb); }
+      C = DF.step(C, dx, tg/steps, () => Dg, {type:'refl'}, 'refl'); }
+    return C; }
+  function draw(C, Ca, v){ const Cs = SUB[v.d], X = i => (i - Nsub)*dx*1e4, ideal = [[-3, Cs], [0, Cs], [0, Ne], [v.h, Ne]];
+    const S = [{pts:ideal, color:'--ink3', w:1.5, dash:[5, 4]}, {pts:Array.from(C, (c, i) => [X(i), Math.max(c, 1e13)]), color:'--red', w:3}];
+    if(Ca) S.push({pts:Array.from(Ca, (c, i) => [X(i), Math.max(c, 1e13)]), color:'--indigo', w:2.5});
+    J.plot(J.$('#cv2'), {x:[-3, v.h + 1], y:[1e14, 1e20], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'계면으로부터 높이 (µm) → 표면', ylab:'농도 (cm⁻³)', series:S, vlines:[{x:0, color:'--ink3'}, {x:(C.length - Nsub)*dx*1e4, color:'--jade'}]}); }
+  const metrics = (C, v) => { const Cs = SUB[v.d], lg = c => Math.log10(c), hi = lg(Ne) + 0.9*(lg(Cs) - lg(Ne)), lo = lg(Ne) + 0.1*(lg(Cs) - lg(Ne)); let a = null, b = null, fl = null;
+    for(let i = 1; i < C.length; i++){ const l0 = lg(C[i - 1]), l1 = lg(C[i]); if(a === null && l0 >= hi && l1 < hi) a = i; if(b === null && l0 >= lo && l1 < lo) b = i; if(fl === null && C[i] < 1.5*Ne) fl = i; }
+    return {w:a !== null && b !== null ? (b - a)*dx*1e4 : null, flat:fl !== null ? (C.length - fl)*dx*1e4 : 0, s:C[C.length - 1]}; };
+  const final = v => { const C = grow(v, 1e9), Ca = v.ta > 0 ? DF.solve(C, dx, v.ta*60, () => DF.D(v.d, 1100), {type:'refl'}, 'refl', 80) : C; return [C, Ca]; };
+  const report = (C, v) => { const m = metrics(C, v); J.out(box, 'w', m.w === null ? '표면까지 번짐' : J.fmt(m.w, 2) + ' µm', m.w !== null && m.w < 1 ? 'good' : m.w !== null && m.w < 2 ? 'warn' : 'bad');
+    J.out(box, 'flat', J.fmt(m.flat, 2) + ' µm  (' + J.fmt(m.flat/v.h*100, 0) + ' %)', m.flat/v.h > 0.6 ? 'good' : m.flat/v.h > 0.3 ? 'warn' : 'bad'); J.out(box, 's', J.sci(m.s, 2) + ' / 1×10¹⁵', m.s < 1.2e15 ? 'good' : m.s < 3e15 ? 'warn' : 'bad'); };
+  J.sim('sim2', v => { V = v; anim = null; const [C, Ca] = final(v); draw(C, Ca, v); report(Ca, v); });
+  J.$('#b2g').onclick = () => { anim = 0; };
+  J.loop(J.$('#cv2'), () => { if(anim === null || !V) return; anim += 1; const C = grow(V, anim); draw(C, null, V); if(anim >= 60){ anim = null; const [C2, Ca] = final(V); draw(C2, Ca, V); report(Ca, V); } });
+})();
+
+/* 12-3 SiGe 임계 두께 */
+(function(){
+  const box = J.$('#sim3'), nu = 0.28, b = 0.384;
+  const hMB = x => { const f = 0.042*x; let h = 10*b; for(let k = 0; k < 60; k++) h = b*(1 - nu*0.25)/(8*Math.PI*f*(1 + nu)*0.5)*(Math.log(h/b) + 1); return h; };
+  const hPB = x => { const f = 0.042*x, bb = 0.4, a = 0.5431; let h = 50; for(let k = 0; k < 80; k++) h = (1 - nu)/(1 + nu)/(16*Math.PI*Math.SQRT2)*bb*bb/a/(f*f)*Math.log(Math.max(h/bb, 1.01)); return h; };
+  const hMeta = (x, T) => { const m = hMB(x), p = hPB(x), s = J.clamp((T - 550)/450, 0, 1); return Math.exp(Math.log(p) + (Math.log(m) - Math.log(p))*s); }; // 고온일수록 MB 쪽으로
+  J.sim('sim3', v => { const xs = Array.from({length:111}, (_, i) => 0.05 + i*0.005);
+    const P = J.plot(J.$('#cv3a'), {x:[0.05, 0.6], y:[1, 1000], logy:true, yf:t => J.fmt(t, 0), xlab:'Ge 조성 x', ylab:'층 두께 (nm)', series:[
+      {pts:xs.map(x => [x, hMB(x)]), color:'--jade', w:3}, {pts:xs.map(x => [x, Math.min(hPB(x), 1000)]), color:'--red', w:3}, {pts:xs.map(x => [x, hMeta(x, v.T)]), color:'--gold', w:2, dash:[6, 4]}], points:[{x:v.x, y:v.h, color:'--ink', r:7}]});
+    const ctx = P.ctx; ctx.font = '11px "Noto Sans KR"'; ctx.fillStyle = J.c('--jade'); ctx.fillText('안정 (MB 아래)', P.X(0.08), P.Y(2.2)); ctx.fillStyle = J.c('--red'); ctx.fillText('완화 (PB 위)', P.X(0.4), P.Y(500)); ctx.fillStyle = J.c('--gold'); ctx.fillText('열처리 후 한계', P.X(0.36), P.Y(hMeta(0.36, v.T)*0.6));
+    const m = hMB(v.x), p = hPB(v.x), mt = hMeta(v.x, v.T), st = v.h < m ? 0 : v.h < mt ? 1 : 2;
+    J.out(box, 'f', J.fmt(0.042*v.x*100, 2) + ' %'); J.out(box, 'hc', J.fmt(m, 1) + ' / ' + J.fmt(p, 0) + ' nm');
+    J.out(box, 'st', ['안정 (변형 유지)', '준안정 (이 열처리까지 견딤)', '완화 (어긋남 전위)'][st], ['good', 'warn', 'bad'][st]);
+    /* 격자 */
+    const {ctx:c2, w, h} = J.fit(J.$('#cv3b')); c2.clearRect(0,0,w,h); const a0 = Math.min(26, (w - 40)/12), nx = Math.floor((w - 40)/a0), y0 = h*0.62, rows = Math.min(7, Math.max(1, Math.round(Math.log(v.h + 1)*1.6)));
+    for(let r = 0; r < 4; r++) for(let i = 0; i < nx; i++){ c2.fillStyle = '#9aa3ad'; c2.beginPath(); c2.arc(20 + i*a0 + a0/2, y0 + r*a0 + a0/2, a0*0.28, 0, 7); c2.fill(); }
+    const eps = 0.042*v.x*6; // 시각 과장
+    for(let r = 0; r < rows; r++){ const relaxed = st === 2, ax = relaxed ? a0*(1 + eps) : a0, az = relaxed ? a0*(1 + eps) : a0*(1 + 1.4*eps), n2 = relaxed ? nx - 1 : nx;
+      for(let i = 0; i < n2; i++){ c2.fillStyle = (i*7 + r*3) % 10 < v.x*10 ? '#3aa36a' : '#8fb7dd'; c2.beginPath(); c2.arc(20 + i*ax + ax/2 + (relaxed ? (nx*a0 - n2*ax)/2 : 0), y0 - (r + 1)*az + az/2, a0*0.3, 0, 7); c2.fill(); } }
+    c2.strokeStyle = J.c('--ink3'); c2.setLineDash([4, 4]); c2.beginPath(); c2.moveTo(16, y0); c2.lineTo(w - 16, y0); c2.stroke(); c2.setLineDash([]);
+    c2.fillStyle = J.c('--ink2'); c2.font = '12px "Noto Sans KR"'; c2.fillText('Si 기판', 20, h - 8); c2.fillText(st === 2 ? 'SiGe (완화)' : 'SiGe (압축 변형: 옆으로 맞춤, 위로 늘어남)', 20, 18);
+    if(st === 2){ c2.strokeStyle = J.c('--red'); c2.lineWidth = 3; const xm = w/2; c2.beginPath(); c2.moveTo(xm - 9, y0); c2.lineTo(xm + 9, y0); c2.moveTo(xm, y0); c2.lineTo(xm, y0 - 18); c2.stroke(); c2.fillStyle = J.c('--red'); c2.fillText('어긋남 전위 ⊥', xm + 12, y0 - 6); } });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RTP와 밀리초·레이저 어닐 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="rtp">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 09 <span class="hanja">第九章 · 速</span></div>
+  <h1>RTP와 밀리초·레이저 어닐</h1>
+  <p class="lead">얕은 접합 시대의 열공정은 "얼마나 높이"보다 "얼마나 짧게"의 싸움이다. 급속 열처리(RTP) 장비는 수백 개의 할로겐 램프로 웨이퍼 한 장을 초당 250 °C로 데우고, 고온계로 온도를 재며 램프를 제어한다. 플래시 램프는 1~10 ms 동안 웨이퍼 표면만 1,300 °C로 올리고, 레이저는 µs~ns 동안 표면 수백 nm만 녹는점까지 데운다. 시간이 짧아질수록 열이 웨이퍼 깊이 퍼질 시간도 없어, 표면만 뜨겁고 몸체는 차갑다. 이 장은 램프 가열의 동역학과 제어, 펄스 길이에 따른 열 확산 깊이, 그리고 칩 무늬가 만드는 온도 불균일(패턴 효과)을 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>웨이퍼의 열용량·복사 손실·램프 전력으로 승온·냉각 속도를 계산하고, PID 제어로 스파이크 곡선을 따라간다.</li>
+  <li>열 확산 길이 √(αt)로 스파이크·플래시·레이저의 가열 깊이를 비교한다.</li>
+  <li>표면 무늬의 흡수율 차이가 만드는 칩 안 온도 차와 그 대책을 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>램프로 웨이퍼 데우기</h2>
+<p>300 mm 웨이퍼(두께 0.775 mm)는 질량 130 g의 얇은 판이다. 램프가 위아래에서 비추면 흡수한 전력만큼 온도가 오르고, 뜨거운 웨이퍼는 복사(∝ T⁴)로 열을 잃는다. 1,000 °C 근처에서는 복사 손실이 커서, 램프를 끄기만 해도 초당 50~100 °C로 식는다. 스파이크 어닐은 최고점에 머무르지 않고 바로 꺾어 내려와야 하므로, 고온계로 1초에 수백 번 온도를 읽어 램프 전력을 조절한다(PID 제어). 웨이퍼 표면의 방사율이 무늬·막에 따라 달라 고온계 읽기가 틀어지는 것이 오래된 난제다.</p>
+<div class="eq">$$\rho\,c\,d\,\frac{dT}{dt} = \alpha P_{lamp} - 2\varepsilon\sigma\left(T^4 - T_{ch}^4\right),\qquad P_{lamp} = K_pe + K_i\!\int\!e\,dt + K_d\,\dot e$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-1</span><span class="ttl">스파이크 어닐 제어</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">목표 최고 온도 <output data-o="tp"></output></span><input type="range" data-k="tp" min="900" max="1150" step="5" value="1050" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">목표 승온 속도 <output data-o="r"></output></span><input type="range" data-k="r" min="50" max="400" step="10" value="250" data-d="0" data-u="°C/s"></label>
+      <label class="ctrl"><span class="lab">최대 램프 전력 <output data-o="pm"></output></span><input type="range" data-k="pm" min="50" max="300" step="5" value="180" data-d="0" data-u="W/cm²"></label>
+      <label class="ctrl"><span class="lab">비례 이득 K_p <output data-o="kp"></output></span><input type="range" data-k="kp" min="0.05" max="3" step="0.05" value="1" data-d="2"></label>
+      <label class="ctrl"><span class="lab">방사율 ε <output data-o="e"></output></span><input type="range" data-k="e" min="0.3" max="0.9" step="0.01" value="0.68" data-d="2"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">실제 최고 온도 (넘침)</span><span class="v" data-r="pk"></span></div>
+      <div class="ro"><span class="k">최고점 −50 °C 폭 (t₅₀)</span><span class="v" data-r="w"></span></div>
+      <div class="ro"><span class="k">냉각 속도 (최고점 직후)</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">붕소 확산 길이 √(∫D dt)</span><span class="v" data-r="l"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 설정 곡선(회색 점선)과 실제 웨이퍼 온도(빨강), 아래는 램프 전력(주황, 0~100 %). 이득이 너무 크면 최고점을 넘기고(넘침) 진동한다. 최대 전력이 부족하면 승온을 못 따라간다. 오른쪽: 순간 확산 계수 D(t)(로그). 확산은 최고점 근처 몇십 ms에 몰려 일어나므로 t₅₀이 확산량을 좌우한다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🍳</span><b>팬 위의 얇은 크레페</b><span>얇은 크레페(웨이퍼)는 불을 세게 하면 순식간에 타고, 불을 끄면 순식간에 식는다. 두꺼운 고기라면 겉만 익고 속은 날것이다. RTP는 크레페 요리이고, 레이저 어닐은 두꺼운 고기 겉만 순간적으로 그을리는 토치 요리다.</span></div>
+
+<h2 id="s2"><span class="n">02</span>열은 얼마나 깊이 퍼지나</h2>
+<p>짧은 시간 t 동안 표면에 열을 주면, 열은 √(αt)(α = 실리콘의 열확산율, 고온에서 약 0.1 cm²/s) 깊이까지만 퍼진다. 1초 스파이크면 3 mm로 웨이퍼 전체가 같은 온도다. 1 ms 플래시면 100 µm, 웨이퍼 두께의 일부만 뜨겁고 몸체는 차가운 열 흡수원이 되어 꺼지자마자 빨리 식는다. 100 ns 레이저면 1 µm 안쪽만 뜨겁다. 열 확산 방정식은 도펀트 확산 방정식과 같은 꼴이라 같은 엔진으로 풀 수 있다.</p>
+<div class="eq">$$\frac{\partial T}{\partial t} = \alpha\,\frac{\partial^2 T}{\partial x^2},\qquad -\kappa\frac{\partial T}{\partial x}\Big|_0 = q''(t),\qquad L_{th} = \sqrt{\alpha\,t_{pulse}}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-2</span><span class="ttl">펄스 길이와 가열 깊이</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">펄스 길이 <output data-o="tp"></output></span><input type="range" data-k="tp" min="-7" max="0" step="0.05" value="-3" data-log="1" data-d="7" data-u="s"></label>
+      <label class="ctrl"><span class="lab">표면 최고 온도 목표 <output data-o="T"></output></span><input type="range" data-k="T" min="1000" max="1400" step="10" value="1300" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">예열 온도 <output data-o="pre"></output></span><input type="range" data-k="pre" min="25" max="800" step="25" value="600" data-d="0" data-u="°C"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">열 확산 길이 √(αt)</span><span class="v" data-r="l"></span></div>
+      <div class="ro"><span class="k">필요한 표면 열유속</span><span class="v" data-r="q"></span></div>
+      <div class="ro"><span class="k">펄스 직후 웨이퍼 뒷면 온도</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">장비 분류</span><span class="v" data-r="k"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 펄스가 끝난 순간의 깊이별 온도(가로 = 깊이, 로그). 점선은 √(αt). 오른쪽: 표면 온도의 시간 변화(가로 = 펄스 길이로 나눈 시간). 짧은 펄스일수록 몸체가 차가워 꺼진 뒤 순식간에 식는다(자기 급랭). 같은 최고 온도를 내려면 짧을수록 훨씬 강한 열유속이 필요하다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>패턴 효과: 무늬가 다르면 온도도 다르다</h2>
+<p>칩 표면은 산화막·폴리실리콘·금속·소자 분리 영역이 섞인 모자이크다. 영역마다 램프·레이저 빛의 흡수율과 방사율이 달라, 같은 빛을 받아도 온도가 달라진다. 1초 스파이크에서는 열이 옆으로 수 mm 퍼져 차이가 거의 지워지지만, ms 플래시나 µs 레이저에서는 옆으로 퍼질 시간이 없어 영역마다 수십 °C 차이가 난다. 이것이 트랜지스터 특성 산포로 이어진다. 대책은 표면을 흡수율이 고른 막(탄소 흡수막)으로 덮거나, 반사가 무늬에 덜 민감한 파장·입사각을 고르는 것이다.</p>
+<div class="eq">$$\Delta T_{local} \approx \Delta A\,\frac{T_{peak} - T_{pre}}{\bar A}\cdot\frac{1}{1 + (L_{th,lat}/\ell_{pattern})^2}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 9-3</span><span class="ttl">칩 위 온도 지도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">어닐 방식</span><select data-k="m"><option value="spike">스파이크 (1 s)</option><option value="flash" selected>플래시 (1 ms)</option><option value="laser">레이저 (1 µs)</option></select></label>
+      <label class="ctrl"><span class="lab">흡수율 차이 (무늬 사이) <output data-o="da"></output></span><input type="range" data-k="da" min="0" max="0.4" step="0.01" value="0.2" data-d="2"></label>
+      <label class="ctrl"><span class="lab">탄소 흡수막</span><select data-k="c"><option value="0" selected>없음</option><option value="1">있음 (흡수율 균일화)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">칩 안 최고 온도 차</span><span class="v" data-r="dt"></span></div>
+      <div class="ro"><span class="k">옆 방향 열 확산 길이</span><span class="v" data-r="l"></span></div>
+      <div class="ro"><span class="k">붕소 R_s 산포 (어림)</span><span class="v" data-r="rs"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽 위: 2 × 2 mm 칩의 무늬(흡수율 높음 = 진함). 왼쪽 아래: 최고 온도 지도(빨강 = 뜨거움, 파랑 = 차가움, ±30 °C 눈금). 오른쪽: 가로 한 줄을 따라 잰 온도. 스파이크는 열이 옆으로 퍼져 평평하고, 레이저는 무늬를 그대로 따라간다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 레이저로 표면을 녹였다 굳히면(용융 레이저 어닐) 어떤 장점과 위험이 있을까?</p><p>액체 실리콘에서 도펀트 확산은 고체보다 10⁸배 빨라, 녹은 깊이까지 상자형으로 고르게 퍼지고 굳을 때 고용도를 넘게 갇힌다. 접합 깊이 = 녹은 깊이라 매우 얕고 날카롭다. 대신 게이트나 측벽 같은 주변 구조물이 녹거나 변형될 수 있고, 녹는 깊이를 칩 전체에서 고르게 맞추기가 어렵다. 그래서 3D 소자 위에서는 녹지 않는 밀리초 어닐이 주로 쓰인다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">스파이크 어닐에서 확산량을 주로 정하는 것은?</p><ol><li>승온을 시작한 온도</li><li>최고점 근처에 머무는 시간 폭(t₅₀)</li><li>냉각 후 실온 유지 시간</li><li>램프 개수</li></ol>
+<p class="explain">D는 온도의 지수 함수라 최고점 근처 몇십 ms에서 대부분의 확산이 일어난다.</p></div>
+<div class="quiz" data-a="0"><p class="q">열확산율 0.1 cm²/s일 때 1 ms 펄스의 열 확산 길이는?</p><ol><li>100 µm</li><li>1 µm</li><li>1 mm</li><li>10 nm</li></ol>
+<p class="explain">√(0.1 × 10⁻³) cm = 0.01 cm = 100 µm.</p></div>
+<div class="quiz" data-a="3"><p class="q">패턴 효과가 레이저 어닐에서 특히 큰 이유는?</p><ol><li>레이저 파장이 길어서</li><li>웨이퍼 전체가 뜨거워서</li><li>예열을 안 해서</li><li>짧은 시간이라 열이 옆으로 퍼져 차이를 지울 시간이 없어서</li></ol>
+<p class="explain">옆 방향 열 확산 길이가 무늬 크기보다 작다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const SIG = 5.67e-12; // W/cm²K⁴
+/* 9-1 PID */
+(function(){
+  const box = J.$('#sim1');
+  J.sim('sim1', v => { const C = 2.33*0.75*0.0775, T0 = 400, dt = 0.002, TK = c => c + 273.15; // J/cm²K
+    let T = T0, I = 0, prevE = 0, t = 0, peakT = 0, peakAt = 0, phase = 'up'; const tr = [], sp = [], pw = [], Dd = [];
+    const tUp = (v.tp - T0)/v.r, setp = tt => tt < tUp ? T0 + v.r*tt : Math.max(T0, v.tp - 120*(tt - tUp));
+    let ldiff = 0; for(let k = 0; k < Math.round((tUp + 6)/dt); k++){ t = k*dt; const s = setp(t), e = s - T, ff = C*v.r*(t < tUp ? 1 : 0) + 2*v.e*SIG*(Math.pow(TK(T), 4) - Math.pow(TK(25), 4));
+      I += e*dt; const d = (e - prevE)/dt; prevE = e; let P = (t < tUp ? ff : 0) + v.kp*(e*C*40 + 0.5*I*C*40*0.2 + 0.002*d*C*40); P = J.clamp(P, 0, v.pm);
+      T += (P*0.7 - 2*v.e*SIG*(Math.pow(TK(T), 4) - Math.pow(TK(25), 4)))/C*dt; if(T > peakT){ peakT = T; peakAt = t; }
+      ldiff += DF.D('B', T)*dt; if(k % 5 === 0){ tr.push([t, T]); sp.push([t, s]); pw.push([t, 400 + P/v.pm*200]); Dd.push([t, Math.max(DF.D('B', T), 1e-22)]); } }
+    let a = null, b = null; tr.forEach(([tt, TT]) => { if(TT >= peakT - 50){ if(a === null) a = tt; b = tt; } });
+    const i0 = tr.findIndex(q => q[0] >= peakAt), cool = i0 >= 0 && tr[i0 + 25] ? (tr[i0][1] - tr[i0 + 25][1])/(tr[i0 + 25][0] - tr[i0][0]) : 0;
+    J.plot(J.$('#cv1a'), {x:[0, tUp + 6], y:[350, 1250], xlab:'시간 (s)', ylab:'온도 (°C)', series:[{pts:pw, color:'--gold', w:1.2}, {pts:sp, color:'--ink3', w:1.5, dash:[5, 4]}, {pts:tr, color:'--red', w:3}], hlines:[{y:v.tp, color:'--ink3'}]});
+    J.plot(J.$('#cv1b'), {x:[0, tUp + 6], y:[1e-20, 1e-12], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'시간 (s)', ylab:'D_B (cm²/s)', series:[{pts:Dd, color:'--indigo', w:3, fill:.15}]});
+    J.out(box, 'pk', J.fmt(peakT, 0) + ' °C (' + (peakT - v.tp >= 0 ? '+' : '') + J.fmt(peakT - v.tp, 1) + ')', Math.abs(peakT - v.tp) < 5 ? 'good' : Math.abs(peakT - v.tp) < 20 ? 'warn' : 'bad');
+    J.out(box, 'w', a !== null ? J.fmt((b - a)*1e3, 0) + ' ms' : '—'); J.out(box, 'c', J.fmt(cool, 0) + ' °C/s'); J.out(box, 'l', J.fmt(Math.sqrt(ldiff)*1e7, 2) + ' nm'); });
+})();
+
+/* 9-2 열 확산 */
+(function(){
+  const box = J.$('#sim2'), alpha = 0.12, kappa = 0.25, W = 0.0775; // cm²/s, W/cmK, cm
+  J.sim('sim2', v => { const tp = v.tp, L = Math.min(W, 6*Math.sqrt(alpha*tp*3)), Nx = 300, dx = L/Nx, bottom = L >= W ? 'refl' : 'fixed';
+    let lo = 1, hi = 1e9; for(let k = 0; k < 50; k++){ const m = Math.sqrt(lo*hi), r = (() => { let Tg = new Float64Array(Nx).fill(v.pre); const ns = 300, dt = tp/ns; for(let i = 0; i < ns; i++){ Tg[0] += m*dt/(dx*1.63); Tg = DF.step(Tg, dx, dt, () => alpha, {type:'refl'}, bottom); } return Tg[0]; })(); if(r < v.T) lo = m; else hi = m; }
+    const q = Math.sqrt(lo*hi); let Tg = new Float64Array(Nx).fill(v.pre); const ns = 300, dt = tp/ns; const hist = []; for(let k = 0; k < ns; k++){ Tg[0] += q*dt/(dx*1.63); Tg = DF.step(Tg, dx, dt, () => alpha, {type:'refl'}, bottom); if(k % 3 === 0) hist.push([k*dt/tp, Tg[0]]); }
+    const prof = Array.from(Tg, (T, i) => [Math.max((i + .5)*dx*1e4, 1e-4), T]); let T2 = Tg; for(let k = 0; k < 150; k++){ T2 = DF.step(T2, dx, tp*2/150, () => alpha, {type:'refl'}, bottom); if(k % 3 === 0) hist.push([1 + (k + 1)*2/150, T2[0]]); }
+    const lth = Math.sqrt(alpha*tp);
+    J.plot(J.$('#cv2a'), {x:[Math.max(dx*1e4*0.5, 1e-3), L*1e4], y:[0, 1450], logx:true, xf:t => t >= 1 ? J.fmt(t, 0) + 'µm' : J.fmt(t*1000, 0) + 'nm', xlab:'깊이 (로그)', ylab:'온도 (°C)', series:[{pts:prof, color:'--red', w:3}], vlines:[{x:lth*1e4, color:'--ink3', label:'√(αt)'}]});
+    J.plot(J.$('#cv2b'), {x:[0, 3], y:[0, 1450], xlab:'시간 / 펄스 길이', ylab:'표면 온도 (°C)', series:[{pts:hist, color:'--red', w:3}], vlines:[{x:1, color:'--ink3', label:'펄스 끝'}]});
+    const kind = tp > 0.1 ? 'RTP 스파이크' : tp > 1e-4 ? '플래시 램프' : tp > 1e-6 ? '밀리·마이크로초 레이저' : '나노초 레이저';
+    J.out(box, 'l', lth*1e4 >= 1 ? J.fmt(lth*1e4, 1) + ' µm' : J.fmt(lth*1e7, 0) + ' nm'); J.out(box, 'q', J.sci(q, 2) + ' W/cm²'); J.out(box, 'b', bottom === 'refl' ? J.fmt(Tg[Nx - 1], 0) + ' °C' : J.fmt(v.pre, 0) + ' °C (변화 없음)'); J.out(box, 'k', kind); });
+})();
+
+/* 9-3 패턴 효과 */
+(function(){
+  const box = J.$('#sim3'), G = 60;
+  const pat = () => { const A = new Float32Array(G*G); for(let j = 0; j < G; j++) for(let i = 0; i < G; i++){ let a = 0.5; if(i < 25 && j < 30) a = 0.7; else if(i >= 30 && j < 20) a = ((i + j) % 6 < 3) ? 0.3 : 0.6; else if(j >= 36) a = (i % 8 < 4) ? 0.35 : 0.65; A[j*G + i] = a; } return A; };
+  const blur = (A, s) => { if(s < 0.3) return A; const R = Math.ceil(2.5*s), k = []; let S = 0; for(let j = -R; j <= R; j++){ const v2 = Math.exp(-j*j/(2*s*s)); k.push(v2); S += v2; } const T = new Float32Array(G*G), O = new Float32Array(G*G);
+    for(let y = 0; y < G; y++) for(let x = 0; x < G; x++){ let a = 0; for(let j = -R; j <= R; j++) a += A[y*G + Math.min(G - 1, Math.max(0, x + j))]*k[j + R]; T[y*G + x] = a/S; }
+    for(let y = 0; y < G; y++) for(let x = 0; x < G; x++){ let a = 0; for(let j = -R; j <= R; j++) a += T[Math.min(G - 1, Math.max(0, y + j))*G + x]*k[j + R]; O[y*G + x] = a/S; } return O; };
+  J.sim('sim3', v => { const A0 = pat(), tp = {spike:1, flash:1e-3, laser:1e-6}[v.m], Llat = Math.sqrt(0.12*tp)*1e4, cell = 2000/G, A = new Float32Array(G*G);
+    let mean = 0; for(let i = 0; i < G*G; i++){ A[i] = 0.5 + (A0[i] - 0.5)*v.da/0.2*(+v.c ? 0.1 : 1); mean += A[i]; } mean /= G*G;
+    const B = Llat/cell > 40 ? new Float32Array(G*G).fill(mean) : blur(A, Llat/cell), Tm = new Float32Array(G*G), rise = 1300 - (v.m === 'spike' ? 400 : 700); let mn = 9e9, mx = -9e9;
+    for(let i = 0; i < G*G; i++){ Tm[i] = 1300 + (B[i] - mean)/mean*rise*0.08; mn = Math.min(mn, Tm[i]); mx = Math.max(mx, Tm[i]); }
+    const {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const s = Math.min(w/G, (h - 10)/(2*G)), ox = (w - s*G)/2;
+    for(let j = 0; j < G; j++) for(let i = 0; i < G; i++){ const a = A0[j*G + i]; ctx.fillStyle = `rgba(60,50,90,${a})`; ctx.fillRect(ox + i*s, j*s, s + .4, s + .4);
+      const t = J.clamp((Tm[j*G + i] - 1300)/30*0.5 + 0.5, 0, 1); ctx.fillStyle = `rgb(${Math.round(40 + 210*t)},${Math.round(80 + 60*(1 - Math.abs(t - 0.5)*2))},${Math.round(230 - 200*t)})`; ctx.fillRect(ox + i*s, G*s + 10 + j*s, s + .4, s + .4); }
+    const row = Math.floor(G*0.15), line = []; for(let i = 0; i < G; i++) line.push([i*cell/1000, Tm[row*G + i]]);
+    J.plot(J.$('#cv3b'), {x:[0, 2], y:[1240, 1360], xlab:'칩 위 위치 (mm)', ylab:'최고 온도 (°C)', series:[{pts:line, color:'--red', w:3}], hlines:[{y:1300, color:'--ink3'}]});
+    const dT = mx - mn, Ea = 3.46, dRs = (Math.exp(Ea/(DF.kB*(1300 + 273.15 - dT/2))/1) ? (1 - Math.exp(-Ea/DF.kB*(1/(1573.15 + dT/2) - 1/(1573.15 - dT/2))))*50 : 0);
+    J.out(box, 'dt', J.fmt(dT, 1) + ' °C', dT < 5 ? 'good' : dT < 20 ? 'warn' : 'bad'); J.out(box, 'l', Llat >= 1000 ? J.fmt(Llat/1000, 1) + ' mm' : J.fmt(Llat, 1) + ' µm'); J.out(box, 'rs', '±' + J.fmt(Math.min(40, dT*0.6), 1) + ' %'); });
+})();
+</script>
+</body>
+</html>

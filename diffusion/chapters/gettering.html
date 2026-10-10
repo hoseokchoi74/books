@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>금속 오염과 게터링 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="gettering">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 11 <span class="hanja">第十一章 · 淨</span></div>
+  <h1>금속 오염과 게터링</h1>
+  <p class="lead">고온 공정의 가장 무서운 적은 눈에 보이지 않는 금속 원자다. 철, 구리, 니켈 같은 전이 금속은 실리콘 격자 틈 사이로 혼자 미끄러져 도펀트보다 수백만 배 빨리 움직인다. 1,000 °C에서 몇 초면 웨이퍼 두께 전체를 가로지른다. 이 원자들은 띠틈 한가운데 깊은 준위를 만들어 전자와 정공을 잡아먹고(재결합), 이미지 센서의 흰 점, DRAM의 짧은 유지 시간, 게이트 산화막 파괴로 나타난다. 1조 개 실리콘 원자에 금속 하나(10¹⁰ cm⁻³)만 있어도 문제가 된다. 깨끗이 하는 것이 최선이지만, 들어온 금속은 소자가 없는 곳으로 끌어모아 가두는 <span class="term">게터링</span>으로 처리한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>금속의 빠른 틈새 확산과 고용도의 강한 온도 의존성을 계산한다.</li>
+  <li>깊은 준위가 운반자 수명과 누설 전류를 떨어뜨리는 원리(SRH 재결합)를 안다.</li>
+  <li>냉각 중 과포화된 금속이 게터 자리(산소 석출물, 뒷면 손상층, 고농도 p⁺층)로 모이는 과정을 시뮬레이션한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>빠르게, 어디로든</h2>
+<p>철은 실리콘 속에서 이동 에너지 약 0.67 eV로 틈새를 미끄러진다. 도펀트(3.5 eV 남짓)와 비교하면 같은 온도에서 수백만 배 빠르다. 그래서 웨이퍼 뒷면이나 가장자리에서 묻은 철도 고온 공정 한 번에 앞면 소자 영역까지 퍼진다. 또 고용도는 온도가 내려가면 급격히 줄어, 고온에서 녹아 있던 금속은 냉각 중 과포화되어 어딘가에 석출하려 한다. 그 "어딘가"를 우리가 정해 주는 것이 게터링의 핵심이다.</p>
+<div class="eq">$$D_{Fe} \approx 1.0\times10^{-3}\,e^{-0.67/k_BT}\ \mathrm{cm^2/s},\qquad C_{sol,Fe} \approx 5\times10^{22}\,e^{-2.94/k_BT}\ \mathrm{cm^{-3}}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-1</span><span class="ttl">금속과 도펀트의 확산 비교</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="300" max="1150" step="10" value="900" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">시간 <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="4" step="0.05" value="1" data-log="1" data-d="1" data-u="s"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">확산 길이 Fe / Cu / B</span><span class="v" data-r="l" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">웨이퍼 관통 시간 (Fe, 775 µm)</span><span class="v" data-r="tw"></span></div>
+      <div class="ro"><span class="k">Fe 고용도</span><span class="v" data-r="s"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 원소별 확산 계수의 아레니우스 그림(점선 = 현재 온도). 금속(Cu, Ni, Fe, Au)은 도펀트보다 7~10자릿수 위에 있다. 오른쪽: 웨이퍼 단면(가로 = 두께 775 µm)에서 뒷면에 묻은 철(빨강)과 붕소(파랑)가 같은 시간 동안 퍼진 거리. 구리는 실온에서도 몇 시간이면 웨이퍼를 가로지른다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>깊은 준위와 수명</h2>
+<p>금속 원자는 띠틈 한가운데 근처에 에너지 준위를 만든다. 이 준위는 전도대의 전자 하나와 가전자대의 정공 하나를 차례로 잡아 짝을 지워 없앤다(쇼클리–리드–홀 재결합). 운반자 수명은 결함 농도에 반비례해, 철 10¹² cm⁻³이면 수명이 1 ms에서 수 µs로 떨어진다. 수명이 짧으면 pn 접합의 역방향 누설 전류(생성 전류)가 커져 DRAM은 데이터를 빨리 잃고, 이미지 센서는 빛이 없어도 신호가 나온다(암전류).</p>
+<div class="eq">$$\frac{1}{\tau} = \sigma\,v_{th}\,N_t,\qquad J_{gen} = \frac{q\,n_i\,W}{2\tau},\qquad \text{Fe: } \sigma_n \approx 5\times10^{-14}\ \mathrm{cm^2}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-2</span><span class="ttl">오염 농도와 소자 영향</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">철 농도 <output data-o="n"></output></span><input type="range" data-k="n" min="8" max="14" step="0.1" value="11" data-log="1" data-d="1" data-u="cm⁻³"></label>
+      <label class="ctrl"><span class="lab">결함 준위 (띠틈 중간 기준)</span><select data-k="e"><option value="0" selected>한가운데 (Fe, Au)</option><option value="0.2">0.2 eV 비켜남 (Cu)</option><option value="0.35">0.35 eV 비켜남 (얕음)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">운반자 수명</span><span class="v" data-r="tau"></span></div>
+      <div class="ro"><span class="k">접합 누설 전류 밀도 (실온)</span><span class="v" data-r="j"></span></div>
+      <div class="ro"><span class="k">DRAM 셀 유지 시간 (어림)</span><span class="v" data-r="ret"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 띠 그림과 깊은 준위(빨간 선), 전자(파랑)·정공(빨강)이 준위를 통해 재결합하는 애니메이션. 오른쪽: 철 농도에 따른 수명(빨강)과 누설 전류(파랑, 오른쪽 축 대신 같은 로그 눈금). 결함 준위가 띠틈 한가운데에서 멀어질수록 재결합 효율이 지수적으로 떨어진다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🧲</span><b>먼지 떨이와 자석 판</b><span>집 안 곳곳에 퍼진 쇳가루(금속)를 일일이 닦기는 어렵다. 대신 방 한쪽 구석에 강한 자석 판(게터)을 두고 집을 흔들면(가열) 쇳가루가 저절로 자석 쪽으로 모인다. 사람이 다니는 거실(소자 영역)만 깨끗하면 된다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>게터링 시뮬레이터</h2>
+<p><b>내부 게터링</b>(IG): 웨이퍼 몸체의 산소를 고온에서 석출시켜 작은 산화물 덩어리(BMD)를 만들고, 그 주변 결함에 금속을 붙잡는다. 표면 근처 수십 µm는 산소를 밖으로 빼내 석출물이 없는 깨끗한 층(디누디드 존)으로 남긴다. <b>외부 게터링</b>(EG): 웨이퍼 뒷면에 손상층이나 폴리실리콘을 입혀 금속을 끌어당긴다. <b>p⁺ 게터링</b>: 고농도 붕소층은 철과 짝을 이뤄(Fe–B) 금속을 붙잡는다. 금속은 냉각 중 과포화될 때 게터로 확산해 가므로, 냉각 속도가 너무 빠르면 소자 영역에 그대로 갇힌다.</p>
+<div class="eq">$$\frac{\partial C}{\partial t} = D\frac{\partial^2 C}{\partial x^2} - \frac{C - C_{sol}(T)}{\tau_{getter}(x)}\Big|_{C > C_{sol}},\qquad \tau_{getter} \approx \frac{1}{4\pi D r N_{BMD}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 11-3</span><span class="ttl">냉각 중 철의 이동</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">게터 방식</span><select data-k="g"><option value="none">없음</option><option value="ig" selected>내부 게터링 (BMD)</option><option value="eg">뒷면 외부 게터링</option><option value="both">둘 다</option></select></label>
+      <label class="ctrl"><span class="lab">BMD 밀도 <output data-o="b"></output></span><input type="range" data-k="b" min="7" max="11" step="0.1" value="9.5" data-log="1" data-d="1" data-u="cm⁻³"></label>
+      <label class="ctrl"><span class="lab">디누디드 존 깊이 <output data-o="dz"></output></span><input type="range" data-k="dz" min="5" max="100" step="5" value="40" data-d="0" data-u="µm"></label>
+      <label class="ctrl"><span class="lab">냉각 속도 <output data-o="c"></output></span><input type="range" data-k="c" min="0" max="2.5" step="0.05" value="1" data-log="1" data-d="1" data-u="°C/s"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b3g">냉각 재생</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">현재 온도</span><span class="v" data-r="T"></span></div>
+      <div class="ro"><span class="k">소자 영역 (표면 10 µm) 철 농도</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">게터에 잡힌 비율</span><span class="v" data-r="f"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 1,000 °C에서 10¹³ cm⁻³로 고르게 녹아 있던 철이 300 °C까지 식는 동안의 분포. 왼쪽: 웨이퍼 단면(가로 = 깊이 0~775 µm). 빨강 = 녹아 있는 철, 회색 점 = BMD, 초록 = 뒷면 게터층, 노랑 띠 = 소자 영역. 오른쪽: 냉각 중 소자 영역 철 농도(빨강)와 고용도(점선). 냉각이 너무 빠르면 철이 게터까지 가지 못한다. 뒷면 게터는 775 µm를 건너와야 해서 냉각만으로는 앞면을 다 비우지 못한다. 그래서 실제로는 BMD(가까운 게터)와 뒷면 게터를 함께 쓰거나, 느린 냉각 구간을 레시피에 넣는다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 구리 배선을 쓰는데 구리 오염은 어떻게 막을까?</p><p>구리는 실온에서도 실리콘과 산화막 속을 빠르게 움직인다. 그래서 구리 배선은 반드시 Ta/TaN 같은 확산 방지막으로 둘러싸고, 구리를 다루는 배선 공정 장비는 트랜지스터 공정 장비와 엄격히 분리하며, 웨이퍼 뒷면·가장자리의 구리를 세정으로 제거한다. 팹에서 "구리 구역"이 따로 있는 이유다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">철이 붕소보다 훨씬 빨리 확산하는 이유는?</p><ol><li>더 가벼워서</li><li>격자 틈 사이로 혼자 이동해 활성화 에너지가 작아서</li><li>전하가 없어서</li><li>산화막과 반응해서</li></ol>
+<p class="explain">순수 틈새 확산, E<sub>a</sub> ≈ 0.67 eV.</p></div>
+<div class="quiz" data-a="3"><p class="q">금속 오염이 DRAM 유지 시간을 줄이는 경로는?</p><ol><li>도펀트를 비활성화해서</li><li>산화막을 두껍게 해서</li><li>배선 저항을 올려서</li><li>깊은 준위가 누설(생성) 전류를 키워 저장 전하를 빨리 잃게 해서</li></ol>
+<p class="explain">수명이 짧아지면 J<sub>gen</sub> ∝ 1/τ가 커진다.</p></div>
+<div class="quiz" data-a="0"><p class="q">내부 게터링에서 표면 근처에 석출물이 없는 층을 두는 이유는?</p><ol><li>소자 영역에 결함이 없어야 하므로(디누디드 존)</li><li>산소를 늘리려고</li><li>웨이퍼를 얇게 하려고</li><li>뒷면을 보호하려고</li></ol>
+<p class="explain">게터는 소자에서 떨어진 몸체에만 있어야 한다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const MET = {Fe:[1e-3, 0.67, '#d65a4a', '철'], Cu:[3e-4, 0.18, '#d98b3a', '구리'], Ni:[2e-3, 0.47, '#3aa36a', '니켈'], Au:[2.4e-4, 0.39, '#c9a227', '금 (틈새)']};
+const Dm = (k, T) => MET[k][0]*Math.exp(-MET[k][1]/(DF.kB*(T + 273.15)));
+const solFe = T => 5e22*Math.exp(-2.94/(DF.kB*(T + 273.15)));
+/* 11-1 */
+(function(){
+  const box = J.$('#sim1');
+  J.sim('sim1', v => { const S = []; Object.keys(MET).forEach(k => S.push({pts:Array.from({length:91}, (_, i) => { const T = 250 + i*10; return [1e4/(T + 273.15), Dm(k, T)]; }), color:MET[k][2], w:2.5}));
+    ['B', 'P'].forEach(k => S.push({pts:Array.from({length:61}, (_, i) => { const T = 600 + i*10; return [1e4/(T + 273.15), DF.D(k, T)]; }), color:DF.DOP[k].col, w:2, dash:[5, 4]}));
+    const P = J.plot(J.$('#cv1a'), {x:[6.5, 19], y:[1e-22, 1e-3], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'10⁴ / T (K⁻¹)', ylab:'D (cm²/s)', series:S, vlines:[{x:1e4/(v.T + 273.15), color:'--ink'}]});
+    Object.keys(MET).forEach((k, i) => { P.ctx.fillStyle = MET[k][2]; P.ctx.font = '11px "Noto Sans KR"'; P.ctx.fillText(MET[k][3], P.X(15.5), P.Y(Dm(k, 1e4/15.5 - 273.15)) - 4); }); P.ctx.fillStyle = DF.DOP.B.col; P.ctx.fillText('붕소·인', P.X(7), P.Y(DF.D('B', 1e4/7 - 273.15)) + 14);
+    const lf = Math.sqrt(Dm('Fe', v.T)*v.t)*1e4, lc = Math.sqrt(Dm('Cu', v.T)*v.t)*1e4, lb = Math.sqrt((v.T >= 500 ? DF.D('B', v.T) : 0)*v.t)*1e4;
+    const {ctx, w, h} = J.fit(J.$('#cv1b')); ctx.clearRect(0,0,w,h); const W = 775, X = x => 20 + (W - x)/W*(w - 40);
+    ctx.fillStyle = '#c9ced8'; ctx.fillRect(20, h*0.3, w - 40, h*0.4); ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('앞면 (소자)', 22, h*0.3 - 6); ctx.textAlign = 'right'; ctx.fillText('뒷면 (오염)', w - 22, h*0.3 - 6); ctx.textAlign = 'left';
+    const grad = (len, col, y0, hh) => { const g = ctx.createLinearGradient(X(0), 0, X(Math.min(W, 3*len)), 0); g.addColorStop(0, col); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(X(Math.min(W, 3*len)), y0, X(0) - X(Math.min(W, 3*len)), hh); };
+    grad(lf, 'rgba(214,90,74,.9)', h*0.32, h*0.12); grad(lc, 'rgba(217,139,58,.9)', h*0.45, h*0.12); grad(Math.max(lb, 0.3), 'rgba(61,127,208,.9)', h*0.58, h*0.1);
+    ctx.fillStyle = J.c('--ink'); ctx.fillText('철', 26, h*0.4); ctx.fillText('구리', 26, h*0.53); ctx.fillText('붕소', 26, h*0.65);
+    const tw = Math.pow(0.0775, 2)/Dm('Fe', v.T), f = s => s < 60 ? J.fmt(s, 1) + ' s' : s < 3600 ? J.fmt(s/60, 1) + ' 분' : s < 86400*365 ? J.fmt(s/3600, 1) + ' 시간' : J.sci(s/86400/365, 1) + ' 년';
+    const fl = l => l >= 1 ? J.fmt(l, 0) + ' µm' : J.fmt(l*1000, 1) + ' nm';
+    J.out(box, 'l', fl(lf) + ' / ' + fl(lc) + ' / ' + fl(lb)); J.out(box, 'tw', f(tw)); J.out(box, 's', J.sci(solFe(v.T), 2) + ' cm⁻³'); });
+})();
+
+/* 11-2 */
+(function(){
+  const box = J.$('#sim2'); let V = null, t = 0;
+  const tauOf = (N, dE) => { const sig = 5e-14, vth = 1e7; return 1/(sig*vth*N)*Math.cosh(dE/0.0259); };
+  J.sim('sim2', v => { V = v; const S1 = [], S2 = []; for(let l = 8; l <= 14; l += 0.05){ const N = Math.pow(10, l), ta = Math.min(1e-2, tauOf(N, +v.e)); S1.push([N, ta]); S2.push([N, 1.6e-19*1e10*1e-4/(2*ta)]); }
+    const ta = Math.min(1e-2, tauOf(v.n, +v.e)), J0 = 1.6e-19*1e10*1e-4/(2*ta);
+    J.plot(J.$('#cv2b'), {x:[1e8, 1e14], y:[1e-12, 1e-1], logx:true, logy:true, xf:t => '10^' + Math.round(Math.log10(t)), yf:t => '10^' + Math.round(Math.log10(t)), xlab:'철 농도 (cm⁻³)', ylab:'수명 (s)  /  J (A/cm²)', series:[{pts:S1, color:'--red', w:3}, {pts:S2, color:'--indigo', w:2.5, dash:[5, 4]}], points:[{x:v.n, y:ta, color:'--red', r:6}, {x:v.n, y:J0, color:'--indigo', r:6}]});
+    J.out(box, 'tau', ta < 1e-3 ? J.fmt(ta*1e6, 2) + ' µs' : J.fmt(ta*1e3, 2) + ' ms', ta > 1e-4 ? 'good' : ta > 1e-6 ? 'warn' : 'bad'); J.out(box, 'j', J.sci(J0, 2) + ' A/cm²'); J.out(box, 'ret', J.fmt(Math.min(1000, 64*ta/1e-4)*1e0, 1) + ' ms', ta > 1e-4 ? 'good' : 'bad'); });
+  J.loop(J.$('#cv2a'), dt => { if(!V) return; t += dt; const {ctx, w, h} = J.fit(J.$('#cv2a')); ctx.clearRect(0,0,w,h); const cb = h*0.25, vb = h*0.75, mid = (cb + vb)/2 - (+V.e)*(vb - cb)/1.12;
+    ctx.fillStyle = 'rgba(61,127,208,.15)'; ctx.fillRect(20, 10, w - 40, cb - 10); ctx.fillStyle = 'rgba(214,90,74,.15)'; ctx.fillRect(20, vb, w - 40, h - vb - 10);
+    ctx.strokeStyle = J.c('--ink'); ctx.lineWidth = 2; [cb, vb].forEach(y => { ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(w - 20, y); ctx.stroke(); });
+    ctx.strokeStyle = J.c('--red'); ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(w*0.3, mid); ctx.lineTo(w*0.7, mid); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.fillText('전도대', 24, cb - 6); ctx.fillText('가전자대', 24, vb + 16); ctx.fillStyle = J.c('--red'); ctx.fillText('Fe 준위', w*0.72, mid + 4);
+    const rate = Math.min(3, Math.log10(V.n) - 7)/Math.cosh(+V.e/0.06), ph = (t*rate*0.6) % 1;
+    const ex = w*0.5, ey = ph < 0.5 ? cb - 8 + (mid - cb + 8)*ph*2 : mid, hx = w*0.5, hy = ph < 0.5 ? vb + 8 : vb + 8 - (vb + 8 - mid)*(ph - 0.5)*2;
+    ctx.fillStyle = '#3d7fd0'; ctx.beginPath(); ctx.arc(ex, ey, 6, 0, 7); ctx.fill(); ctx.strokeStyle = '#d65a4a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(hx, hy, 6, 0, 7); ctx.stroke();
+    for(let k = 0; k < 8; k++){ ctx.fillStyle = 'rgba(61,127,208,.5)'; ctx.beginPath(); ctx.arc(40 + k*(w - 80)/8, cb - 14 - (k % 2)*6, 3.5, 0, 7); ctx.fill(); } });
+})();
+
+/* 11-3 게터링 */
+(function(){
+  const box = J.$('#sim3'), Nx = 200, W = 775e-4, dx = W/Nx; let C = null, T = 1000, run = false, V = null, hist = [], trapped = 0, tot0 = 0;
+  const reset = () => { C = new Float64Array(Nx).fill(1e13); T = 1000; hist = []; trapped = 0; tot0 = 1e13*W; };
+  const sink = (i, v) => { const x = (i + .5)*dx*1e4; let k = 0; if((v.g === 'ig' || v.g === 'both') && x > v.dz) k += 4*Math.PI*5e-6*v.b; if((v.g === 'eg' || v.g === 'both') && x > 758) k += 1e9; return k; };
+  const draw = () => { const v = V, {ctx, w, h} = J.fit(J.$('#cv3a')); ctx.clearRect(0,0,w,h); const X = i => 20 + i/Nx*(w - 40), mx = 1.2e13;
+    ctx.fillStyle = '#d9dde4'; ctx.fillRect(20, 20, w - 40, h - 50); ctx.fillStyle = 'rgba(240,200,80,.4)'; ctx.fillRect(20, 20, 10/775*(w - 40), h - 50);
+    if(v.g === 'ig' || v.g === 'both'){ const r = J.rng(3); ctx.fillStyle = 'rgba(90,90,90,.5)'; const n = Math.round(Math.log10(v.b)*40 - 250); for(let k = 0; k < n; k++){ const x = v.dz + r()*(775 - v.dz); ctx.fillRect(20 + x/775*(w - 40), 22 + r()*(h - 54), 2, 2); } }
+    if(v.g === 'eg' || v.g === 'both'){ ctx.fillStyle = 'rgba(58,163,106,.6)'; ctx.fillRect(20 + 760/775*(w - 40), 20, 15/775*(w - 40), h - 50); }
+    ctx.fillStyle = 'rgba(214,90,74,.85)'; for(let i = 0; i < Nx; i++){ const hh = Math.min(1, C[i]/mx)*(h - 60); ctx.fillRect(X(i), h - 30 - hh, (w - 40)/Nx + .5, hh); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('앞면', 22, h - 12); ctx.textAlign = 'right'; ctx.fillText('뒷면 775 µm', w - 22, h - 12); ctx.textAlign = 'left';
+    const dev = C.slice(0, Math.round(10e-4/dx)).reduce((a, b) => a + b, 0)/Math.round(10e-4/dx);
+    J.plot(J.$('#cv3b'), {x:[1000, 300], y:[1e8, 2e13], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'온도 (°C, 냉각 →)', ylab:'철 농도 (cm⁻³)', series:[{pts:Array.from({length:71}, (_, i) => [1000 - i*10, Math.max(solFe(1000 - i*10), 1e8)]), color:'--ink3', w:1.5, dash:[5, 4]}, {pts:hist, color:'--red', w:3}]});
+    J.out(box, 'T', J.fmt(T, 0) + ' °C'); J.out(box, 'c', J.sci(dev, 2) + ' cm⁻³', dev < 1e10 ? 'good' : dev < 1e11 ? 'warn' : 'bad'); J.out(box, 'f', J.fmt(Math.max(0, (1 - C.reduce((a, b) => a + b, 0)*dx/tot0)*100), 1) + ' %'); };
+  J.sim('sim3', v => { V = v; reset(); draw(); });
+  J.$('#b3g').onclick = () => { reset(); run = true; };
+  J.loop(J.$('#cv3a'), () => { if(!run || !V) return; for(let k = 0; k < 4; k++){ const dTstep = 3, dt = dTstep/V.c, D = Dm('Fe', T), cs = solFe(T);
+      C = DF.step(C, dx, dt, () => D, {type:'refl'}, 'refl');
+      for(let i = 0; i < Nx; i++){ const s = sink(i, V); if(s > 0 && C[i] > cs){ const f = Math.exp(-Math.min(50, s*D*dt)); C[i] = cs + (C[i] - cs)*f; } }
+      T -= dTstep; const dev = C.slice(0, Math.round(10e-4/dx)).reduce((a, b) => a + b, 0)/Math.round(10e-4/dx); hist.push([T, Math.max(dev, 1e8)]); if(T <= 300){ run = false; break; } } draw(); });
+})();
+</script>
+</body>
+</html>

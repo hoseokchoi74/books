@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>원자 수준 확산 기구 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="atomistic">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 03 <span class="hanja">第三章 · 機</span></div>
+  <h1>원자 수준 확산 기구</h1>
+  <p class="lead">실리콘 결정은 원자가 빈틈없이 짜인 다이아몬드 격자다. 그 속에서 도펀트 원자는 어떻게 움직일까? 혼자서는 못 움직인다. 옆자리가 비어 있거나(<span class="term">빈자리</span>, vacancy), 자리 밖으로 밀려난 실리콘 원자(<span class="term">틈새 원자</span>, self-interstitial)가 와서 밀어 줘야 한다. 이 점결함들은 고온에서 저절로 생기고 사라지며, 산화·질화·이온 주입이 그 수를 크게 바꾼다. 그래서 도펀트의 확산 속도는 온도뿐 아니라 "결함이 얼마나 있느냐"에 달려 있다. 이 장은 세 가지 기구를 원자 애니메이션으로 보고, 실험 데이터에서 활성화 에너지를 뽑고, 결함 과포화가 확산을 바꾸는 원리를 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>빈자리 기구, 틈새·킥아웃 기구, 순수 틈새 기구의 차이를 원자 단위로 본다.</li>
+  <li>아레니우스 그림에서 활성화 에너지와 전지수 인자를 추출하고, 그것이 결함 형성 + 이동 에너지임을 안다.</li>
+  <li>틈새 원자 비율 f<sub>I</sub>와 점결함 과포화로 산화 증강·지연 확산을 계산한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>세 가지 기구</h2>
+<p><b>빈자리 기구</b>: 도펀트 옆에 빈자리가 오면 도펀트가 그 자리로 뛰어 들어간다. 빈자리가 도펀트 주위를 맴돌아야 다시 움직일 수 있다(안티몬, 비소가 주로 이 방식). <b>틈새(interstitialcy) 기구</b>: 실리콘 틈새 원자가 도펀트와 짝을 이뤄 도펀트를 격자 밖으로 밀어내고, 도펀트–틈새 쌍이 함께 이동하다 다시 격자 자리에 앉는다(붕소, 인). <b>순수 틈새 기구</b>: 철·구리·금 같은 금속은 원래 격자 틈 사이로 혼자 미끄러지듯 움직여 수백만 배 빠르다(11장).</p>
+<div class="eq">$$D_A = D_A^0\,\Bigl[f_I\,\frac{C_I}{C_I^*} + (1 - f_I)\,\frac{C_V}{C_V^*}\Bigr]$$<div class="note">f<sub>I</sub>: 틈새 기구 비율(B ≈ 1, P ≈ 1, As ≈ 0.4, Sb ≈ 0.02), C<sub>I</sub>/C<sub>I</sub>*: 틈새 원자의 평형 대비 과포화도.</div></div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-1</span><span class="ttl">격자 속 도펀트 애니메이션</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">기구</span><select data-k="m"><option value="v" selected>빈자리 기구 (Sb, As)</option><option value="i">틈새 기구 (B, P)</option><option value="d">순수 틈새 (Fe, Cu)</option></select></label>
+      <label class="ctrl"><span class="lab">온도 (결함 수·속도) <output data-o="T"></output></span><input type="range" data-k="T" min="1" max="10" step="1" value="5" data-d="0"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b1g">재생/멈춤</button><button class="sbtn warn" id="b1r">처음으로</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">경과 시간 (프레임)</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">도펀트 이동 횟수</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">출발점에서 거리</span><span class="v" data-r="d"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 실리콘 격자(회색), 도펀트(빨강), 빈자리(점선 원), 틈새 원자(파랑). 빈자리 기구에서는 빈자리가 옆에 와야 도펀트가 뛰고, 틈새 기구에서는 파란 원자가 도펀트를 밀어내 함께 움직인다. 순수 틈새는 도펀트가 격자 사이를 쉼 없이 미끄러진다. 오른쪽: 도펀트의 이동 거리(시간에 따라).</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>활성화 에너지 뽑기</h2>
+<p>여러 온도에서 측정한 확산 계수를 ln D 대 1/T로 그리면 직선이 된다. 기울기 −E<sub>a</sub>/k<sub>B</sub>에서 활성화 에너지를, 절편에서 전지수 인자 D₀를 얻는다. 원자적으로 E<sub>a</sub>는 "결함을 만드는 에너지(형성)"와 "결함과 함께 한 칸 뛰는 에너지(이동)"의 합이다. 실리콘에서 도펀트의 E<sub>a</sub>는 3.4~4.1 eV, 금속은 이동 에너지만 필요해서 0.5~1 eV에 불과하다.</p>
+<div class="eq">$$D = \underbrace{g\,a^2\,\nu}_{D_0}\,\exp\!\left(-\frac{E_f + E_m}{k_BT}\right),\qquad \ln D = \ln D_0 - \frac{E_a}{k_B}\cdot\frac{1}{T}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-2</span><span class="ttl">측정점으로 아레니우스 맞추기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">결함 형성 에너지 E_f <output data-o="ef"></output></span><input type="range" data-k="ef" min="0" max="4" step="0.05" value="2.5" data-d="2" data-u="eV"></label>
+      <label class="ctrl"><span class="lab">이동 에너지 E_m <output data-o="em"></output></span><input type="range" data-k="em" min="0.2" max="2" step="0.05" value="1.0" data-d="2" data-u="eV"></label>
+      <label class="ctrl"><span class="lab">측정 잡음 <output data-o="n"></output></span><input type="range" data-k="n" min="0" max="0.5" step="0.02" value="0.15" data-d="2" data-u="(ln 단위)"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b2r">다시 측정</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">참 E_a</span><span class="v" data-r="ea"></span></div>
+      <div class="ro"><span class="k">맞춘 E_a ± 오차</span><span class="v" data-r="fit"></span></div>
+      <div class="ro"><span class="k">맞춘 D₀</span><span class="v" data-r="d0"></span></div>
+      <div class="ro"><span class="k">닮은 실제 도펀트</span><span class="v" data-r="like"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 800~1,200 °C의 측정점 9개(점)와 최소 제곱 직선(빨강). 오른쪽: 에너지 언덕 그림. 결함을 만드는 데 E<sub>f</sub>, 넘어가는 데 E<sub>m</sub>이 든다. E<sub>f</sub>를 0으로 하면(결함이 이미 많음) 금속처럼 빠른 확산이 된다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🚌</span><b>만원 버스에서 자리 옮기기</b><span>꽉 찬 버스에서 자리를 옮기려면 옆자리가 비어야 한다(빈자리). 아니면 누군가 일어서서(틈새 원자) 내 자리를 밀어 차지하고 나는 통로로 밀려났다 다른 자리에 앉는다(틈새 기구). 통로에 서 있는 승객(금속 원자)은 아무 때나 자유롭게 움직인다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>점결함 과포화: 산화가 확산을 바꾼다</h2>
+<p>실리콘 표면을 산화하면 산화막이 자라며 실리콘 원자 일부가 틈새로 밀려 들어가 틈새 원자가 평형보다 많아진다(C<sub>I</sub>/C<sub>I</sub>* &gt; 1). 틈새와 빈자리는 만나면 서로 소멸하므로 빈자리는 오히려 줄어든다(C<sub>I</sub>C<sub>V</sub> = C<sub>I</sub>*C<sub>V</sub>*). 그 결과 틈새 기구를 쓰는 붕소·인은 빨라지고(<b>산화 증강 확산</b>, OED), 빈자리 기구를 쓰는 안티몬은 느려진다(<b>산화 지연 확산</b>, ORD). 질화는 반대로 빈자리를 주입한다. 이 대비 실험으로 f<sub>I</sub>를 측정한다.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 3-3</span><span class="ttl">과포화와 확산 증강</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">틈새 과포화 C_I/C_I* <output data-o="s"></output></span><input type="range" data-k="s" min="-1" max="1.3" step="0.02" value="0.6" data-log="1" data-d="2"></label>
+      <label class="ctrl"><span class="lab">상황</span><select data-k="c"><option value="free">직접 조절</option><option value="ox">건식 산화 (1,000 °C)</option><option value="nit">질화 (NH₃)</option><option value="imp">주입 직후 (TED, 8장)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">빈자리 C_V/C_V*</span><span class="v" data-r="v"></span></div>
+      <div class="ro"><span class="k">D/D* (B / P / As / Sb)</span><span class="v" data-r="e" style="font-size:13.5px"></span></div>
+      <div class="ro"><span class="k">가장 빨라진 / 느려진</span><span class="v" data-r="m"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 틈새 과포화에 따른 네 도펀트의 확산 증강비(로그–로그). 점선 = 현재 조건. 오른쪽: 같은 시간 동안 퍼진 분포(점선 = 평형 조건, 실선 = 현재). 붕소·인은 틈새 기구라 과포화에 정비례하고, 안티몬은 빈자리 기구라 반비례한다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 고온에서 평형 상태의 실리콘에는 빈자리가 얼마나 있을까?</p><p>1,000 °C에서 빈자리와 틈새 원자의 평형 농도는 각각 10¹³~10¹⁴ cm⁻³ 정도로, 실리콘 원자(5 × 10²² cm⁻³) 10억 개 중 하나도 안 된다. 그런데도 도펀트 확산은 이 극소수의 결함이 전부 담당한다. 그래서 주입·산화로 결함이 몇 배만 늘어도 확산이 몇 배로 뛴다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">산화 중에 붕소의 확산이 빨라지는 이유는?</p><ol><li>산화막이 붕소를 끌어당겨서</li><li>온도가 올라가서</li><li>산화가 틈새 원자를 주입하고, 붕소는 틈새 기구로 확산하기 때문</li><li>빈자리가 늘어서</li></ol>
+<p class="explain">산화 증강 확산(OED). 붕소의 f<sub>I</sub> ≈ 1.</p></div>
+<div class="quiz" data-a="0"><p class="q">안티몬이 산화 중에 오히려 느려지는 이유는?</p><ol><li>빈자리 기구를 쓰는데 산화가 빈자리를 줄이기 때문</li><li>안티몬이 무거워서</li><li>산화막에 녹아서</li><li>틈새 원자가 많아서 빨라진다</li></ol>
+<p class="explain">C<sub>I</sub>C<sub>V</sub> = 상수이므로 틈새가 늘면 빈자리가 준다.</p></div>
+<div class="quiz" data-a="3"><p class="q">철이 붕소보다 수백만 배 빨리 확산하는 이유는?</p><ol><li>철이 가벼워서</li><li>철이 전하를 띠어서</li><li>온도가 높아서</li><li>격자 틈 사이로 혼자 이동해 결함 형성 에너지가 필요 없어서</li></ol>
+<p class="explain">순수 틈새 확산은 이동 에너지(~0.7 eV)만 필요하다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 3-1 격자 애니메이션 */
+(function(){
+  const box = J.$('#sim1'), NX = 14, NY = 10; let V = null, run = false, st = null, acc = 0, hist = [], tt = 0;
+  const reset = () => { st = {dop:{x:7, y:5, inter:false}, vac:{x:9, y:6}, I:{x:3.5, y:2.5}, moves:0, x0:7, y0:5}; hist = [[0, 0]]; tt = 0; };
+  reset();
+  const tick = () => { const s = st, r = Math.random, nb = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    if(V.m === 'v'){ // 빈자리가 무작위 이동, 도펀트 옆이면 확률적으로 교환
+      let [dx, dy] = nb[Math.floor(r()*4)]; if(r() < 0.35){ const ddx = s.dop.x - s.vac.x, ddy = s.dop.y - s.vac.y; if(Math.abs(ddx) > Math.abs(ddy)){ dx = Math.sign(ddx); dy = 0; } else { dx = 0; dy = Math.sign(ddy); } } const nx = (s.vac.x + dx + NX) % NX, ny = (s.vac.y + dy + NY) % NY;
+      if(nx === s.dop.x && ny === s.dop.y){ if(r() < 0.6){ s.dop.x = s.vac.x; s.dop.y = s.vac.y; s.vac.x = nx; s.vac.y = ny; s.moves++; } } else { s.vac.x = nx; s.vac.y = ny; }
+      if(Math.hypot(s.vac.x - s.dop.x, s.vac.y - s.dop.y) > 4 && r() < 0.1){ s.vac.x = (s.dop.x + (r() < .5 ? 2 : -2) + NX) % NX; s.vac.y = s.dop.y; } }
+    else if(V.m === 'i'){ if(!s.dop.inter){ const tx = s.dop.x + 0.5*(r() < .5 ? 1 : -1), ty = s.dop.y + 0.5*(r() < .5 ? 1 : -1); s.I.x += (tx - s.I.x)*0.5; s.I.y += (ty - s.I.y)*0.5; if(Math.hypot(s.I.x - tx, s.I.y - ty) < 0.3 && r() < 0.5){ s.dop.inter = true; s.dop.x += 0.5; s.dop.y += 0.5; s.I.x = s.dop.x - 0.5; s.I.y = s.dop.y - 0.5; } }
+      else { const [dx, dy] = nb[Math.floor(r()*4)]; s.dop.x += dx; s.dop.y += dy; s.moves++; if(r() < 0.25){ s.dop.inter = false; s.dop.x = Math.round(s.dop.x - 0.5); s.dop.y = Math.round(s.dop.y - 0.5); s.I.x = s.dop.x + 3.5; s.I.y = s.dop.y - 2.5; } } }
+    else { const [dx, dy] = nb[Math.floor(r()*4)]; if(s.dop.x % 1 === 0){ s.dop.x += 0.5; s.dop.y += 0.5; } s.dop.x += dx; s.dop.y += dy; s.moves++; }
+    s.dop.x = ((s.dop.x % NX) + NX) % NX; s.dop.y = ((s.dop.y % NY) + NY) % NY; };
+  let ux = 0, uy = 0, px = 7, py = 5;
+  const draw = () => { const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const s = Math.min(w/NX, h/NY), ox = (w - s*NX)/2, oy = (h - s*NY)/2, X = x => ox + (x + .5)*s, Y = y => oy + (y + .5)*s;
+    for(let j = 0; j < NY; j++) for(let i = 0; i < NX; i++){ if(st.vac && V.m === 'v' && i === st.vac.x && j === st.vac.y){ ctx.strokeStyle = J.c('--ink3'); ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(X(i), Y(j), s*0.3, 0, 7); ctx.stroke(); ctx.setLineDash([]); continue; }
+      if(!st.dop.inter && V.m !== 'd' && i === st.dop.x && j === st.dop.y) continue; ctx.fillStyle = '#9aa1ad'; ctx.beginPath(); ctx.arc(X(i), Y(j), s*0.3, 0, 7); ctx.fill(); }
+    if(V.m === 'i'){ ctx.fillStyle = '#3d7fd0'; ctx.beginPath(); ctx.arc(X(st.I.x), Y(st.I.y), s*0.26, 0, 7); ctx.fill(); if(st.dop.inter){ const dx0 = Math.round(st.dop.x - 0.5), dy0 = Math.round(st.dop.y - 0.5); } }
+    ctx.fillStyle = '#d65a4a'; ctx.beginPath(); ctx.arc(X(st.dop.x), Y(st.dop.y), s*0.32, 0, 7); ctx.fill();
+    const lx = hist.map(p => p[1]);
+    J.plot(J.$('#cv1b'), {x:[0, Math.max(200, tt)], y:[0, Math.max(5, ...lx)*1.15], xlab:'시간 (프레임)', ylab:'출발점에서 거리 (칸)', series:[{pts:hist, color:'--red', w:2}]});
+    J.out(box, 't', tt); J.out(box, 'n', st.moves); J.out(box, 'd', J.fmt(hist[hist.length - 1][1], 1) + ' 칸'); };
+  J.sim('sim1', v => { const ch = V && V.m !== v.m; V = v; if(ch){ reset(); ux = 0; uy = 0; } draw(); });
+  J.$('#b1g').onclick = e => { run = !run; e.target.classList.toggle('on', run); };
+  J.$('#b1r').onclick = () => { reset(); ux = 0; uy = 0; draw(); };
+  J.loop(J.$('#cv1a'), dt => { if(!run || !V) return; acc += dt*V.T*3; while(acc > 1){ acc -= 1; const bx = st.dop.x, by = st.dop.y; tick(); let dx = st.dop.x - bx, dy = st.dop.y - by; if(dx > NX/2) dx -= NX; if(dx < -NX/2) dx += NX; if(dy > NY/2) dy -= NY; if(dy < -NY/2) dy += NY; ux += dx; uy += dy; tt++; hist.push([tt, Math.hypot(ux, uy)]); if(hist.length > 600) hist.shift(); } draw(); });
+})();
+
+/* 3-2 아레니우스 맞추기 */
+(function(){
+  const box = J.$('#sim2'); let seed = 1;
+  J.sim('sim2', v => { const Ea = v.ef + v.em, D0 = 0.5, r = J.rng(seed), pts = [];
+    for(let i = 0; i < 9; i++){ const T = 800 + i*50, x = 1e4/(T + 273.15), lnD = Math.log(D0) - Ea/(DF.kB*(T + 273.15)) + v.n*J.gauss(r); pts.push([x, lnD]); }
+    const n = pts.length, sx = pts.reduce((a, p) => a + p[0], 0), sy = pts.reduce((a, p) => a + p[1], 0), sxx = pts.reduce((a, p) => a + p[0]*p[0], 0), sxy = pts.reduce((a, p) => a + p[0]*p[1], 0);
+    const b = (n*sxy - sx*sy)/(n*sxx - sx*sx), a = (sy - b*sx)/n, res = pts.reduce((s, p) => s + Math.pow(p[1] - a - b*p[0], 2), 0), se = Math.sqrt(res/(n - 2)/(sxx - sx*sx/n));
+    const EaFit = -b*DF.kB*1e4, EaErr = se*DF.kB*1e4, D0fit = Math.exp(a);
+    J.plot(J.$('#cv2a'), {x:[6.7, 9.4], y:[Math.min(...pts.map(p => p[1])) - 1, Math.max(...pts.map(p => p[1])) + 1], xlab:'10⁴ / T (K⁻¹)', ylab:'ln D', series:[{pts:[[6.7, a + b*6.7], [9.4, a + b*9.4]], color:'--red', w:2.5}], points:pts.map(p => ({x:p[0], y:p[1], color:'--indigo', r:4.5}))});
+    const {ctx, w, h} = J.fit(J.$('#cv2b')); ctx.clearRect(0,0,w,h); const sc = (h - 60)/5, base = h - 30;
+    ctx.strokeStyle = J.c('--ink'); ctx.lineWidth = 2.5; ctx.beginPath(); for(let x = 0; x <= w - 20; x += 2){ const f = x/(w - 20); let E; if(f < 0.2){ const u = f/0.2; E = v.ef*u*u*(3 - 2*u); } else E = v.ef + v.em*Math.pow(Math.sin(Math.PI*(f - 0.2)/0.2), 2); ctx.lineTo(10 + x, base - E*sc); } ctx.stroke();
+    ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(14, base - 6, 6, 0, 7); ctx.fill();
+    ctx.strokeStyle = J.c('--jade'); ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(10, base); ctx.lineTo(w - 10, base); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.fillText('결함 형성 E_f = ' + J.fmt(v.ef, 2) + ' eV', 12, base - v.ef*sc - 8); ctx.fillText('+ 이동 E_m = ' + J.fmt(v.em, 2) + ' eV', w*0.45, base - (v.ef + v.em)*sc - 8);
+    const like = Ea < 1.3 ? '철·구리 (금속)' : Ea < 3.0 ? '산소·탄소' : Ea < 3.55 ? '붕소·비소' : Ea < 3.75 ? '인·안티몬' : '실리콘 자기 확산';
+    J.out(box, 'ea', J.fmt(Ea, 2) + ' eV'); J.out(box, 'fit', J.fmt(EaFit, 2) + ' ± ' + J.fmt(EaErr, 2) + ' eV', Math.abs(EaFit - Ea) < 2*EaErr + 0.05 ? 'good' : 'warn'); J.out(box, 'd0', J.sci(D0fit, 2) + ' cm²/s'); J.out(box, 'like', like); });
+  J.$('#b2r').onclick = () => { seed++; J.redrawAll(); };
+})();
+
+/* 3-3 과포화 */
+(function(){
+  const box = J.$('#sim3'), FI = {B:1, P:0.95, As:0.4, Sb:0.02}, Ks = ['B', 'P', 'As', 'Sb'];
+  const enh = (k, s) => FI[k]*s + (1 - FI[k])/s;
+  J.sim('sim3', v => { const s = v.c === 'ox' ? 4 : v.c === 'nit' ? 0.3 : v.c === 'imp' ? 300 : v.s;
+    const S = Ks.map(k => ({pts:Array.from({length:121}, (_, i) => { const x = Math.pow(10, -1 + i*0.025*1.5); return [x, enh(k, x)]; }), color:DF.DOP[k].col, w:2.5}));
+    const P = J.plot(J.$('#cv3a'), {x:[0.1, 500], y:[0.05, 500], logx:true, logy:true, xlab:'C_I / C_I*', ylab:'D / D*', series:S, vlines:[{x:Math.min(500, s), color:'--ink'}], hlines:[{y:1, color:'--ink3'}]});
+    Ks.forEach((k, i) => { P.ctx.fillStyle = DF.DOP[k].col; P.ctx.font = '12px "Noto Sans KR"'; P.ctx.fillText(DF.DOP[k].name, P.X(0.12), P.Y(enh(k, 0.12)) - 4 - i*2); });
+    const Nx = 200, L = 300e-7, dx = L/Nx, T = 1000, t = 3600, S2 = [];
+    Ks.forEach(k => { const D0 = DF.D(k, T), e = enh(k, s); [1, e].forEach((f, j) => { const pts = []; const Dt = D0*f*t; for(let i = 0; i < Nx; i++){ const x = i*dx; pts.push([x*1e7, Math.exp(-x*x/(4*Dt))]); } S2.push({pts, color:DF.DOP[k].col, w:j ? 2.5 : 1.2, dash:j ? [] : [4, 4]}); }); });
+    J.plot(J.$('#cv3b'), {x:[0, 300], y:[0, 1.05], xlab:'깊이 (nm) · 1,000 °C 1시간', ylab:'C / C_s', series:S2});
+    const es = Ks.map(k => enh(k, s)), mx = Ks[es.indexOf(Math.max(...es))], mn = Ks[es.indexOf(Math.min(...es))];
+    J.out(box, 'v', J.fmt(1/s, 3)); J.out(box, 'e', es.map(x => J.fmt(x, x < 10 ? 2 : 0)).join(' / ')); J.out(box, 'm', DF.DOP[mx].name + ' / ' + DF.DOP[mn].name); });
+})();
+</script>
+</body>
+</html>

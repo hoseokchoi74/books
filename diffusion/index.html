@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>확산 書 · 집현전</title>
+<meta name="description" content="집현전 인터랙티브 교과서 — 열로 심는 원자: 픽의 법칙·원자 기구·프로파일·농도 의존 확산·산화·이온 주입·TED·RTP·퍼니스·게터링·에피·얕은 접합·계측을 실험으로 배우는 확산·열공정 책">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/jade.css">
+<link rel="stylesheet" href="../assets/book.css">
+<script src="book.js"></script>
+<script src="../assets/book.js"></script>
+<script src="../assets/iso3d.js"></script>
+<style>
+  :root{--acc:#963c26}
+  :root[data-theme="dark"]{--acc:#e89a7e}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--acc:#e89a7e} }
+  .hero{display:grid; grid-template-columns:1.05fr 1fr; gap:40px; align-items:center; padding:56px 0 40px}
+  .hero h1{font-size:clamp(34px,5.4vw,58px); margin:14px 0 18px; font-weight:900; line-height:1.18}
+  .hero h1 em{font-style:normal; color:var(--acc)}
+  .hero p.lead{font-size:17.5px; color:var(--ink2); max-width:560px}
+  .hero .cta{display:flex; gap:10px; flex-wrap:wrap; margin:24px 0 18px}
+  .hero .chips{display:flex; gap:8px; flex-wrap:wrap}
+  .hero .chips span{font-size:13px; border:1px solid var(--line); border-radius:3px; padding:2px 10px; background:var(--card); color:var(--ink2)}
+  .stage{position:relative; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:10px; box-shadow:inset 0 0 0 5px var(--card), inset 0 0 0 6px var(--line2), var(--shadow)}
+  .stage canvas{display:block; width:100%}
+  .stage .over{position:absolute; left:18px; top:14px; font-size:12px; color:var(--ink3)}
+  .stage .bar{display:flex; gap:8px; align-items:center; padding:4px 8px; font-size:12.5px; color:var(--ink2); flex-wrap:wrap}
+  .titleslip{position:absolute; right:-12px; top:-18px; writing-mode:vertical-rl; background:var(--paper); border:1px solid var(--line); padding:12px 7px; font-family:var(--serif); font-weight:900; font-size:20px; letter-spacing:.2em; box-shadow:var(--shadow)}
+  .titleslip small{display:block; font-weight:400; font-size:11px; letter-spacing:.15em; color:var(--ink3); margin-top:6px}
+  @media (max-width:900px){ .hero{grid-template-columns:1fr; padding-top:32px} .titleslip{right:6px; top:-14px} }
+  section.block{padding:46px 0 10px}
+  section.block > h2{font-size:28px; margin:0 0 8px; font-weight:900}
+  section.block > p.sub{color:var(--ink2); margin:0 0 22px; max-width:760px}
+  .chain svg{width:100%; height:auto; display:block}
+  .chain a:hover rect.blk{stroke:var(--red); stroke-width:3}
+  .nums{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px}
+  .num{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px; position:relative; overflow:hidden}
+  .num b{font-family:var(--serif); font-size:30px; font-weight:900; display:block}
+  .num span{font-size:14px; color:var(--ink2)}
+  .num:after{content:attr(data-h); position:absolute; right:10px; bottom:-14px; font-family:var(--serif); font-size:64px; color:var(--ink); opacity:.05; font-weight:900}
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px}
+  .card{display:flex; flex-direction:column; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:3px; padding:18px 18px 16px 24px; color:var(--ink); position:relative; transition:transform .15s, box-shadow .15s}
+  .card:before{content:''; position:absolute; left:8px; top:10px; bottom:10px; width:1px; background:var(--line)}
+  .card:hover{transform:translateY(-3px); box-shadow:var(--shadow); text-decoration:none; border-color:var(--acc)}
+  .card .cn{font-family:var(--mono); font-size:11.5px; color:var(--acc); letter-spacing:.15em}
+  .card h3{margin:0; font-size:18.5px}
+  .card p{margin:0; font-size:14px; color:var(--ink2); line-height:1.65; flex:1}
+  .card .tags{display:flex; gap:5px; flex-wrap:wrap; margin-top:6px}
+  .paths{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px}
+  .path{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px 18px}
+  .path h3{margin:0 0 4px; font-size:17px}
+  .path p{margin:0 0 10px; font-size:14px; color:var(--ink2)}
+  .path .seq{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .path .seq a{font-family:var(--mono); font-size:13px; border:1px solid var(--acc); color:var(--acc); border-radius:3px; padding:1px 8px}
+  .path .seq i{color:var(--ink3); font-style:normal; font-size:12px}
+  .howto{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px}
+  .how{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px; text-align:center}
+  .how .hj{font-family:var(--serif); font-size:32px; font-weight:900; color:var(--red)}
+  .how b{display:block; font-family:var(--serif); margin:2px 0 4px}
+  .how span{font-size:13.5px; color:var(--ink2)}
+</style>
+</head>
+<body>
+<div id="top"></div>
+<div class="wrap">
+
+<section class="hero">
+  <div>
+    <div class="kicker">Interactive Diffusion Textbook · 集賢殿 器部 別冊</div>
+    <h1>열로 심는<br><em>원자</em></h1>
+    <p class="lead">순수한 실리콘은 거의 부도체다. 10만 개 원자 가운데 하나를 붕소나 인으로 바꾸어야 비로소 트랜지스터가 된다. 그 원자들을 원하는 깊이에, 원하는 만큼, 원하는 모양으로 심는 일이 확산과 열공정이다. 1,000 °C의 결정 속에서 원자는 빈자리와 틈새를 따라 무작위로 뛰고, 이온 주입이 남긴 손상은 그 걸음을 수천 배 빠르게 만든다. 몇 시간 굽는 퍼니스에서 1 ms의 레이저까지, 같은 원리가 µm 웰과 10 nm 접합을 동시에 만든다. 무작위 걸음부터 TED, 게터링, SIMS까지 44개의 실험으로 직접 돌려 본다.</p>
+    <div class="cta">
+      <a class="btn red" href="chapters/overview.html" style="background:var(--acc);border-color:var(--acc)">1장부터 펼치기 →</a>
+      <a class="btn ghost" href="chapters/playground.html">열공정 레시피 놀이터</a>
+    </div>
+    <div class="chips"><span>16개 장</span><span>44개 실험</span><span>3D 모형</span><span>공대 학부 수준</span></div>
+  </div>
+  <div class="stage">
+    <div class="titleslip">擴散 書<small>植原之道</small></div>
+    <div class="over" id="hOver">드래그해서 돌려 보세요</div>
+    <canvas id="hero3d" data-h="400" aria-label="주입·확산 공정 3D 모형"></canvas>
+    <div class="bar" id="modeBtns">
+      <button class="sbtn" data-m="0">마스크</button><button class="sbtn" data-m="1">주입</button><button class="sbtn" data-m="2">어닐</button><button class="sbtn on" data-m="3">접합</button>
+      <button class="sbtn" id="hAuto">▶ 순서대로 재생</button>
+    </div>
+  </div>
+</section>
+
+<section class="block chain">
+  <div class="kicker">One thermal step</div>
+  <h2>도핑 한 번의 고리</h2>
+  <p class="sub">한 번의 도핑은 이 고리를 돈다: <b>마스크 → 이온 주입 → 손상·비정질화 → 어닐(활성화) → 확산·TED → 접합 형성 → 계측</b>. 그 바탕에는 점결함의 물리와 픽의 법칙이, 그 결과에는 접합 깊이·면저항·누설이 있다.</p>
+  <figure class="fig" style="margin:0">
+    <svg viewBox="0 0 980 300" role="img" aria-label="도핑 고리"><g id="chainG"></g></svg>
+    <figcaption><b>그림 0-1.</b> 도핑 한 번의 흐름(가운데)과 그것을 지배하는 원리·결과(양옆). 상자를 누르면 해당 장으로 간다.</figcaption>
+  </figure>
+</section>
+
+<section class="block">
+  <div class="kicker">Diffusion in numbers</div>
+  <h2>숫자로 보는 확산</h2>
+  <p class="sub">이 책을 덮을 즈음이면 아래 숫자가 왜 그 값인지 설명할 수 있게 됩니다. (2025–26년 대략값)</p>
+  <div class="nums">
+    <div class="num" data-h="熱"><b>1,000 °C</b><span>도펀트가 움직이기 시작하는 온도대 → 1장</span></div>
+    <div class="num" data-h="速"><b>×10,000</b><span>TED가 붕소 확산을 빠르게 하는 정도 → 8장</span></div>
+    <div class="num" data-h="淺"><b>&lt; 15 nm</b><span>첨단 소스/드레인 확장부 접합 깊이 → 13장</span></div>
+    <div class="num" data-h="瞬"><b>1 ms</b><span>레이저·플래시 어닐 시간 → 9장</span></div>
+    <div class="num" data-h="能"><b>3.5 eV</b><span>도펀트 확산의 활성화 에너지 → 3장</span></div>
+    <div class="num" data-h="鐵"><b>10¹⁰ cm⁻³</b><span>문제를 일으키는 철 오염 농도 → 11장</span></div>
+    <div class="num" data-h="均"><b>±1 °C</b><span>배치 퍼니스 구역 온도 균일도 → 10장</span></div>
+    <div class="num" data-h="解"><b>1 nm/dec</b><span>저에너지 SIMS의 깊이 분해능 → 14장</span></div>
+  </div>
+</section>
+
+<section class="block" id="chapters">
+  <div class="kicker">Table of contents · 目次</div>
+  <h2>전체 장</h2>
+  <p class="sub">각 장은 <b>개념 → 그림 → 수식 → 실험 → 문제</b> 순서로 짜여 있습니다.</p>
+  <div class="cards" id="cards"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">Reading paths</div>
+  <h2>추천 학습 경로</h2>
+  <p class="sub">관심사와 직무에 따라 이렇게 읽어 보세요.</p>
+  <div class="paths" id="paths"></div>
+</section>
+
+<section class="block">
+  <div class="kicker">How to read</div>
+  <h2>이 책 읽는 법</h2>
+  <div class="howto">
+    <div class="how"><div class="hj">讀</div><b>읽기</b><span>무작위 걸음과 점결함부터. 영어 용어는 괄호로 함께 씁니다.</span></div>
+    <div class="how"><div class="hj">觀</div><b>보기</b><span>1D·2D 확산 방정식 풀이로 분포가 퍼지는 것을 봅니다.</span></div>
+    <div class="how"><div class="hj">算</div><b>계산하기</b><span>아레니우스, 픽의 법칙, 딜–그로브, LSS 범위, SRH… 직접 돌립니다.</span></div>
+    <div class="how"><div class="hj">觸</div><b>만지기</b><span>슬라이더를 끝까지. 공정 창의 가장자리에서 배웁니다.</span></div>
+    <div class="how"><div class="hj">問</div><b>확인하기</b><span>장마다 문제, 마지막 장에서 20문제 종합 퀴즈.</span></div>
+  </div>
+</section>
+
+</div>
+<footer class="site">확산 書 — 집현전 인터랙티브 교과서 시리즈 · 수치는 교육용 근사 모델이며 특정 회사·장비의 사양이 아닙니다.<br>콘텐츠 CC BY 4.0 · 코드 MIT</footer>
+
+<script>
+(function(){
+  const B = window.BOOK;
+  document.getElementById('cards').innerHTML = B.chapters.map(c => `
+    <a class="card" href="chapters/${c.slug}.html"><span class="cn">CHAPTER ${c.n}</span><h3>${c.title}</h3><p>${c.desc}</p>
+    <span class="tags">${c.tags.map(t => `<span class="tag ${t==='시뮬레이터'?'sim':t==='3D'?'d3':''}">${t}</span>`).join('')}</span></a>`).join('');
+  const P = [
+    ['입문 · 전체 그림','확산이 처음이라면. 흐름과 핵심 원리.',['01','02','04','07','08']],
+    ['확산 물리','무작위 걸음, 원자 기구, 비이상 확산.',['02','03','05','06']],
+    ['소자 공정 엔지니어','주입, 어닐, 접합 설계.',['07','08','09','13','15']],
+    ['열공정 장비','RTP, 퍼니스, 에피 반응기.',['01','09','10','12']],
+    ['수율·신뢰성','오염, 게터링, 계측.',['10','11','14']],
+    ['소자 설계자','접합과 단채널 효과.',['04','08','13','14']]
+  ];
+  const slug = n => B.chapters.find(c => c.n === n).slug;
+  document.getElementById('paths').innerHTML = P.map(p => `<div class="path"><h3>${p[0]}</h3><p>${p[1]}</p><div class="seq">${p[2].map(n => `<a href="chapters/${slug(n)}.html">${n}</a>`).join('<i>→</i>')}</div></div>`).join('');
+})();
+
+(function(){
+  const g = document.getElementById('chainG'), cx = 490, cy = 150, R = 105;
+  const items = [['마스크','산화막 창','profiles','--jade'],['이온 주입','R_p·도즈','implant','--red'],['손상','비정질·{311}','anneal','--plum'],['어닐','활성화','rtp','--gold'],['확산','TED·OED','nonideal','--wood2'],['접합','x_j·R_s','junction','--indigo'],['계측','SIMS·4탐침','metrology','--ink3']];
+  items.forEach(([t, s, ch, c], i) => { const a = -Math.PI/2 + i/items.length*Math.PI*2, x = cx + R*1.55*Math.cos(a), y = cy + R*Math.sin(a);
+    const l = J.svg('a', {href:'chapters/' + ch + '.html'}, g);
+    J.svg('rect', {class:'blk', x:x - 62, y:y - 26, width:124, height:52, rx:26, fill:'var(--card)', stroke:`var(${c})`, 'stroke-width':2.2}, l);
+    J.svg('text', {x, y:y - 2, 'text-anchor':'middle', class:'t-m', text:t, style:'font-weight:700'}, l);
+    J.svg('text', {x, y:y + 15, 'text-anchor':'middle', class:'t-s', text:s}, l);
+    const a2 = a + Math.PI*2/items.length*0.5, x2 = cx + R*1.25*Math.cos(a2), y2 = cy + R*0.8*Math.sin(a2);
+    J.svg('text', {x:x2, y:y2 + 5, 'text-anchor':'middle', class:'t-m', text:'→', style:`fill:var(--ink3);transform-origin:${x2}px ${y2}px;transform:rotate(${(a2 + Math.PI/2)*180/Math.PI}deg)`}, g); });
+  J.svg('circle', {cx, cy, r:48, fill:'var(--paper2)', stroke:'var(--line)'}, g);
+  J.svg('text', {x:cx, y:cy - 4, 'text-anchor':'middle', class:'t-l', text:'도핑 1회'}, g); J.svg('text', {x:cx, y:cy + 16, 'text-anchor':'middle', class:'t-s', text:'1 ms ~ 수 시간'}, g);
+  const side = [['픽의 법칙', 'fick', 70, 80], ['원자 기구', 'atomistic', 70, 150], ['산화', 'oxidation', 70, 220], ['퍼니스', 'furnace', 910, 80], ['게터링', 'gettering', 910, 150], ['에피', 'epi', 910, 220]];
+  side.forEach(([t, ch, x, y]) => { const l = J.svg('a', {href:'chapters/' + ch + '.html'}, g); J.svg('rect', {class:'blk', x:x - 56, y:y - 18, width:112, height:36, rx:4, fill:'var(--card)', stroke:'var(--acc)', 'stroke-width':1.5}, l); J.svg('text', {x, y:y + 5, 'text-anchor':'middle', class:'t-m', text:t}, l); });
+})();
+
+/* 히어로 3D: 마스크 → 주입 → 어닐 → 접합 */
+(function(){
+  const cv = document.getElementById('hero3d'), cam = {yaw:-0.65, pitch:0.5, scale:30};
+  let stage = 3, prog = 1, auto = false, t = 0;
+  const over = ['마스크: 산화막 창으로 심을 자리를 연다', '주입: 이온이 표면 바로 아래에 박힌다', '어닐: 열로 손상을 고치고 원자가 퍼진다', '접합: 아래로, 옆으로 자란 n⁺ 영역'];
+  const lines = [-2.6, 0, 2.6], gap = 1.1;
+  function draw(){
+    const {ctx, w, h} = J.fit(cv); ctx.clearRect(0,0,w,h); cam.scale = Math.min(w, h*1.2)/15.5; cam.oy = h*0.12;
+    const S = new J3.Scene(), lv = stage + Math.min(1, prog) - 1;
+    const imp = stage >= 1 ? J.clamp(stage === 1 ? lv : 1, 0, 1) : 0, grow = stage >= 2 ? J.clamp(lv - 1, 0, 1) : 0, dep = 0.35 + 1.25*grow, lat = 0.05 + 0.75*grow;
+    S.box(-5, -2.6, -3, 10, 2.6, 6, '#8f98a8', {layer:0});
+    const segs = []; let x0 = -5; lines.forEach(c => { segs.push([x0, c - gap/2]); x0 = c + gap/2; }); segs.push([x0, 5]);
+    segs.forEach(([a, b]) => S.box(a, 0, -3, b - a, 0.55, 6, '#8cc6e6', {layer:3}));
+    if(imp > 0.02) lines.forEach(c => S.box(c - gap/2 - lat, -dep, -3, gap + 2*lat, dep - 0.02, 6, '#c8553d', {layer:1, alpha:0.35 + 0.5*imp}));
+    if(stage === 1){ const f = Math.min(1, prog); lines.forEach(c => S.box(c - 0.12, 0.55, -2.6, 0.24, 3.8, 5.2, '#ffd84a', {layer:7, alpha:0.25*f})); }
+    if(stage === 2){ const f = Math.min(1, prog); S.box(-5, 4.4, -3, 10, 0.25, 6, '#e0623a', {layer:8, alpha:0.35*f}); S.box(-5, -3.2, -3, 10, 0.25, 6, '#e0623a', {layer:8, alpha:0.35*f}); }
+    S.render(ctx, cam, w, h);
+    if(stage === 1){ const r = J.rng(Math.floor(t*8)); ctx.fillStyle = 'rgba(200,85,61,.85)'; for(let k = 0; k < 22; k++){ ctx.beginPath(); ctx.arc(w*0.2 + r()*w*0.6, h*0.08 + r()*h*0.28, 2.4, 0, 7); ctx.fill(); } }
+    if(stage === 2){ ctx.fillStyle = 'rgba(224,98,58,.10)'; ctx.fillRect(0, 0, w, h); }
+  }
+  J3.drag(cv, cam, draw); J.live(draw);
+  const setStage = s => { stage = s; prog = 0; J.$$('#modeBtns [data-m]').forEach(x => x.classList.toggle('on', +x.dataset.m === s)); J.$('#hOver').textContent = over[s] + ' · 드래그해서 돌려 보세요'; };
+  J.$$('#modeBtns [data-m]').forEach(b => b.onclick = () => { auto = false; J.$('#hAuto').classList.remove('on'); setStage(+b.dataset.m); });
+  J.$('#hAuto').onclick = e => { auto = !auto; e.target.classList.toggle('on', auto); if(auto) setStage(0); };
+  J.$('#hOver').textContent = over[3] + ' · 드래그해서 돌려 보세요';
+  J.loop(cv, dt => { t += dt; if(!cam.user) cam.yaw += dt*0.12; if(prog < 1) prog = Math.min(1, prog + dt*0.5); if(auto && prog >= 1 && (t % 2.6) < dt){ setStage((stage + 1) % 4); } draw(); });
+})();
+</script>
+</body>
+</html>

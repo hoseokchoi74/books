@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>레시피 놀이터 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="playground">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 15 <span class="hanja">第十五章 · 戲</span></div>
+  <h1>레시피 놀이터</h1>
+  <p class="lead">이제 공정 엔지니어가 되어 볼 차례다. 이 놀이터에서는 이온 주입(도펀트, 에너지, 도즈, 기울기)과 열처리(온도, 시간)를 직접 골라 목표 접합을 만든다. 앞 장들의 모델이 모두 들어 있다. 농도에 따라 빨라지는 확산(5장), 주입 손상이 일으키는 순간 증속 확산 TED(8장), 고용도로 제한되는 활성화(8장), 그리고 웨이퍼가 견딜 수 있는 온도–시간 한계(9·10장)가 그것이다. 미션마다 정답은 하나가 아니다. 여러 레시피를 시도하며 각 손잡이가 결과를 어느 쪽으로 미는지 감을 잡아 보자.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>주입 조건과 열처리 조건을 함께 설계해 x<sub>j</sub>, R<sub>s</sub>, 피크 위치 목표를 동시에 맞춘다.</li>
+  <li>온도–시간 지도에서 퍼니스, RTA, 스파이크, 밀리초 어닐의 영역과 한계를 익힌다.</li>
+  <li>열 예산과 TED가 얕은 접합에서 왜 가장 큰 적인지 체감한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>미션 보드</h2>
+<p>미션을 고르고 손잡이를 움직이면 즉시 공정이 다시 계산된다. 모든 조건이 초록이 되면 미션 완료다. 완료한 미션은 이 브라우저에 기억된다. 막히면 "힌트"를 눌러 보자.</p>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 15-1</span><span class="ttl">주입 + 어닐 레시피 설계</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">미션</span><select data-k="m"><option value="0" selected>① 깊은 n-웰</option><option value="1">② nMOS 깊은 소스/드레인</option><option value="2">③ 펀치스루 방지 매몰층</option><option value="3">④ pMOS 초저접합 확장부</option></select></label>
+      <label class="ctrl"><span class="lab">도펀트</span><select data-k="d"><option value="P" selected>인 (P)</option><option value="As">비소 (As)</option><option value="B">붕소 (B)</option><option value="Sb">안티몬 (Sb)</option></select></label>
+      <label class="ctrl"><span class="lab">주입 에너지 <output data-o="E"></output></span><input type="range" data-k="E" min="-0.3" max="2.3" step="0.01" value="2" data-log="1" data-d="1" data-u="keV"></label>
+      <label class="ctrl"><span class="lab">도즈 <output data-o="Q"></output></span><input type="range" data-k="Q" min="11" max="16" step="0.05" value="13" data-log="1" data-d="1" data-u="cm⁻²"></label>
+      <label class="ctrl"><span class="lab">웨이퍼 기울기</span><select data-k="tl"><option value="7" selected>7° (채널링 억제)</option><option value="0">0° (채널링)</option></select></label>
+      <label class="ctrl"><span class="lab">어닐 온도 <output data-o="T"></output></span><input type="range" data-k="T" min="700" max="1350" step="5" value="1000" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">어닐 시간 <output data-o="t"></output></span><input type="range" data-k="t" min="-3.5" max="4.5" step="0.05" value="1" data-log="1" data-d="2" data-u="s"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="bhint">힌트</button><button class="sbtn" id="breset">완료 기록 지우기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="320"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="320"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">미션 목표</span><span class="v" data-r="goal" style="font-size:13px"></span></div>
+      <div class="ro"><span class="k">결과</span><span class="v" data-r="res" style="font-size:13px"></span></div>
+      <div class="ro"><span class="k">판정</span><span class="v" data-r="ok" style="font-size:14px"></span></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">어닐 방식</span><span class="v" data-r="mode" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">열 예산 √(Dt)</span><span class="v" data-r="bud"></span></div>
+      <div class="ro"><span class="k">완료한 미션</span><span class="v" data-r="done"></span></div>
+    </div>
+    <p class="cap" id="hint" style="display:none"></p>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 주입 직후(회색 점선), 어닐 후 전체 도펀트(실선), 그중 활성(채움), 기판 도핑(가로 점선), 목표 범위(초록 띠). 오른쪽: 온도–시간 지도. 색 영역은 각 어닐 장비가 낼 수 있는 범위이고, 빨간 영역은 웨이퍼가 미끄럼 변형이나 녹음으로 견딜 수 없는 조건이다. 점선은 같은 열 예산(현재 도펀트의 √Dt가 일정한 선)이다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🍳</span><b>오븐과 토치</b><span>퍼니스는 저온으로 오래 굽는 오븐이라 속까지 고르게 익지만 겉(얕은 접합)도 퍼진다. 스파이크는 센 불에 잠깐, 레이저·플래시는 토치로 겉만 순간적으로 그을린다. 깊은 웰은 오븐, 초저접합은 토치가 맞다. 요리마다 도구가 다르다.</span></div>
+
+<h2 id="s2"><span class="n">02</span>레시피 비교판</h2>
+<p>여러 레시피를 기록해 두고 결과를 한 화면에서 비교해 보자. 같은 x<sub>j</sub>를 얻는 데에도 "얕게 심고 오래 굽기"와 "깊게 심고 잠깐 굽기"는 전혀 다른 분포를 만든다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 15-2</span><span class="ttl">레시피 기록과 비교</span></div>
+  <div class="sim-b">
+    <div class="btnrow"><button class="sbtn pri" id="bsave">위 레시피 기록</button><button class="sbtn" id="bclr">비우기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">기록 수</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">가장 얕은 x<sub>j</sub></span><span class="v" data-r="xj"></span></div>
+      <div class="ro"><span class="k">가장 낮은 R<sub>s</sub></span><span class="v" data-r="rs"></span></div>
+    </div>
+    <div id="tbl" style="overflow-x:auto;font-size:13px"></div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 기록한 레시피의 최종 분포를 색을 바꿔 겹쳐 그린다(같은 미션의 깊이 범위). 아래 표에 조건과 결과가 정리된다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 실제 팹에서는 레시피를 어떻게 정할까?</p><p>여기서 한 것처럼 공정 시뮬레이터(TCAD)로 후보를 좁힌 뒤, 실험 계획법(DOE)으로 에너지·도즈·온도를 몇 단계씩 바꾼 웨이퍼를 만들어 SIMS, 4탐침, 소자 전기 특성으로 확인한다. 그리고 선택한 조건 주변에서 각 변수가 조금 흔들릴 때 결과가 얼마나 변하는지(공정 여유)를 본다. 목표를 아슬아슬하게 맞추는 레시피보다, 목표 한가운데 있으면서 변수에 둔감한 레시피가 좋은 레시피다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">1 µm 이상 깊은 웰을 만들 때 알맞은 열처리는?</p><ol><li>레이저 어닐</li><li>스파이크 RTA</li><li>퍼니스 장시간 드라이브인</li><li>열처리 없이</li></ol>
+<p class="explain">√(Dt)가 수백 nm 이상이어야 한다.</p></div>
+<div class="quiz" data-a="1"><p class="q">초저접합에서 스파이크 대신 밀리초 어닐을 쓰는 가장 큰 이유는?</p><ol><li>장비가 싸서</li><li>TED와 확산을 거의 없애면서 높은 온도로 활성화하려고</li><li>산화막을 기르려고</li><li>채널링을 막으려고</li></ol>
+<p class="explain">손상이 풀리기 전에 끝나는 짧은 시간 + 높은 준안정 고용도.</p></div>
+<div class="quiz" data-a="3"><p class="q">펀치스루 방지층처럼 표면 아래에 봉우리를 두려면?</p><ol><li>낮은 에너지 + 긴 어닐</li><li>높은 도즈 + 레이저</li><li>0° 주입</li><li>적당히 높은 에너지 + 짧고 약한 어닐</li></ol>
+<p class="explain">R<sub>p</sub>로 위치를 정하고 확산은 최소로.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const MS = [
+  {name:'깊은 n-웰', sub:'p', NB:1e15, L:4000, dx:10, type:'n', goal:'n형 · x<sub>j</sub> 1.0~1.5 µm · R<sub>s</sub> &lt; 1,500 Ω/□',
+   chk:r => [['n형 도펀트', r.type === 'n'], ['x_j ' + J.fmt(r.xj/1000, 2) + ' µm', r.xj >= 1000 && r.xj <= 1500], ['R_s ' + J.fmt(r.rs, 0) + ' Ω/□', r.rs < 1500]], band:[1000, 1500],
+   hint:'P를 100 keV 근처, 2×10¹³ cm⁻² 안팎으로 심고, 1,100 °C 부근에서 한 시간쯤(3×10³ s) 드라이브인해 보자. 저항이 크면 도즈를 올린다. 퍼니스는 1,150 °C 이하에서만 오래 쓸 수 있다.'},
+  {name:'nMOS 깊은 S/D', sub:'p', NB:1e18, L:300, dx:0.5, type:'n', goal:'n형 · x<sub>j</sub> 60~90 nm · R<sub>s</sub> &lt; 60 Ω/□',
+   chk:r => [['n형 도펀트', r.type === 'n'], ['x_j ' + J.fmt(r.xj, 1) + ' nm', r.xj >= 60 && r.xj <= 90], ['R_s ' + J.fmt(r.rs, 0) + ' Ω/□', r.rs < 60]], band:[60, 90],
+   hint:'무거운 As는 분포가 날카롭다. 30~50 keV, 3~5×10¹⁵ cm⁻²에 1,050 °C 근처 스파이크(1~2 s)를 시도하자. 저항이 크면 도즈를, 접합이 얕으면 에너지나 온도를 올린다.'},
+  {name:'펀치스루 방지층', sub:'n', NB:1e16, L:600, dx:1, type:'p', goal:'p형 · 피크 깊이 150~250 nm · 피크 1~5×10¹⁷ · 표면(5 nm) &lt; 5×10¹⁶',
+   chk:r => [['p형 도펀트', r.type === 'p'], ['피크 깊이 ' + J.fmt(r.pkx, 0) + ' nm', r.pkx >= 150 && r.pkx <= 250], ['피크 ' + J.sci(r.pk, 1), r.pk >= 1e17 && r.pk <= 5e17], ['표면 ' + J.sci(r.surf, 1), r.surf < 5e16]], band:[150, 250],
+   hint:'B의 R<sub>p</sub>가 200 nm 근처가 되는 에너지(60~70 keV)를 고르고, 피크 농도가 10¹⁷대가 되게 도즈를 10¹²대로 낮추자. 어닐은 짧은 스파이크로 퍼짐을 최소화한다.'},
+  {name:'pMOS 초저접합', sub:'n', NB:1e18, L:150, dx:0.25, type:'p', goal:'p형 · x<sub>j</sub> &lt; 20 nm · R<sub>s</sub> &lt; 900 Ω/□',
+   chk:r => [['p형 도펀트', r.type === 'p'], ['x_j ' + J.fmt(r.xj, 1) + ' nm', r.xj > 0 && r.xj < 20], ['R_s ' + J.fmt(r.rs, 0) + ' Ω/□', r.rs < 900]], band:[0, 20],
+   hint:'붕소는 가볍고 빨라 스파이크로는 TED 때문에 20 nm를 훌쩍 넘는다. 0.5~1 keV, 10¹⁵대 도즈에 1,250 °C 이상 밀리초(10⁻³ s) 어닐을 써 보자.'}];
+const PG = {};
+PG.run = v => { const M = MS[+v.m], dop = v.d, N = Math.round(M.L/M.dx), dx = M.dx*1e-7, ch = v.tl === '0' ? 0.15 : 0.02, typ = DF.DOP[dop].type;
+  const C0 = new Float64Array(N); for(let i = 0; i < N; i++) C0[i] = DF.implant(dop, v.E, v.Q, (i + .5)*M.dx, ch);
+  const T = v.T, t = v.t, kT = DF.kB*(T + 273.15), ms = t < 0.01;
+  const tauT = 1.85e-16*Math.exp(3.9/kT), S0 = 40*Math.pow(v.Q/1e14, 0.5), ted = ms ? 1 : 1 + S0*tauT/t*(1 - Math.exp(-t/tauT)), ni = DF.ni(T);
+  const C = DF.solve(C0, dx, t, c => DF.D(dop, T)*(1 + c/ni)*ted, {type:'flux', h:1e-8, Ceq:0}, 'refl', 160);
+  const sol = DF.solub(dop, T)*(ms ? 2.5 : 1), act = C.map(c => Math.min(c, sol*(1 - Math.exp(-c/sol))));
+  const opp = typ !== (M.sub === 'p' ? 'p' : 'n'); const xj = opp ? DF.xj(C, dx, M.NB)*1e7 : 0, rs = opp ? DF.rs(act, dx, M.NB, typ) : Infinity;
+  let pk = 0, pkx = 0; for(let i = 0; i < N; i++) if(C[i] > pk){ pk = C[i]; pkx = (i + .5)*M.dx; }
+  const surf = C[Math.min(N - 1, Math.round(5/M.dx))];
+  let lim = null; if(T > 1300 && t > 0.01) lim = '이 온도는 밀리초 어닐로만 가능'; else if(T > 1150 && t > 5) lim = '1,150 °C 넘게 수 초 이상: 미끄럼 변형'; else if(T > 1100 && t > 120) lim = '1,100 °C 넘게 2분 이상: 웨이퍼 휨'; else if(T > 1414) lim = 'Si 녹음';
+  const mode = ms ? '밀리초 (레이저/플래시)' : t < 5 ? '스파이크 RTA' : t < 300 ? 'RTA 유지' : '퍼니스';
+  return {M, C0, C, act, N, typ, type:opp ? typ : 'x', xj, rs, pk, pkx, surf, lim, mode, ted, bud:Math.sqrt(DF.D(dop, T)*t)*1e7}; };
+(function(){
+  const box = J.$('#sim1'); let done = {}; try { done = JSON.parse(localStorage.getItem('diff-pg') || '{}'); } catch(e){}
+  const save = () => { try { localStorage.setItem('diff-pg', JSON.stringify(done)); } catch(e){} };
+  J.sim('sim1', v => { const r = PG.run(v), M = r.M, xs = i => (i + .5)*M.dx, unit = M.L > 1000 ? 1000 : 1, col = DF.DOP[v.d].col; PG.last = {v:Object.assign({}, v), r};
+    const P = J.plot(J.$('#cv1a'), {x:[0, M.L/unit], y:[1e14, 1e22], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (' + (unit > 1 ? 'µm' : 'nm') + ')', ylab:'농도 (cm⁻³)', series:[
+      {pts:Array.from(r.C0, (c, i) => [xs(i)/unit, Math.max(c, 1e13)]), color:'--ink3', w:1.5, dash:[5, 4]}, {pts:Array.from(r.act, (c, i) => [xs(i)/unit, Math.max(c, 1e13)]), color:col, w:0, fill:col + '44'}, {pts:Array.from(r.C, (c, i) => [xs(i)/unit, Math.max(c, 1e13)]), color:col, w:3}],
+      hlines:[{y:M.NB, color:'--ink3'}]});
+    P.ctx.fillStyle = 'rgba(58,163,106,.16)'; P.ctx.fillRect(P.X(M.band[0]/unit), P.Y(1e22), P.X(M.band[1]/unit) - P.X(M.band[0]/unit), P.Y(1e14) - P.Y(1e22));
+    if(+v.m === 2){ P.ctx.strokeStyle = J.c('--jade'); P.ctx.setLineDash([4, 3]); P.ctx.strokeRect(P.X(150), P.Y(5e17), P.X(250) - P.X(150), P.Y(1e17) - P.Y(5e17)); P.ctx.setLineDash([]); }
+    /* T–t 지도 */
+    const regs = [['밀리초', -3.5, -2, 1100, 1350, 'rgba(201,162,39,.22)'], ['스파이크', -0.3, 0.7, 950, 1100, 'rgba(61,127,208,.2)'], ['RTA', 0.7, 2.5, 850, 1150, 'rgba(58,163,106,.2)'], ['퍼니스', 2.5, 4.5, 700, 1150, 'rgba(138,90,200,.18)']];
+    const Q = J.plot(J.$('#cv1b'), {x:[-3.5, 4.5], y:[700, 1350], xf:t => '10^' + Math.round(t), xlab:'시간 (s)', ylab:'온도 (°C)', series:[], points:[]});
+    const g = Q.ctx; regs.forEach(([n, a, b, c, d, f]) => { g.fillStyle = f; g.fillRect(Q.X(a), Q.Y(d), Q.X(b) - Q.X(a), Q.Y(c) - Q.Y(d)); g.fillStyle = J.c('--ink2'); g.font = '11px "Noto Sans KR"'; g.fillText(n, Q.X(a) + 3, Q.Y(d) + 13); });
+    g.fillStyle = 'rgba(214,90,74,.22)'; g.beginPath(); g.moveTo(Q.X(-2), Q.Y(1350)); g.lineTo(Q.X(-2), Q.Y(1300)); g.lineTo(Q.X(Math.log10(5)), Q.Y(1300)); g.lineTo(Q.X(Math.log10(5)), Q.Y(1150)); g.lineTo(Q.X(Math.log10(120)), Q.Y(1150)); g.lineTo(Q.X(Math.log10(120)), Q.Y(1100)); g.lineTo(Q.X(4.5), Q.Y(1100)); g.lineTo(Q.X(4.5), Q.Y(1350)); g.closePath(); g.fill();
+    g.fillStyle = J.c('--red'); g.fillText('웨이퍼 손상', Q.X(2.6), Q.Y(1330));
+    /* 같은 열 예산 선 */
+    g.strokeStyle = J.c('--ink3'); g.setLineDash([4, 4]); g.lineWidth = 1.2; g.beginPath(); let st = false; const Dt = DF.D(v.d, v.T)*v.t;
+    for(let T = 700; T <= 1350; T += 5){ const tt = Dt/DF.D(v.d, T), lt = Math.log10(tt); if(lt < -3.5 || lt > 4.5){ st = false; continue; } st ? g.lineTo(Q.X(lt), Q.Y(T)) : g.moveTo(Q.X(lt), Q.Y(T)); st = true; } g.stroke(); g.setLineDash([]);
+    g.fillStyle = r.lim ? J.c('--red') : J.c('--ink'); g.beginPath(); g.arc(Q.X(Math.log10(v.t)), Q.Y(v.T), 7, 0, 7); g.fill();
+    /* 판정 */
+    const c = M.chk(r), lim = r.lim ? [['장비 한계: ' + r.lim, false]] : [], all = c.concat(lim), ok = all.every(a => a[1]);
+    J.out(box, 'goal', M.goal.replace(/<[^>]+>/g, '')); box.querySelector('[data-r=goal]').innerHTML = M.goal;
+    J.out(box, 'res', ''); box.querySelector('[data-r=res]').innerHTML = all.map(([s, k]) => `<span style="color:${J.c(k ? '--jade' : '--red')}">${k ? '✓' : '✗'} ${s}</span>`).join('<br>');
+    if(ok && !done[v.m]){ done[v.m] = 1; save(); }
+    J.out(box, 'ok', ok ? '미션 완료! 🎉' : '조정 필요', ok ? 'good' : 'bad'); J.out(box, 'mode', r.mode + (r.ted > 1.5 ? ' · TED ×' + J.fmt(r.ted, 1) : ''), r.lim ? 'bad' : '');
+    J.out(box, 'bud', r.bud < 1 ? J.fmt(r.bud*10, 2) + ' Å' : r.bud < 1000 ? J.fmt(r.bud, 1) + ' nm' : J.fmt(r.bud/1000, 2) + ' µm');
+    J.out(box, 'done', Object.keys(done).length + ' / 4 ' + '★'.repeat(Object.keys(done).length) + '☆'.repeat(4 - Object.keys(done).length));
+    const hb = J.$('#hint'); if(hb.dataset.m !== v.m){ hb.style.display = 'none'; hb.dataset.m = v.m; } hb.innerHTML = '<b>힌트.</b> ' + M.hint; });
+  J.$('#bhint').onclick = () => { const hb = J.$('#hint'); hb.style.display = hb.style.display === 'none' ? 'block' : 'none'; };
+  J.$('#breset').onclick = () => { done = {}; save(); J.redrawAll(); };
+})();
+
+/* 15-2 비교 */
+(function(){
+  const box = J.$('#sim2'), rec = [], cols = ['#d65a4a', '#3d7fd0', '#3aa36a', '#8a5ac8', '#c9a227', '#2d6470', '#963c26', '#555'];
+  const draw = () => { const m = rec.length ? rec[rec.length - 1].v.m : (PG.last ? PG.last.v.m : '0'), M = MS[+m], unit = M.L > 1000 ? 1000 : 1, same = rec.filter(a => a.v.m === m);
+    J.plot(J.$('#cv2'), {x:[0, M.L/unit], y:[1e14, 1e22], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (' + (unit > 1 ? 'µm' : 'nm') + ') · ' + M.name, ylab:'농도 (cm⁻³)', hlines:[{y:M.NB, color:'--ink3'}],
+      series:same.map((a, k) => ({pts:Array.from(a.r.C, (c, i) => [(i + .5)*M.dx/unit, Math.max(c, 1e13)]), color:cols[rec.indexOf(a) % cols.length], w:2.5}))});
+    J.out(box, 'n', String(rec.length)); const xs = rec.filter(a => a.r.xj > 0); J.out(box, 'xj', xs.length ? J.fmt(Math.min(...xs.map(a => a.r.xj)), 1) + ' nm' : '—'); const rs = rec.filter(a => isFinite(a.r.rs)); J.out(box, 'rs', rs.length ? J.fmt(Math.min(...rs.map(a => a.r.rs)), 0) + ' Ω/□' : '—');
+    J.$('#tbl').innerHTML = rec.length ? '<table style="border-collapse:collapse;width:100%"><tr style="text-align:left"><th>#</th><th>미션</th><th>조건</th><th>x<sub>j</sub></th><th>R<sub>s</sub></th></tr>' + rec.map((a, k) => `<tr style="border-top:1px solid var(--line)"><td><span style="color:${cols[k % cols.length]}">■</span> ${k + 1}</td><td>${MS[+a.v.m].name}</td><td>${a.v.d} ${J.fmt(a.v.E, 1)} keV ${J.sci(a.v.Q, 1)} · ${J.fmt(a.v.T, 0)} °C ${J.fmt(a.v.t, a.v.t < 1 ? 4 : 0)} s</td><td>${a.r.xj > 0 ? J.fmt(a.r.xj, 1) + ' nm' : '—'}</td><td>${isFinite(a.r.rs) ? J.fmt(a.r.rs, 0) : '—'}</td></tr>`).join('') + '</table>' : ''; };
+  J.$('#bsave').onclick = () => { if(PG.last){ rec.push({v:PG.last.v, r:PG.last.r}); if(rec.length > 8) rec.shift(); draw(); } };
+  J.$('#bclr').onclick = () => { rec.length = 0; draw(); };
+  J.live(draw);
+})();
+</script>
+</body>
+</html>

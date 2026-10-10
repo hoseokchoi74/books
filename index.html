@@ -96,8 +96,8 @@
   <div>
     <div class="kicker">The Interactive Library · 集賢殿 叢書</div>
     <h1>책을 펼치면,<br><em>원리</em>가 움직입니다.</h1>
-    <p>집현전(Jade Hall)은 직접 만지며 배우는 인터랙티브 교과서 시리즈입니다. 옛 서책처럼 실로 엮은 한 권 한 권 안에, 슬라이더를 움직이고 3D 구조를 돌려 보는 실험이 가득합니다. 지금은 중·고등학생을 위한 입문서 <b>반도체 기초 書</b>(상·중·하 세 권), <b>DRAM</b>, <b>NAND 플래시</b>, 메모리 전반을 아우르는 <b>메모리 書</b>, 칩 전체를 다루는 <b>SoC 書</b>, 칩을 만드는 <b>공정 書</b>, 그리고 노광과 식각을 각각 깊이 파고든 별책 <b>포토 書</b>와 <b>식각 書</b>를 펼칠 수 있습니다.</p>
-    <div class="cta"><a class="btn red" href="semiconductor/index.html" style="background:#3f6b2e;border-color:#3f6b2e">반도체 기초 書 펼치기 →</a><a class="btn red" href="dram/index.html">DRAM 書 펼치기 →</a><a class="btn red" href="nand/index.html" style="background:var(--plum);border-color:var(--plum)">NAND 書 펼치기 →</a><a class="btn red" href="memory/index.html" style="background:var(--jade);border-color:var(--jade)">메모리 書 펼치기 →</a><a class="btn red" href="soc/index.html" style="background:var(--gold);border-color:var(--gold)">SoC 書 펼치기 →</a><a class="btn red" href="process/index.html" style="background:var(--wood2);border-color:var(--wood2)">공정 書 펼치기 →</a><a class="btn red" href="photo/index.html" style="background:#4b3a7c;border-color:#4b3a7c">포토 書 펼치기 →</a><a class="btn red" href="etch/index.html" style="background:#2d6470;border-color:#2d6470">식각 書 펼치기 →</a><a class="btn ghost" href="#shelf">서가 둘러보기</a></div>
+    <p>집현전(Jade Hall)은 직접 만지며 배우는 인터랙티브 교과서 시리즈입니다. 옛 서책처럼 실로 엮은 한 권 한 권 안에, 슬라이더를 움직이고 3D 구조를 돌려 보는 실험이 가득합니다. 지금은 중·고등학생을 위한 입문서 <b>반도체 기초 書</b>(상·중·하 세 권), <b>DRAM</b>, <b>NAND 플래시</b>, 메모리 전반을 아우르는 <b>메모리 書</b>, 칩 전체를 다루는 <b>SoC 書</b>, 칩을 만드는 <b>공정 書</b>, 그리고 노광·식각·확산을 각각 깊이 파고든 별책 <b>포토 書</b>, <b>식각 書</b>, <b>확산 書</b>를 펼칠 수 있습니다.</p>
+    <div class="cta"><a class="btn red" href="semiconductor/index.html" style="background:#3f6b2e;border-color:#3f6b2e">반도체 기초 書 펼치기 →</a><a class="btn red" href="dram/index.html">DRAM 書 펼치기 →</a><a class="btn red" href="nand/index.html" style="background:var(--plum);border-color:var(--plum)">NAND 書 펼치기 →</a><a class="btn red" href="memory/index.html" style="background:var(--jade);border-color:var(--jade)">메모리 書 펼치기 →</a><a class="btn red" href="soc/index.html" style="background:var(--gold);border-color:var(--gold)">SoC 書 펼치기 →</a><a class="btn red" href="process/index.html" style="background:var(--wood2);border-color:var(--wood2)">공정 書 펼치기 →</a><a class="btn red" href="photo/index.html" style="background:#4b3a7c;border-color:#4b3a7c">포토 書 펼치기 →</a><a class="btn red" href="etch/index.html" style="background:#2d6470;border-color:#2d6470">식각 書 펼치기 →</a><a class="btn red" href="diffusion/index.html" style="background:#963c26;border-color:#963c26">확산 書 펼치기 →</a><a class="btn ghost" href="#shelf">서가 둘러보기</a></div>
   </div>
 </section>
 
@@ -147,6 +147,7 @@ const SHELVES = [
     {t:'공정 書', s:'工程', kr:'반도체 공정: 웨이퍼 위에 새기는 천 개의 단계', code:'器 · 伍', c:'#6b4426', href:'process/index.html'},
     {t:'포토 書', s:'光刻', kr:'포토리소그래피: 빛으로 새기는 나노미터', code:'器 · 別冊', c:'#4b3a7c', href:'photo/index.html'},
     {t:'식각 書', s:'蝕刻', kr:'식각: 깎아서 새기는 나노 조각', code:'器 · 別冊', c:'#2d6470', href:'etch/index.html'},
+    {t:'확산 書', s:'擴散', kr:'확산·열공정: 열로 심는 원자', code:'器 · 別冊', c:'#963c26', href:'diffusion/index.html'},
     {t:'包裝 書', s:'封止', kr:'패키징과 적층', code:'器 · 陸', c:'#3c6f8a'},
     {t:'感光 書', s:'映像', kr:'이미지 센서', code:'器 · 柒', c:'#8a2f28'},
     {t:'顯示 書', s:'畫面', kr:'디스플레이', code:'器 · 捌', c:'#3c3a6b'}
@@ -211,11 +212,17 @@ const SHELVES = [
     ['식각 書 · 8장','이온과 라디칼이 만든 단면은?','입자 수천 개를 추적해 수직 트렌치·언더컷·보잉을 직접 깎기','etch/chapters/profile.html#s1','etchprof'],
     ['식각 書 · 9장','깊은 구멍은 왜 느리게 깎일까?','폭이 다른 네 구멍을 함께 식각해 ARDE 관찰','etch/chapters/aspect.html#s1','arde'],
     ['식각 書 · 11장','원자 한 층만 깎을 수 있을까?','흡착과 이온 두 단계로 도는 ALE 사이클 애니메이션','etch/chapters/ale.html#s1','ale'],
+    ['확산 書 · 2장','원자는 어떻게 퍼질까?','원자 600개의 무작위 걸음이 √(Dt) 구름이 되는 과정을 직접 관찰','diffusion/chapters/fick.html#s1','rwalk'],
+    ['확산 書 · 8장','주입 손상은 왜 확산을 빠르게 할까?','틈새 원자가 {311}로 뭉쳤다 풀리며 일으키는 TED 계산','diffusion/chapters/anneal.html#s1','ted'],
+    ['확산 書 · 15장','목표 접합을 만들 수 있을까?','주입·어닐 레시피로 웰부터 초저접합까지 네 미션 도전','diffusion/chapters/playground.html#s1','recipe'],
     ['SoC 書 · 3장','NPU는 행렬을 어떻게 곱할까?','3×3 시스톨릭 어레이로 데이터가 흐르는 모습 보기','soc/chapters/accel.html#s3','systolic'],
     ['SoC 書 · 4장','칩 안에도 교통 체증이 있을까?','4×4 메시 NoC에 패킷을 흘려 포화를 일으키기','soc/chapters/noc.html#s2','noc'],
     ['SoC 書 · 8장','게임하면 왜 폰이 느려질까?','20분 게임 동안 온도와 스로틀링 따라가기','soc/chapters/thermal.html#s1','thermal']
   ];
   const art = {
+    rwalk:(()=>{let o='',x=150,y=60,r=7;const R=()=>(r=(r*9301+49297)%233280)/233280;for(let k=0;k<70;k++){const a=R()*6.283,nx=x+Math.cos(a)*9,ny=y+Math.sin(a)*7;o+='<line x1="'+x.toFixed(1)+'" y1="'+y.toFixed(1)+'" x2="'+nx.toFixed(1)+'" y2="'+ny.toFixed(1)+'" stroke="#963c26" stroke-width="1.4" opacity="'+(0.3+k/100)+'"/>';x=nx;y=ny;}return '<circle cx="150" cy="60" r="46" fill="none" stroke="var(--ink3)" stroke-dasharray="4 4"/>'+o+'<circle cx="150" cy="60" r="4" fill="var(--ink)"/>';})(),
+    ted:'<rect x="20" y="10" width="260" height="100" fill="#c9ced8"/>'+[[60,40],[100,62],[150,30],[200,70],[240,48]].map(([x,y])=>'<rect x="'+(x-14)+'" y="'+(y-2)+'" width="28" height="4" fill="#8a5ac8" transform="rotate(-25 '+x+' '+y+')"/>').join('')+Array.from({length:24},(_,i)=>'<circle cx="'+(30+((i*37)%240))+'" cy="'+(20+((i*53)%85))+'" r="2.6" fill="#d65a4a"/>').join(''),
+    recipe:'<polyline points="20,100 60,100 75,20 90,100 280,100" fill="none" stroke="var(--ink3)" stroke-width="1.5"/><path d="M20,22 C80,22 110,30 140,60 C170,95 200,100 280,102" fill="none" stroke="#963c26" stroke-width="3"/><rect x="130" y="10" width="40" height="100" fill="rgba(58,163,106,.18)"/><text x="150" y="24" text-anchor="middle" font-size="16">★</text>',
     etchprof:'<rect x="20" y="10" width="260" height="14" fill="#9c7bd1"/><rect x="20" y="24" width="260" height="80" fill="#8cc6e6"/><rect x="20" y="104" width="260" height="8" fill="#d9a441"/>'+[70,150,230].map(x=>'<rect x="'+(x-12)+'" y="10" width="24" height="94" fill="var(--card)"/><rect x="'+(x-13)+'" y="24" width="2" height="80" fill="#5f9a45"/><rect x="'+(x+11)+'" y="24" width="2" height="80" fill="#5f9a45"/><line x1="'+x+'" y1="0" x2="'+x+'" y2="100" stroke="#e0b030" stroke-width="1.5"/>').join(''),
     arde:'<rect x="20" y="10" width="260" height="100" fill="#8cc6e6"/>'+[[50,6,40],[110,12,62],[180,24,82],[250,40,96]].map(([x,w,d])=>'<rect x="'+(x-w/2)+'" y="10" width="'+w+'" height="'+d+'" fill="var(--card)"/>').join('')+'<rect x="20" y="6" width="260" height="4" fill="#9c7bd1"/>',
     ale:Array.from({length:4},(_,l)=>Array.from({length:12},(_,i)=>'<circle cx="'+(40+i*20)+'" cy="'+(100-l*18)+'" r="8" fill="#8f96a3"/>').join('')).join('')+Array.from({length:12},(_,i)=>i%3?'<circle cx="'+(40+i*20)+'" cy="36" r="5" fill="#3aa36a"/>':'').join('')+'<line x1="80" y1="0" x2="80" y2="26" stroke="var(--red)" stroke-width="2.5"/><line x1="200" y1="0" x2="200" y2="26" stroke="var(--red)" stroke-width="2.5"/>',

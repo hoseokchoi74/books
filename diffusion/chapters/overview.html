@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>열공정 한눈에 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="overview">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 01 <span class="hanja">第一章 · 熱</span></div>
+  <h1>열공정 한눈에</h1>
+  <p class="lead">반도체는 "불순물을 일부러 넣은" 실리콘이다. 붕소를 넣으면 p형, 인·비소를 넣으면 n형이 되고, 그 경계가 다이오드와 트랜지스터를 만든다. 원자를 원하는 깊이에 원하는 양만큼 심고 제자리에 앉히는 일이 <span class="term">확산·열공정</span>이다. 팹에서는 흔히 "디퓨전" 공정이라 부르며, 산화로(퍼니스), 이온 주입기, 급속 열처리(RTP), 레이저 어닐 장비가 여기에 속한다. 핵심 원리는 단 하나, 원자는 뜨거울수록 빨리 움직인다는 것이다. 그래서 칩 공정 전체의 온도와 시간을 합친 <span class="term">열 예산</span>(thermal budget)이 모든 접합의 깊이를 정한다. 이 장은 공정 흐름 속 열공정의 자리, 장비별 온도–시간 모양, 그리고 온도가 확산을 얼마나 무섭게 바꾸는지 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>CMOS 공정 흐름에서 산화·주입·어닐·실리사이드의 순서와 온도를 안다.</li>
+  <li>각 열 단계의 Dt를 더해 누적 확산 길이 √(ΣDt)를 계산한다(열 예산).</li>
+  <li>퍼니스·RTP·플래시·레이저 어닐의 온도–시간 곡선과 확산량을 비교한다.</li>
+  <li>아레니우스 식에서 온도 100 °C 차이가 확산 계수를 수십 배 바꾸는 것을 확인한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>공정 흐름 속 열 단계와 열 예산</h2>
+<p>트랜지스터를 만드는 동안 웨이퍼는 수십 번 가열된다. 소자 분리 트렌치의 라이너 산화(1,000 °C 이상), 웰 주입 후 활성화, 게이트 산화, 소스·드레인 주입 후 스파이크 어닐(1,050 °C, 1초 남짓), 실리사이드(400~500 °C), 그리고 배선 공정의 수십 번의 400 °C. 먼저 넣은 도펀트는 이후의 모든 열을 다 겪는다. 그래서 공정 설계는 "뒤로 갈수록 차갑게"가 원칙이다. 확산 길이는 각 단계의 D·t를 더한 값의 제곱근으로 커진다.</p>
+<div class="eq">$$L_{diff} = \sqrt{\textstyle\sum_k D(T_k)\,t_k},\qquad D(T) = D_0\,e^{-E_a/k_BT}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-1</span><span class="ttl">열 예산 계산기 (붕소 소스·드레인)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">S/D 어닐</span><select data-k="a"><option value="furn">퍼니스 950 °C 30분 (옛날 방식)</option><option value="rta">RTA 1,000 °C 10초</option><option value="spike" selected>스파이크 1,050 °C</option><option value="laser">레이저 1,300 °C 0.5 ms</option></select></label>
+      <label class="ctrl"><span class="lab">이후 실리사이드 온도 <output data-o="s"></output></span><input type="range" data-k="s" min="350" max="800" step="10" value="450" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">배선 공정 400 °C 누적 시간 <output data-o="b"></output></span><input type="range" data-k="b" min="0" max="20" step="0.5" value="6" data-d="1" data-u="시간"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">어닐 확산 길이 √(Dt)</span><span class="v" data-r="la"></span></div>
+      <div class="ro"><span class="k">이후 공정 기여</span><span class="v" data-r="lb"></span></div>
+      <div class="ro"><span class="k">누적 √(ΣDt)</span><span class="v" data-r="lt"></span></div>
+      <div class="ro"><span class="k">가장 큰 기여 단계</span><span class="v" data-r="top"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 소스·드레인 주입 이후의 열 단계를 온도(세로)와 시간 길이(가로, 로그)로 그린 막대. 오른쪽: 단계별 Dt 기여(막대, 로그)와 누적 확산 길이. 1 nm라도 줄여야 하는 최첨단 공정에서 퍼니스 어닐은 상상할 수 없다. 400 °C 배선 공정은 시간이 길어도 붕소를 거의 움직이지 못한다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🍞</span><b>오븐에 여러 번 들어가는 빵</b><span>빵 위에 처음 올린 치즈는 그 뒤 오븐에 들어갈 때마다 조금씩 더 녹아 퍼진다. 마지막에 올린 토핑은 거의 그대로다. 그래서 요리사는 오래 굽는 것부터 하고, 섬세한 토핑은 마지막에, 짧게 데운다. 반도체 공정의 "뒤로 갈수록 차갑게" 원칙이 이것이다.</span></div>
+
+<h2 id="s2"><span class="n">02</span>네 가지 가열 장비</h2>
+<p><b>퍼니스</b>(확산로)는 웨이퍼 100~150장을 석영관에 넣고 수십 분~수 시간 가열한다. 균일하고 경제적이지만 온도를 빨리 바꿀 수 없다(분당 수 °C~10 °C). <b>RTP</b>(급속 열처리)는 할로겐 램프로 웨이퍼 한 장을 초당 수십~수백 °C로 데웠다 식힌다. 꼭대기에서 머물지 않고 바로 식히는 것이 <b>스파이크 어닐</b>이다. <b>플래시 어닐</b>은 수 ms 동안 섬광으로 표면만 1,300 °C로 올리고, <b>레이저 어닐</b>은 µs~ns 동안 표면 수백 nm만 녹는점 가까이 올린다. 시간이 짧을수록 도펀트는 덜 움직이지만, 활성화(격자 자리 진입)는 충분히 된다는 것이 핵심이다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-2</span><span class="ttl">온도–시간 곡선과 확산량</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">최고 온도 <output data-o="T"></output></span><input type="range" data-k="T" min="900" max="1350" step="10" value="1050" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">도펀트</span><select data-k="d"><option value="B" selected>붕소</option><option value="P">인</option><option value="As">비소</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">퍼니스 (승온 10 °C/분, 30분 유지)</span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">스파이크 (승온 150 °C/s)</span><span class="v" data-r="s"></span></div>
+      <div class="ro"><span class="k">플래시 (1.5 ms)</span><span class="v" data-r="fl"></span></div>
+      <div class="ro"><span class="k">레이저 (0.2 ms)</span><span class="v" data-r="l"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 네 장비의 온도–시간 곡선(가로 = 시간, 로그). 오른쪽: 같은 최고 온도에서 각 장비가 만드는 확산 길이 √(∫D dt) (막대, 로그). 같은 1,050 °C라도 퍼니스와 레이저의 확산량은 수천 배 차이 난다. 승온·냉각 구간까지 적분했다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>아레니우스: 100 °C가 만드는 수십 배</h2>
+<p>도펀트 원자가 실리콘 결정 속에서 한 칸 옮겨 가려면 3.5 eV 남짓의 에너지 언덕을 넘어야 한다. 실온의 열에너지 k<sub>B</sub>T는 0.026 eV에 불과하므로 원자는 사실상 영원히 제자리에 있다. 1,000 °C에서도 k<sub>B</sub>T는 0.11 eV뿐이지만, 이미 수많은 원자 진동 중 일부가 언덕을 넘는다. 확산 계수는 온도의 지수 함수라서 1,000 °C 근처에서 온도가 25 °C만 올라도 두 배가 된다. 그래서 열공정 장비는 ±1 °C 이하로 온도를 맞춘다.</p>
+<div class="eq">$$\frac{d\ln D}{dT} = \frac{E_a}{k_B T^2}\quad\Rightarrow\quad \frac{\Delta D}{D} \approx \frac{E_a}{k_BT^2}\,\Delta T \approx 2.5\,\%/^\circ\text{C}\ (\text{1,000 °C, 3.5 eV})$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 1-3</span><span class="ttl">도펀트 확산 계수 지도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="700" max="1300" step="5" value="1000" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">목표 확산 길이 <output data-o="L"></output></span><input type="range" data-k="L" min="5" max="500" step="5" value="100" data-d="0" data-u="nm"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">D (B / P / As / Sb)</span><span class="v" data-r="d" style="font-size:13.5px"></span></div>
+      <div class="ro"><span class="k">1 °C 오차의 D 변화 (붕소)</span><span class="v" data-r="s"></span></div>
+      <div class="ro"><span class="k">목표 길이까지 걸리는 시간 (붕소)</span><span class="v" data-r="t"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 네 도펀트의 확산 계수(로그)를 1/T에 대해 그린 아레니우스 그림. 직선의 기울기가 활성화 에너지다. 오른쪽: 현재 온도에서 시간에 따라 붕소가 퍼지는 거리 √(Dt)(실선)와 목표(점선). 인은 붕소보다 약간, 비소·안티몬은 훨씬 느리다. 그래서 얕은 n⁺ 접합에는 무거운 비소를 쓴다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 실온에서 붕소 원자 하나가 한 칸(0.27 nm) 옮겨 가는 데 얼마나 걸릴까?</p><p>25 °C에서 D ≈ 0.76 × e<sup>−3.46/0.0257</sup> ≈ 10⁻⁵⁹ cm²/s. 한 칸 거리에 필요한 시간은 a²/D ≈ 10⁴⁴초로, 우주 나이(4 × 10¹⁷초)의 10²⁶배다. 그래서 칩은 수십 년을 써도 접합이 그대로이고, 확산은 오직 공정 중 뜨거운 순간에만 일어난다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">열 예산을 줄이려면 공정 순서를 어떻게 하는 것이 원칙인가?</p><ol><li>뒤로 갈수록 뜨겁게</li><li>뒤로 갈수록 차갑게</li><li>모든 단계를 같은 온도로</li><li>순서는 상관없다</li></ol>
+<p class="explain">먼저 넣은 도펀트는 이후 모든 열을 겪으므로, 고온 공정을 앞에 둔다.</p></div>
+<div class="quiz" data-a="2"><p class="q">두 열 단계의 Dt가 각각 4 × 10⁻¹² cm², 5 × 10⁻¹² cm²이면 누적 확산 길이는?</p><ol><li>9 nm</li><li>45 nm</li><li>30 nm</li><li>3 nm</li></ol>
+<p class="explain">√(9 × 10⁻¹²) cm = 3 × 10⁻⁶ cm = 30 nm.</p></div>
+<div class="quiz" data-a="0"><p class="q">스파이크·플래시·레이저 어닐의 공통 목적은?</p><ol><li>짧은 시간에 활성화는 충분히, 확산은 최소로</li><li>산화막을 두껍게</li><li>도펀트를 깊이 보내기</li><li>장비를 싸게</li></ol>
+<p class="explain">활성화는 빠르게 일어나지만 확산은 Dt에 비례하므로 짧을수록 유리하다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 1-1 열 예산 */
+(function(){
+  const box = J.$('#sim1'), AN = {furn:['퍼니스 950 °C', 950, 1800], rta:['RTA 1,000 °C', 1000, 10], spike:['스파이크 1,050 °C', 1050, 1.2], laser:['레이저 1,300 °C', 1300, 5e-4]};
+  J.sim('sim1', v => { const a = AN[v.a], steps = [[a[0], a[1], a[2]], ['스페이서 증착 550 °C', 550, 1800], ['실리사이드 ' + v.s + ' °C', v.s, 30], ['배선 400 °C', 400, v.b*3600]].filter(s => s[2] > 0);
+    const dts = steps.map(s => DF.D('B', s[1])*s[2]), tot = dts.reduce((x, y) => x + y, 0);
+    const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const L = 50, B = h - 34, X = t => L + (Math.log10(t) + 4)/9*(w - L - 10), Y = T => B - (T - 300)/1100*(B - 12);
+    ctx.strokeStyle = J.c('--line'); for(let e = -4; e <= 5; e++){ ctx.beginPath(); ctx.moveTo(X(Math.pow(10, e)), 12); ctx.lineTo(X(Math.pow(10, e)), B); ctx.stroke(); }
+    ctx.fillStyle = J.c('--ink3'); ctx.font = '10.5px "JetBrains Mono"'; ctx.textAlign = 'center'; ['0.1ms', '1ms', '', '0.1s', '1s', '', '1분', '', '3시간', ''].forEach((t, i) => t && ctx.fillText(t, X(Math.pow(10, i - 4 + (t === '1분' ? 0.78 : t === '3시간' ? 0.03 : 0))), B + 13));
+    ctx.textAlign = 'right'; [400, 700, 1000, 1300].forEach(T => ctx.fillText(T + '°C', L - 4, Y(T) + 4));
+    steps.forEach((s, i) => { const col = ['--red', '--gold', '--plum', '--indigo'][i]; ctx.fillStyle = J.c(col); ctx.globalAlpha = .7; ctx.fillRect(X(1e-4), Y(s[1]) - 6, X(s[2]) - X(1e-4), 12); ctx.globalAlpha = 1; ctx.fillStyle = J.c('--ink'); ctx.textAlign = 'left'; ctx.font = '11px "Noto Sans KR"'; ctx.fillText(s[0], X(1e-4) + 4, Y(s[1]) - 9); });
+    ctx.fillStyle = J.c('--ink2'); ctx.textAlign = 'center'; ctx.fillText('유지 시간 (로그)', (L + w)/2, h - 4);
+    const {ctx:c2, w:w2, h:h2} = J.fit(J.$('#cv1b')); c2.clearRect(0, 0, w2, h2); const bw = (w2 - 60)/steps.length, Yl = v2 => h2 - 40 - (Math.log10(Math.max(v2, 1e-22)) + 22)/12*(h2 - 70);
+    steps.forEach((s, i) => { const x = 40 + i*bw + 8; c2.fillStyle = J.c(['--red', '--gold', '--plum', '--indigo'][i]); c2.fillRect(x, Yl(dts[i]), bw - 16, h2 - 40 - Yl(dts[i]));
+      c2.fillStyle = J.c('--ink'); c2.font = '11px "JetBrains Mono"'; c2.textAlign = 'center'; c2.fillText(J.fmt(Math.sqrt(dts[i])*1e7, 2) + ' nm', x + (bw - 16)/2, Yl(dts[i]) - 6); c2.font = '10.5px "Noto Sans KR"'; c2.fillText(s[0].split(' ')[0], x + (bw - 16)/2, h2 - 24); });
+    c2.fillStyle = J.c('--ink2'); c2.textAlign = 'left'; c2.font = '11px "Noto Sans KR"'; c2.fillText('단계별 Dt (로그 눈금, 숫자 = √(Dt))', 6, 14);
+    const top = dts.indexOf(Math.max(...dts)), lb = Math.sqrt(tot - dts[0]);
+    J.out(box, 'la', J.fmt(Math.sqrt(dts[0])*1e7, 2) + ' nm'); J.out(box, 'lb', J.fmt(lb*1e7, 2) + ' nm', lb*1e7 < 1 ? 'good' : 'warn'); J.out(box, 'lt', J.fmt(Math.sqrt(tot)*1e7, 2) + ' nm', Math.sqrt(tot)*1e7 < 5 ? 'good' : Math.sqrt(tot)*1e7 < 20 ? 'warn' : 'bad'); J.out(box, 'top', steps[top][0]); });
+})();
+
+/* 1-2 장비 */
+(function(){
+  const box = J.$('#sim2');
+  const prof = (kind, Tp) => { const pts = []; const base = 500;
+    if(kind === 'f'){ const ru = (Tp - base)/(10/60); for(let t = 0; t <= 2*ru + 1800; t += 10){ const T = t < ru ? base + t*10/60 : t < ru + 1800 ? Tp : Tp - (t - ru - 1800)*5/60; pts.push([t + 1, Math.max(base, T)]); } }
+    if(kind === 's'){ const ru = (Tp - base)/150; for(let t = 0; t <= ru + 6; t += 0.01){ const T = t < ru ? base + 150*t : Tp - (t - ru)*80; pts.push([t + 0.01, Math.max(base, Math.min(Tp, T))]); } }
+    if(kind === 'fl'){ const pre = 800; for(let t = 0; t <= 0.02; t += 2e-5){ const T = pre + (Tp - pre)*Math.exp(-Math.pow((t - 0.003)/0.0015, 2)); pts.push([t + 1e-5, T]); } }
+    if(kind === 'l'){ for(let t = 0; t <= 0.003; t += 2e-6){ const T = 400 + (Tp - 400)*Math.exp(-Math.pow((t - 4e-4)/2e-4, 2)); pts.push([t + 1e-6, T]); } }
+    return pts; };
+  const integ = (pts, dop) => { let s = 0; for(let i = 1; i < pts.length; i++) s += DF.D(dop, pts[i][1])*(pts[i][0] - pts[i - 1][0]); return Math.sqrt(s)*1e7; };
+  J.sim('sim2', v => { const K = ['f', 's', 'fl', 'l'], P = K.map(k => prof(k, v.T)), cols = ['--indigo', '--red', '--gold', '--plum'];
+    J.plot(J.$('#cv2a'), {x:[1e-5, 2e4], y:[400, 1400], logx:true, xf:t => t >= 1 ? J.fmt(t, 0) + 's' : t >= 1e-3 ? J.fmt(t*1e3, 0) + 'ms' : J.fmt(t*1e6, 0) + 'µs', xlab:'시간 (로그)', ylab:'온도 (°C)', series:P.map((p, i) => ({pts:p, color:cols[i], w:2.5}))});
+    const L = P.map(p => integ(p, v.d)), names = ['퍼니스', '스파이크', '플래시', '레이저'];
+    const {ctx, w, h} = J.fit(J.$('#cv2b')); ctx.clearRect(0,0,w,h); const bw = (w - 60)/4, Yl = x => h - 40 - (Math.log10(Math.max(x, 1e-3)) + 3)/6*(h - 70);
+    L.forEach((l, i) => { const x = 40 + i*bw + 8; ctx.fillStyle = J.c(cols[i]); ctx.fillRect(x, Yl(l), bw - 16, h - 40 - Yl(l)); ctx.fillStyle = J.c('--ink'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.fillText(J.fmt(l, l < 1 ? 3 : 1) + ' nm', x + (bw - 16)/2, Yl(l) - 6); ctx.font = '11px "Noto Sans KR"'; ctx.fillText(names[i], x + (bw - 16)/2, h - 24); });
+    ctx.fillStyle = J.c('--ink2'); ctx.textAlign = 'left'; ctx.fillText('확산 길이 √(∫D dt) (로그)', 6, 14);
+    ['f', 's', 'fl', 'l'].forEach((k, i) => J.out(box, k, J.fmt(L[i], L[i] < 1 ? 3 : 1) + ' nm')); });
+})();
+
+/* 1-3 아레니우스 */
+(function(){
+  const box = J.$('#sim3'), Ks = ['B', 'P', 'As', 'Sb'];
+  J.sim('sim3', v => { const S = Ks.map(k => ({pts:Array.from({length:61}, (_, i) => { const T = 700 + i*10; return [1e4/(T + 273.15), DF.D(k, T)]; }), color:DF.DOP[k].col, w:2.5}));
+    const P = J.plot(J.$('#cv3a'), {x:[6.3, 10.3], y:[1e-19, 1e-11], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'10⁴ / T (K⁻¹)', ylab:'D (cm²/s)', series:S, vlines:[{x:1e4/(v.T + 273.15), color:'--ink'}]});
+    Ks.forEach((k, i) => { P.ctx.fillStyle = DF.DOP[k].col; P.ctx.font = '12px "Noto Sans KR"'; P.ctx.fillText(DF.DOP[k].name, P.X(6.5), P.Y(DF.D(k, 1300 - 0)) - 4 + i*14); });
+    const Db = DF.D('B', v.T), tNeed = Math.pow(v.L*1e-7, 2)/Db, pts = []; for(let lt = -1; lt <= 6; lt += 0.05){ const t = Math.pow(10, lt); pts.push([t, Math.sqrt(Db*t)*1e7]); }
+    J.plot(J.$('#cv3b'), {x:[0.1, 1e6], y:[0.01, 2000], logx:true, logy:true, xf:t => t < 60 ? J.fmt(t, 1) + 's' : t < 3600 ? J.fmt(t/60, 0) + '분' : J.fmt(t/3600, 0) + 'h', yf:t => J.fmt(t, 2), xlab:'시간', ylab:'붕소 확산 길이 (nm)', series:[{pts, color:'--red', w:3}], hlines:[{y:v.L, color:'--ink3', label:'목표'}]});
+    const fmtT = t => t < 1 ? J.fmt(t*1e3, 1) + ' ms' : t < 60 ? J.fmt(t, 1) + ' s' : t < 3600 ? J.fmt(t/60, 1) + ' 분' : t < 86400*365 ? J.fmt(t/3600, 1) + ' 시간' : J.sci(t/(86400*365), 2) + ' 년';
+    J.out(box, 'd', Ks.map(k => J.sci(DF.D(k, v.T), 1)).join(' / ') + ' cm²/s'); J.out(box, 's', '+' + J.fmt((DF.D('B', v.T + 1)/Db - 1)*100, 1) + ' %'); J.out(box, 't', fmtT(tNeed)); });
+})();
+</script>
+</body>
+</html>

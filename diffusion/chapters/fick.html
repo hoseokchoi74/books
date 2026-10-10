@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>확산의 기초 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="fick">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 02 <span class="hanja">第二章 · 散</span></div>
+  <h1>확산의 기초</h1>
+  <p class="lead">잉크 한 방울을 물에 떨어뜨리면 아무도 휘젓지 않아도 퍼져 나간다. 분자 하나하나는 아무 방향으로나 무작위로 움직일 뿐인데, 많은 수가 모이면 진한 곳에서 묽은 곳으로 흐르는 질서 있는 흐름이 생긴다. 이것이 <span class="term">확산</span>이다. 실리콘 결정 속 도펀트 원자도 똑같다. 이 장은 원자 하나의 무작위 걸음에서 출발해 픽의 법칙을 유도하고, 원자 구름이 시간의 제곱근으로 퍼지는 이유를 시뮬레이션으로 확인한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>무작위 걸음의 평균 이동 거리가 √(걸음 수)에 비례하고 그것이 √(Dt)로 이어지는 것을 본다.</li>
+  <li>픽의 제1법칙(흐름 ∝ 농도 기울기)과 제2법칙(변화 ∝ 곡률)을 그림으로 이해한다.</li>
+  <li>고정된 양의 원자가 퍼질 때 가우스 분포를 이루고 꼭대기가 1/√t로 낮아지는 것을 확인한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>무작위 걸음</h2>
+<p>결정 속 원자는 이웃 자리로 1초에 ν번 뛰어오른다(진동은 10¹³번 하지만 대부분 실패). 한 번 뛸 때 방향은 무작위다. N번 뛴 뒤 원자의 평균 위치는 그대로지만, 퍼짐(제곱 평균 거리)은 √N으로 커진다. 걸음 길이 a, 시간 t 동안 걸음 수 N = νt이므로, 퍼짐은 √(νa²t)이고, 이 νa²에 해당하는 양이 확산 계수 D다. "거리가 시간에 비례하지 않고 시간의 제곱근에 비례한다"는 것이 확산의 모든 계산에 깔린 핵심이다.</p>
+<div class="eq">$$\langle x^2\rangle = N a^2 = 2Dt\ (\text{1차원}),\qquad D = \tfrac12\,\nu\,a^2$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-1</span><span class="ttl">원자 600개의 무작위 걸음</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">뛰는 빈도 (온도) <output data-o="f"></output></span><input type="range" data-k="f" min="1" max="20" step="1" value="6" data-d="0" data-u="번/프레임"></label>
+      <label class="ctrl"><span class="lab">차원</span><select data-k="dim"><option value="1">1차원 (가로로만)</option><option value="2" selected>2차원</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b1g">시작/멈춤</button><button class="sbtn warn" id="b1r">처음으로</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">걸음 수 N</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">가로 방향 RMS 거리</span><span class="v" data-r="rms"></span></div>
+      <div class="ro"><span class="k">이론 √N (2차원은 √(N/2))</span><span class="v" data-r="th"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 가운데 세로선에서 출발한 원자들(점)과 원자 하나의 궤적(빨강). 오른쪽: 가로 위치의 분포(막대)와 이론 가우스 곡선(빨강). 걸음 수가 4배가 되면 퍼짐은 2배만 늘어난다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🚶</span><b>술 취한 사람의 산책</b><span>가로등에서 출발해 동전을 던져 앞이나 뒤로 한 걸음씩 걷는 사람은 100걸음 뒤 평균적으로 10걸음, 10,000걸음 뒤 100걸음 거리에 있다. 100배 오래 걸어도 10배 멀리 갈 뿐이다. 확산이 느린 이유다.</span></div>
+
+<h2 id="s2"><span class="n">02</span>픽의 두 법칙</h2>
+<p>왼쪽이 진하고 오른쪽이 묽으면, 왼쪽에서 오른쪽으로 뛰는 원자가 반대보다 많다. 그래서 알짜 흐름(선속) J는 농도 기울기에 비례한다(<b>제1법칙</b>). 한 지점의 농도가 시간에 따라 변하려면 들어오는 흐름과 나가는 흐름이 달라야 한다. 기울기가 일정하면(직선) 들어온 만큼 나가서 농도가 변하지 않는다. 농도 곡선이 위로 볼록한 곳(봉우리)은 줄고, 아래로 볼록한 곳(골짜기)은 찬다(<b>제2법칙</b>). 확산은 언제나 굴곡을 펴는 방향으로 일어난다.</p>
+<div class="eq">$$J = -D\,\frac{\partial C}{\partial x},\qquad \frac{\partial C}{\partial t} = -\frac{\partial J}{\partial x} = D\,\frac{\partial^2 C}{\partial x^2}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-2</span><span class="ttl">흐름 화살표와 곡률</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">처음 모양</span><select data-k="s"><option value="step" selected>계단</option><option value="two">봉우리 두 개</option><option value="lin">직선 기울기</option><option value="saw">톱니</option></select></label>
+      <label class="ctrl"><span class="lab">재생 속도 <output data-o="v"></output></span><input type="range" data-k="v" min="1" max="10" step="1" value="4" data-d="0"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b2g">시작/멈춤</button><button class="sbtn warn" id="b2r">처음으로</button></div>
+    <div class="canvas-box"><canvas id="cv2" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">경과 (무차원 Dt/L²)</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">전체 원자 수 (보존)</span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">최대 기울기</span><span class="v" data-r="g"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 파란 곡선 = 농도, 빨간 화살표 = 흐름 J(길이 ∝ 기울기), 아래 막대 = ∂C/∂t (초록 = 늘어남, 주황 = 줄어듦). 직선 구간에서는 화살표가 같은 크기라 농도가 변하지 않는다. 양 끝은 막혀 있어(반사 경계) 원자 수가 보존된다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>가우스 구름: 고정된 양이 퍼질 때</h2>
+<p>표면에 아주 얇게 Q개(단위 면적당)의 원자를 놓고 가열하면, 원자는 아래로 퍼지되 총량은 그대로다(표면은 막혀 있다고 하자). 해는 가우스 분포이고, 폭은 2√(Dt)로 자라고 꼭대기(표면 농도)는 1/√t로 낮아진다. 시간과 깊이를 √(Dt)로 나눠 그리면 모든 곡선이 하나로 겹친다. 이 "√t 닮음"이 확산 문제의 지문이다.</p>
+<div class="eq">$$C(x,t) = \frac{Q}{\sqrt{\pi D t}}\,\exp\!\left(-\frac{x^2}{4Dt}\right)\quad(\text{표면 반사}),\qquad C_s(t) = \frac{Q}{\sqrt{\pi Dt}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 2-3</span><span class="ttl">드라이브인 가우스와 닮음 붕괴</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="900" max="1200" step="10" value="1100" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">도즈 Q <output data-o="q"></output></span><input type="range" data-k="q" min="12" max="16" step="0.1" value="14" data-log="1" data-d="1" data-u="cm⁻²"></label>
+      <label class="ctrl"><span class="lab">보기</span><select data-k="m"><option value="raw" selected>깊이 그대로</option><option value="sc">√(Dt)로 나눈 닮음 좌표</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">D (붕소)</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">1시간 후 표면 농도</span><span class="v" data-r="cs"></span></div>
+      <div class="ro"><span class="k">수치 해 vs 해석 해 오차</span><span class="v" data-r="err"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 10분, 30분, 1시간, 3시간 후 붕소 분포(로그 눈금, 선 = 해석 해, 점 = 엔진의 수치 해). 오른쪽: 시간에 따른 표면 농도(빨강)와 1/√t 직선(회색). 닮음 좌표로 보면 네 곡선이 한 곡선에 포개진다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 깊이 100 nm까지 퍼지는 데 1시간 걸렸다면 200 nm까지는 얼마나 걸릴까?</p><p>거리는 √t에 비례하므로 2배 거리는 4배 시간, 곧 4시간이다. 반대로 접합을 절반 깊이로 줄이려면 열 시간을 4분의 1로 줄여야 한다. 얕은 접합 경쟁이 "더 짧은 어닐" 경쟁이 된 이유다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">무작위 걸음을 400번 하면 평균 이동 거리(RMS)는 걸음 길이의 몇 배인가?</p><ol><li>400</li><li>20</li><li>200</li><li>4</li></ol>
+<p class="explain">√400 = 20.</p></div>
+<div class="quiz" data-a="3"><p class="q">농도 분포가 직선(일정한 기울기)인 구간에서 시간이 지나면?</p><ol><li>농도가 늘어난다</li><li>농도가 줄어든다</li><li>흐름이 0이다</li><li>흐름은 있지만 농도는 변하지 않는다</li></ol>
+<p class="explain">곡률이 0이라 들어오는 흐름 = 나가는 흐름.</p></div>
+<div class="quiz" data-a="0"><p class="q">고정된 양이 가우스로 퍼질 때 시간이 4배가 되면 표면 농도는?</p><ol><li>1/2</li><li>1/4</li><li>2배</li><li>그대로</li></ol>
+<p class="explain">C<sub>s</sub> ∝ 1/√t.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 2-1 무작위 걸음 */
+(function(){
+  const box = J.$('#sim1'), NA = 600; let P = [], N = 0, run = false, V = null, trail = [];
+  const reset = () => { P = Array.from({length:NA}, (_, i) => ({x:0, y:Math.round((i/NA - 0.5)*80), y0:(i/NA - 0.5)})); N = 0; trail = [[0, P[0].y]]; };
+  reset();
+  const draw = () => { const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const cx = w/2, cy = h/2, s = Math.min(w, h)/90;
+    ctx.strokeStyle = J.c('--line2'); ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.stroke();
+    ctx.fillStyle = 'rgba(61,127,208,.6)'; P.forEach(p => ctx.fillRect(cx + p.x*s - 1.5, (V.dim === '2' ? cy + p.y*s : cy + p.y0*h*0.9) - 1.5, 3, 3));
+    ctx.strokeStyle = J.c('--red'); ctx.lineWidth = 1.5; ctx.beginPath(); trail.forEach(([x, y], i) => { const X = cx + x*s, Y = V.dim === '2' ? cy + y*s : cy + P[0].y0*h*0.9; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); ctx.stroke();
+    const bins = new Array(45).fill(0); P.forEach(p => { const k = Math.floor((p.x + 45)/2); if(k >= 0 && k < 45) bins[k]++; });
+    const fr = V.dim === '2' ? 0.5 : 1, sg = Math.sqrt(Math.max(N*fr, 1)), g = []; for(let x = -45; x <= 45; x += 0.5) g.push([x, NA*2/(Math.sqrt(2*Math.PI)*sg)*Math.exp(-x*x/(2*sg*sg))]);
+    J.plot(J.$('#cv1b'), {x:[-45, 45], y:[0, Math.max(...bins, 10)*1.15], xlab:'가로 위치 (걸음)', ylab:'원자 수', series:[{pts:bins.flatMap((n, k) => [[k*2 - 45, n], [k*2 - 43, n]]), color:'--indigo', w:1.5, fill:.3}].concat(N > 0 ? [{pts:g, color:'--red', w:2.5}] : [])});
+    const rms = Math.sqrt(P.reduce((a, p) => a + p.x*p.x, 0)/NA);
+    J.out(box, 'n', N); J.out(box, 'rms', J.fmt(rms, 2)); J.out(box, 'th', J.fmt(Math.sqrt(N*fr), 2)); };
+  J.sim('sim1', v => { const ch = V && V.dim !== v.dim; V = v; if(ch) reset(); draw(); });
+  J.$('#b1g').onclick = e => { run = !run; e.target.classList.toggle('on', run); };
+  J.$('#b1r').onclick = () => { reset(); draw(); };
+  J.loop(J.$('#cv1a'), () => { if(!run || !V) return; for(let k = 0; k < V.f; k++){ N++; P.forEach(p => { if(V.dim === '2'){ const r = Math.random(); if(r < .25) p.x++; else if(r < .5) p.x--; else if(r < .75) p.y++; else p.y--; } else p.x += Math.random() < .5 ? 1 : -1; });
+      const t = trail[trail.length - 1], p0 = P[0]; trail.push([p0.x, p0.y]); if(trail.length > 400) trail.shift(); } if(N > 1600){ run = false; J.$('#b1g').classList.remove('on'); } draw(); });
+})();
+
+/* 2-2 픽 */
+(function(){
+  const box = J.$('#sim2'), Nx = 200; let C = null, t = 0, run = false, V = null;
+  const init = s => { C = new Float64Array(Nx); for(let i = 0; i < Nx; i++){ const x = i/(Nx - 1);
+      C[i] = s === 'step' ? (x < 0.4 ? 1 : 0.1) : s === 'two' ? 0.1 + 0.8*Math.exp(-Math.pow((x - 0.3)/0.05, 2)) + 0.6*Math.exp(-Math.pow((x - 0.7)/0.08, 2)) : s === 'lin' ? 0.9 - 0.8*x : 0.1 + 0.8*((x*5) % 1); } t = 0; };
+  const draw = () => { const {ctx, w, h} = J.fit(J.$('#cv2')); ctx.clearRect(0,0,w,h); const L = 40, R = w - 10, top = 14, mid = h*0.7, X = i => L + i/(Nx - 1)*(R - L), Y = c => mid - c*(mid - top - 10);
+    ctx.strokeStyle = J.c('--line'); ctx.beginPath(); ctx.moveTo(L, mid); ctx.lineTo(R, mid); ctx.stroke();
+    ctx.strokeStyle = J.c('--indigo'); ctx.lineWidth = 3; ctx.beginPath(); for(let i = 0; i < Nx; i++) i ? ctx.lineTo(X(i), Y(C[i])) : ctx.moveTo(X(i), Y(C[i])); ctx.stroke();
+    let gmax = 0; for(let i = 8; i < Nx - 8; i += 12){ const g = -(C[i + 1] - C[i - 1])/2*(Nx - 1); gmax = Math.max(gmax, Math.abs(g)); const len = J.clamp(g*12, -60, 60), y = Y(C[i]) - 14; if(Math.abs(len) < 2) continue;
+      ctx.strokeStyle = J.c('--red'); ctx.fillStyle = J.c('--red'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(i), y); ctx.lineTo(X(i) + len, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(X(i) + len, y); ctx.lineTo(X(i) + len - Math.sign(len)*6, y - 4); ctx.lineTo(X(i) + len - Math.sign(len)*6, y + 4); ctx.closePath(); ctx.fill(); }
+    for(let i = 1; i < Nx - 1; i += 2){ const c2 = (C[i + 1] - 2*C[i] + C[i - 1])*(Nx - 1)*(Nx - 1), hh = J.clamp(c2*0.004, -1, 1)*(h - mid - 10); ctx.fillStyle = c2 > 0 ? 'rgba(58,163,106,.7)' : 'rgba(224,138,60,.7)'; ctx.fillRect(X(i) - 1, h - (h - mid)/2 - Math.max(0, hh), 3, Math.abs(hh)); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('농도 C(x)', L + 4, top + 4); ctx.fillText('∂C/∂t', L + 4, mid + 14);
+    J.out(box, 't', J.fmt(t, 4)); J.out(box, 'n', J.fmt(C.reduce((a, b) => a + b, 0)/Nx, 4)); J.out(box, 'g', J.fmt(gmax, 2)); };
+  J.sim('sim2', v => { const ch = !V || V.s !== v.s; V = v; if(ch) init(v.s); draw(); });
+  J.$('#b2g').onclick = e => { run = !run; e.target.classList.toggle('on', run); };
+  J.$('#b2r').onclick = () => { init(V.s); draw(); };
+  J.loop(J.$('#cv2'), () => { if(!run || !V) return; const dx = 1/(Nx - 1), dt = 2e-5*V.v; C = DF.step(C, dx, dt, () => 1, {type:'refl'}, 'refl'); t += dt; draw(); });
+})();
+
+/* 2-3 가우스 */
+(function(){
+  const box = J.$('#sim3'), Nx = 300;
+  J.sim('sim3', v => { const D = DF.D('B', v.T), times = [600, 1800, 3600, 10800], cols = ['--gold', '--jade', '--red', '--indigo'], L = 8*Math.sqrt(D*10800), dx = L/Nx;
+    const S = [], pts = []; let err = 0;
+    times.forEach((tt, k) => { const ana = [], num = []; const C0 = new Float64Array(Nx); C0[0] = v.q/dx;
+      const Cn = DF.solve(C0, dx, tt, () => D, {type:'refl'}, 'refl', 300);
+      for(let i = 0; i < Nx; i++){ const x = i*dx, c = v.q/Math.sqrt(Math.PI*D*tt)*Math.exp(-x*x/(4*D*tt)); const X = v.m === 'sc' ? x/Math.sqrt(D*tt) : x*1e7, Yv = v.m === 'sc' ? c*Math.sqrt(D*tt)/v.q : c;
+        ana.push([X, Math.max(Yv, 1e-30)]); if(i % 12 === 0) num.push([X, Math.max(v.m === 'sc' ? Cn[i]*Math.sqrt(D*tt)/v.q : Cn[i], 1e-30)]); if(k === 2 && i > 3 && i < Nx/3) err = Math.max(err, Math.abs(Cn[i] - c)/c); }
+      S.push({pts:ana, color:cols[k], w:2.5}); S.push({pts:num, color:cols[k], w:0, dash:[1, 6]}); pts.push(...num.map(p => ({x:p[0], y:p[1], color:cols[k], r:2.5}))); });
+    const xmax = v.m === 'sc' ? 6 : L*1e7, ymin = v.m === 'sc' ? 1e-4 : v.q/Math.sqrt(Math.PI*D*10800)*1e-4, ymax = v.m === 'sc' ? 1 : v.q/Math.sqrt(Math.PI*D*600)*2;
+    J.plot(J.$('#cv3a'), {x:[0, xmax], y:[ymin, ymax], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:v.m === 'sc' ? 'x / √(Dt)' : '깊이 (nm)', ylab:v.m === 'sc' ? 'C·√(Dt)/Q' : 'C (cm⁻³)', series:S.filter((_, i) => i % 2 === 0), points:pts});
+    const cs = [], ref = []; for(let lt = 1.5; lt <= 5; lt += 0.05){ const tt = Math.pow(10, lt); cs.push([tt/60, v.q/Math.sqrt(Math.PI*D*tt)]); }
+    J.plot(J.$('#cv3b'), {x:[0.5, 1700], y:[v.q/Math.sqrt(Math.PI*D*1e5), v.q/Math.sqrt(Math.PI*D*30)], logx:true, logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'시간 (분)', ylab:'표면 농도 (cm⁻³)', series:[{pts:cs, color:'--red', w:3}], points:times.map((tt, k) => ({x:tt/60, y:v.q/Math.sqrt(Math.PI*D*tt), color:cols[k], r:6}))});
+    J.out(box, 'd', J.sci(D, 2) + ' cm²/s'); J.out(box, 'cs', J.sci(v.q/Math.sqrt(Math.PI*D*3600), 2) + ' cm⁻³'); J.out(box, 'err', J.fmt(err*100, 1) + ' %', err < 0.05 ? 'good' : 'warn'); });
+})();
+</script>
+</body>
+</html>

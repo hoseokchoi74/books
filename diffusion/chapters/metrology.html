@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>도핑 계측 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="metrology">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 14 <span class="hanja">第十四章 · 測</span></div>
+  <h1>도핑 계측</h1>
+  <p class="lead">원자는 눈에 보이지 않는다. 그래서 확산 공정의 결과는 늘 간접적으로 잰다. 바늘 네 개로 전기 저항을 재는 4탐침, 표면을 한 겹씩 깎아내며 날아오는 이온의 질량을 세는 SIMS, 비스듬히 갈아낸 단면을 따라 저항을 재는 SRP, 공핍층의 커패시턴스로 농도를 읽는 C–V가 대표적이다. 측정법마다 보는 것이 다르다. SIMS는 원자의 총량(화학 농도)을, 4탐침·SRP·C–V는 전기적으로 활성화된 운반자를 본다. 그리고 각 측정은 그 자체의 분해능과 왜곡을 갖는다. 이 장에서는 측정값이 실제 분포를 어떻게 비틀어 보여 주는지 실험해 본다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>4탐침 면저항 측정 원리와 웨이퍼 지도(49점) 통계를 해석한다.</li>
+  <li>SIMS의 깊이 분해능과 knock-on 혼합이 얕은 분포를 넓혀 보이게 하는 과정을 본다.</li>
+  <li>화학 농도(SIMS)와 운반자 농도(SRP)의 차이로 비활성 도펀트와 접합 위치를 판단한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>4탐침과 면저항 지도</h2>
+<p>일직선으로 같은 간격 s로 놓인 네 바늘 중 바깥 둘로 전류 I를 흘리고 안쪽 둘 사이의 전압 V를 잰다. 얇은 층이 무한히 넓다면 R<sub>s</sub> = (π/ln2)(V/I) ≈ 4.532 V/I로, 바늘 간격이나 접촉 저항과 상관없다. 웨이퍼 가장자리에 가까우면 전류가 막혀 보정 계수가 필요하다. 양산에서는 웨이퍼 위 49점(또는 그 이상)을 재어 평균과 1σ 불균일도를 관리한다. 지도 무늬는 원인을 알려 준다. 동심원은 어닐 온도(가열 균일도), 줄무늬는 주입 스캔, 한쪽으로 기운 무늬는 주입 각도나 기체 흐름이다.</p>
+<div class="eq">$$R_s = \frac{\pi}{\ln 2}\,\frac{V}{I}\,F\!\left(\frac{d}{s}\right),\qquad \sigma_{\%} = \frac{\mathrm{std}(R_s)}{\overline{R_s}}\times 100$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-1</span><span class="ttl">면저항 웨이퍼 지도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">어닐 온도 중심–가장자리 차 <output data-o="dT"></output></span><input type="range" data-k="dT" min="-8" max="8" step="0.5" value="3" data-d="1" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">주입 스캔 줄무늬 <output data-o="st"></output></span><input type="range" data-k="st" min="0" max="3" step="0.1" value="0.5" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">주입 도즈 기울기 (왼→오) <output data-o="tl"></output></span><input type="range" data-k="tl" min="-4" max="4" step="0.1" value="0" data-d="1" data-u="%"></label>
+      <label class="ctrl"><span class="lab">측정 점</span><select data-k="n"><option value="9">9점</option><option value="49" selected>49점</option><option value="121">121점</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="320"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="320"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">평균 R<sub>s</sub></span><span class="v" data-r="m"></span></div>
+      <div class="ro"><span class="k">1σ 불균일</span><span class="v" data-r="s"></span></div>
+      <div class="ro"><span class="k">진단</span><span class="v" data-r="d" style="font-size:14px"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 실제 면저항 지도(색)와 측정 점(검은 점). 오른쪽: 4탐침 원리. 바깥 바늘에서 들어간 전류(파란 곡선)가 층을 따라 퍼지고, 안쪽 바늘이 그 사이 전압을 읽는다. 아래 그래프는 가장자리까지의 거리 d/s에 따른 보정 계수 F. 어닐 온도가 1 °C 높으면 활성화가 늘어 R<sub>s</sub>가 약 1 % 낮아진다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>SIMS: 깎으며 세기</h2>
+<p>SIMS는 산소(O₂⁺)나 세슘(Cs⁺) 이온 빔으로 표면을 조금씩 깎아내며, 튀어나온 2차 이온을 질량 분석기로 세어 원소별 깊이 분포를 얻는다. 검출 한계가 10¹⁵ cm⁻³ 수준으로 매우 낮아 도펀트 분포 측정의 표준이다. 하지만 1차 이온이 표면을 때릴 때 아래 원자들을 더 깊이 밀어 넣는 knock-on 혼합이 일어나, 분포의 뒤쪽이 실제보다 완만하게(꼬리처럼) 측정된다. 이 왜곡은 지수 감쇠 길이(nm/decade)로 표현하며 1차 이온 에너지가 낮고 입사각이 비스듬할수록 작아진다. 몇 nm 두께의 얕은 접합을 재려면 수백 eV의 저에너지 빔이 필요하다.</p>
+<div class="eq">$$C_{meas}(z) = \int C_{true}(z')\,R(z - z')\,dz',\qquad R(u) \propto \begin{cases} e^{-u/\lambda_d} & u > 0 \\ e^{u/\lambda_u} & u < 0 \end{cases}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-2</span><span class="ttl">붕소 델타층 SIMS 측정</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">1차 이온 에너지 <output data-o="E"></output></span><input type="range" data-k="E" min="-0.6" max="0.7" step="0.02" value="0" data-log="1" data-d="2" data-u="keV"></label>
+      <label class="ctrl"><span class="lab">입사각 (법선 기준) <output data-o="a"></output></span><input type="range" data-k="a" min="0" max="70" step="1" value="45" data-d="0" data-u="°"></label>
+      <label class="ctrl"><span class="lab">델타층 간격 <output data-o="g"></output></span><input type="range" data-k="g" min="2" max="20" step="0.5" value="6" data-d="1" data-u="nm"></label>
+      <label class="ctrl"><span class="lab">측정 시료</span><select data-k="s"><option value="delta" selected>B 델타층 5개</option><option value="usj">초저에너지 B 주입 (0.5 keV)</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b2g">깎기 애니메이션</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">감쇠 길이 (뒤쪽)</span><span class="v" data-r="ld"></span></div>
+      <div class="ro"><span class="k">구별되는 델타층 / 측정 x<sub>j</sub></span><span class="v" data-r="n"></span></div>
+      <div class="ro"><span class="k">최고 농도 손실</span><span class="v" data-r="pk"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 실제 분포(회색 채움)와 SIMS 측정 결과(빨강, 로그 축). 측정 곡선의 각 봉우리 뒤쪽이 앞쪽보다 완만하다. 오른쪽: 분화구 단면. 1차 이온(노랑)이 들어와 표면을 깎으며 일부 붕소(빨강 점)를 아래로 밀어 넣는다. 간격이 감쇠 길이의 약 3배보다 좁으면 이웃 델타가 하나로 뭉쳐 보인다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🍰</span><b>케이크 층을 숟가락으로 맛보기</b><span>얇은 층이 여러 겹인 케이크를 위에서부터 한 숟갈씩 떠먹으며 맛(원소)을 기록한다. 숟가락이 클수록(1차 이온 에너지가 클수록) 떠낼 때 크림이 아래로 눌려 들어가, 아래층에서도 위층 맛이 난다. 작은 숟가락을 비스듬히 대면 층을 더 또렷이 구별할 수 있다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>화학 농도 대 운반자 농도</h2>
+<p>SIMS는 원자의 총량을, 확산 저항 분석(SRP)은 운반자를 본다. SRP는 시료를 아주 작은 각도로 비스듬히 갈아(베벨) 깊이를 옆으로 늘린 다음, 두 바늘을 몇 µm 간격으로 옮기며 접촉 저항을 재고 이를 운반자 농도로 환산한다. 베벨 각이 작을수록 깊이 분해능이 좋아진다. 두 측정을 겹쳐 보면 고용도를 넘은 비활성 도펀트(SIMS만 높음)와, 접합 근처에서 운반자가 공핍되거나 옆으로 번지는 효과(운반자 넘침)가 드러난다. 이 차이가 곧 활성화율이며, 접합 깊이도 두 측정에서 다르게 나온다.</p>
+<div class="eq">$$\Delta z = \Delta x\,\sin\theta,\qquad \eta_{act} = \frac{\int n(z)\,dz}{\int C(z)\,dz},\qquad L_D = \sqrt{\frac{\varepsilon_s k_BT}{q^2 N}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 14-3</span><span class="ttl">SIMS와 SRP 겹쳐 보기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">베벨 각 <output data-o="th"></output></span><input type="range" data-k="th" min="0.05" max="3" step="0.01" value="0.15" data-d="2" data-u="°"></label>
+      <label class="ctrl"><span class="lab">바늘 이동 간격 <output data-o="st"></output></span><input type="range" data-k="st" min="1" max="10" step="0.5" value="2.5" data-d="1" data-u="µm"></label>
+      <label class="ctrl"><span class="lab">어닐 온도 (스파이크) <output data-o="T"></output></span><input type="range" data-k="T" min="950" max="1100" step="5" value="1000" data-d="0" data-u="°C"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">SRP 깊이 분해능</span><span class="v" data-r="dz"></span></div>
+      <div class="ro"><span class="k">활성화율</span><span class="v" data-r="eta"></span></div>
+      <div class="ro"><span class="k">x<sub>j</sub> (SIMS / SRP)</span><span class="v" data-r="xj"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 시료: As 3 keV, 3×10¹⁵ cm⁻² 주입 + 스파이크 어닐, p형 기판 10¹⁷ cm⁻³. 왼쪽: 검정 = SIMS(화학 농도), 초록 = 실제 운반자, 빨간 점 = SRP 측정점. 고용도 위쪽 회색 영역이 비활성 비소다. SRP는 전자든 정공이든 다수 운반자를 보므로, 접합에서 곡선이 V자로 꺼졌다가 기판의 정공 농도(10¹⁷)로 다시 올라간다. 이 골의 위치가 SRP가 보는 접합이다. 오른쪽: 베벨 단면. 각이 작을수록 같은 깊이가 옆으로 길게 펼쳐져 측정점이 촘촘해진다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 3D 구조(FinFET 핀 옆면)의 도핑은 어떻게 잴까?</p><p>평면 시료를 전제로 한 SIMS, SRP는 핀 하나의 옆면 분포를 직접 재기 어렵다. 그래서 같은 공정을 넓은 평면 테스트 패턴에 적용해 재거나, 원자 탐침 단층 촬영(APT)처럼 원자 하나하나의 위치를 3D로 재구성하는 방법, 투과 전자 현미경의 에너지 분산 분광(EDS) 지도, 그리고 소자 전기 특성에서 거꾸로 도핑을 추정하는 방법을 함께 쓴다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">4탐침에서 바깥 두 바늘로 전류를, 안쪽 두 바늘로 전압을 재는 이유는?</p><ol><li>전류를 키우려고</li><li>접촉 저항의 영향을 없애려고</li><li>웨이퍼를 덜 긁으려고</li><li>측정을 빠르게 하려고</li></ol>
+<p class="explain">전압 바늘에는 전류가 거의 흐르지 않아 접촉 저항에서 전압 강하가 없다.</p></div>
+<div class="quiz" data-a="2"><p class="q">SIMS 측정 분포의 뒤쪽 꼬리가 실제보다 완만해지는 주된 이유는?</p><ol><li>검출기 잡음</li><li>산화막 성장</li><li>1차 이온에 의한 knock-on 혼합</li><li>도펀트 확산</li></ol>
+<p class="explain">1차 이온 에너지를 낮추고 입사각을 키우면 줄어든다.</p></div>
+<div class="quiz" data-a="0"><p class="q">SIMS 농도가 SRP 농도보다 훨씬 높은 표면 영역이 의미하는 것은?</p><ol><li>고용도를 넘은 비활성 도펀트</li><li>측정 오류</li><li>표면 산화</li><li>접합 위치</li></ol>
+<p class="explain">화학 농도 − 운반자 농도 = 비활성(클러스터, 석출) 도펀트.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 14-1 면저항 지도 */
+(function(){
+  const box = J.$('#sim1');
+  const pts = n => { const P = [[0, 0]]; if(n === 9){ for(let k = 0; k < 8; k++) P.push([0.8*Math.cos(k*Math.PI/4), 0.8*Math.sin(k*Math.PI/4)]); return P; }
+    const rings = n === 49 ? [[8, 0.33], [16, 0.66], [24, 0.95]] : [[8, 0.2], [16, 0.4], [24, 0.6], [32, 0.8], [40, 0.95]]; rings.forEach(([m, r]) => { for(let k = 0; k < m; k++) P.push([r*Math.cos(k*2*Math.PI/m), r*Math.sin(k*2*Math.PI/m)]); }); return P; };
+  const Rs = (x, y, v) => { const rr = x*x + y*y, dT = v.dT*(1 - rr); return 480*Math.exp(-dT/100)*(1 + v.st/100*Math.sin(y*28))*(1 - v.tl/200*x); };
+  J.sim('sim1', v => { const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const R = Math.min(w, h)/2 - 16, cx = w/2, cy = h/2 - 4, n = 60, vals = [];
+    for(let i = 0; i < n; i++) for(let j = 0; j < n; j++){ const x = (i + .5)/n*2 - 1, y = (j + .5)/n*2 - 1; if(x*x + y*y > 1) continue; vals.push([i, j, Rs(x, y, v)]); }
+    const mn = Math.min(...vals.map(a => a[2])), mx = Math.max(...vals.map(a => a[2])), sp = Math.max(mx - mn, 2);
+    vals.forEach(([i, j, r]) => { const f = (r - (mn + mx)/2 + sp/2)/sp; ctx.fillStyle = `hsl(${220 - 210*f},62%,52%)`; ctx.fillRect(cx - R + i/n*2*R, cy - R + j/n*2*R, 2*R/n + .6, 2*R/n + .6); });
+    ctx.strokeStyle = J.c('--ink'); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+    const P = pts(+v.n), rn = J.rng(7), m = P.map(([x, y]) => Rs(x, y, v)*(1 + 0.002*J.gauss(rn))); ctx.fillStyle = J.c('--ink');
+    P.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(cx + x*R, cy + y*R, 2.6, 0, 7); ctx.fill(); });
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText(J.fmt(mn, 1) + ' (파랑) ~ ' + J.fmt(mx, 1) + ' Ω/□ (빨강)', 6, h - 4);
+    const mean = m.reduce((a, b) => a + b, 0)/m.length, sd = Math.sqrt(m.reduce((a, b) => a + (b - mean)*(b - mean), 0)/(m.length - 1)), sig = sd/mean*100;
+    J.out(box, 'm', J.fmt(mean, 1) + ' Ω/□'); J.out(box, 's', J.fmt(sig, 2) + ' %', sig < 1 ? 'good' : sig < 2 ? 'warn' : 'bad');
+    const cause = [[Math.abs(v.dT)*0.5, '동심원 → 어닐 가열 균일도'], [v.st*0.7, '줄무늬 → 주입 스캔'], [Math.abs(v.tl)*0.6, '한쪽 기울기 → 주입 각도·빔']].sort((a, b) => b[0] - a[0]);
+    J.out(box, 'd', cause[0][0] < 0.4 ? '균일' : cause[0][1]);
+    /* 4탐침 그림 */
+    const c = J.$('#cv1b'), F = J.fit(c), g = F.ctx, W = F.w, H = F.h; g.clearRect(0,0,W,H); const top = H*0.32, s = W/6;
+    g.fillStyle = 'rgba(61,127,208,.18)'; g.fillRect(10, top, W - 20, 16); g.fillStyle = J.c('--line'); g.fillRect(10, top + 16, W - 20, 30);
+    const xs = [1.5, 2.5, 3.5, 4.5].map(k => k*s); g.strokeStyle = J.c('--indigo'); g.lineWidth = 1.4;
+    for(let k = 1; k <= 4; k++){ g.beginPath(); g.ellipse((xs[0] + xs[3])/2, top + 2, (xs[3] - xs[0])/2, k*3.4, 0, 0, Math.PI); g.stroke(); }
+    xs.forEach((x, k) => { g.strokeStyle = J.c('--ink'); g.lineWidth = 3; g.beginPath(); g.moveTo(x, 18); g.lineTo(x, top); g.stroke(); g.fillStyle = J.c('--ink2'); g.font = '11px "Noto Sans KR"'; g.textAlign = 'center'; g.fillText(['I+', 'V+', 'V−', 'I−'][k], x, 14); });
+    g.fillStyle = J.c('--red'); g.fillText('V = ' + J.fmt(mean/4.532, 1) + ' mV  (I = 1 mA)', W/2, top - 10); g.textAlign = 'left';
+    const PL = {x0:40, x1:W - 12, y0:H - 26, y1:top + 64}; const Fd = d => 1 - 0.3*Math.exp(-1.15*d); // 근사 보정 계수
+    g.strokeStyle = J.c('--line2'); g.lineWidth = 1; g.strokeRect(PL.x0, PL.y1, PL.x1 - PL.x0, PL.y0 - PL.y1); g.strokeStyle = J.c('--jade'); g.lineWidth = 2.5; g.beginPath();
+    for(let k = 0; k <= 100; k++){ const d = k/10, X = PL.x0 + d/10*(PL.x1 - PL.x0), Y = PL.y0 - (Fd(d) - 0.6)/0.45*(PL.y0 - PL.y1); k ? g.lineTo(X, Y) : g.moveTo(X, Y); } g.stroke();
+    g.fillStyle = J.c('--ink2'); g.fillText('F', 26, PL.y1 + 10); g.fillText('가장자리 거리 d/s → 10', PL.x1 - 140, PL.y0 + 16); g.fillText('1.0', 16, PL.y0 - 0.4/0.45*(PL.y0 - PL.y1) + 4); });
+})();
+
+/* 14-2 SIMS */
+(function(){
+  const box = J.$('#sim2'), dz = 0.1, N = 600; let V = null, anim = null;
+  const truth = v => { const C = new Float64Array(N); if(v.s === 'delta'){ for(let k = 0; k < 5; k++){ const z0 = 5 + k*v.g; for(let i = 0; i < N; i++){ const z = i*dz; C[i] += 2e20*Math.exp(-Math.pow((z - z0)/0.6, 2)); } } }
+    else for(let i = 0; i < N; i++) C[i] = DF.implant('B', 0.5, 1e15, i*dz, 0.05); for(let i = 0; i < N; i++) C[i] += 1e15; return C; };
+  const lam = v => { const dec = 0.35 + 1.9*Math.pow(v.E, 0.75)*Math.pow(Math.cos(v.a*Math.PI/180), 1.2); return dec; };
+  const meas = (C, v) => { const ld = lam(v)/Math.LN10, lu = ld/4, sg = 0.25 + 0.3*ld, K = []; let s = 0;
+    for(let k = -60; k <= 300; k++){ const u = k*dz, r = (u > 0 ? Math.exp(-u/ld) : Math.exp(u/lu))*1 + 0; K.push(r); s += r; }
+    const out = new Float64Array(N); for(let i = 0; i < N; i++){ let a = 0; for(let k = -60; k <= 300; k++){ const j = i - k; if(j >= 0 && j < N) a += C[j]*K[k + 60]; } out[i] = a/s; }
+    /* 가우스 (표면 거칠기) */
+    const g = Math.max(1, Math.round(sg/dz)), o2 = new Float64Array(N); for(let i = 0; i < N; i++){ let a = 0, ws = 0; for(let k = -3*g; k <= 3*g; k++){ const j = i + k; if(j < 0 || j >= N) continue; const wt = Math.exp(-k*k/(2*g*g)); a += out[j]*wt; ws += wt; } o2[i] = a/ws + 5e15; } return o2; };
+  const peaks = (M, v) => { if(v.s !== 'delta') return null; let n = 0; for(let k = 0; k < 5; k++){ const i0 = Math.round((5 + k*v.g)/dz), mid = k < 4 ? Math.round((5 + (k + .5)*v.g)/dz) : null; if(mid !== null && M[mid] < 0.5*M[i0]) n++; } return n + 1; };
+  const draw = (v, depthCut) => { const C = truth(v), M = meas(C, v), zmax = v.s === 'delta' ? Math.min(60, 5 + 4*v.g + 20) : 30;
+    const Mpts = []; for(let i = 0; i < N; i++){ const z = i*dz; if(z > zmax) break; if(depthCut !== undefined && z > depthCut) break; Mpts.push([z, M[i]]); }
+    J.plot(J.$('#cv2a'), {x:[0, zmax], y:[1e15, 5e20], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (nm)', ylab:'B 농도 (cm⁻³)', series:[{pts:Array.from(C, (c, i) => [i*dz, c]).filter(p => p[0] <= zmax), color:'--ink3', w:1, fill:'rgba(120,120,120,.25)'}, {pts:Mpts, color:'--red', w:2.5}]});
+    const pkT = Math.max(...C), pkM = Math.max(...M), ld = lam(v); J.out(box, 'ld', J.fmt(ld, 2) + ' nm/dec', ld < 1.5 ? 'good' : ld < 3 ? 'warn' : 'bad');
+    if(v.s === 'delta'){ const n = peaks(M, v); J.out(box, 'n', n + ' / 5 개', n === 5 ? 'good' : n >= 3 ? 'warn' : 'bad'); }
+    else { const xjT = DF.xj(C, dz*1e-7, 1e18)*1e7, xjM = DF.xj(M, dz*1e-7, 1e18)*1e7; J.out(box, 'n', J.fmt(xjM, 1) + ' nm (실제 ' + J.fmt(xjT, 1) + ')', xjM - xjT < 1.5 ? 'good' : xjM - xjT < 4 ? 'warn' : 'bad'); }
+    J.out(box, 'pk', J.fmt((1 - pkM/pkT)*100, 0) + ' %'); return zmax; };
+  const crater = (v, f) => { const {ctx, w, h} = J.fit(J.$('#cv2b')); ctx.clearRect(0,0,w,h); const s0 = h*0.3, depth = f*h*0.4, r = J.rng(5);
+    ctx.fillStyle = '#c9ced8'; ctx.fillRect(10, s0, w - 20, h - s0 - 10); ctx.fillStyle = J.c('--paper'); ctx.beginPath(); ctx.moveTo(w*0.25, s0); ctx.lineTo(w*0.3, s0 + depth); ctx.lineTo(w*0.7, s0 + depth); ctx.lineTo(w*0.75, s0); ctx.closePath(); ctx.fill();
+    const ld = lam(v); for(let k = 0; k < 5; k++){ const y = s0 + (5 + k*(v.s === 'delta' ? v.g : 3))*h*0.4/60*1.6; if(y < s0 + depth) continue; ctx.strokeStyle = 'rgba(214,90,74,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(12, y); ctx.lineTo(w - 12, y); ctx.stroke(); }
+    for(let k = 0; k < 40; k++){ const x = w*0.3 + r()*w*0.4, yy = s0 + depth + Math.abs(J.gauss(r))*ld*6; ctx.fillStyle = J.c('--red'); ctx.beginPath(); ctx.arc(x, yy, 2.2, 0, 7); ctx.fill(); }
+    const ang = v.a*Math.PI/180; ctx.strokeStyle = J.c('--gold'); ctx.lineWidth = 2 + v.E*1.5; for(let k = -2; k <= 2; k++){ const xe = w/2 + k*18, ye = s0 + depth; ctx.beginPath(); ctx.moveTo(xe - Math.sin(ang)*120, ye - Math.cos(ang)*120); ctx.lineTo(xe, ye); ctx.stroke(); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('O₂⁺ ' + J.fmt(v.E, 2) + ' keV, ' + v.a + '°', 12, 16); ctx.fillText('B 층 (빨강 줄)', 12, h - 16); };
+  J.sim('sim2', v => { V = v; anim = null; draw(v); crater(v, 0.5); });
+  J.$('#b2g').onclick = () => { anim = 0; };
+  J.loop(J.$('#cv2b'), dt => { if(anim === null || !V) return; anim += dt*0.25; const zmax = draw(V, anim*(V.s === 'delta' ? Math.min(60, 5 + 4*V.g + 20) : 30)); crater(V, Math.min(1, anim)); if(anim >= 1){ anim = null; draw(V); } });
+})();
+
+/* 14-3 SIMS vs SRP */
+(function(){
+  const box = J.$('#sim3'), dx = 0.5e-7, N = 400, NB = 1e17;
+  J.sim('sim3', v => { const C0 = new Float64Array(N); for(let i = 0; i < N; i++) C0[i] = DF.implant('As', 3, 3e15, (i + .5)*0.5, 0.02);
+    const T = v.T, ni = DF.ni(T), ted = 1 + 6*Math.sqrt(3)*Math.exp(-(T - 950)/60), C = DF.solve(C0, dx, 1.5, c => DF.D('As', T)*(1 + c/ni)*ted, {type:'flux', h:2e-6, Ceq:0}, 'refl', 60);
+    const sol = 2.5e20*Math.exp((T - 1100)/120), act = C.map(c => Math.min(c, sol*(1 - Math.exp(-c/sol))));
+    /* 운반자 넘침: 데바이 길이로 평활 + 접합 근처 공핍 */
+    const xjS = DF.xj(C, dx, NB), n = new Float64Array(N); for(let i = 0; i < N; i++){ const net = act[i] - NB, LD = Math.sqrt(1.04e-12*0.0259/(1.6e-19*Math.max(Math.abs(net), 1e15)))*1e7; const z = (i + .5)*0.5; n[i] = Math.abs(net)*(1 - Math.exp(-Math.abs(xjS*1e7 - z)/(1.5*LD))) + 1e14; }
+    const xs = i => (i + .5)*0.5, step = v.st*1e3*Math.sin(v.th*Math.PI/180), r = J.rng(11), srp = [];
+    for(let z = step/2; z < 150; z += step){ const i = Math.min(N - 1, Math.round(z/0.5 - .5)); srp.push({x:z, y:Math.max(1e15, n[i]*(1 + 0.12*J.gauss(r))), color:'--red', r:4}); }
+    const xjE = (() => { let b = 0; for(let i = 1; i < N; i++) if(n[i] < n[b]) b = i; return xs(b); })();
+    J.plot(J.$('#cv3a'), {x:[0, 120], y:[1e15, 1e21], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (nm)', ylab:'농도 (cm⁻³)', series:[
+      {pts:Array.from(C, (c, i) => [xs(i), Math.max(c, 1e15)]), color:'--ink', w:2.5}, {pts:Array.from(C, (c, i) => [xs(i), Math.max(c, 1e15)]), color:'rgba(0,0,0,0)', w:0, fill:'rgba(140,140,140,.18)'}, {pts:Array.from(n, (c, i) => [xs(i), c]), color:'#3aa36a', w:2.5, fill:'rgba(58,163,106,.2)'}],
+      hlines:[{y:sol, color:'--gold'}, {y:NB, color:'--ink3'}], points:srp});
+    const inC = C.reduce((a, b) => a + b, 0), inA = act.reduce((a, b) => a + b, 0);
+    J.out(box, 'dz', J.fmt(step, 1) + ' nm / 점', step < 5 ? 'good' : step < 15 ? 'warn' : 'bad'); J.out(box, 'eta', J.fmt(inA/inC*100, 0) + ' %'); J.out(box, 'xj', J.fmt(xjS*1e7, 1) + ' / ' + J.fmt(xjE, 1) + ' nm');
+    /* 베벨 그림 */
+    const {ctx, w, h} = J.fit(J.$('#cv3b')); ctx.clearRect(0,0,w,h); const th = v.th*Math.PI/180, top = h*0.3, Lb = w - 40, dep = h*0.55, gy = h*0.14, xjn = xjS*1e7;
+    ctx.fillStyle = '#c9ced8'; ctx.fillRect(20, top, w - 40, h*0.6); ctx.fillStyle = 'rgba(58,163,106,.55)'; ctx.fillRect(20, top, w - 40, gy);
+    ctx.fillStyle = J.c('--paper'); ctx.beginPath(); ctx.moveTo(20, top); ctx.lineTo(w - 20, top); ctx.lineTo(w - 20, top + dep); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = J.c('--red'); for(let k = 0; k < 400; k++){ const z = (k + .5)*step, y = top + z/xjn*gy; if(y > top + dep) break; const x = 20 + (y - top)/dep*Lb; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 7); ctx.fill(); }
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('베벨 ' + J.fmt(v.th, 2) + '° (각도 과장 표시)', 22, top - 8); ctx.fillText('n⁺ 층 (초록) · 갈아낸 면 위의 측정점 (빨강)', 22, h - 8); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>퍼니스와 열 응력 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="furnace">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 10 <span class="hanja">第十章 · 爐</span></div>
+  <h1>퍼니스와 열 응력</h1>
+  <p class="lead">세로로 선 석영관 안에 웨이퍼 100~150장을 선반처럼 꽂아 넣고 한꺼번에 굽는 <span class="term">배치 퍼니스</span>는 지금도 팹의 일꾼이다. 산화, 어닐, 저압 화학 증착(LPCVD)을 한 번에 수십 장씩 처리하니 원가가 싸다. 대신 관 위아래 끝은 열이 새어 온도가 낮고, 가스는 아래에서 위로 가며 소모되어 웨이퍼마다 막 두께가 달라진다. 또 웨이퍼를 빨리 넣고 빨리 데우면 가장자리와 가운데의 온도 차로 열 응력이 생겨 결정이 미끄러진다(<span class="term">슬립</span>). 이 장은 다구역 히터 튜닝, 승온 속도와 슬립 한계, 배치 대 매엽 장비의 처리량을 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>다구역 히터로 퍼니스 길이 방향 온도를 평탄화하고, 막 두께의 웨이퍼 간 산포를 계산한다.</li>
+  <li>승온 중 웨이퍼 반경 방향 온도 차로 생기는 열 응력과 고온에서 줄어드는 슬립 한계를 비교한다.</li>
+  <li>배치 퍼니스와 매엽 RTP의 처리량·열 예산을 비교한다.</li>
+</ul></div>
+
+<figure class="fig">
+<svg viewBox="0 0 860 230" role="img" aria-label="세로형 퍼니스" id="fig1"></svg>
+<figcaption><b>그림 10-1.</b> 세로형 배치 퍼니스. 석영 보트에 웨이퍼 100여 장이 5~8 mm 간격으로 꽂혀 아래에서 관 안으로 들어간다. 관 바깥의 히터는 위아래로 4~6구역으로 나뉘어 각각 온도를 맞춘다. 가스는 아래에서 들어와 위로(또는 반대로) 흐르며, 위아래 끝에는 온도가 고르지 않은 더미 웨이퍼를 둔다.</figcaption>
+</figure>
+
+<h2 id="s1"><span class="n">01</span>다구역 온도 평탄화</h2>
+<p>관의 위아래 끝은 열이 빠져나가 가운데보다 차갑다. 그래서 끝 구역 히터에 더 많은 전력을 준다. 구역 사이는 열이 퍼져 영향이 겹치므로, 한 구역을 바꾸면 이웃도 변한다. 온도가 고르더라도 산화제나 증착 가스는 아래에서 들어와 웨이퍼를 지날 때마다 조금씩 소모되므로, 위로 갈수록 막이 얇아진다. 이를 상쇄하려고 위쪽 온도를 조금 올리는 "온도 기울기" 튜닝을 쓰기도 한다.</p>
+<div class="eq">$$T(z) = T_{amb} + \sum_j P_j\,g_j(z),\qquad \text{막 두께}\ \propto\ \underbrace{e^{-E_a/k_BT(z)}}_{\text{반응}}\cdot\underbrace{e^{-z/\lambda_{dep}}}_{\text{가스 고갈}}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-1</span><span class="ttl">5구역 히터 튜닝</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">구역 1 (아래) <output data-o="p1"></output></span><input type="range" data-k="p1" min="0.92" max="1.12" step="0.001" value="1" data-d="3"></label>
+      <label class="ctrl"><span class="lab">구역 2 <output data-o="p2"></output></span><input type="range" data-k="p2" min="0.92" max="1.12" step="0.001" value="1" data-d="3"></label>
+      <label class="ctrl"><span class="lab">구역 3 (가운데) <output data-o="p3"></output></span><input type="range" data-k="p3" min="0.92" max="1.12" step="0.001" value="1" data-d="3"></label>
+      <label class="ctrl"><span class="lab">구역 4 <output data-o="p4"></output></span><input type="range" data-k="p4" min="0.92" max="1.12" step="0.001" value="1" data-d="3"></label>
+      <label class="ctrl"><span class="lab">구역 5 (위) <output data-o="p5"></output></span><input type="range" data-k="p5" min="0.92" max="1.12" step="0.001" value="1" data-d="3"></label>
+      <label class="ctrl"><span class="lab">가스 고갈 (LPCVD) <output data-o="g"></output></span><input type="range" data-k="g" min="0" max="0.3" step="0.01" value="0.08" data-d="2"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b1a">온도 평탄화 (자동)</button><button class="sbtn" id="b1b">두께 평탄화 (자동)</button><button class="sbtn warn" id="b1z">초기화</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">제품 구간 온도 범위</span><span class="v" data-r="t"></span></div>
+      <div class="ro"><span class="k">웨이퍼 간 두께 산포 (±)</span><span class="v" data-r="d"></span></div>
+      <div class="ro"><span class="k">평균 온도</span><span class="v" data-r="m"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 관 단면(세로 = 높이). 웨이퍼 막대의 색이 온도(파랑 = 차가움, 빨강 = 뜨거움, 목표 ±3 °C)이고, 오른쪽 막대가 구역별 히터 전력이다. 위아래 각 15장은 더미. 오른쪽: 웨이퍼 번호에 따른 온도(빨강, 목표 750 °C)와 막 두께(파랑, 평균 = 1). 온도를 평탄하게 해도 가스 고갈 때문에 두께는 기운다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>승온 속도와 슬립</h2>
+<p>퍼니스 안에서 웨이퍼는 주로 관 벽의 복사로 데워진다. 촘촘히 꽂힌 웨이퍼의 가장자리는 벽을 직접 보지만 가운데는 이웃 웨이퍼에 가려져, 승온 중에는 가장자리가 먼저 뜨거워진다. 가장자리가 팽창하려는데 가운데가 붙잡으니 큰 응력이 생기고, 그 응력이 실리콘의 임계 전단 응력을 넘으면 원자면이 미끄러져 슬립선이 생긴다. 고온일수록 실리콘이 물러져 한계가 급격히 낮아지므로, 고온 구간에서는 승온을 늦춰야 한다. 300 mm 웨이퍼는 지름이 커서 같은 승온 속도에서도 온도 차가 더 크다.</p>
+<div class="eq">$$\Delta T_{edge-center} \approx \frac{\rho c\,\dot T\,R^2}{8\,\kappa_{eff}},\qquad \sigma_{th} \approx \frac{E\,\alpha_{th}\,\Delta T}{2},\qquad \tau_c(T) \propto e^{\,E_s/k_BT}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-2</span><span class="ttl">슬립 한계 지도</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">승온 속도 <output data-o="r"></output></span><input type="range" data-k="r" min="1" max="100" step="1" value="10" data-d="0" data-u="°C/분"></label>
+      <label class="ctrl"><span class="lab">웨이퍼 지름</span><select data-k="d" data-num><option value="200">200 mm</option><option value="300" selected>300 mm</option><option value="450">450 mm</option></select></label>
+      <label class="ctrl"><span class="lab">웨이퍼 간격 <output data-o="p"></output></span><input type="range" data-k="p" min="3" max="12" step="0.5" value="6" data-d="1" data-u="mm"></label>
+      <label class="ctrl"><span class="lab">목표 온도 <output data-o="T"></output></span><input type="range" data-k="T" min="700" max="1200" step="10" value="1100" data-d="0" data-u="°C"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">가장자리–가운데 온도 차</span><span class="v" data-r="dt"></span></div>
+      <div class="ro"><span class="k">최대 응력 / 한계 (최고 온도에서)</span><span class="v" data-r="s"></span></div>
+      <div class="ro"><span class="k">슬립 시작 온도</span><span class="v" data-r="slip"></span></div>
+      <div class="ro"><span class="k">안전한 최대 승온 (이 조건)</span><span class="v" data-r="safe"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 승온 중 웨이퍼 반지름 방향 온도 분포(가운데 기준 상대). 오른쪽: 온도에 따른 열 응력(빨강)과 슬립 한계(초록, 온도가 오를수록 낮아짐). 빨간 선이 초록 선을 넘는 구간에서 슬립이 생긴다. 웨이퍼 간격을 넓히면 가운데도 벽을 더 잘 보아 온도 차가 준다(대신 한 번에 넣는 장수가 준다).</p>
+</div>
+
+<div class="analogy"><span class="ic">🥧</span><b>냉동 파이를 오븐에</b><span>꽁꽁 언 파이를 뜨거운 오븐에 넣으면 가장자리는 금방 녹아 부풀지만 가운데는 아직 단단하다. 너무 급하면 파이가 갈라진다. 그래서 낮은 온도에서 천천히 녹인 뒤 굽는다. 웨이퍼도 고온 구간에서 승온을 늦춘다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>배치와 매엽: 처리량과 열 예산</h2>
+<p>배치 퍼니스는 한 번에 100장을 넣어 몇 시간 처리한다. 승온·냉각이 느려(분당 5~10 °C) 그 시간도 열 예산에 들어간다. 매엽 RTP는 한 장씩 1~2분에 끝내며 열 예산이 작다. 공정 시간이 길면 배치가, 짧고 열 예산이 중요하면 매엽이 유리하다. 실제 팹은 게이트 산화막·LPCVD 질화막·드라이브인은 퍼니스로, 소스·드레인 활성화는 RTP로 한다.</p>
+<div class="eq">$$\text{WPH}_{batch} = \frac{N_{batch}}{t_{load} + t_{ramp\uparrow} + t_{proc} + t_{ramp\downarrow} + t_{unload}},\qquad \text{WPH}_{single} = \frac{3600}{t_{proc} + t_{oh}}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 10-3</span><span class="ttl">처리량 비교 (900 °C 공정)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">공정 시간 (최고 온도 유지) <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="3.3" step="0.05" value="2" data-log="1" data-d="0" data-u="s"></label>
+      <label class="ctrl"><span class="lab">배치 크기 <output data-o="n"></output></span><input type="range" data-k="n" min="25" max="150" step="25" value="100" data-d="0" data-u="장"></label>
+      <label class="ctrl"><span class="lab">퍼니스 승온 속도 <output data-o="r"></output></span><input type="range" data-k="r" min="3" max="30" step="1" value="8" data-d="0" data-u="°C/분"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="280"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="280"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">퍼니스 처리량</span><span class="v" data-r="a"></span></div>
+      <div class="ro"><span class="k">RTP 처리량</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">열 예산 √(Dt) 붕소 (퍼니스 / RTP)</span><span class="v" data-r="c"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 공정 시간(로그)에 따른 처리량(파랑 = 퍼니스, 빨강 = RTP). 두 곡선이 만나는 시간보다 길면 배치가 유리하다. 오른쪽: 한 번의 공정 온도 이력(퍼니스는 승온·냉각 포함). 퍼니스는 승온·냉각 동안의 확산까지 더해진다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 퍼니스 위쪽과 아래쪽에 제품이 아닌 "더미 웨이퍼"를 넣는 이유는?</p><p>관 끝은 온도와 가스 흐름이 고르지 않다. 그 구간을 더미로 채우면 제품 웨이퍼가 고른 구간에만 놓이고, 더미가 복사 차폐·가스 흐름 정류 역할도 한다. 더미는 막이 계속 쌓여 주기적으로 교체한다. 장비의 실제 용량은 "보트 슬롯 수 − 더미 수"다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">LPCVD 퍼니스에서 온도를 완벽히 평탄하게 해도 위쪽 웨이퍼의 막이 얇아지는 이유는?</p><ol><li>위쪽이 더 무거워서</li><li>히터가 아래에만 있어서</li><li>가스가 아래 웨이퍼들을 지나며 소모되어서</li><li>슬립 때문</li></ol>
+<p class="explain">가스 고갈. 위쪽 온도를 약간 올려 보정한다.</p></div>
+<div class="quiz" data-a="0"><p class="q">고온 구간에서 승온 속도를 늦춰야 하는 이유는?</p><ol><li>고온에서 실리콘의 슬립 한계(임계 전단 응력)가 급격히 낮아져서</li><li>히터 전력이 부족해서</li><li>산화가 멈춰서</li><li>가스가 부족해서</li></ol>
+<p class="explain">같은 온도 차·응력이라도 고온에서는 미끄러짐이 쉽다.</p></div>
+<div class="quiz" data-a="3"><p class="q">공정 시간이 수 시간인 드라이브인에 유리한 장비는?</p><ol><li>레이저 어닐</li><li>플래시 어닐</li><li>매엽 RTP</li><li>배치 퍼니스</li></ol>
+<p class="explain">긴 공정은 한 번에 많이 처리하는 배치가 처리량이 높다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 10-1 */
+(function(){
+  const s = J.$('#fig1'); if(!s) return;
+  J.live(() => { s.innerHTML = ''; const lab = (x, y, t, c = '--ink2', a = 'middle') => { const e = J.svg('text', {x, y, 'text-anchor':a, 'font-size':12.5, fill:J.c(c)}, s); e.textContent = t; };
+    J.svg('rect', {x:330, y:10, width:200, height:200, rx:90, fill:'none', stroke:J.c('--ink3'), 'stroke-width':3}, s);
+    for(let i = 0; i < 5; i++){ J.svg('rect', {x:300, y:15 + i*39, width:16, height:34, fill:J.c('--red'), opacity:.3 + 0.12*i}, s); J.svg('rect', {x:544, y:15 + i*39, width:16, height:34, fill:J.c('--red'), opacity:.3 + 0.12*i}, s); lab(580, 36 + i*39, '구역 ' + (5 - i), '--ink2', 'start'); }
+    for(let i = 0; i < 28; i++){ const y = 30 + i*6.2; J.svg('line', {x1:355, y1:y, x2:505, y2:y, stroke:i < 3 || i > 24 ? J.c('--ink3') : J.c('--indigo'), 'stroke-width':2.4}, s); }
+    J.svg('rect', {x:350, y:24, width:6, height:180, fill:'#cfc5b0'}, s); J.svg('rect', {x:504, y:24, width:6, height:180, fill:'#cfc5b0'}, s);
+    J.svg('path', {d:'M430,225 L430,205', stroke:J.c('--jade'), 'stroke-width':3, 'marker-end':''}, s); lab(430, 222, '가스 ↑', '--jade');
+    lab(200, 60, '석영관 (최대 1,200 °C)', '--ink2', 'end'); lab(200, 110, '웨이퍼 보트 100~150장', '--indigo', 'end'); lab(200, 160, '위아래 끝: 더미 웨이퍼 (회색)', '--ink3', 'end'); });
+})();
+
+/* 10-1 구역 튜닝 */
+(function(){
+  const box = J.$('#sim1'), NW = 120, Z = 5;
+  const g = (j, z) => Math.exp(-Math.pow((z - (j + .5)/Z)/0.16, 2)); // 구역 영향
+  const temp = (P, z) => { let s = 0, n = 0; for(let j = 0; j < Z; j++){ s += P[j]*g(j, z); n += g(j, z); } return 750*s/n - 45*(Math.exp(-z/0.07) + Math.exp(-(1 - z)/0.07)); };
+  const thick = (T, z, gd) => Math.exp(-1.6/(DF.kB*(T + 273.15)) + 1.6/(DF.kB*(750 + 273.15)))*Math.exp(-gd*z/0.5);
+  let V = null;
+  const calc = v => { const P = [v.p1, v.p2, v.p3, v.p4, v.p5], T = [], D = []; for(let i = 0; i < NW; i++){ const z = (i + .5)/NW; T.push(temp(P, z)); D.push(thick(T[i], z, v.g)); } return {P, T, D}; };
+  J.sim('sim1', v => { V = v; const {P, T, D} = calc(v), prod = i => i >= 15 && i < NW - 15, Tp = T.filter((_, i) => prod(i)), Dp = D.filter((_, i) => prod(i)), md = Dp.reduce((a, b) => a + b, 0)/Dp.length;
+    const {ctx, w, h} = J.fit(J.$('#cv1a')); ctx.clearRect(0,0,w,h); const top = 12, bot = h - 12, X0 = w*0.2, X1 = w*0.7;
+    ctx.strokeStyle = J.c('--ink3'); ctx.lineWidth = 2; ctx.strokeRect(X0 - 8, top - 4, X1 - X0 + 16, bot - top + 8);
+    for(let i = 0; i < NW; i += 2){ const y = bot - (i + .5)/NW*(bot - top), t = J.clamp((T[i] - 750)/6 + 0.5, 0, 1); ctx.fillStyle = prod(i) ? `rgb(${Math.round(40 + 210*t)},${Math.round(90 + 60*(1 - Math.abs(t - .5)*2))},${Math.round(230 - 200*t)})` : '#b0b0b0'; ctx.fillRect(X0, y - 1, X1 - X0, 2); }
+    P.forEach((p, j) => { const y0 = bot - (j + 1)/Z*(bot - top), hh = (bot - top)/Z - 4; ctx.fillStyle = J.c('--red'); ctx.globalAlpha = .25 + (p - 0.92)/0.2*0.6; ctx.fillRect(X1 + 14, y0 + 2, (p - 0.9)*w*0.9, hh); ctx.globalAlpha = 1; ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "JetBrains Mono"'; ctx.fillText(J.fmt(p, 3), X1 + 16, y0 + hh/2 + 6); });
+    J.plot(J.$('#cv1b'), {x:[0, NW], y:[0.85, 1.15], xlab:'웨이퍼 번호 (아래 → 위)', ylab:'상대 두께  ·  온도/750', series:[{pts:T.map((t, i) => [i, t/750]), color:'--red', w:2.5}, {pts:D.map((d, i) => [i, d/md]), color:'--indigo', w:2.5}], bands:[{x0:15, x1:NW - 15, color:'--jade', alpha:.08}], hlines:[{y:1, color:'--ink3'}]});
+    const tr = Math.max(...Tp) - Math.min(...Tp), dr = (Math.max(...Dp) - Math.min(...Dp))/(2*md);
+    J.out(box, 't', J.fmt(Math.min(...Tp), 1) + ' ~ ' + J.fmt(Math.max(...Tp), 1) + ' °C', tr < 6 ? 'good' : tr < 12 ? 'warn' : 'bad'); J.out(box, 'd', J.fmt(dr*100, 2) + ' %', dr < 0.01 ? 'good' : dr < 0.03 ? 'warn' : 'bad'); J.out(box, 'm', J.fmt(Tp.reduce((a, b) => a + b, 0)/Tp.length, 1) + ' °C'); });
+  const setP = P => { P.forEach((p, j) => { J.$(`#sim1 [data-k="p${j + 1}"]`).value = Math.round(J.clamp(p, 0.92, 1.12)*1000)/1000; }); J.$('#sim1 [data-k="p1"]').dispatchEvent(new Event('input')); };
+  const opt = useD => { let P = [V.p1, V.p2, V.p3, V.p4, V.p5]; const cost = P => { const {T, D} = calc(Object.assign({}, V, {p1:P[0], p2:P[1], p3:P[2], p4:P[3], p5:P[4]})); let s = 0, n = 0; const md = D.slice(15, NW - 15).reduce((a, b) => a + b, 0)/(NW - 30); for(let i = 15; i < NW - 15; i++){ s += useD ? Math.pow((D[i] - md)/md*100, 2) + 0.02*Math.pow(T[i] - 750, 2) : Math.pow(T[i] - 750, 2); n++; } return s/n; };
+    let best = cost(P), st = 0.02; for(let it = 0; it < 400 && st > 0.0005; it++){ let mv = false; for(let j = 0; j < Z; j++) for(const sg of [-1, 1]){ const c = P.slice(); c[j] = J.clamp(c[j] + sg*st, 0.92, 1.12); const e = cost(c); if(e < best){ best = e; P = c; mv = true; } } if(!mv) st /= 2; } setP(P); };
+  J.$('#b1a').onclick = () => opt(false); J.$('#b1b').onclick = () => opt(true); J.$('#b1z').onclick = () => setP([1, 1, 1, 1, 1]);
+})();
+
+/* 10-2 슬립 */
+(function(){
+  const box = J.$('#sim2');
+  const tauc = T => 6*Math.exp(0.9/(DF.kB*(T + 273.15)) - 0.9/(DF.kB*(1100 + 273.15))); // MPa, 1100 °C에서 18 MPa
+  J.sim('sim2', v => { const R = v.d/20, rate = v.r/60, kap = 0.25*(v.p/6), dT = T => 2.33*0.7*rate*R*R/(8*kap)*(1 + 0.4*(T - 500)/700)*0.6, sig = T => 160e3*2.6e-6*dT(T)/2; // MPa
+    const prof = []; const dmax = dT(v.T); for(let r = 0; r <= R; r += R/50) prof.push([r*10, dmax*Math.pow(r/R, 2)]);
+    J.plot(J.$('#cv2a'), {x:[0, R*10], y:[0, Math.max(5, dmax*1.2)], xlab:'반지름 (mm)', ylab:'가운데보다 높은 온도 (°C)', series:[{pts:prof, color:'--red', w:3, fill:.15}]});
+    const S = [], L = []; let slip = null; for(let T = 500; T <= 1200; T += 10){ S.push([T, sig(T)]); L.push([T, tauc(T)]); if(slip === null && T <= v.T && sig(T) > tauc(T)) slip = T; }
+    J.plot(J.$('#cv2b'), {x:[500, 1200], y:[0.5, 500], logy:true, xlab:'웨이퍼 온도 (°C)', ylab:'응력 (MPa)', series:[{pts:L, color:'--jade', w:3}, {pts:S, color:'--red', w:3}], vlines:[{x:v.T, color:'--ink3', label:'목표'}]});
+    let safe = 0; for(let r = 1; r <= 100; r++){ const rt = r/60, sg2 = T => 160e3*2.6e-6*(2.33*0.7*rt*R*R/(8*kap)*(1 + 0.4*(T - 500)/700)*0.6)/2; let ok = true; for(let T = 500; T <= v.T; T += 10) if(sg2(T) > tauc(T)) ok = false; if(ok) safe = r; }
+    J.out(box, 'dt', J.fmt(dmax, 1) + ' °C'); J.out(box, 's', J.fmt(sig(v.T), 1) + ' / ' + J.fmt(tauc(v.T), 1) + ' MPa', sig(v.T) < tauc(v.T) ? 'good' : 'bad'); J.out(box, 'slip', slip ? slip + ' °C' : '없음', slip ? 'bad' : 'good'); J.out(box, 'safe', J.fmt(safe, 0) + ' °C/분'); });
+})();
+
+/* 10-3 처리량 */
+(function(){
+  const box = J.$('#sim3'), T = 900;
+  const furnace = (tp, n, r) => { const ru = (T - 600)/r*60, rd = (T - 600)/(r*0.6)*60, tot = 20*60 + ru + tp + rd + 20*60; return {wph:n/(tot/3600), ru, rd}; };
+  const rtp = tp => ({wph:3600/(tp + 60)});
+  J.sim('sim3', v => { const S1 = [], S2 = []; for(let lt = 0; lt <= 4.2; lt += 0.05){ const tp = Math.pow(10, lt); S1.push([tp, furnace(tp, v.n, v.r).wph]); S2.push([tp, rtp(tp).wph]); }
+    const f = furnace(v.t, v.n, v.r), r = rtp(v.t);
+    J.plot(J.$('#cv3a'), {x:[1, 15000], y:[0.5, 500], logx:true, logy:true, xf:t => t < 60 ? t + 's' : t < 3600 ? J.fmt(t/60, 0) + '분' : J.fmt(t/3600, 1) + 'h', xlab:'공정 시간', ylab:'처리량 (장/시간)', series:[{pts:S1, color:'--indigo', w:3}, {pts:S2, color:'--red', w:3}], vlines:[{x:v.t, color:'--ink3'}]});
+    const hist = [[0, 600], [f.ru/60, T], [(f.ru + v.t)/60, T], [(f.ru + v.t + f.rd)/60, 600]], hr = [[0, 600], [0.05, T], [0.05 + v.t/60, T], [0.1 + v.t/60, 600]];
+    J.plot(J.$('#cv3b'), {x:[0, Math.max(10, (f.ru + v.t + f.rd)/60)], y:[550, 950], xlab:'시간 (분)', ylab:'온도 (°C)', series:[{pts:hist, color:'--indigo', w:3}, {pts:hr, color:'--red', w:3}]});
+    let df = 0; for(let i = 1; i < hist.length; i++){ const t0 = hist[i - 1][0]*60, t1 = hist[i][0]*60, T0 = hist[i - 1][1], T1 = hist[i][1]; for(let k = 0; k < 50; k++){ const tt = (k + .5)/50; df += DF.D('B', T0 + (T1 - T0)*tt)*(t1 - t0)/50; } }
+    const dr = DF.D('B', T)*v.t;
+    J.out(box, 'a', J.fmt(f.wph, 1) + ' 장/h', f.wph > r.wph ? 'good' : ''); J.out(box, 'b', J.fmt(r.wph, 1) + ' 장/h', r.wph > f.wph ? 'good' : ''); J.out(box, 'c', J.fmt(Math.sqrt(df)*1e7, 1) + ' / ' + J.fmt(Math.sqrt(dr)*1e7, 1) + ' nm'); });
+})();
+</script>
+</body>
+</html>

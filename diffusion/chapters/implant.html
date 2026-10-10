@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이온 주입 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="implant">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 07 <span class="hanja">第七章 · 注</span></div>
+  <h1>이온 주입</h1>
+  <p class="lead">오늘날 거의 모든 도펀트는 <span class="term">이온 주입</span>으로 넣는다. 도펀트 원자를 이온으로 만들어 질량 분석기로 골라낸 뒤, 수 keV~수 MeV로 가속해 웨이퍼에 쏜다. 이온이 몇 개 들어갔는지는 웨이퍼로 흘러간 전류를 적분해 정확히 세고(도즈), 얼마나 깊이 들어갈지는 가속 에너지로 정한다. 감광액을 마스크로 쓸 수 있어 실온에서 원하는 곳에만 넣을 수 있다. 대신 이온은 실리콘 원자들과 부딪히며 결정을 망가뜨리므로, 반드시 어닐로 복구해야 한다(8장). 이 장은 주입 분포의 모양, 결정 방향을 따라 깊이 빠지는 채널링, 그리고 여러 번의 주입을 겹쳐 원하는 분포를 설계하는 방법을 다룬다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>투사 비정 R<sub>p</sub>와 표준 편차 ΔR<sub>p</sub>로 가우스 주입 분포를 계산하고, 도즈와 최고 농도의 관계를 안다.</li>
+  <li>채널링이 만드는 깊은 꼬리와 7° 기울임·비정질화 주입의 역할을 본다.</li>
+  <li>여러 에너지·도즈의 주입을 겹쳐 레트로그레이드 웰 같은 목표 분포를 설계한다.</li>
+</ul></div>
+
+<figure class="fig">
+<svg viewBox="0 0 860 210" role="img" aria-label="이온 주입기 구성" id="fig1"></svg>
+<figcaption><b>그림 7-1.</b> 이온 주입기. 이온원에서 BF₃·PH₃·AsH₃ 기체를 플라스마로 이온화하고, 자석(질량 분석기)이 원하는 질량만 휘어 통과시킨다. 가속관에서 에너지를 얻은 빔은 웨이퍼 전체를 고르게 훑고(스캔), 패러데이 컵이 전류를 세어 도즈를 맞춘다.</figcaption>
+</figure>
+
+<h2 id="s1"><span class="n">01</span>주입 분포</h2>
+<p>이온은 실리콘 원자핵과 전자에 부딪혀 에너지를 잃다가 멈춘다. 같은 에너지로 들어간 이온들의 멈춘 깊이는 평균 R<sub>p</sub>, 퍼짐 ΔR<sub>p</sub>의 분포를 이룬다. 첫 근사는 가우스이고, 더 정확히는 비대칭(피어슨 IV) 분포다. 가벼운 붕소는 같은 에너지에서 깊이 들어가고 넓게 퍼지며, 무거운 비소는 얕고 날카롭다. 도즈 Q를 넣으면 최고 농도는 Q/(√(2π)ΔR<sub>p</sub>)가 된다. 도즈가 일정 이상이면 이온이 지나간 자리가 모두 망가져 결정이 비정질(amorphous)이 된다.</p>
+<div class="eq">$$C(x) = \frac{Q}{\sqrt{2\pi}\,\Delta R_p}\exp\!\left[-\frac{(x - R_p)^2}{2\Delta R_p^2}\right],\qquad C_{peak} \approx \frac{0.4\,Q}{\Delta R_p}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-1</span><span class="ttl">주입 분포 탐색기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">이온</span><select data-k="d"><option value="B" selected>붕소 ¹¹B⁺</option><option value="P">인 ³¹P⁺</option><option value="As">비소 ⁷⁵As⁺</option><option value="Sb">안티몬 ¹²¹Sb⁺</option></select></label>
+      <label class="ctrl"><span class="lab">에너지 <output data-o="e"></output></span><input type="range" data-k="e" min="0" max="2.3" step="0.02" value="1.3" data-log="1" data-d="1" data-u="keV"></label>
+      <label class="ctrl"><span class="lab">도즈 <output data-o="q"></output></span><input type="range" data-k="q" min="11" max="16" step="0.1" value="14" data-log="1" data-d="1" data-u="cm⁻²"></label>
+      <label class="ctrl"><span class="lab">기판 농도 N_B <output data-o="nb"></output></span><input type="range" data-k="nb" min="14" max="18" step="0.1" value="16" data-log="1" data-d="1" data-u="cm⁻³"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">R_p / ΔR_p</span><span class="v" data-r="rp"></span></div>
+      <div class="ro"><span class="k">최고 농도</span><span class="v" data-r="pk"></span></div>
+      <div class="ro"><span class="k">접합 깊이 (어닐 전)</span><span class="v" data-r="xj"></span></div>
+      <div class="ro"><span class="k">비정질화</span><span class="v" data-r="am"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 깊이에 따른 농도(로그). 빨강 = 선택 이온, 옅은 선 = 같은 에너지·도즈의 다른 이온들. 노란 띠 = 비정질화될 만큼 손상된 깊이(무거운 이온, 높은 도즈). 오른쪽: 에너지에 따른 R<sub>p</sub>(실선)와 ΔR<sub>p</sub>(점선), 네 이온 비교(로그–로그).</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>채널링: 결정의 고속도로</h2>
+<p>결정은 원자가 줄지어 있어, 특정 방향에서 보면 원자 기둥 사이로 텅 빈 통로가 보인다. 이 통로와 거의 나란히 들어온 이온은 원자핵과 정면으로 부딪히지 않고 통로 벽에 살짝살짝 튕기며 아주 깊이 미끄러져 간다(<b>채널링</b>). 그 결과 분포에 긴 꼬리가 생겨 접합이 깊어진다. 이를 막으려고 웨이퍼를 7° 기울이고 회전시키거나, 얇은 산화막을 통과시켜 이온 방향을 흐트러뜨리거나, 미리 게르마늄을 주입해 표면을 비정질로 만든다(PAI). 채널링이 일어나는 임계 각은 가벼운 이온·높은 에너지일수록 작다.</p>
+<div class="eq">$$\psi_c \approx \sqrt{\frac{2Z_1Z_2e^2}{4\pi\varepsilon_0\,E\,d}}\quad(\text{린드하드 임계각}),\qquad \text{채널링 비율} \approx e^{-\theta^2/2\psi_c^2}$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-2</span><span class="ttl">결정 통로 속 이온</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">웨이퍼 기울임 θ <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="10" step="0.5" value="0" data-d="1" data-u="°"></label>
+      <label class="ctrl"><span class="lab">이온</span><select data-k="d"><option value="B" selected>붕소</option><option value="As">비소</option></select></label>
+      <label class="ctrl"><span class="lab">표면 상태</span><select data-k="s"><option value="c" selected>결정 그대로</option><option value="ox">스크린 산화막 10 nm</option><option value="pai">Ge 비정질화 (PAI)</option></select></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b2r">다시 쏘기</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">임계각 ψ_c (10 keV)</span><span class="v" data-r="pc"></span></div>
+      <div class="ro"><span class="k">채널링 비율</span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">10¹⁶ cm⁻³ 깊이 (기판 10¹⁶)</span><span class="v" data-r="x"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 위에서 비스듬히 본 결정(회색 원자 기둥)과 이온 궤적 30개. 통로에 들어간 이온(초록)은 깊이 내려가고, 원자와 부딪힌 이온(빨강)은 얕게 멈춘다. 오른쪽: 10 keV, 10¹⁴ cm⁻² 주입 분포(로그). 회색 점선 = 채널링 없는 가우스. θ = 0°에서 긴 꼬리가 생기고, 7°에서 대부분 사라진다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🌲</span><b>숲 속 오솔길</b><span>나무가 줄지어 심긴 조림지에 공을 굴리면, 줄과 정확히 나란한 방향으로 굴린 공은 나무 사이 오솔길을 따라 멀리 간다. 조금만 비스듬하면 금방 나무에 부딪혀 멈춘다. 채널링을 막으려 웨이퍼를 기울이는 것은 일부러 비스듬히 굴리는 것이다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>겹쳐서 설계하기: 레트로그레이드 웰</h2>
+<p>CMOS의 웰은 표면은 낮게, 깊은 곳은 높게 도핑한 "역방향(retrograde)" 분포가 좋다. 표면 농도는 문턱 전압을, 깊은 농도는 펀치스루와 래치업 방지를 맡는다. 이런 분포는 한 번의 주입으로 못 만드니, 에너지와 도즈가 다른 주입 3~4개를 겹친다(체인 주입). 고에너지(MeV) 주입은 깊은 곳을, 저에너지 주입은 표면 근처를 맡는다. 아래 실험에서 목표 분포(점선)에 맞춰 보자.</p>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 7-3</span><span class="ttl">체인 주입으로 목표 분포 맞추기 (붕소 p-웰)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">① 깊은 주입 에너지 <output data-o="e1"></output></span><input type="range" data-k="e1" min="50" max="200" step="5" value="140" data-d="0" data-u="keV"></label>
+      <label class="ctrl"><span class="lab">① 도즈 <output data-o="q1"></output></span><input type="range" data-k="q1" min="12" max="14" step="0.05" value="13.3" data-log="1" data-d="1" data-u="cm⁻²"></label>
+      <label class="ctrl"><span class="lab">② 중간 주입 에너지 <output data-o="e2"></output></span><input type="range" data-k="e2" min="10" max="80" step="2" value="40" data-d="0" data-u="keV"></label>
+      <label class="ctrl"><span class="lab">② 도즈 <output data-o="q2"></output></span><input type="range" data-k="q2" min="11.5" max="13.5" step="0.05" value="12.5" data-log="1" data-d="1" data-u="cm⁻²"></label>
+      <label class="ctrl"><span class="lab">③ 문턱 조절 에너지 <output data-o="e3"></output></span><input type="range" data-k="e3" min="2" max="20" step="1" value="8" data-d="0" data-u="keV"></label>
+      <label class="ctrl"><span class="lab">③ 도즈 <output data-o="q3"></output></span><input type="range" data-k="q3" min="11" max="13" step="0.05" value="12" data-log="1" data-d="1" data-u="cm⁻²"></label>
+    </div>
+    <div class="canvas-box"><canvas id="cv3" data-h="320"></canvas></div>
+    <div class="readouts">
+      <div class="ro"><span class="k">목표와의 차이 (로그 RMS)</span><span class="v" data-r="e"></span></div>
+      <div class="ro"><span class="k">표면 (20 nm) / 깊은 곳 (400 nm) 농도</span><span class="v" data-r="c" style="font-size:14px"></span></div>
+      <div class="ro"><span class="k">전체 도즈</span><span class="v" data-r="q"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 색 점선 = 각 주입의 분포, 빨강 = 합, 검정 점선 = 목표 레트로그레이드 분포(표면 3 × 10¹⁷, 400 nm에서 2 × 10¹⁸ cm⁻³). 로그 RMS 차이가 0.15 아래면 목표 달성(초록). 실제 웰은 이후 어닐로 조금 더 퍼진다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 0.5 keV 이하의 아주 낮은 에너지 붕소 주입이 어려운 이유는?</p><p>빔 속 이온들이 서로 밀어내는 공간 전하 때문에 낮은 에너지 빔은 퍼져 전류를 많이 실어 나를 수 없다. 그래서 높은 에너지로 보낸 뒤 웨이퍼 직전에 감속하거나, 무거운 분자(BF₂⁺, B₁₈H₂₂⁺ 클러스터)로 보내 같은 에너지에서 붕소 하나당 에너지를 낮춘다. 플라스마 도핑(PLAD)처럼 빔을 아예 쓰지 않는 방법도 있다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="1"><p class="q">도즈 10¹⁵ cm⁻², ΔR<sub>p</sub> = 20 nm인 가우스 주입의 최고 농도는 약?</p><ol><li>2 × 10¹⁸ cm⁻³</li><li>2 × 10²⁰ cm⁻³</li><li>5 × 10¹⁵ cm⁻³</li><li>10²² cm⁻³</li></ol>
+<p class="explain">0.4 × 10¹⁵ / (20 × 10⁻⁷ cm) = 2 × 10²⁰.</p></div>
+<div class="quiz" data-a="3"><p class="q">채널링을 줄이는 방법이 아닌 것은?</p><ol><li>웨이퍼를 7° 기울인다</li><li>얇은 스크린 산화막을 통과시킨다</li><li>Ge로 표면을 비정질화한다</li><li>에너지를 높인다</li></ol>
+<p class="explain">높은 에너지는 임계각을 줄여 오히려 채널링이 더 날카로워진다.</p></div>
+<div class="quiz" data-a="0"><p class="q">같은 에너지에서 붕소가 비소보다 깊이 들어가는 이유는?</p><ol><li>가벼워서 충돌마다 잃는 에너지가 적기 때문</li><li>전하가 커서</li><li>확산이 빨라서</li><li>결정 방향 때문</li></ol>
+<p class="explain">실리콘(28)보다 가벼운 이온은 핵 충돌 에너지 손실이 작다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 그림 7-1 */
+(function(){
+  const s = J.$('#fig1'); if(!s) return;
+  J.live(() => { s.innerHTML = ''; const lab = (x, y, t, c = '--ink2', sz = 12.5) => { const e = J.svg('text', {x, y, 'text-anchor':'middle', 'font-size':sz, fill:J.c(c)}, s); e.textContent = t; };
+    J.svg('rect', {x:20, y:70, width:90, height:60, rx:8, fill:J.c('--plum-soft'), stroke:J.c('--plum')}, s); lab(65, 105, '이온원'); lab(65, 150, 'BF₃·PH₃·AsH₃');
+    J.svg('path', {d:'M110,100 L190,100 Q260,100 270,40', fill:'none', stroke:J.c('--red'), 'stroke-width':3}, s); J.svg('path', {d:'M190,100 Q250,100 300,90', fill:'none', stroke:J.c('--ink3'), 'stroke-width':2, 'stroke-dasharray':'4 3'}, s);
+    J.svg('path', {d:'M180,60 L280,60 L280,140 L180,140 Z', fill:'none', stroke:J.c('--indigo'), 'stroke-width':2}, s); lab(230, 165, '질량 분석 자석');
+    J.svg('path', {d:'M270,40 Q300,10 360,40 L560,40', fill:'none', stroke:J.c('--red'), 'stroke-width':3}, s);
+    for(let i = 0; i < 6; i++) J.svg('rect', {x:380 + i*28, y:28, width:8, height:24, fill:J.c('--gold')}, s); lab(460, 78, '가속관 (수 keV~MeV)');
+    J.svg('path', {d:'M560,40 L700,60 M560,40 L700,140', fill:'none', stroke:J.c('--red'), 'stroke-width':2, opacity:.6}, s); lab(630, 160, '빔 스캔');
+    J.svg('rect', {x:700, y:50, width:12, height:100, fill:'#8f96a3'}, s); lab(706, 175, '웨이퍼'); J.svg('rect', {x:740, y:80, width:40, height:40, rx:4, fill:'none', stroke:J.c('--jade'), 'stroke-width':2}, s); lab(760, 140, '패러데이 컵', '--jade'); });
+})();
+
+/* 7-1 */
+(function(){
+  const box = J.$('#sim1'), Ks = ['B', 'P', 'As', 'Sb'], AM = {B:Infinity, P:4e14, As:7e13, Sb:4e13};
+  J.sim('sim1', v => { const {Rp, dRp} = DF.range(v.d, v.e), xmax = Math.max(4*(Rp + 3*dRp), 20), S = [];
+    Ks.forEach(k => { const pts = []; for(let x = 0; x <= xmax; x += xmax/400) pts.push([x, Math.max(DF.implant(k, v.e, v.q, x), 1e13)]); S.push({pts, color:k === v.d ? '--red' : DF.DOP[k].col, w:k === v.d ? 3 : 1.2, dash:k === v.d ? [] : [4, 4]}); });
+    const pk = v.q/(Math.sqrt(2*Math.PI)*dRp*1e-7), am = v.q > AM[v.d], half = am ? Math.sqrt(2*Math.log(pk/(AM[v.d]/(Math.sqrt(2*Math.PI)*dRp*1e-7))))*dRp*0.8 : 0;
+    J.plot(J.$('#cv1a'), {x:[0, xmax], y:[1e14, 1e22], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (nm)', ylab:'농도 (cm⁻³)', series:S.reverse(), hlines:[{y:v.nb, color:'--ink3', label:'N_B'}], bands:am ? [{x0:Math.max(0, Rp - half), x1:Rp + half, color:'--gold', alpha:.25}] : []});
+    let xj = 0; for(let x = Rp; x <= xmax*2; x += 0.1){ if(DF.implant(v.d, v.e, v.q, x) < v.nb){ xj = x; break; } }
+    const R = Ks.map(k => ({pts:Array.from({length:60}, (_, i) => { const e = Math.pow(10, i*0.0383); return [e, DF.range(k, e).Rp]; }), color:DF.DOP[k].col, w:k === v.d ? 3 : 1.5})).concat(Ks.map(k => ({pts:Array.from({length:60}, (_, i) => { const e = Math.pow(10, i*0.0383); return [e, DF.range(k, e).dRp]; }), color:DF.DOP[k].col, w:1, dash:[4, 4]})));
+    J.plot(J.$('#cv1b'), {x:[1, 200], y:[0.5, 600], logx:true, logy:true, xlab:'에너지 (keV)', ylab:'nm', series:R, points:[{x:v.e, y:Rp, color:'--red', r:6}]});
+    J.out(box, 'rp', J.fmt(Rp, 1) + ' / ' + J.fmt(dRp, 1) + ' nm'); J.out(box, 'pk', J.sci(pk, 2) + ' cm⁻³'); J.out(box, 'xj', xj ? J.fmt(xj, 0) + ' nm' : '—'); J.out(box, 'am', am ? '예 (임계 ' + J.sci(AM[v.d], 1) + ')' : '아니오', am ? 'warn' : ''); });
+})();
+
+/* 7-2 채널링 */
+(function(){
+  const box = J.$('#sim2'); let seed = 1;
+  J.sim('sim2', v => { const psi = v.d === 'B' ? 3.2 : 2.0, sup = v.s === 'c' ? 1 : v.s === 'ox' ? 0.25 : 0.02, f = Math.exp(-v.t*v.t/(2*psi*psi))*0.35*sup, r = J.rng(seed);
+    const {ctx, w, h} = J.fit(J.$('#cv2a')); ctx.clearRect(0,0,w,h); const cols = 9, sp = (w - 40)/cols;
+    for(let c = 0; c <= cols; c++){ const x = 20 + c*sp; for(let y = 20; y < h - 10; y += 10){ ctx.fillStyle = '#9aa1ad'; ctx.beginPath(); ctx.arc(x + (y - 20)*Math.tan(v.t*Math.PI/180)*0.6, y, 2.6, 0, 7); ctx.fill(); } }
+    if(v.s !== 'c'){ ctx.fillStyle = v.s === 'ox' ? 'rgba(150,200,240,.7)' : 'rgba(180,160,120,.6)'; ctx.fillRect(10, 8, w - 20, v.s === 'ox' ? 14 : 40); }
+    for(let k = 0; k < 30; k++){ const x0 = 20 + (k % cols + .5)*sp, ch = r() < f/0.35*0.6; let x = x0, y = 10; ctx.strokeStyle = ch ? 'rgba(58,163,106,.9)' : 'rgba(214,90,74,.85)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x, y);
+      if(ch){ for(let y2 = 10; y2 < h - 10; y2 += 6){ x = x0 + Math.sin(y2/18 + k)*sp*0.15; ctx.lineTo(x, y2); } }
+      else { const stop = 30 + r()*h*0.35; for(let y2 = 10; y2 < stop; y2 += 6){ x += (r() - .5)*10; ctx.lineTo(x, y2); } }
+      ctx.stroke(); }
+    const pts = [], g = []; for(let x = 0; x <= 400; x += 1){ pts.push([x, Math.max(DF.implant(v.d, 10, 1e14, x, f), 1e13)]); g.push([x, Math.max(DF.implant(v.d, 10, 1e14, x, 0), 1e13)]); }
+    let xd = 0; for(let x = 0; x <= 400; x++) if(DF.implant(v.d, 10, 1e14, x, f) >= 1e16) xd = x;
+    J.plot(J.$('#cv2b'), {x:[0, 400], y:[1e14, 1e20], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (nm)', ylab:'농도 (cm⁻³)', series:[{pts:g, color:'--ink3', w:1.5, dash:[5, 4]}, {pts, color:'--red', w:3}], hlines:[{y:1e16, color:'--ink3'}]});
+    J.out(box, 'pc', J.fmt(psi, 1) + '°'); J.out(box, 'f', J.fmt(f*100, 1) + ' %', f < 0.02 ? 'good' : f < 0.1 ? 'warn' : 'bad'); J.out(box, 'x', J.fmt(xd, 0) + ' nm'); });
+  J.$('#b2r').onclick = () => { seed++; J.redrawAll(); };
+})();
+
+/* 7-3 체인 주입 */
+(function(){
+  const box = J.$('#sim3'), target = x => Math.pow(10, Math.log10(3e17) + (Math.log10(2e18) - Math.log10(3e17))*Math.min(1, x/400)) * (x > 500 ? Math.exp(-(x - 500)/120) : 1);
+  J.sim('sim3', v => { const I = [[v.e1, v.q1], [v.e2, v.q2], [v.e3, v.q3]], cols = ['--indigo', '--jade', '--gold'], S = [], tot = [];
+    I.forEach(([e, q], k) => { const pts = []; for(let x = 0; x <= 800; x += 4) pts.push([x, Math.max(DF.implant('B', e, q, x, 0.02), 1e14)]); S.push({pts, color:cols[k], w:1.5, dash:[5, 4]}); });
+    let err = 0, n = 0; for(let x = 0; x <= 800; x += 4){ const c = I.reduce((a, [e, q]) => a + DF.implant('B', e, q, x, 0.02), 0) + 1e15; tot.push([x, c]); if(x >= 10 && x <= 600){ err += Math.pow(Math.log10(c) - Math.log10(target(x)), 2); n++; } }
+    const rms = Math.sqrt(err/n), tg = []; for(let x = 0; x <= 800; x += 4) tg.push([x, target(x)]);
+    J.plot(J.$('#cv3'), {x:[0, 800], y:[1e15, 1e19], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (nm)', ylab:'붕소 (cm⁻³)', series:S.concat([{pts:tg, color:'--ink', w:2, dash:[3, 3]}, {pts:tot, color:'--red', w:3}])});
+    const at = x => I.reduce((a, [e, q]) => a + DF.implant('B', e, q, x, 0.02), 0);
+    J.out(box, 'e', J.fmt(rms, 3), rms < 0.15 ? 'good' : rms < 0.3 ? 'warn' : 'bad'); J.out(box, 'c', J.sci(at(20), 2) + ' / ' + J.sci(at(400), 2) + ' cm⁻³'); J.out(box, 'q', J.sci(I.reduce((a, [, q]) => a + q, 0), 2) + ' cm⁻²'); });
+})();
+</script>
+</body>
+</html>

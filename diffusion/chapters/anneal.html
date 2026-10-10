@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>활성화 어닐과 TED · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="anneal">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 08 <span class="hanja">第八章 · 復</span></div>
+  <h1>활성화 어닐과 TED</h1>
+  <p class="lead">주입 직후의 도펀트는 대부분 쓸모가 없다. 이온 하나가 수백 개의 실리콘 원자를 튕겨 내 격자는 망가져 있고, 도펀트 원자는 격자 자리가 아닌 엉뚱한 곳에 박혀 전자를 내놓지 못한다. 열을 가해 격자를 되살리고(재결정) 도펀트를 격자 자리에 앉히는 것이 <span class="term">활성화 어닐</span>이다. 그런데 어닐 초기에는 이상한 일이 생긴다. 주입이 남긴 여분의 틈새 원자들이 붕소의 확산을 수천 배 가속해, 짧은 순간에 접합이 깊어진다. 이를 <span class="term">과도 증강 확산</span>(TED)이라 한다. 놀랍게도 TED는 낮은 온도에서 더 심하다. 이 장은 TED의 원인과 크기, 결함의 진화, 그리고 활성화율을 계산한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>"+1 모형"으로 주입이 남기는 여분 틈새 원자의 양을 어림하고, 그것이 TED를 일으키는 원리를 안다.</li>
+  <li>TED의 총량이 낮은 온도에서 더 큰 이유(과포화 지속 시간)를 계산한다.</li>
+  <li>{311} 결함이 틈새 원자를 저장했다 내놓는 과정을 입자 시뮬레이션으로 본다.</li>
+  <li>고용도, 붕소–틈새 클러스터, 준안정 활성화로 면저항–온도 관계를 이해한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>과도 증강 확산</h2>
+<p>이온이 튕겨 낸 실리콘 원자(틈새)와 남긴 빈자리는 대부분 서로 만나 사라진다. 하지만 들어온 도펀트 원자가 격자 자리 하나를 차지하므로, 결국 도펀트 하나당 틈새 원자 하나가 남는다("+1 모형"). 이 여분의 틈새 원자들은 고온에서 표면으로 빠져나가거나 결함으로 뭉쳐 사라질 때까지, 틈새 기구를 쓰는 붕소·인의 확산을 엄청나게 가속한다. 과포화는 수천 배에 이르지만 오래가지 않아 "과도(transient)"라 부른다. 과포화가 사라지는 시간이 온도가 낮을수록 훨씬 길어서, 총 증강량은 낮은 온도에서 더 크다.</p>
+<div class="eq">$$D_{eff}(t) = D^*\bigl[1 + S(t)\bigr],\quad S(t) \approx S_0\,e^{-t/\tau(T)},\qquad \Delta(Dt)_{TED} \approx D^*S_0\,\tau \propto e^{-(E_a - E_\tau)/k_BT}$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-1</span><span class="ttl">TED 계산기 (붕소 2 keV, 기판 10¹⁷)</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">도즈 <output data-o="q"></output></span><input type="range" data-k="q" min="13" max="15.5" step="0.1" value="14.5" data-log="1" data-d="1" data-u="cm⁻²"></label>
+      <label class="ctrl"><span class="lab">어닐 온도 <output data-o="T"></output></span><input type="range" data-k="T" min="700" max="1100" step="10" value="900" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">어닐 시간 <output data-o="t"></output></span><input type="range" data-k="t" min="0" max="4" step="0.05" value="1.5" data-log="1" data-d="1" data-u="s"></label>
+      <label class="ctrl"><span class="lab">TED 모형</span><select data-k="m"><option value="1" selected>켬 (+1 모형)</option><option value="0">끔 (평형 확산만)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">초기 과포화 S₀ / 지속 시간 τ</span><span class="v" data-r="s"></span></div>
+      <div class="ro"><span class="k">TED 몫 / 평형 몫 (Dt)</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">접합 깊이 이동</span><span class="v" data-r="xj"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 주입 직후(회색), 평형 확산만 했을 때(파랑 점선), TED 포함(빨강) 붕소 분포. 오른쪽: 어닐 온도에 따른 총 확산량 √(Dt)(시간은 각 온도에서 과포화가 다 사라질 만큼). 평형 몫(파랑)은 온도가 높을수록 크지만, TED 몫(빨강)은 낮은 온도에서 오히려 크다. 그래서 짧고 높은 온도의 스파이크 어닐이 유리하다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🎉</span><b>잔치 뒤 흥분한 손님들</b><span>잔치(주입)가 끝나면 흥분한 손님들(틈새 원자)이 한동안 이리저리 돌아다니며 다른 사람(붕소)까지 들썩이게 만든다. 문(표면)이 넓고 손님들이 빨리 집에 가는 따뜻한 날(고온)에는 소란이 금방 끝나지만, 추운 날(저온)에는 다들 오래 머물며 오래 들썩인다.</span></div>
+
+<h2 id="s2"><span class="n">02</span>틈새 원자의 저장고: {311} 결함</h2>
+<p>여분의 틈새 원자들은 혼자 다니지 않고 뭉친다. 먼저 작은 덩어리를 이루고, 이어 실리콘의 {311} 면을 따라 막대 모양 결함으로 자라며, 오래 두면 고리 모양 전위(dislocation loop)가 된다. 이 결함들은 틈새 원자의 저장고처럼 작동해, 조금씩 틈새 원자를 다시 내놓아 과포화를 오래 유지한다. 큰 덩어리는 작은 덩어리보다 안정해서 작은 것은 녹고 큰 것은 자란다(오스트발트 숙성). 내놓아진 틈새 원자는 표면에서 사라진다.</p>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-2</span><span class="ttl">틈새 원자 뭉침과 방출</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">온도 (방출 속도) <output data-o="T"></output></span><input type="range" data-k="T" min="1" max="10" step="1" value="5" data-d="0"></label>
+      <label class="ctrl"><span class="lab">처음 틈새 원자 수 (도즈) <output data-o="n"></output></span><input type="range" data-k="n" min="100" max="600" step="20" value="360" data-d="0" data-u="개"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn pri" id="b2g">어닐 시작/멈춤</button><button class="sbtn warn" id="b2r">주입 직후로</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="300"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="300"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">자유 틈새 원자 (과포화)</span><span class="v" data-r="f"></span></div>
+      <div class="ro"><span class="k">결함 속 / 결함 수</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">표면에서 소멸</span><span class="v" data-r="s"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 단면(위 = 표면). 파란 점 = 자유 틈새 원자, 주황 막대 = {311} 결함(길이 ∝ 크기). 오른쪽: 시간에 따른 자유 틈새(파랑, 곧 과포화 S), 결함 속 원자(주황), 소멸(회색). 자유 틈새는 처음 급감했다가 결함이 녹는 동안 낮은 수준에서 오래 유지된다. 이 고원(plateau)이 TED의 지속 시간이다.</p>
+</div>
+
+<h2 id="s3"><span class="n">03</span>활성화: 원자는 있지만 전자는 없다</h2>
+<p>도펀트가 격자 자리에 들어가 전자나 정공을 내놓아야 "활성"이다. 평형에서 활성 농도의 상한은 그 온도의 고용도다. 붕소는 고농도에서 틈새 원자와 뭉쳐 붕소–틈새 클러스터(BIC)가 되어 비활성화되기도 한다. 레이저처럼 극히 짧은 어닐은 표면을 녹였다 순식간에 굳혀 고용도를 넘는 농도를 격자에 가둔다(준안정 활성화). 대신 이후 공정의 낮은 온도(500~700 °C)에서 다시 비활성화될 수 있다. 면저항은 활성 농도와 이동도로 정해진다.</p>
+<div class="eq">$$C_{active} \le C_{sol}(T),\qquad R_s = \frac{1}{q\int \mu\,C_{active}\,dx}$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 8-3</span><span class="ttl">어닐 방식별 면저항–접합 깊이</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">붕소 도즈 <output data-o="q"></output></span><input type="range" data-k="q" min="14" max="15.7" step="0.05" value="15" data-log="1" data-d="1" data-u="cm⁻²"></label>
+      <label class="ctrl"><span class="lab">주입 에너지 <output data-o="e"></output></span><input type="range" data-k="e" min="0.5" max="5" step="0.1" value="1" data-d="1" data-u="keV"></label>
+      <label class="ctrl"><span class="lab">이후 저온 공정 (비활성화)</span><select data-k="post"><option value="0" selected>없음</option><option value="1">600 °C 30분</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">스파이크 1,050 °C (R_s / x_j)</span><span class="v" data-r="a"></span></div>
+      <div class="ro"><span class="k">플래시 1,300 °C</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">레이저 용융</span><span class="v" data-r="c"></span></div>
+      <div class="ro"><span class="k">퍼니스 900 °C 20분</span><span class="v" data-r="d"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 어닐 방식별 (접합 깊이, 면저항) 점. 왼쪽 아래로 갈수록 좋은 접합(얕고 전도성 좋음)이다. 초록 띠는 소스·드레인 목표(x<sub>j</sub> &lt; 25 nm, R<sub>s</sub> &lt; 600 Ω/□, 웰 농도 10¹⁸ cm⁻³ 기준). 오른쪽: 선택 조건에서 각 방식의 활성 붕소 분포. 이후 600 °C 공정을 켜면 레이저의 준안정 활성 농도가 고용도로 떨어진다.</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 탄소를 함께 주입하면 붕소의 TED가 줄어든다. 왜일까?</p><p>탄소는 틈새 원자를 붙잡아 안정한 탄소–틈새 짝을 만들어 과포화를 줄인다(틈새 원자 "청소부"). 그래서 붕소 소스·드레인이나 SiGe 층에 탄소를 소량 넣어 접합을 얕게 유지한다. 반대로 질소·불소도 결함과 상호작용해 확산을 바꾼다. 공동 주입(co-implant)은 확산을 다스리는 대표 기술이다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">"+1 모형"이 말하는 것은?</p><ol><li>도펀트 하나가 빈자리 하나를 남긴다</li><li>주입 후 도펀트가 하나 늘어난다</li><li>주입된 도펀트 하나당 여분 틈새 원자 하나가 남는다</li><li>어닐하면 1 nm 확산한다</li></ol>
+<p class="explain">대부분의 프렌켈 쌍은 재결합하고 도펀트가 차지한 자리만큼 틈새 원자가 남는다.</p></div>
+<div class="quiz" data-a="0"><p class="q">TED의 총 증강량이 낮은 온도에서 더 큰 이유는?</p><ol><li>과포화가 사라지는 시간이 훨씬 길어서</li><li>확산 계수가 커서</li><li>도즈가 늘어서</li><li>표면이 반사해서</li></ol>
+<p class="explain">τ가 온도에 대해 D보다 강하게 늘어나 D·S₀·τ가 커진다.</p></div>
+<div class="quiz" data-a="3"><p class="q">레이저 어닐이 고용도보다 높은 활성 농도를 얻는 원리는?</p><ol><li>온도가 낮아서</li><li>도즈가 늘어서</li><li>채널링 때문</li><li>표면을 녹였다 급랭해 도펀트를 격자에 가두기 때문(준안정)</li></ol>
+<p class="explain">대신 이후 저온 공정에서 비활성화될 수 있다.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+const tauT = T => 1.85e-16*Math.exp(3.9/(DF.kB*(T + 273.15))); // 과포화 지속 시간 (s)
+const S0 = Q => 40*Math.pow(Q/1e14, 0.5);
+/* 8-1 */
+(function(){
+  const box = J.$('#sim1'), NB = 1e17;
+  J.sim('sim1', v => { const D = DF.D('B', v.T), tau = tauT(v.T), s0 = +v.m ? S0(v.q) : 0, t = v.t, ted = D*s0*tau*(1 - Math.exp(-t/tau)), eq = D*t;
+    const Nx = 300, L = 300e-7, dx = L/Nx, C0 = new Float64Array(Nx); for(let i = 0; i < Nx; i++) C0[i] = DF.implant('B', 2, v.q, i*dx*1e7, 0.05);
+    const ns = 200, run = withTed => { let C = Float64Array.from(C0); for(let k = 0; k < ns; k++){ const tk = (k + .5)*t/ns, Se = withTed ? s0*Math.exp(-tk/tau) : 0; C = DF.step(C, dx, t/ns, () => D*(1 + Se), {type:'refl'}, 'refl'); } return C; };
+    const Ce = run(false), Ct = run(true), P = C => Array.from(C, (c, i) => [i*dx*1e7, Math.max(c, 1e15)]).filter((_, i) => i % 2 === 0);
+    J.plot(J.$('#cv1a'), {x:[0, 150], y:[1e16, 1e21], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (nm)', ylab:'붕소 (cm⁻³)', series:[{pts:P(C0), color:'--ink3', w:1.5}, {pts:P(Ce), color:'--indigo', w:2, dash:[5, 4]}, {pts:P(Ct), color:'--red', w:3}], hlines:[{y:NB, color:'--ink3', label:'N_B'}]});
+    const E = [], Tt = []; for(let T = 700; T <= 1100; T += 10){ const Dd = DF.D('B', T), ta = tauT(T), full = 5*ta; E.push([T, Math.sqrt(Dd*full)*1e7]); Tt.push([T, Math.sqrt(Dd*S0(v.q)*ta)*1e7]); }
+    J.plot(J.$('#cv1b'), {x:[700, 1100], y:[0.01, 1000], logy:true, yf:t => J.fmt(t, 2), xlab:'어닐 온도 (°C)', ylab:'√(Dt) (nm)', series:[{pts:E, color:'--indigo', w:2.5}, {pts:Tt, color:'--red', w:3}], vlines:[{x:v.T, color:'--ink'}]});
+    const x0 = DF.xj(C0, dx, NB), x1 = DF.xj(Ct, dx, NB);
+    J.out(box, 's', J.fmt(s0, 0) + ' / ' + (tau < 1 ? J.fmt(tau*1e3, 1) + ' ms' : tau < 3600 ? J.fmt(tau, 1) + ' s' : J.fmt(tau/3600, 1) + ' h')); J.out(box, 'r', J.sci(ted, 1) + ' / ' + J.sci(eq, 1) + ' cm²', ted > eq ? 'warn' : 'good'); J.out(box, 'xj', J.fmt(x0*1e7, 1) + ' → ' + J.fmt(x1*1e7, 1) + ' nm'); });
+})();
+
+/* 8-2 결함 */
+(function(){
+  const box = J.$('#sim2'); let P = [], Cl = [], run = false, V = null, hist = [], t = 0, lost = 0;
+  const reset = () => { P = []; Cl = []; lost = 0; t = 0; hist = []; for(let i = 0; i < V.n; i++) P.push({x:Math.random(), y:0.25 + 0.12*J.gauss()}); };
+  const draw = () => { const {ctx, w, h} = J.fit(J.$('#cv2a')); ctx.clearRect(0,0,w,h); ctx.fillStyle = J.isDark() ? '#26282e' : '#eceef2'; ctx.fillRect(0, 10, w, h - 10); ctx.fillStyle = J.c('--red'); ctx.fillRect(0, 8, w, 3);
+    ctx.fillStyle = '#3d7fd0'; P.forEach(p => ctx.fillRect(p.x*w - 1.5, 10 + p.y*(h - 10) - 1.5, 3, 3));
+    Cl.forEach(c => { const L = Math.sqrt(c.n)*4; ctx.strokeStyle = '#e08a3c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(c.x*w - L/2, 10 + c.y*(h - 10) - L/3); ctx.lineTo(c.x*w + L/2, 10 + c.y*(h - 10) + L/3); ctx.stroke(); });
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '11px "Noto Sans KR"'; ctx.fillText('표면 (틈새 원자 소멸)', 6, 24);
+    const inC = Cl.reduce((a, c) => a + c.n, 0);
+    J.plot(J.$('#cv2b'), {x:[0, Math.max(300, t)], y:[0, V.n*1.05], xlab:'어닐 시간 (단계)', ylab:'원자 수', series:[{pts:hist.map(q => [q[0], q[1]]), color:'--indigo', w:2.5}, {pts:hist.map(q => [q[0], q[2]]), color:'#e08a3c', w:2.5}, {pts:hist.map(q => [q[0], q[3]]), color:'--ink3', w:2}]});
+    J.out(box, 'f', P.length); J.out(box, 'c', inC + ' / ' + Cl.length + ' 개'); J.out(box, 's', lost); };
+  J.sim('sim2', v => { const ch = !V || V.n !== v.n; V = v; if(ch) reset(); draw(); });
+  J.$('#b2g').onclick = e => { run = !run; e.target.classList.toggle('on', run); };
+  J.$('#b2r').onclick = () => { reset(); draw(); };
+  J.loop(J.$('#cv2a'), () => { if(!run || !V) return; t++; const st = 0.008, emit = 0.002*Math.pow(V.T, 2);
+    for(let i = P.length - 1; i >= 0; i--){ const p = P[i]; p.x = (p.x + st*J.gauss() + 1) % 1; p.y += st*J.gauss(); if(p.y < 0){ P.splice(i, 1); lost++; continue; } if(p.y > 1) p.y = 2 - p.y;
+      const c = Cl.find(c => Math.hypot(c.x - p.x, c.y - p.y) < 0.012 + Math.sqrt(c.n)*0.002); if(c){ c.n++; P.splice(i, 1); continue; }
+      if(Math.random() < 0.02){ const q = P.find(o => o !== p && Math.hypot(o.x - p.x, o.y - p.y) < 0.015); if(q){ Cl.push({x:p.x, y:p.y, n:2}); P.splice(P.indexOf(q), 1); P.splice(P.indexOf(p), 1); } } }
+    for(let j = Cl.length - 1; j >= 0; j--){ const c = Cl[j]; if(Math.random() < emit/Math.sqrt(c.n)*2){ c.n--; P.push({x:c.x + 0.01*J.gauss(), y:c.y + 0.01*J.gauss()}); if(c.n <= 0) Cl.splice(j, 1); } }
+    const inC = Cl.reduce((a, c) => a + c.n, 0); hist.push([t, P.length, inC, lost]); if(hist.length > 2000) hist.shift(); if(P.length + inC === 0){ run = false; J.$('#b2g').classList.remove('on'); } draw(); });
+})();
+
+/* 8-3 활성화 */
+(function(){
+  const box = J.$('#sim3'), NB = 1e18;
+  const A = [['스파이크', 1050, 1.5, 'a', '--red', 1], ['플래시', 1300, 0.002, 'b', '--gold', 0], ['레이저', 1410, 1e-6, 'c', '--plum', 0], ['퍼니스', 900, 1200, 'd', '--indigo', 1]];
+  J.sim('sim3', v => { const Nx = 400, L = 200e-7, dx = L/Nx, C0 = new Float64Array(Nx); for(let i = 0; i < Nx; i++) C0[i] = DF.implant('B', v.e, v.q, i*dx*1e7, 0.01);
+    const pts = [], prof = [];
+    A.forEach(([nm, T, t, k, col, ted]) => { const D = DF.D('B', Math.min(T, 1350)), tau = tauT(Math.min(T, 1350)), s0 = ted ? S0(v.q) : 0, Dt = D*t + D*s0*tau*(1 - Math.exp(-t/tau));
+      let C = DF.solve(C0, dx, Math.max(Dt/D, 1e-9), () => D, {type:'refl'}, 'refl', 150);
+      const melt = nm === '레이저', csol = melt ? 6e20 : DF.solub('B', T)*(T < 1000 ? 0.4 : 1), act = new Float64Array(Nx);
+      for(let i = 0; i < Nx; i++){ let lim = csol; if(+v.post && melt) lim = DF.solub('B', 1000)*0.8; act[i] = Math.min(C[i], lim); }
+      if(melt){ // 용융 깊이까지 균일화
+        const md = DF.range('B', v.e).Rp*2.2e-7; let tot = 0, n = 0; for(let i = 0; i < Nx && i*dx < md; i++){ tot += C[i]; n++; } for(let i = 0; i < n; i++){ C[i] = tot/n; act[i] = Math.min(C[i], +v.post ? DF.solub('B', 1000)*0.8 : 6e20); } }
+      const rs = DF.rs(act, dx, NB, 'p'), xj = DF.xj(C, dx, NB); pts.push({x:xj*1e7, y:rs, color:col, r:7, label:nm}); prof.push({pts:Array.from(act, (c, i) => [i*dx*1e7, Math.max(c, 1e16)]).filter((_, i) => i % 2 === 0), color:col, w:2.5});
+      J.out(box, k, J.fmt(rs, 0) + ' Ω/□ / ' + J.fmt(xj*1e7, 1) + ' nm', xj*1e7 < 25 && rs < 600 ? 'good' : xj*1e7 < 40 ? 'warn' : 'bad'); });
+    J.plot(J.$('#cv3a'), {x:[0, 120], y:[50, 10000], logy:true, xlab:'접합 깊이 (nm)', ylab:'면저항 (Ω/□)', bands:[{x0:0, x1:25, color:'--jade', alpha:.15}], hlines:[{y:600, color:'--jade'}], points:pts});
+    J.plot(J.$('#cv3b'), {x:[0, 80], y:[1e17, 2e21], logy:true, yf:t => '10^' + Math.round(Math.log10(t)), xlab:'깊이 (nm)', ylab:'활성 붕소 (cm⁻³)', series:prof}); });
+})();
+</script>
+</body>
+</html>

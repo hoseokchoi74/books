@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>열산화와 도펀트 재분배 · 확산 書</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23963c26'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23fff' font-family='serif'%3E散%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/jade.css">
+<link rel="stylesheet" href="../../assets/book.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../book.js"></script>
+<script src="../../assets/book.js"></script>
+<script src="../diff.js"></script>
+<style>
+.think{margin:22px 0; padding:14px 18px 12px 52px; border-radius:6px; background:var(--gold-soft); position:relative}
+.think:before{content:'思'; position:absolute; left:14px; top:12px; width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:var(--gold); color:#fff; font-family:var(--serif); font-weight:900; font-size:14px}
+.think b{font-family:var(--serif)}
+.think p{margin:0 0 6px}
+.analogy{display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:18px 0; padding:14px 18px; border:1px dashed var(--jade); border-radius:6px; background:var(--card)}
+.analogy .ic{font-size:30px; line-height:1; grid-row:span 2}
+.analogy b{font-family:var(--serif); color:var(--jade)}
+.chips2{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px}
+.big-num{font-family:var(--serif); font-size:28px; font-weight:900; color:var(--red)}
+</style>
+</head>
+<body data-ch="oxidation">
+<div id="top"></div>
+<div class="layout">
+<nav class="toc" id="toc"></nav>
+<main class="chapter">
+<header class="chead">
+  <div class="kicker">Chapter 06 <span class="hanja">第六章 · 酸</span></div>
+  <h1>열산화와 도펀트 재분배</h1>
+  <p class="lead">확산로의 또 다른 주인공은 열산화다. 실리콘을 산소나 수증기 속에서 가열하면 표면이 SiO₂로 변하는데, 이 산화막은 실리콘에서 "자라나므로" 계면이 원자 수준으로 깨끗하다. 실리콘이 반도체 왕좌에 오른 큰 이유다. 산화는 도펀트에도 영향을 준다. 계면이 실리콘 속으로 파고들며 도펀트를 산화막에 빼앗기거나(붕소) 실리콘 쪽으로 밀어내고(인), 산화가 주입한 틈새 원자가 아래 도펀트의 확산을 빠르게 한다. 이 장은 딜–그로브 모형으로 두께를 계산하고, 계면 편석과 산화 증강 확산을 시뮬레이션한다.</p>
+</header>
+
+<div class="learn"><ul>
+  <li>딜–그로브 모형의 선형(반응 제한)·포물선(확산 제한) 영역과 건식·습식 차이를 계산한다.</li>
+  <li>편석 계수 m에 따라 계면에서 도펀트가 고갈(붕소)되거나 쌓이는(인) 현상을 시뮬레이션한다.</li>
+  <li>산화가 주입한 틈새 원자에 의한 확산 증강(OED)을 묻힌 붕소층으로 확인한다.</li>
+</ul></div>
+
+<h2 id="s1"><span class="n">01</span>딜–그로브 모형</h2>
+<p>산화제(O₂ 또는 H₂O)는 기체에서 산화막 표면으로 오고, 이미 자란 산화막을 뚫고 확산해, 계면에서 실리콘과 반응한다. 산화막이 얇을 때는 계면 반응이 느린 쪽이라 두께가 시간에 비례하고(선형 영역, B/A), 두꺼워지면 산화막을 뚫는 확산이 느린 쪽이 되어 두께가 √t로 자란다(포물선 영역, B). 수증기는 산화막에 훨씬 잘 녹아 습식 산화가 건식보다 5~10배 빠르다. 대신 건식 산화막이 더 치밀해 게이트 산화막에 쓴다. 실리콘 1 nm가 소모되면 산화막 2.27 nm가 생긴다.</p>
+<div class="eq">$$x_{ox}^2 + A\,x_{ox} = B\,(t + \tau),\qquad x_{ox} = \frac{A}{2}\left[\sqrt{1 + \frac{4B(t + \tau)}{A^2}} - 1\right]$$</div>
+
+<div class="sim" id="sim1">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-1</span><span class="ttl">산화막 성장 계산기</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">분위기</span><select data-k="g"><option value="dry">건식 O₂</option><option value="wet" selected>습식 H₂O</option></select></label>
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="800" max="1200" step="10" value="1000" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">시간 <output data-o="t"></output></span><input type="range" data-k="t" min="1" max="600" step="1" value="60" data-d="0" data-u="분"></label>
+      <label class="ctrl"><span class="lab">결정면</span><select data-k="o"><option value="100" selected>(100)</option><option value="111">(111) (B/A × 1.68)</option></select></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv1a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv1b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">산화막 두께</span><span class="v" data-r="x"></span></div>
+      <div class="ro"><span class="k">소모된 실리콘</span><span class="v" data-r="si"></span></div>
+      <div class="ro"><span class="k">B / (B/A)</span><span class="v" data-r="b"></span></div>
+      <div class="ro"><span class="k">영역</span><span class="v" data-r="z"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 시간에 따른 산화막 두께(실선)와 두 한계(점선: 선형 B/A·t, 포물선 √(Bt)). 오른쪽: 단면. 원래 실리콘 표면(점선)을 기준으로 산화막의 44 %는 아래로, 56 %는 위로 자란다. 건식 산화의 τ는 초기 급성장(약 20 nm)을 반영한다.</p>
+</div>
+
+<h2 id="s2"><span class="n">02</span>계면 편석: 붕소는 빼앗기고 인은 쌓인다</h2>
+<p>계면에서 도펀트는 실리콘과 산화막 사이에 일정한 비율로 나뉜다. 그 비율이 편석 계수 m = C<sub>Si</sub>/C<sub>ox</sub>이다. 붕소는 m ≈ 0.3으로 산화막을 좋아해 산화막이 실리콘 표면의 붕소를 빨아들인다. 그래서 산화 후 실리콘 표면의 붕소 농도가 떨어져(고갈) 문턱 전압이 변한다. 인·비소는 m ≈ 10으로 산화막을 싫어해, 계면이 지나갈 때 밀려난 도펀트가 실리콘 표면에 쌓인다(파일업). 산화막 속 확산이 느릴수록, 산화가 빠를수록 효과가 크다.</p>
+<div class="eq">$$m = \frac{C_{Si}}{C_{ox}}\Big|_{\text{계면}},\qquad \text{계면이 밀어내는 양} = v\,C_{Si}\left(1 - \frac{2.27}{m}\right)\ (\text{단위 시간·면적})$$</div>
+
+<div class="sim" id="sim2">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-2</span><span class="ttl">산화 중 도펀트 재분배</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">도펀트</span><select data-k="d"><option value="B" selected>붕소 (m ≈ 0.3)</option><option value="P">인 (m ≈ 10)</option><option value="As">비소 (m ≈ 10)</option></select></label>
+      <label class="ctrl"><span class="lab">편석 계수 m (직접) <output data-o="m"></output></span><input type="range" data-k="m" min="-1" max="1.5" step="0.05" value="-0.52" data-log="1" data-d="2"></label>
+      <label class="ctrl"><span class="lab">습식 산화 온도 <output data-o="T"></output></span><input type="range" data-k="T" min="900" max="1150" step="10" value="1000" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">시간 <output data-o="t"></output></span><input type="range" data-k="t" min="5" max="240" step="5" value="60" data-d="0" data-u="분"></label>
+    </div>
+    <div class="btnrow"><button class="sbtn" id="b2m">도펀트 기본 m 적용</button></div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv2a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv2b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">산화막 두께</span><span class="v" data-r="x"></span></div>
+      <div class="ro"><span class="k">실리콘 표면 농도 / 원래</span><span class="v" data-r="r"></span></div>
+      <div class="ro"><span class="k">영향 깊이 (±10 %)</span><span class="v" data-r="d"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 처음 10¹⁷ cm⁻³로 고르던 도펀트가 산화 후 실리콘 쪽(오른쪽, x &gt; 0)에서 어떻게 변했는지(빨강)와 산화막 속 농도(왼쪽, 보라, C<sub>Si</sub>/m). 오른쪽: 시간에 따른 실리콘 표면 농도. m &lt; 2.27이면 고갈, m &gt; 2.27이면 파일업이다.</p>
+</div>
+
+<div class="analogy"><span class="ic">🧊</span><b>얼음이 얼면서 소금을 밀어내기</b><span>바닷물이 얼 때 얼음은 소금을 거의 받아들이지 않아 남은 물이 점점 짜진다(파일업, 인). 반대로 소금을 좋아하는 스펀지가 물 위를 덮어 오면 물이 싱거워진다(고갈, 붕소). 산화막 계면은 실리콘 속으로 움직이는 "어는 면"이다.</span></div>
+
+<h2 id="s3"><span class="n">03</span>산화 증강 확산 (OED)</h2>
+<p>산화 중 계면에서 실리콘 원자 일부는 산화막에 들어가지 못하고 틈새 원자로 실리콘 속에 주입된다. 이 과포화된 틈새 원자는 수 µm 아래까지 퍼져, 묻혀 있는 붕소·인 층의 확산을 수 배 빠르게 한다(3장). 증강 정도는 산화 속도의 거듭제곱(지수 약 0.3~0.5)에 비례하고, 질화 분위기에서는 반대로 빈자리가 주입된다. 그래서 같은 온도·시간이라도 산화 분위기냐 질소 분위기냐에 따라 접합 깊이가 달라진다.</p>
+<div class="eq">$$\frac{D_{ox}}{D^*} = 1 + K\left(\frac{dx_{ox}}{dt}\right)^{n},\qquad n \approx 0.3\sim0.5$$</div>
+
+<div class="sim" id="sim3">
+  <div class="sim-h"><span class="stamp">實驗</span><span class="no">실험 6-3</span><span class="ttl">묻힌 붕소 표지층의 퍼짐</span></div>
+  <div class="sim-b">
+    <div class="ctrls">
+      <label class="ctrl"><span class="lab">분위기</span><select data-k="a"><option value="n2">N₂ (불활성)</option><option value="dry">건식 산화</option><option value="wet" selected>습식 산화</option><option value="nh3">NH₃ 질화 (빈자리 주입)</option></select></label>
+      <label class="ctrl"><span class="lab">온도 <output data-o="T"></output></span><input type="range" data-k="T" min="900" max="1150" step="10" value="1000" data-d="0" data-u="°C"></label>
+      <label class="ctrl"><span class="lab">시간 <output data-o="t"></output></span><input type="range" data-k="t" min="10" max="240" step="10" value="60" data-d="0" data-u="분"></label>
+    </div>
+    <div class="fig-row">
+      <div class="canvas-box"><canvas id="cv3a" data-h="290"></canvas></div>
+      <div class="canvas-box"><canvas id="cv3b" data-h="290"></canvas></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">확산 증강 D/D*</span><span class="v" data-r="e"></span></div>
+      <div class="ro"><span class="k">표지층 폭 (반치폭)</span><span class="v" data-r="w"></span></div>
+      <div class="ro"><span class="k">N₂ 대비 폭</span><span class="v" data-r="r"></span></div>
+    </div>
+  </div>
+  <p class="cap"><b>읽는 법.</b> 왼쪽: 깊이 0.5 µm에 묻힌 얇은 붕소층(델타 도핑)이 열처리 후 퍼진 모습. 회색 = 처음, 파랑 = N₂, 빨강 = 선택한 분위기. 오른쪽: 분위기별 증강비 막대. 습식 산화는 산화가 빨라 증강이 크고, 질화는 붕소를 오히려 느리게 한다(틈새 원자 부족).</p>
+</div>
+
+<div class="think"><p><b>생각해 보기.</b> 실리콘 표면이 평평하지 않고 모서리(트렌치 위쪽 모서리 등)가 있으면 산화는 어떻게 될까?</p><p>모서리에서는 산화막이 부피 팽창하며 큰 응력을 받아 산화제 확산과 반응이 느려지고, 산화막이 얇아진다. 볼록한 모서리는 전기장이 몰려 누설과 파괴의 원인이 되므로, STI 공정에서는 고온에서 산화해 응력을 풀고 모서리를 둥글게 만든다. 2D·3D 산화는 딜–그로브만으로 설명되지 않는다.</p></div>
+
+<section class="quiz-sec">
+<h2 id="quiz"><span class="n">問</span>확인 문제</h2>
+<div class="quiz" data-a="2"><p class="q">두꺼운 산화막의 성장이 √t에 비례하는 이유는?</p><ol><li>계면 반응이 느려서</li><li>온도가 내려가서</li><li>산화제가 두꺼워진 산화막을 뚫고 확산해야 해서</li><li>실리콘이 바닥나서</li></ol>
+<p class="explain">포물선 영역: 확산 제한.</p></div>
+<div class="quiz" data-a="0"><p class="q">산화 후 실리콘 표면의 붕소 농도가 떨어지는 이유는?</p><ol><li>붕소의 편석 계수가 작아 산화막이 붕소를 빨아들여서</li><li>붕소가 증발해서</li><li>붕소가 깊이 확산해서</li><li>붕소가 비활성화돼서</li></ol>
+<p class="explain">m ≈ 0.3 &lt; 2.27 → 고갈.</p></div>
+<div class="quiz" data-a="3"><p class="q">산화 중 묻힌 붕소층의 확산이 빨라지는 현상은?</p><ol><li>TED</li><li>ARDE</li><li>파일업</li><li>OED</li></ol>
+<p class="explain">산화 증강 확산. 주입된 틈새 원자 때문.</p></div>
+</section>
+
+<div id="pager"></div>
+</main>
+</div>
+
+<script>
+/* 딜-그로브 계수 (µm, 시간) */
+function dg(g, Tc, orient = '100'){ const T = Tc + 273.15, k = DF.kB;
+  const B = g === 'wet' ? 386*Math.exp(-0.78/(k*T)) : 772*Math.exp(-1.23/(k*T));
+  const BA = (g === 'wet' ? 9.7e7*Math.exp(-2.05/(k*T)) : 3.71e6*Math.exp(-2.0/(k*T)))*(orient === '111' ? 1.68 : 1);
+  const A = B/BA, tau = g === 'dry' ? (0.02*0.02 + A*0.02)/B : 0; return {A, B, BA, tau}; }
+const xox = (p, th) => p.A/2*(Math.sqrt(1 + 4*p.B*(th + p.tau)/(p.A*p.A)) - 1);
+/* 6-1 */
+(function(){
+  const box = J.$('#sim1');
+  J.sim('sim1', v => { const p = dg(v.g, v.T, v.o), th = v.t/60, x = xox(p, th), S = [], L1 = [], L2 = [];
+    for(let m = 1; m <= 600; m += 3){ const h = m/60; S.push([m, xox(p, h)*1e3]); L1.push([m, p.BA*(h + p.tau)*1e3]); L2.push([m, Math.sqrt(p.B*(h + p.tau))*1e3]); }
+    const ymax = Math.max(...S.map(q => q[1]))*1.15;
+    J.plot(J.$('#cv1a'), {x:[0, 600], y:[0, ymax], xlab:'시간 (분)', ylab:'산화막 두께 (nm)', series:[{pts:L1, color:'--jade', w:1.5, dash:[5, 4]}, {pts:L2, color:'--indigo', w:1.5, dash:[5, 4]}, {pts:S, color:'--red', w:3}], points:[{x:v.t, y:x*1e3, color:'--red', r:6}]});
+    const {ctx, w, h} = J.fit(J.$('#cv1b')); ctx.clearRect(0,0,w,h); const sc = Math.min(1.2, (h*0.6)/Math.max(x*1e3, 1)), y0 = h*0.55, up = x*1e3*0.56*sc, dn = x*1e3*0.44*sc;
+    ctx.fillStyle = '#8f96a3'; ctx.fillRect(30, y0 + dn, w - 60, h - y0 - dn - 10); ctx.fillStyle = 'rgba(160,200,240,.85)'; ctx.fillRect(30, y0 - up, w - 60, up + dn);
+    ctx.strokeStyle = J.c('--ink'); ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(20, y0); ctx.lineTo(w - 20, y0); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = J.c('--ink2'); ctx.font = '12px "Noto Sans KR"'; ctx.fillText('SiO₂ ' + J.fmt(x*1e3, 1) + ' nm', 36, y0 - up + 16); ctx.fillText('원래 실리콘 표면', w - 140, y0 - 4); ctx.fillText('Si', 36, h - 18);
+    J.out(box, 'x', J.fmt(x*1e3, 1) + ' nm'); J.out(box, 'si', J.fmt(x*1e3*0.44, 1) + ' nm'); J.out(box, 'b', J.fmt(p.B*1e6, 0) + ' nm²/h / ' + J.fmt(p.BA*1e3, 2) + ' nm/h'); J.out(box, 'z', x < p.A*0.3 ? '선형 (반응 제한)' : x > p.A*3 ? '포물선 (확산 제한)' : '중간'); });
+})();
+
+/* 6-2 편석 */
+(function(){
+  const box = J.$('#sim2'), M0 = {B:0.3, P:10, As:10}, C0 = 1e17;
+  J.sim('sim2', v => { const p = dg('wet', v.T), D = DF.D(v.d, v.T), Nx = 300, Ttot = v.t*60, L = Math.max(10*Math.sqrt(D*Ttot), 0.3e-4), dx = L/Nx, ns = 200, dt = Ttot/ns;
+    let C = new Float64Array(Nx).fill(C0); const hist = [[0, 1]]; let xprev = xox(p, 0);
+    for(let k = 1; k <= ns; k++){ const xo = xox(p, k*dt/3600); const dsi = (xo - xprev)*1e-4*0.44; xprev = xo; // cm
+      const rej = 0.15*dsi*C[0]*(1 - 2.27/v.m); C[0] = Math.max(0, C[0] + rej/dx); C = DF.step(C, dx, dt, () => D, {type:'refl'}, 'refl'); hist.push([k*dt/60, C[0]/C0]); }
+    const xo = xox(p, v.t/60)*1e3, S = [], O = []; for(let i = 0; i < Nx; i++) S.push([i*dx*1e7, C[i]]); O.push([-xo, C[0]/v.m], [0, C[0]/v.m]);
+    const ymax = Math.max(C0*1.5, ...C)*1.2, ymin = Math.min(C0*0.2, C[0]/v.m*0.8);
+    J.plot(J.$('#cv2a'), {x:[-Math.max(xo, 20), L*1e7], y:[ymin, ymax], logy:true, yf:t => J.sci(t, 1), xlab:'깊이 (nm, 0 = 계면, 음수 = 산화막)', ylab:'농도 (cm⁻³)', series:[{pts:O, color:'--plum', w:3}, {pts:S, color:'--red', w:3}], hlines:[{y:C0, color:'--ink3', label:'원래'}], vlines:[{x:0, color:'--ink'}]});
+    J.plot(J.$('#cv2b'), {x:[0, v.t], y:[0, Math.max(2, ...hist.map(q => q[1]))*1.1], xlab:'시간 (분)', ylab:'표면 농도 / 원래', series:[{pts:hist, color:'--red', w:3}], hlines:[{y:1, color:'--ink3'}]});
+    let dd = 0; for(let i = 0; i < Nx; i++) if(Math.abs(C[i]/C0 - 1) > 0.1) dd = i*dx;
+    J.out(box, 'x', J.fmt(xo, 0) + ' nm'); J.out(box, 'r', J.fmt(C[0]/C0, 2), Math.abs(C[0]/C0 - 1) < 0.1 ? 'good' : 'warn'); J.out(box, 'd', J.fmt(dd*1e7, 0) + ' nm'); });
+  J.$('#b2m').onclick = () => { const d = J.$('#sim2 [data-k="d"]').value, e = J.$('#sim2 [data-k="m"]'); e.value = Math.log10(M0[d]); e.dispatchEvent(new Event('input')); };
+  J.$('#sim2 [data-k="d"]').addEventListener('input', () => J.$('#b2m').click());
+})();
+
+/* 6-3 OED */
+(function(){
+  const box = J.$('#sim3'), x0 = 0.5e-4, Q = 1e13;
+  const enh = (a, T) => { if(a === 'n2') return 1; if(a === 'nh3') return 0.4; const p = dg(a, T), rate = p.BA/(1 + 2*0.05/p.A); return 1 + 1.2*Math.pow(rate*1e3/60, 0.4); }; // nm/분 기준
+  J.sim('sim3', v => { const D = DF.D('B', v.T), t = v.t*60, Nx = 300, L = 1e-4, dx = L/Nx, C0 = new Float64Array(Nx); C0[Math.round(x0/dx)] = Q/dx;
+    const run = f => DF.solve(C0, dx, t, () => D*f, {type:'refl'}, 'refl', 150), e = enh(v.a, v.T), Cn = run(1), Ca = run(e);
+    const fwhm = C => { const mx = Math.max(...C); let a = -1, b = -1; for(let i = 0; i < Nx; i++) if(C[i] >= mx/2){ if(a < 0) a = i; b = i; } return (b - a + 1)*dx*1e7; };
+    const P = (C) => Array.from(C, (c, i) => [i*dx*1e4, c]); const init = [[x0*1e4 - 0.002, 0], [x0*1e4, Math.max(...Cn)*1.3], [x0*1e4 + 0.002, 0]];
+    J.plot(J.$('#cv3a'), {x:[0.3, 0.7], y:[0, Math.max(...Cn)*1.4], xlab:'깊이 (µm)', ylab:'붕소 (cm⁻³)', series:[{pts:init, color:'--ink3', w:1.5}, {pts:P(Cn), color:'--indigo', w:2.5}, {pts:P(Ca), color:'--red', w:3}]});
+    const keys = ['n2', 'dry', 'wet', 'nh3'], names = ['N₂', '건식', '습식', 'NH₃'], E = keys.map(k => enh(k, v.T)), {ctx, w, h} = J.fit(J.$('#cv3b')); ctx.clearRect(0,0,w,h); const bw = (w - 60)/4, mx = Math.max(...E)*1.15;
+    E.forEach((x, i) => { const bh = x/mx*(h - 60), X = 40 + i*bw + 8; ctx.fillStyle = J.c(keys[i] === v.a ? '--red' : '--indigo'); ctx.fillRect(X, h - 30 - bh, bw - 16, bh); ctx.fillStyle = J.c('--ink'); ctx.font = '11px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.fillText(J.fmt(x, 2) + '×', X + (bw - 16)/2, h - 36 - bh); ctx.font = '12px "Noto Sans KR"'; ctx.fillText(names[i], X + (bw - 16)/2, h - 12); });
+    J.out(box, 'e', J.fmt(e, 2) + ' ×'); J.out(box, 'w', J.fmt(fwhm(Ca), 1) + ' nm'); J.out(box, 'r', J.fmt(fwhm(Ca)/fwhm(Cn), 2) + ' ×'); });
+})();
+</script>
+</body>
+</html>
